@@ -1,5 +1,9 @@
+import builtins
 import torch  # type: ignore[import-untyped]
 import torch.nn as nn  # type: ignore[import-untyped]
+
+_builtin_min = builtins.min
+_builtin_max = builtins.max
 
 class Quantity:
     """Physikalische Größe mit Einheit (z. B. 10[m], 5[m/s]). Rechenregeln: gleiche Einheit für +/-, Einheiten multiplizieren/dividieren."""
@@ -600,8 +604,8 @@ def pde_heat_2d(u0, x, y, t, k, bc="dirichlet"):
     k = _to_tensor(k).float()
     if x.numel() != nx or y.numel() != ny:
         raise ValueError("pde_heat_2d: x/y Länge muss zu u0 passen.")
-    dx = float((x[-1] - x[0]).item()) / max(nx - 1, 1)
-    dy = float((y[-1] - y[0]).item()) / max(ny - 1, 1)
+    dx = float((x[-1] - x[0]).item()) / _builtin_max(nx - 1, 1)
+    dy = float((y[-1] - y[0]).item()) / _builtin_max(ny - 1, 1)
     dx2, dy2 = dx * dx, dy * dy
 
     def rhs(t_cur, u_flat):
@@ -701,7 +705,7 @@ def metropolis(log_prior_fn, log_likelihood_fn, data, init_theta, num_steps, ste
         except Exception:
             lp_cur = lp_prop = ll_cur = ll_prop = float("-inf")
         log_accept = (lp_prop + ll_prop) - (lp_cur + ll_cur)
-        accept_prob = 1.0 if log_accept >= 0 else min(1.0, torch.exp(torch.tensor(log_accept)).item())
+        accept_prob = 1.0 if log_accept >= 0 else _builtin_min(1.0, torch.exp(torch.tensor(log_accept)).item())
         if torch.rand(1).item() < accept_prob:
             theta = proposal.clone()
         samples.append(theta.clone())
@@ -735,7 +739,7 @@ def hmc(log_prior_fn, log_likelihood_fn, data, init_theta, num_steps, step_size=
         p = torch.randn_like(theta)
         q = theta.clone()
         eps = float(step_size)
-        L = max(1, int(num_leapfrog))
+        L = _builtin_max(1, int(num_leapfrog))
         U_cur = neg_log_post(theta)[0]
         K_cur = 0.5 * (p ** 2).sum().item()
         H_cur = U_cur + K_cur
@@ -752,7 +756,7 @@ def hmc(log_prior_fn, log_likelihood_fn, data, init_theta, num_steps, step_size=
         K_prop = 0.5 * (p ** 2).sum().item()
         H_prop = U_prop + K_prop
         log_accept = H_cur - H_prop
-        accept_prob = min(1.0, float(torch.exp(torch.tensor(log_accept)).item()))
+        accept_prob = _builtin_min(1.0, float(torch.exp(torch.tensor(log_accept)).item()))
         if torch.rand(1).item() < accept_prob:
             theta = q.clone()
         samples.append(theta.clone())
@@ -821,6 +825,89 @@ def tanh(x):
     """Tangens hyperbolicus tanh(x)."""
     return torch.tanh(_to_tensor(x).float())
 
+# --- Standard Library: Reduktionen (min, max, argmin, argmax) ---
+def min(x, dim=None):
+    """
+    Minimum der Elemente. x: Tensor oder Skalar.
+    dim: optional, Achse entlang der reduziert wird (None = über alle).
+    Rückgabe: Skalar wenn dim=None; sonst (value, index) bei dim gesetzt — hier einheitlich Tensor.
+    """
+    t = _to_tensor(x).float()
+    if dim is None:
+        return t.min()
+    return t.min(dim=dim)[0]
+
+def max(x, dim=None):
+    """
+    Maximum der Elemente. x: Tensor oder Skalar.
+    dim: optional, Achse (None = über alle). Rückgabe: Skalar oder Tensor.
+    """
+    t = _to_tensor(x).float()
+    if dim is None:
+        return t.max()
+    return t.max(dim=dim)[0]
+
+def argmin(x, dim=None):
+    """
+    Index des Minimums. x: Tensor. dim: optional (None = abgeflacht).
+    Rückgabe: Long-Tensor (Skalar wenn dim=None).
+    """
+    t = _to_tensor(x).float()
+    if dim is None:
+        return torch.argmin(t)
+    return torch.argmin(t, dim=dim)
+
+def argmax(x, dim=None):
+    """
+    Index des Maximums. x: Tensor. dim: optional (None = abgeflacht).
+    Rückgabe: Long-Tensor (Skalar wenn dim=None).
+    """
+    t = _to_tensor(x).float()
+    if dim is None:
+        return torch.argmax(t)
+    return torch.argmax(t, dim=dim)
+
+# --- Standard Library: Runden ---
+def round(x):
+    """Rundet auf nächste ganze Zahl; x Tensor oder Skalar."""
+    return torch.round(_to_tensor(x).float())
+
+def floor(x):
+    """Ganzzahlig nach unten; x Tensor oder Skalar."""
+    return torch.floor(_to_tensor(x).float())
+
+def ceil(x):
+    """Ganzzahlig nach oben; x Tensor oder Skalar."""
+    return torch.ceil(_to_tensor(x).float())
+
+# --- Standard Library: Lineare Algebra (Norm, Det, Spur) ---
+def norm(x, p=None, dim=None):
+    """
+    Vektor- oder Matrixnorm. x: Tensor.
+    p: optional, Art der Norm (2 = L2/Frobenius default; "fro" für Frobenius; 1, inf möglich).
+    dim: optional, Achse(n) für Norm (None = über alle).
+    """
+    t = _to_tensor(x).float()
+    if p is None:
+        p = 2
+    if dim is not None:
+        return torch.linalg.norm(t, ord=p, dim=dim)
+    return torch.linalg.norm(t, ord=p)
+
+def det(A):
+    """Determinante der Matrix A (2D-Tensor)."""
+    t = _to_tensor(A).float()
+    if t.dim() != 2:
+        raise ValueError("det: Erwartet 2D-Matrix.")
+    return torch.linalg.det(t)
+
+def trace(A):
+    """Spur der Matrix A (Summe der Diagonalelemente)."""
+    t = _to_tensor(A).float()
+    if t.dim() != 2:
+        raise ValueError("trace: Erwartet 2D-Matrix.")
+    return torch.trace(t)
+
 # --- Standard Library: Numerical Integration ---
 # Differenzierbar, wenn f Tensor-Argument akzeptiert und differenzierbar ist.
 
@@ -833,7 +920,7 @@ def integrate(f, a, b, n=100):
     """
     a_val = float(_to_tensor(a).float().squeeze().item())
     b_val = float(_to_tensor(b).float().squeeze().item())
-    n_int = max(2, int(n))
+    n_int = _builtin_max(2, int(n))
     x = torch.linspace(a_val, b_val, n_int)
     y = f(x)
     y = _to_tensor(y).float().flatten()
@@ -850,7 +937,7 @@ class UncertainQuantity:
     """Größe mit Unsicherheit: value ± std. Gauß'sche Fehlerfortpflanzung für +, -, *, /, ^."""
     def __init__(self, value, std=0.0, unit=""):
         self.value = float(value)
-        self.std = max(0.0, float(std))
+        self.std = _builtin_max(0.0, float(std))
         self.unit = str(unit) if unit else ""
 
     def _same_unit(self, other):

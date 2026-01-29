@@ -246,6 +246,12 @@ Fourier provides **numerical integration** and **math functions** for scientific
 
 **Hyperbelfunktionen:** **`sinh(x)`**, **`cosh(x)`**, **`tanh(x)`**.
 
+**Reduktionen:** **`min(x, dim=None)`**, **`max(x, dim=None)`** — Minimum/Maximum; **`argmin(x, dim=None)`**, **`argmax(x, dim=None)`** — Index des Min/Max.
+
+**Runden:** **`round(x)`**, **`floor(x)`**, **`ceil(x)`**.
+
+**Lineare Algebra:** **`norm(x, p=None, dim=None)`** — Vektor- oder Matrixnorm (default p=2); **`det(A)`** — Determinante; **`trace(A)`** — Spur.
+
 Examples: \(\int_0^1 x^2\,dx = 1/3\), \(\int_0^\pi \sin(x)\,dx = 2\); see `examples/fourier/integration.fourier`. Full math showcase: `examples/fourier/math_functions.fourier`.
 
 ### 15.11 Uncertainty Propagation and Fitting (v0.9.3)

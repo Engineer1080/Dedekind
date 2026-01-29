@@ -15,6 +15,9 @@ _LATEX_FUNCS = {
     "exp": "exp", "log": "log", "log10": "log_{10}", "sqrt": "sqrt", "abs": "abs",
     "asin": "arcsin", "acos": "arccos", "atan": "arctan", "atan2": "atan2",
     "sinh": "sinh", "cosh": "cosh", "tanh": "tanh",
+    "min": "min", "max": "max", "argmin": "argmin", "argmax": "argmax",
+    "round": "round", "floor": "floor", "ceil": "ceil",
+    "norm": "norm", "det": "det", "trace": "operatorname{tr}",
     "diff": "frac", "grad": "nabla",
 }
 
@@ -132,6 +135,14 @@ class LatexExporter:
                 return f"\\sqrt{{{args[0]}}}" if args else "\\sqrt{}"
             if cmd == "abs":
                 return f"\\left| {args[0]} \\right|" if args else "|"
+            if cmd == "norm" and args:
+                return f"\\left\\| {args[0]} \\right\\|"
+            if cmd == "floor" and args:
+                return f"\\lfloor {args[0]} \\rfloor"
+            if cmd == "ceil" and args:
+                return f"\\lceil {args[0]} \\rceil"
+            if cmd == "operatorname{tr}" and args:
+                return f"\\operatorname{{tr}}\\left( {args[0]} \\right)"
             if cmd == "atan2" and len(args) >= 2:
                 return f"\\operatorname{{atan2}}\\left( {args[0]}, {args[1]} \\right)"
             if cmd == "frac" and len(args) >= 2:

@@ -10,6 +10,7 @@ class CodeGenerator:
         self.code.append("import torch")
         self.code.append("import torch.nn as nn")
         self.code.append("import sys")
+        self.code.append("import builtins")
         self.code.append("")
         
         self.add_line("def _to_tensor(data):")

@@ -17,7 +17,7 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **Differentiable PDE Solvers**: `pde_heat_1d(u0, x, t, k)` and `pde_heat_2d(u0, x, y, t, k)` for the heat equation \(u_t = k \cdot \Delta u\); finite differences + `ode_solve`; gradients through `u0` and `k`.
 - **Probabilistic Programming**: First-class distributions `Normal(mu, sigma)`, `Uniform(low, high)`, `Bernoulli(p)`, `Exponential(rate)`, `Gamma(concentration, rate)`, `Beta(alpha, beta)`, `Poisson(rate)`; `sample(dist)`, `log_prob(dist, value)`; Bayesian inference via `metropolis(log_prior, log_likelihood, data, init, steps)`.
 - **Numerical Integration**: `integrate(f, a, b, n)` — trapezoidal quadrature; differentiable when `f` accepts a tensor.
-- **Math Functions**: `sin`, `cos`, `tan`, `exp`, `log`, `log10`, `sqrt`, `abs`; `asin`, `acos`, `atan`, `atan2(y,x)`; `sinh`, `cosh`, `tanh` — element-wise, differentiable; Tensor or scalar.
+- **Math Functions**: `sin`, `cos`, `tan`, `exp`, `log`, `log10`, `sqrt`, `abs`; `asin`, `acos`, `atan`, `atan2(y,x)`; `sinh`, `cosh`, `tanh` — element-wise, differentiable; Tensor or scalar. **Reductions**: `min(x)`, `max(x)`, `argmin(x)`, `argmax(x)` (optional `dim`). **Rounding**: `round(x)`, `floor(x)`, `ceil(x)`. **Linear algebra**: `norm(x)`, `det(A)`, `trace(A)`.
 - **Uncertainty Propagation**: `uncertain(value, std)` bzw. `UncertainQuantity` — Gauß'sche Fehlerfortpflanzung für +, -, *, /, ^; optional mit Einheit.
 - **Fitting / Regression**: `fit(loss_fn, params_init, data, method="gd"|"mcmc"|"hmc", lr=0.01, steps=500)` — minimiert `loss_fn(params, data)` via Gradient Descent, Metropolis-Hastings oder **HMC** (Hamiltonian Monte Carlo).
 - **LaTeX-Export**: `export_to_latex(source)` bzw. CLI `--latex` — Formeln aus Fourier-Code als LaTeX (für Papers/Notizen).
@@ -27,7 +27,8 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **Modern IDE**: "Fourier Studio" – v0.9.6 with resizable terminal and file explorer.
 
 ### What's New in v0.9.6
-- **Grundlegende Math-Funktionen**: Erweiterung der Standard-Bibliothek um `tan`, `exp`, `log`, `log10`, `sqrt`, `abs`; Arkusfunktionen `asin`, `acos`, `atan`, `atan2(y,x)`; Hyperbelfunktionen `sinh`, `cosh`, `tanh`. Alle elementweise, differenzierbar; LaTeX-Export angepasst. Beispiel: `examples/fourier/math_functions.fourier`.
+- **Grundlegende Math-Funktionen**: Erweiterung der Standard-Bibliothek um `tan`, `exp`, `log`, `log10`, `sqrt`, `abs`; Arkusfunktionen `asin`, `acos`, `atan`, `atan2(y,x)`; Hyperbelfunktionen `sinh`, `cosh`, `tanh`. Alle elementweise, differenzierbar; LaTeX-Export angepasst.
+- **Reduktionen, Runden, Lineare Algebra**: `min(x)`, `max(x)`, `argmin(x)`, `argmax(x)` (optional `dim`); `round(x)`, `floor(x)`, `ceil(x)`; `norm(x)`, `det(A)`, `trace(A)`. Beispiel: `examples/fourier/math_functions.fourier`.
 
 ### What's New in v0.9.5
 - **Phase 2 — Bessere Fehlermeldungen**: AST-Knoten tragen optional `line`; Parser wirft `CompileError(message, line, filepath)` bei erwartetem Token, ungültigem Zuweisungsziel, unerwartetem Token; Runtime-Quantity-Meldungen mit klarem Kontext („Einheitenfehler bei Addition: [m] vs [s] …“).

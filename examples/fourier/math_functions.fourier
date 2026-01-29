@@ -47,6 +47,30 @@ fn main() {
     print("int_{-3}^{3} exp(-x^2) dx (Näherung sqrt(pi)):")
     print(I)
 
+    // Reduktionen: min, max, argmin, argmax
+    v = [3.0, 1.0, 4.0, 1.0, 5.0]
+    print("min(v), max(v):")
+    print(min(v))
+    print(max(v))
+    print("argmin(v), argmax(v):")
+    print(argmin(v))
+    print(argmax(v))
+
+    // Runden: round, floor, ceil
+    print("round(2.7), floor(2.7), ceil(2.3):")
+    print(round(2.7))
+    print(floor(2.7))
+    print(ceil(2.3))
+
+    // Lineare Algebra: norm, det, trace
+    w = [3.0, 4.0]
+    print("norm([3,4]) (soll 5):")
+    print(norm(w))
+    M = [[1.0, 2.0], [3.0, 4.0]]
+    print("det(M), trace(M):")
+    print(det(M))
+    print(trace(M))
+
     print("\nMath-Funktionen aktiv.")
 }
 main()
