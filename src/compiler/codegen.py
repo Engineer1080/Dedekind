@@ -7,9 +7,32 @@ class CodeGenerator:
 
     def generate(self, node: Node) -> str:
         self.code = []
-        self.add_line("import torch")
-        self.add_line("import sys")
-        self.add_line("")
+        self.code.append("import torch")
+        self.code.append("import torch.nn as nn")
+        self.code.append("import sys")
+        self.code.append("")
+        
+        # Inject ML Runtime Library
+        self.code.append("# Fourier ML Runtime")
+        ml_runtime_path = __file__.replace('codegen.py', 'ml_runtime.py')
+        try:
+            with open(ml_runtime_path, 'r') as f:
+                ml_code = f.read()
+                reached_code = False
+                for line in ml_code.split('\n'):
+                    # Start including only once we hit a class or function definition
+                    if not reached_code:
+                        if line.startswith('class ') or line.startswith('def '):
+                            reached_code = True
+                        else:
+                            continue
+                    
+                    if reached_code:
+                        self.code.append(line.rstrip())
+        except FileNotFoundError:
+            pass  # ML runtime not found, skip
+        
+        self.code.append("")
         
         # Helper for Device Management
         self.add_line("def _get_device():")
