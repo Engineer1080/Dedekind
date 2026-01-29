@@ -42,6 +42,9 @@ class Parser:
             return self.parse_for_stmt()
         elif token.type == 'GRAD':
             return self.parse_grad_expr()
+        elif token.type == 'ID' and token.value == 'einsum':
+            # Handle einsum as a special expression
+            return self.parse_expression()
         elif token.type == 'ID' and self.peek(1) and self.peek(1).type == 'ASSIGN':
             return self.parse_assignment()
         else:

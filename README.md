@@ -13,7 +13,9 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **Parallel by Default**: Built-in support for vector and matrix operations.
 - **Hardware Acceleration**: Use `.gpu()` or `.cpu()` to control execution device via PyTorch.
 - **ML Framework**: Native `Dense` and `Sequential` primitives for Neural Networks.
-- **Modern IDE**: "Fourier Studio" - a premium Electron-based environment.
+- **Differentiable Programming**: First-class `grad()` keyword and `.with_grad()` support.
+- **Tensor Inspection**: Direct property access like `.shape`.
+- **Modern IDE**: "Fourier Studio" - v0.2 with resizable terminal and file explorer.
 - **Fast Development**: Transpiles directly to highly optimized PyTorch code.
 
 ## 🧠 Machine Learning Example
@@ -141,11 +143,19 @@ npm run electron:dev
 *   [x] Integration with **PyTorch** for GPU execution.
 *   [x] Implementation of `.gpu()` and `.cpu()` modifiers.
 
-### Phase 4: Production (v0.2) 🚧
+### Phase 4: Production (v0.2) ✅
 *   [x] **Native Performance**: Integration with MLIR/Inductor via `.fast()`.
 *   [x] **MLIR Prototype**: Fourier-Dialect IR generation.
-*   [ ] LLVM AOT Compilation.
-*   [ ] Advanced Memory Management (Linear Types).
+*   [x] **Studio Upgrade**: Resizable terminal and UI polish.
+
+### Phase 5: Advanced Mathematics ✅
+*   [x] **Autograd**: Native `grad()` operator for automatic differentiation.
+*   [x] **Property Access**: Native `.shape` support for tensors and models.
+
+### Phase 6: Tensor Contraction & Logic (v0.3) 🚧
+*   [ ] **Einsum**: High-level elective tensor contraction syntax.
+*   [ ] **Complex/Quaternion**: Built-in support for rotational math.
+*   [ ] **AOT Compilation**: Static LLVM binary generation.
 
 ## 📄 License
 

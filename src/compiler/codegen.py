@@ -161,6 +161,10 @@ class CodeGenerator:
             # We map this to torch.autograd.grad(f(x), x)[0]
             # args[0] is the function, args[1] is the parameter
             return f"torch.autograd.grad({args[0]}({args[1]}), {args[1]}, create_graph=True)[0]"
+        if func_name == "einsum":
+            # Map Fourier einsum("equation", ...) to torch.einsum("equation", ...)
+            # The first argument is the string equation
+            return f"torch.einsum({args[0]}, {', '.join(args[1:])})"
         if func_name == "matmul": return f"torch.matmul({args[0]}, {args[1]})"
         if func_name == "forward":
              all_args = args[1:] + kwargs

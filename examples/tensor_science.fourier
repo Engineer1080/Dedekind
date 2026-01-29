@@ -1,0 +1,51 @@
+fn main() {
+    print("--- Fourier: Tensor Science (Einsum) Showcase ---")
+    
+    A = [
+        [1.0, 2.0],
+        [3.0, 4.0]
+    ]
+    
+    B = [
+        [5.0, 6.0],
+        [7.0, 8.0]
+    ]
+    
+    print("Matrix A:")
+    print(A)
+    print("Matrix B:")
+    print(B)
+    
+    // 1. Matrix-Multiplikation via Einsum
+    // ii,jk -> ik bedeutet: Multipliziere Zeilen von A mit Spalten von B
+    C = einsum("ij,jk->ik", A, B)
+    
+    print("\n1. Matrix-Multiplikation (A * B) via Einsum:")
+    print(C)
+    
+    // 2. Trace (Spur) berechnen
+    // ii -> summiert die Diagonalelemente
+    trace_A = einsum("ii", A)
+    
+    print("\n2. Trace von Matrix A (Summe der Diagonale):")
+    print(trace_A)
+    
+    // 3. Dot Product (Skalarprodukt)
+    // i,i -> summiert das elementweise Produkt zweier Vektoren
+    v1 = [1.0, 2.0, 3.0]
+    v2 = [4.0, 5.0, 6.0]
+    dot = einsum("i,i", v1, v2)
+    
+    print("\n3. Dot Product von [1,2,3] und [4,5,6]:")
+    print(dot)
+    
+    // 4. Outer Product (Äußeres Produkt)
+    // i,j -> erzeugt eine Matrix aus zwei Vektoren
+    outer = einsum("i,j->ij", v1, v2)
+    
+    print("\n4. Outer Product (Matrix-Erzeugung):")
+    print(outer)
+    
+    print("\nErfolgreich ausgeführt! Fourier beherrscht die Einstein-Notation. 🦅📐")
+}
+main()

@@ -72,7 +72,7 @@ class Lexer:
             elif kind == 'MISMATCH':
                 raise RuntimeError(f'{value!r} unexpected on line {line}')
             else:
-                keywords = {'fn', 'return', 'if', 'else', 'while', 'for', 'in', 'grad'}
+                keywords = {'fn', 'return', 'if', 'else', 'while', 'for', 'in', 'grad', 'einsum'}
                 if kind == 'ID' and value in keywords:
                     kind = value.upper()
                 tokens.append(Token(kind, value, line))
