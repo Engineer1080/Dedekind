@@ -21,6 +21,7 @@ function App() {
   const [expandedFolders, setExpandedFolders] = useState({});
   const [consoleHeight, setConsoleHeight] = useState(200);
   const [isResizing, setIsResizing] = useState(false);
+  const [isBuilding, setIsBuilding] = useState(false);
 
   useEffect(() => {
     // Initial setup: Find project root
@@ -110,7 +111,6 @@ function App() {
       setActiveTabId(newTabs.length > 0 ? newTabs[newTabs.length - 1].path : null);
     }
   };
-
   const handleRun = async () => {
     if (!activeTabId) return;
 
@@ -132,7 +132,30 @@ function App() {
       setOutput('Failed to connect to Compiler Backend.\nIs server.py running?');
     }
     setIsRunning(false);
-  }
+  };
+
+  const handleBuild = async () => {
+    if (!activeTabId) return;
+
+    setIsBuilding(true);
+    setOutput('Starting AOT Compilation (MLIR/LLVM)...');
+    try {
+      const response = await fetch('http://localhost:5000/build', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source: fileContents[activeTabId] }),
+      });
+      const data = await response.json();
+      if (data.status === 'success') {
+        setOutput(`Build Success!\nArtifacts:\n- ${data.path}\n\n${data.message}`);
+      } else {
+        setOutput(`Build Error:\n${data.error}\n\nTraceback:\n${data.traceback}`);
+      }
+    } catch (err) {
+      setOutput('Failed to connect to AOT Build Backend.');
+    }
+    setIsBuilding(false);
+  };
 
   const handleScroll = (e) => {
     if (highlightRef.current) {
@@ -208,8 +231,11 @@ function App() {
         </div>
 
         <div className="toolbar">
-          <button className="btn btn-primary" onClick={handleRun} disabled={isRunning || !activeTabId}>
+          <button className="btn btn-primary" onClick={handleRun} disabled={isRunning || isBuilding || !activeTabId}>
             {isRunning ? 'Running...' : '▶ Run active file'}
+          </button>
+          <button className="btn btn-accent" onClick={handleBuild} disabled={isRunning || isBuilding || !activeTabId}>
+            {isBuilding ? 'Building...' : '⚙ Build Native (AOT)'}
           </button>
           <button className="btn" onClick={() => {
             if (activeTabId) fs.writeFileSync(activeTabId, fileContents[activeTabId]);

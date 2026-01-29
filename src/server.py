@@ -9,9 +9,30 @@ import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from compiler.compiler import compile_source
+from compiler.aot_compiler import AOTCompiler
 
 app = Flask(__name__)
 CORS(app)
+
+@app.route('/build', methods=['POST'])
+def build_endpoint():
+    data = request.json
+    source = data.get('source', '')
+    # Save source to a temp file for AOT processing
+    temp_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "build_target.fourier")
+    with open(temp_path, 'w', encoding='utf-8') as f:
+        f.write(source)
+    
+    try:
+        compiler = AOTCompiler(temp_path)
+        result_path = compiler.compile()
+        return jsonify({
+            'status': 'success', 
+            'path': result_path, 
+            'message': f"AOT Compilation initialized. Artifacts created at {os.path.dirname(result_path)}"
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'error': str(e), 'traceback': traceback.format_exc()})
 
 @app.route('/compile', methods=['POST'])
 def compile_endpoint():

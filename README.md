@@ -152,10 +152,14 @@ npm run electron:dev
 *   [x] **Autograd**: Native `grad()` operator for automatic differentiation.
 *   [x] **Property Access**: Native `.shape` support for tensors and models.
 
-### Phase 6: Tensor Contraction & Logic (v0.3) 🚧
-*   [ ] **Einsum**: High-level elective tensor contraction syntax.
-*   [ ] **Complex/Quaternion**: Built-in support for rotational math.
-*   [ ] **AOT Compilation**: Static LLVM binary generation.
+### Phase 6: Tensor Contraction & Logic (v0.3) ✅
+*   [x] **Einsum**: High-level elective tensor contraction syntax.
+*   [x] **Complex/Quaternion**: Built-in support for rotational math.
+
+### Phase 8: AOT Compilation & LLVM Backend (v0.4) 🚧
+*   [ ] **Static Binary**: Standalone `.exe` generation without Python.
+*   [ ] **MLIR Pipeline**: Fourier -> MLIR -> LLVM -> Binary.
+*   [ ] **Linear Types**: Advanced memory management for zero-overhead.
 
 ## 📄 License
 

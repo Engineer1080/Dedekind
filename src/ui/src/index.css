@@ -200,6 +200,17 @@ html,
   box-shadow: 0 0 15px var(--accent-glow);
 }
 
+.btn-accent {
+  background: #ffaa00;
+  color: #000;
+  font-weight: 600;
+}
+
+.btn-accent:hover {
+  background: #ffcc00;
+  box-shadow: 0 0 15px rgba(255, 170, 0, 0.4);
+}
+
 .btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
