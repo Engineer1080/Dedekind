@@ -161,6 +161,15 @@ npm run electron:dev
 *   [ ] **MLIR Pipeline**: Fourier -> MLIR -> LLVM -> Binary.
 *   [ ] **Linear Types**: Advanced memory management for zero-overhead.
 
+## 🔭 Beyond v1.0: Future Vision
+
+Fourier aims to become the "Standard Language for Nature's Laws." To achieve this, we are researching the native implementation of the following concepts:
+
+1. **Differentiable ODE Solvers**: Native support for solving Differential Equations integrated directly with the `grad()` engine for physics-informed machine learning.
+2. **Physical Units (Unit Safety)**: A type system that understands physics (e.g., `10[m] / 2[s] = 5[m/s]`) and prevents unit-mismatch errors at compile time.
+3. **Probabilistic Programming**: Native support for random variables and Bayesian inference, allowing variables to represent probability distributions rather than discrete values.
+4. **Symbolic Simplification**: A compile-time algebraic engine that simplifies complex mathematical expressions before code generation to maximize efficiency.
+
 ## 📄 License
 
 This project is licensed under the MIT License.
