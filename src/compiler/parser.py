@@ -152,49 +152,36 @@ class Parser:
         return left
 
     def parse_atom(self):
-        # Replaces old parse_factor logic
-        token = self.peek()
-
-
         token = self.peek()
         
+        node = None
         if token.type == 'NUMBER':
             self.consume()
-            return Literal(float(token.value) if '.' in token.value else int(token.value))
+            node = Literal(float(token.value) if '.' in token.value else int(token.value))
         elif token.type == 'STRING':
             self.consume()
-            return Literal(token.value.strip('"'))
+            node = Literal(token.value.strip('"'))
         elif token.type == 'LBRACKET':
-            return self.parse_vector()
+            self.consume('LBRACKET')
+            elements = []
+            if self.peek().type != 'RBRACKET':
+                elements.append(self.parse_expression())
+                while self.peek().type == 'COMMA':
+                    self.consume('COMMA')
+                    elements.append(self.parse_expression())
+            self.consume('RBRACKET')
+            node = VectorLiteral(elements)
         elif token.type == 'LPAREN':
-            # Check if this is a lambda: (a, b) => ...
-            # Simple heuristic: if we see LPAREN -> ID -> COMMA or LPAREN -> ID -> CPAREN -> ARROW
-            # For now, let's keep it simple: Parenthesized expression
             self.consume('LPAREN')
-            expr = self.parse_expression()
+            node = self.parse_expression()
             self.consume('RPAREN')
-            return expr
         elif token.type == 'ID':
-            return self.parse_identifier_or_call()
+            name_token = self.consume('ID')
+            node = Identifier(name_token.value)
         else:
             raise Exception(f"Unexpected token in expression: {token}")
 
-    def parse_vector(self):
-        self.consume('LBRACKET')
-        elements = []
-        if self.peek().type != 'RBRACKET':
-            elements.append(self.parse_expression())
-            while self.peek().type == 'COMMA':
-                self.consume('COMMA')
-                elements.append(self.parse_expression())
-        self.consume('RBRACKET')
-        return VectorLiteral(elements)
-
-    def parse_identifier_or_call(self):
-        name_token = self.consume('ID')
-        node = Identifier(name_token.value)
-        
-        # Handle method calls / chaining: name.method() or name()
+        # Handle Method Chaining & Modifiers
         while self.peek() and (self.peek().type == 'LPAREN' or self.peek().type == 'DOT' or self.peek().type == 'MODIFIER'):
             
             if self.peek().type == 'LPAREN':
@@ -211,7 +198,6 @@ class Parser:
             elif self.peek().type == 'DOT':
                 self.consume('DOT')
                 method_name = self.consume('ID').value
-                # Usually followed by call parens
                 self.consume('LPAREN')
                 args = []
                 if self.peek().type != 'RPAREN':
@@ -220,24 +206,17 @@ class Parser:
                         self.consume('COMMA')
                         args.append(self.parse_expression())
                 self.consume('RPAREN')
-                # Wrap the previous node as the 'self' argument or special method call structure
-                # For simplicity, we'll chain it: Call(method_name, [previous_node, *args])
-                # Or keep it as a dotted access in AST. Let's make a specialized Call structure handling.
-                # Actually, spec has `data.map(...)`.
-                # Let's treat it as: Call(Identifier(method_name), args, [implicit_first_arg=node])
-                # But to keep AST simple for codegen:
-                # We can construct proper Python calls: method_name(node, *args)
                 node = Call(Identifier(method_name), [node] + args, [])
                 
             elif self.peek().type == 'MODIFIER':
-                modifier = self.consume('MODIFIER').value.strip('.') # e.g. "gpu"
+                modifier = self.consume('MODIFIER').value.strip('.') 
                 self.consume('LPAREN')
                 self.consume('RPAREN')
                 if isinstance(node, Call):
                     node.modifiers.append(modifier)
                 else:
-                    # Modifier on a variable? e.g. matrix.gpu()
-                    # Treat as a call to `.cpu()`/`.gpu()` which is identity function with side effect/cast
                     node = Call(Identifier(modifier), [node], [modifier])
                     
         return node
+
+
