@@ -40,8 +40,8 @@ Damit sind viele chemische und biologische Rechnungen (Kinetik, Fitting, Fehlerf
 | **Einheiten mol, L, M, ppm** | Konzentrationen, Stoffmengen, Verdünnungen; Compile-Check für mol+L. | Gering–Mittel | 1 |
 | **Beispiele Chemie/Biologie** | Kinetik 1. Ordnung, Michaelis-Menten, Dosis-Wirkung, logistisches Wachstum. | Gering | 1 |
 | **Doku „Fourier für Chemie & Biologie“** | README/Spec-Abschnitt + Verweise auf Beispiele; klare Zielgruppe. | Gering | 1 |
-| **Convenience-Funktionen** | `michaelis_menten(S, Vmax, Km)`, `logistic_growth(t, r, K, N0)`, evtl. `arrhenius(T, A, Ea)`. | Gering | 2 |
-| **Linear-Regression-Wrapper** | `linear_regression(x, y)` → Steigung, Achsenabschnitt, Unsicherheit (intern `fit` + `uncertain`). | Gering | 2 |
+| **Convenience-Funktionen** | `michaelis_menten(S, Vmax, Km)`, `logistic(t, r, K, N0)`, `logistic_growth_dt(N, r, K)`, `arrhenius(T, A, Ea)`. | Gering | 2 ✅ |
+| **Linear-Regression-Wrapper** | `linear_regression(x, y)` → [Steigung, Achsenabschnitt] (intern `fit`). | Gering | 2 ✅ |
 | **Weitere Einheiten** | bar, atm, pH-Hinweis (pH = -log10([H+]); % w/v optional. | Gering | 3 |
 | **Tutorial / Blog** | „Kinetik in Fourier“, „EC50-Fitting mit Fourier“ (optional). | Mittel | 4 |
 
@@ -84,25 +84,22 @@ Abstimmung mit [Features_Implementation_Roadmap](Features_Implementation_Roadmap
 
 ---
 
-### Phase 2: Convenience-Funktionen (geschätzt: 1 Woche)
+### Phase 2: Convenience-Funktionen (geschätzt: 1 Woche) ✅
 
 **Ziel**: Typische Modelle als benannte Funktionen — weniger Boilerplate, bessere Lesbarkeit.
 
-**Schritte**:
+**Umgesetzt**:
 
 1. **Runtime-Funktionen in `ml_runtime.py`**
    - **`michaelis_menten(S, Vmax, Km)`**: \(v = V_{\max} S / (K_M + S)\); S, Vmax, Km als Tensoren/Skalare; differenzierbar.
-   - **`logistic_growth(N, r, K)`**: \(dN/dt = r N (1 - N/K)\) als ODE-RHS für `ode_solve`; oder **`logistic(t, r, K, N0)`** für analytische Lösung \(N(t) = K / (1 + (K/N_0 - 1) e^{-rt})\).
-   - Optional: **`arrhenius(T, A, Ea)`**: \(k = A e^{-E_a/(R T)}\); R als `R_gas` nutzbar.
+   - **`logistic(t, r, K, N0)`**: Analytische Lösung \(N(t) = K / (1 + (K/N_0 - 1) e^{-rt})\).
+   - **`logistic_growth_dt(N, r, K)`**: \(dN/dt = r N (1 - N/K)\) als RHS für `ode_solve` (z. B. `fn rhs(t, y) { return [logistic_growth_dt(y[0], r, K)] }`).
+   - **`arrhenius(T, A, Ea)`**: \(k = A e^{-E_a/(R T)}\); R = `R_gas.value` (J/(K·mol)).
+   - **`linear_regression(x, y)`**: Rückgabe `[slope, intercept]` via `fit(..., method="gd")`.
 
-2. **Optional: `linear_regression(x, y)`**
-   - Intern: `fit(loss_fn, params_init, [x, y], method="gd")` für lineare Regression; Rückgabe Steigung, Achsenabschnitt; optional mit Unsicherheit (Hessian-Näherung oder MCMC).
-   - API: z. B. `slope, intercept = linear_regression(x, y)` oder ein kleines Struct/Dict.
+2. **Beispiele**: `dose_response.fourier` nutzt `michaelis_menten`; `biology_growth.fourier` nutzt `logistic_growth_dt` und `logistic`; `chemistry_arrhenius.fourier`, `linear_regression.fourier` neu.
 
-3. **Beispiele anpassen**
-   - `chemistry_michaelis_menten.fourier` (oder `dose_response.fourier`) auf `michaelis_menten(...)` umstellen; `biology_growth.fourier` auf `logistic_growth`/`logistic` umstellen.
-
-**Erfolgskriterium**: Michaelis-Menten und logistisches Wachstum sind als eine Zeile aufrufbar; mindestens ein Beispiel nutzt die neuen Funktionen; Dokumentation in Spec §15.
+**Erfolgskriterium**: Erfüllt — Michaelis-Menten, logistisches Wachstum, Arrhenius und lineare Regression sind einzeilig aufrufbar; Beispiele laufen.
 
 ---
 

@@ -80,6 +80,7 @@ Fourier unterstützt **chemische und biologische Anwendungen** mit denselben Bau
 - **Kinetik**: Reaktion 1. Ordnung \(c(t) = c_0 e^{-kt}\) mit `ode_solve` und Einheiten `[M]`, `[1/s]` — Beispiel: `chemistry_kinetics.fourier`.
 - **Dosis-Wirkung / Michaelis-Menten**: Hill-Gleichung oder \(v = V_{\max}[S]/(K_M + [S])\); Parameterfitting mit `fit` (EC50, \(K_M\), \(V_{\max}\)) — Beispiel: `dose_response.fourier`.
 - **Wachstum**: Logistisches Wachstum \(dN/dt = r N (1 - N/K)\) mit `ode_solve` — Beispiel: `biology_growth.fourier`.
+- **Convenience**: `michaelis_menten(S, Vmax, Km)`, `logistic(t, r, K, N0)`, `logistic_growth_dt(N, r, K)`, `arrhenius(T, A, Ea)`, `linear_regression(x, y)` — einzeilig aufrufbar; Beispiele: `dose_response.fourier`, `biology_growth.fourier`, `chemistry_arrhenius.fourier`, `linear_regression.fourier`.
 
 Konstanten wie `N_A`, `R_gas`, `F_faraday` sind als **Quantity** mit SI-Einheiten (`1/mol`, `J/(K*mol)`, `C/mol`) verfügbar. Ausführliche Roadmap: `Documentation/Chemistry_Biology_Roadmap.md`.
 
@@ -206,9 +207,11 @@ Example programs are in `examples/fourier/`, including:
 - `integration.fourier` – numerical integration `integrate(f, a, b)` and `sin`/`cos`  
 - `uncertainty_propagation.fourier` – `uncertain(value, std)`; Gauß'sche Fehlerfortpflanzung  
 - `curve_fitting.fourier` – `fit(loss_fn, params_init, data)` für lineare Regression  
+- `linear_regression.fourier` – Quick-Win: `linear_regression(x, y)` → Steigung, Achsenabschnitt  
 - `chemistry_kinetics.fourier` – Reaktion 1. Ordnung mit Einheiten [M], [1/s] und `ode_solve`  
-- `dose_response.fourier` – Dosis-Wirkung (EC50/Vmax/Km) mit `fit`  
-- `biology_growth.fourier` – logistisches Wachstum mit `ode_solve`  
+- `chemistry_arrhenius.fourier` – Quick-Win: `arrhenius(T, A, Ea)` (Arrhenius-Gleichung)  
+- `dose_response.fourier` – Dosis-Wirkung (EC50/Vmax/Km) mit `michaelis_menten` und `fit`  
+- `biology_growth.fourier` – logistisches Wachstum mit `logistic_growth_dt`/`logistic` und `ode_solve`  
 - `probabilistic.fourier` – distributions, sampling, and Bayesian inference with `metropolis`  
 - `conditional_logic.fourier`, `basic_loops.fourier` – control flow  
 - `mnist_classifier.fourier` – neural network with `Sequential`/`Dense`  

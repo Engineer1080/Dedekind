@@ -11,7 +11,7 @@ fn main() {
         y = data[1]
         Vmax = params[0]
         EC50 = params[1]
-        y_pred = Vmax * x / (EC50 + x)
+        y_pred = michaelis_menten(x, Vmax, EC50)
         diff = y_pred - y
         return (diff * diff).sum()
     }

@@ -1090,6 +1090,82 @@ def fit(loss_fn, params_init, data, method="gd", lr=0.01, steps=500):
             params.sub_(lr * params.grad)
     return params.detach()
 
+# --- Standard Library: Convenience (Chemie/Biologie) ---
+# Quick-Wins: Michaelis-Menten, logistisches Wachstum, Arrhenius, lineare Regression.
+
+def michaelis_menten(S, Vmax, Km):
+    """
+    Michaelis-Menten: v = Vmax * S / (Km + S).
+    S, Vmax, Km: Tensor oder Skalar; differenzierbar.
+    """
+    S = _to_tensor(S).float()
+    Vmax = _to_tensor(Vmax).float()
+    Km = _to_tensor(Km).float()
+    return Vmax * S / (Km + S)
+
+
+def logistic(t, r, K, N0):
+    """
+    Analytische Lösung logistisches Wachstum: N(t) = K / (1 + (K/N0 - 1) * exp(-r*t)).
+    t, r, K, N0: Tensor oder Skalar; differenzierbar.
+    """
+    t = _to_tensor(t).float()
+    r = _to_tensor(r).float()
+    K = _to_tensor(K).float()
+    N0 = _to_tensor(N0).float()
+    ratio = K / N0 - 1.0
+    return K / (1.0 + ratio * torch.exp(-r * t))
+
+
+def logistic_growth_dt(N, r, K):
+    """
+    RHS für ode_solve: dN/dt = r * N * (1 - N/K).
+    Nutzung: fn rhs(t, y) { return [logistic_growth_dt(y[0], r, K)] }; ode_solve(rhs, [N0], t).
+    """
+    N = _to_tensor(N).float()
+    r = _to_tensor(r).float()
+    K = _to_tensor(K).float()
+    return r * N * (1.0 - N / K)
+
+
+def arrhenius(T, A, Ea):
+    """
+    Arrhenius-Gleichung: k = A * exp(-Ea / (R*T)).
+    T: Temperatur (K), A: Präexponent (1/s), Ea: Aktivierungsenergie (J/mol).
+    R = R_gas (universal gas constant). Rückgabe: k (differenzierbar).
+    """
+    T = _to_tensor(T).float()
+    A = _to_tensor(A).float()
+    Ea = _to_tensor(Ea).float()
+    R_val = float(R_gas.value)  # J/(K*mol)
+    return A * torch.exp(-Ea / (R_val * T))
+
+
+def linear_regression(x, y):
+    """
+    Lineare Regression: y = slope * x + intercept.
+    x, y: 1D-Tensoren oder Listen gleicher Länge.
+    Rückgabe: [slope, intercept] (Tensor mit 2 Elementen).
+    """
+    x_t = _to_tensor(x).float().flatten()
+    y_t = _to_tensor(y).float().flatten()
+    if x_t.numel() != y_t.numel():
+        raise ValueError("linear_regression: x und y müssen gleiche Länge haben.")
+    n = x_t.numel()
+    if n < 2:
+        raise ValueError("linear_regression: mindestens 2 Punkte nötig.")
+    params_init = torch.tensor([0.0, 0.0], dtype=torch.float32)
+    data = [x_t, y_t]
+
+    def loss(params, data):
+        xx, yy = data[0], data[1]
+        slope, intercept = params[0], params[1]
+        pred = slope * xx + intercept
+        return ((pred - yy) ** 2).sum()
+
+    params_opt = fit(loss, params_init, data, method="gd", lr=0.01, steps=500)
+    return params_opt  # [slope, intercept]
+
 # --- Standard Library: Sorting ---
 
 def sort(data, descending=False):

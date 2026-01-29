@@ -8,8 +8,7 @@ fn main() {
     K = 500.0
 
     fn rhs(t, y) {
-        N = y[0]
-        return [r * N * (1.0 - N / K)]
+        return [logistic_growth_dt(y[0], r, K)]
     }
 
     t = linspace(0, 15, 151)
@@ -26,6 +25,11 @@ fn main() {
     print(traj[50])
     print(traj[100])
     print(traj[150])
+
+    // Analytische Lösung zum Vergleich: N(10) = logistic(10, r, K, N0)
+    N_analytical = logistic(10.0, r, K, N0)
+    print("Analytisch N(10):")
+    print(N_analytical)
 
     print("\nLogistisches Wachstum aktiv.")
 }
