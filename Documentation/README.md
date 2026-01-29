@@ -11,6 +11,7 @@ This folder contains the **source** and **generated** documentation for the Four
 | **Symbolic_Simplification_Roadmap.md** | Implementierungs-Roadmap für Symbolic Simplification (Phasen, Optionen, Integration) |
 | **Features_Implementation_Roadmap.md** | Implementierungs-Roadmap für naturwissenschaftliche Features (Verteilungen, Integration, Einheiten Compile-Zeit, NUTS/VI, Fitting, LaTeX, symbolische Ableitungen) |
 | **Chemistry_Biology_Roadmap.md** | Roadmap für Chemie und Biologie (Einheiten mol/L/M, Beispiele Kinetik/Dosis-Wirkung/Wachstum, Convenience-Funktionen, Doku „Fourier für Chemie & Biologie“) |
+| **Commercialization_Options.md** | Potenzielle Kommerzialisierungsoptionen (Beratung, Support, Lizenzen, SaaS, Förderung, Phasierung, Risiken) |
 | **Fourier_Language_Specification_v0.1.pdf** | Legacy PDF (v0.1); for current spec use the Markdown or generate v0.2 PDF below |
 | **Fourier_Research_Papers_and_Architecture.pdf** | Legacy PDF; for current content use the Markdown or generate PDF below |
 
