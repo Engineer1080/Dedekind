@@ -32,7 +32,7 @@ class Parser:
     def parse_statement(self):
         token = self.peek()
         
-        # Check for assignment: ID (=) or ID (^/_) ID (=)
+        # Check for assignment: ID (=) or ID (^/_) ID (=) or ID[...] (=)
         if token and token.type == 'ID':
             p = 1
             # Skip indices to see if an ASSIGN follows
@@ -40,8 +40,18 @@ class Parser:
                 p += 1
                 if self.peek(p) and self.peek(p).type == 'ID':
                     p += 1
-                else:
-                    break
+                else: break
+            
+            # Skip subscripts to see if an ASSIGN follows
+            while self.peek(p) and self.peek(p).type == 'LBRACKET':
+                p += 1
+                # We need a more robust way to skip the whole subscript [expr].
+                # Simple count of brackets for now.
+                depth = 1
+                while depth > 0 and self.peek(p):
+                    if self.peek(p).type == 'LBRACKET': depth += 1
+                    elif self.peek(p).type == 'RBRACKET': depth -= 1
+                    p += 1
             
             if self.peek(p) and self.peek(p).type == 'ASSIGN':
                 return self.parse_assignment()
@@ -126,8 +136,14 @@ class Parser:
         return FunctionDef(name, args, body)
 
     def parse_assignment(self):
-        # The target can be an IndexedVariable or a plain ID
+        # The target can be an IndexedVariable, a plain ID, or a Subscript
         target_node = self.parse_atom()
+        
+        self.consume('ASSIGN')
+        value = self.parse_expression()
+
+        if isinstance(target_node, Subscript):
+            return ItemAssignment(target_node, value)
         
         target_name = ""
         if isinstance(target_node, IndexedVariable):
@@ -137,8 +153,6 @@ class Parser:
         else:
             raise Exception(f"Invalid assignment target: {target_node}")
             
-        self.consume('ASSIGN')
-        value = self.parse_expression()
         return Assignment(target_name, value)
 
     def parse_expression(self):
@@ -253,8 +267,8 @@ class Parser:
         else:
             raise Exception(f"Unexpected token in expression: {token}")
 
-        # Handle Method Chaining & Modifiers
-        while self.peek() and (self.peek().type == 'LPAREN' or self.peek().type == 'DOT' or self.peek().type == 'MODIFIER'):
+        # Handle Method Chaining, Modifiers & Subscripts
+        while self.peek() and self.peek().type in ['LPAREN', 'DOT', 'MODIFIER', 'LBRACKET']:
             
             if self.peek().type == 'LPAREN':
                 self.consume('LPAREN')
@@ -281,6 +295,12 @@ class Parser:
                     node.modifiers.append(modifier)
                 else:
                     node = Call(Identifier(modifier), [node], [], [modifier])
+
+            elif self.peek().type == 'LBRACKET':
+                self.consume('LBRACKET')
+                index = self.parse_expression()
+                self.consume('RBRACKET')
+                node = Subscript(node, index)
                     
         return node
 

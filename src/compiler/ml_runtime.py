@@ -176,6 +176,13 @@ def _to_tensor(data):
             return torch.stack([_to_tensor(x) for x in data])
     return torch.as_tensor(data)
 
+def _to_sparse(data):
+    """Converts a dense tensor to a sparse representation (COO)."""
+    tensor = _to_tensor(data)
+    if not tensor.is_sparse:
+        return tensor.to_sparse()
+    return tensor
+
 def compile_model(model):
     """
     Fourier Native Compilation Hook.

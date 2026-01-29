@@ -80,3 +80,13 @@ class MemberAccess(Node):
 class IndexedVariable(Node):
     name: str
     indices: str # String of indices, e.g., "ij"
+
+@dataclass
+class Subscript(Node):
+    value: Node
+    index: Node
+
+@dataclass
+class ItemAssignment(Node):
+    target: Subscript
+    value: Node

@@ -191,6 +191,7 @@ class CodeGenerator:
         if func_name == "cpu": return f"_to_cpu({args[0]})"
         if func_name == "fast": return f"compile_model({args[0]})"
         if func_name == "with_grad": return f"_to_grad({args[0]})"
+        if func_name == "sparse": return f"_to_sparse({args[0]})"
         if func_name == "grad":
             # Native Autograd implementation: grad(f, x)
             # We map this to torch.autograd.grad(f(x), x)[0]
@@ -216,6 +217,16 @@ class CodeGenerator:
     def visit_MemberAccess(self, node: MemberAccess):
         obj = self.visit_expression(node.obj)
         return f"{obj}.{node.member}"
+
+    def visit_Subscript(self, node: Subscript):
+        val = self.visit_expression(node.value)
+        idx = self.visit_expression(node.index)
+        return f"{val}[{idx}]"
+
+    def visit_ItemAssignment(self, node: ItemAssignment):
+        target = self.visit_Subscript(node.target)
+        value = self.visit_expression(node.value)
+        return f"{target} = {value}"
 
     def visit_expression(self, node: Node):
         method_name = f'visit_{self.type_name(node)}'
