@@ -40,12 +40,7 @@ class Parser:
             return self.parse_while_stmt()
         elif token.type == 'FOR':
             return self.parse_for_stmt()
-        elif token.type == 'GRAD':
-            return self.parse_grad_expr()
-        elif token.type == 'ID' and token.value == 'einsum':
-            # Handle einsum as a special expression
-            return self.parse_expression()
-        elif token.type == 'ID' and self.peek(1) and self.peek(1).type == 'ASSIGN':
+        elif token.type in ['ID', 'GRAD', 'EINSUM'] and self.peek(1) and self.peek(1).type == 'ASSIGN':
             return self.parse_assignment()
         else:
             return self.parse_expression()
@@ -96,16 +91,6 @@ class Parser:
         self.consume('RBRACE')
         return ForStmt(var_name, collection, body)
 
-    def parse_grad_expr(self):
-        self.consume('GRAD')
-        self.consume('LPAREN')
-        func = self.parse_expression()
-        self.consume('COMMA')
-        var = self.parse_expression()
-        self.consume('RPAREN')
-        # We represent grad as a special Call for simplicity in this prototype
-        return Call(Identifier('grad'), [func, var], [], [])
-
     def parse_function_def(self):
         self.consume('FN')
         name = self.consume('ID').value
@@ -125,7 +110,7 @@ class Parser:
         return FunctionDef(name, args, body)
 
     def parse_assignment(self):
-        target = self.consume('ID').value
+        target = self.consume().value
         self.consume('ASSIGN')
         value = self.parse_expression()
         return Assignment(target, value)
@@ -196,8 +181,14 @@ class Parser:
             node = self.parse_expression()
             self.consume('RPAREN')
         elif token.type == 'ID':
-            name_token = self.consume('ID')
+            name_token = self.consume()
             node = Identifier(name_token.value)
+        elif token.type == 'GRAD':
+            name_token = self.consume('GRAD')
+            node = Identifier('grad')
+        elif token.type == 'EINSUM':
+            name_token = self.consume('EINSUM')
+            node = Identifier('einsum')
         elif token.type == 'MINUS':
             self.consume('MINUS')
             operand = self.parse_atom()
