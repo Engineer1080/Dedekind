@@ -74,7 +74,8 @@ class FourierSequential(nn.Module):
                 if any(isinstance(x, torch.Tensor) for x in converted):
                     return torch.stack(converted)
             except: pass
-        try: return torch.as_tensor(data, dtype=torch.float32)
+        # Use dynamic dtype inference
+        try: return torch.as_tensor(data)
         except: return data
 
     def forward(self, x):
@@ -159,13 +160,13 @@ def _to_tensor(data):
     if isinstance(data, (list, tuple)):
         # Handle empty lists
         if not data: return torch.tensor([], dtype=torch.float32)
-        # Try converting directly
+        # Try converting directly, let PyTorch infer the type (Float or Complex)
         try:
-            return torch.as_tensor(data, dtype=torch.float32)
+            return torch.as_tensor(data)
         except:
             # Fallback for complex nesting
             return torch.stack([_to_tensor(x) for x in data])
-    return torch.as_tensor(data, dtype=torch.float32)
+    return torch.as_tensor(data)
 
 def compile_model(model):
     """
