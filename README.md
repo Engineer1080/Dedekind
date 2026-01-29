@@ -228,6 +228,7 @@ Fourier aims to become the "Standard Language for Nature's Laws." To achieve thi
 
 - **Language Specification**: `Documentation/Fourier_Language_Specification.md` (v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8). PDF can be generated with `pandoc` (see `Documentation/README.md`).
 - **Research & Architecture**: `Documentation/Fourier_Research_and_Architecture.md` (includes §10 Sprachfeatures v0.6).
+- **Symbolic Simplification**: `Documentation/Symbolic_Simplification_Roadmap.md` — Implementierungs-Roadmap (Phasen, Optionen, Integration).
 - Legacy PDFs (v0.1) remain in `Documentation/`; the Markdown sources are the up-to-date references.
 
 ## 📄 License
