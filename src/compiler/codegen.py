@@ -41,7 +41,7 @@ class CodeGenerator:
                 reached_code = False
                 for line in ml_code.split('\n'):
                     if not reached_code:
-                        if line.startswith('class ') or line.startswith('def '):
+                        if line.startswith('class ') or line.startswith('def ') or (line.strip() and not line.startswith('import ') and '=' in line and not line.startswith(' ')):
                             reached_code = True
                         else:
                             continue
@@ -159,7 +159,9 @@ class CodeGenerator:
 
         left = self.visit_expression(node.left)
         right = self.visit_expression(node.right)
-        return f"({left} {node.op} {right})"
+        op = node.op
+        if op == '^': op = '**'
+        return f"({left} {op} {right})"
 
     def visit_Literal(self, node: Literal):
         if isinstance(node.value, str): return f'"{node.value}"'
@@ -173,8 +175,8 @@ class CodeGenerator:
         return node.name
 
     def visit_IndexedVariable(self, node: IndexedVariable):
-        # If used standalone, it's just the tensor name
-        return node.name
+        # If used standalone, it's the tensor name plus indices (e.g., F_gravity)
+        return f"{node.name}_{node.indices}"
 
     def visit_Call(self, node: Call):
         if isinstance(node.func_name, Identifier):

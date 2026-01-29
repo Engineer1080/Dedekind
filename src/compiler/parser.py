@@ -23,11 +23,29 @@ class Parser:
     def parse(self) -> Program:
         statements = []
         while self.pos < len(self.tokens):
+            if self.peek() and self.peek().type == 'NEWLINE':
+                self.consume()
+                continue
             statements.append(self.parse_statement())
         return Program(statements)
 
     def parse_statement(self):
         token = self.peek()
+        
+        # Check for assignment: ID (=) or ID (^/_) ID (=)
+        if token and token.type == 'ID':
+            p = 1
+            # Skip indices to see if an ASSIGN follows
+            while self.peek(p) and self.peek(p).type in ['CARET', 'UNDERSCORE']:
+                p += 1
+                if self.peek(p) and self.peek(p).type == 'ID':
+                    p += 1
+                else:
+                    break
+            
+            if self.peek(p) and self.peek(p).type == 'ASSIGN':
+                return self.parse_assignment()
+
         if token.type == 'FN':
             return self.parse_function_def()
         elif token.type == 'RETURN':
@@ -40,8 +58,6 @@ class Parser:
             return self.parse_while_stmt()
         elif token.type == 'FOR':
             return self.parse_for_stmt()
-        elif token.type in ['ID', 'GRAD', 'EINSUM'] and self.peek(1) and self.peek(1).type == 'ASSIGN':
-            return self.parse_assignment()
         else:
             return self.parse_expression()
 
@@ -110,10 +126,20 @@ class Parser:
         return FunctionDef(name, args, body)
 
     def parse_assignment(self):
-        target = self.consume().value
+        # The target can be an IndexedVariable or a plain ID
+        target_node = self.parse_atom()
+        
+        target_name = ""
+        if isinstance(target_node, IndexedVariable):
+            target_name = f"{target_node.name}_{target_node.indices}"
+        elif isinstance(target_node, Identifier):
+            target_name = target_node.name
+        else:
+            raise Exception(f"Invalid assignment target: {target_node}")
+            
         self.consume('ASSIGN')
         value = self.parse_expression()
-        return Assignment(target, value)
+        return Assignment(target_name, value)
 
     def parse_expression(self):
         # Lowest precedence: Comparisons
@@ -142,9 +168,23 @@ class Parser:
 
     def parse_factor_expr(self):
         # Multiplication/Division
-        left = self.parse_atom()
+        left = self.parse_power_expr()
         
         while self.peek() and self.peek().type in ['MUL', 'DIV']:
+            op = self.consume().value
+            right = self.parse_power_expr()
+            left = BinaryOp(left, op, right)
+            
+        return left
+
+    def parse_power_expr(self):
+        # Exponentiation (higher precedence than MUL)
+        left = self.parse_atom()
+        
+        while self.peek() and self.peek().type == 'CARET':
+            # Check if this is a Ricci index (followed by ID) or a Power (followed by anything else)
+            # Actually, to be safe, if parse_atom didn't consume it as an IndexedVariable,
+            # we should treat it as a power here if possible.
             op = self.consume().value
             right = self.parse_atom()
             left = BinaryOp(left, op, right)
@@ -185,13 +225,15 @@ class Parser:
             node = Identifier(name_token.value)
             
             # Ricci Calculus: A^ij or A_uv
+            # ONLY if followed by an ID. Otherwise it's a power operation.
             if self.peek() and self.peek().type in ['CARET', 'UNDERSCORE']:
-                indices = ""
-                while self.peek() and self.peek().type in ['CARET', 'UNDERSCORE']:
-                    self.consume() # Consume ^ or _
-                    idx_token = self.consume('ID')
-                    indices += idx_token.value
-                node = IndexedVariable(name_token.value, indices)
+                if self.peek(1) and self.peek(1).type == 'ID':
+                    indices = ""
+                    while self.peek() and self.peek().type in ['CARET', 'UNDERSCORE'] and self.peek(1) and self.peek(1).type == 'ID':
+                        self.consume() # Consume ^ or _
+                        idx_token = self.consume('ID')
+                        indices += idx_token.value
+                    node = IndexedVariable(name_token.value, indices)
         elif token.type == 'GRAD':
             name_token = self.consume('GRAD')
             node = Identifier('grad')

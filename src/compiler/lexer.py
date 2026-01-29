@@ -23,7 +23,7 @@ class Lexer:
         
         token_specs = [
             ('COMPLEX',  r'\d+(\.\d+)?i\b'),     # Complex number 5.0i
-            ('NUMBER',   r'\d+(\.\d+)?'),       # Integer or decimal number
+            ('NUMBER',   r'\d+(\.\d+)?([eE][+-]?\d+)?'), # scientific notation 지원
             ('STRING',   r'"[^"]*"'),           # String literal
             ('MODIFIER', r'\.(gpu|cpu|single)'), # Modifiers .gpu, .cpu, .single
             ('ARROW',    r'=>'),                # Arrow operator

@@ -1,6 +1,14 @@
 import torch
 import torch.nn as nn
 
+# --- Fundamental Physical Constants (CODATA 2018/2022) ---
+c   = 299792458.0      # Speed of light in m/s
+G   = 6.67430e-11      # Gravitational constant in m^3 kg^-1 s^-2
+h   = 6.62607015e-34   # Planck constant in J s
+k_B = 1.380649e-23     # Boltzmann constant in J/K
+k_e = 8.9875517923e9   # Coulomb constant in N m^2 / C^2
+# --------------------------------------------------------
+
 class FourierDense(nn.Module):
     def __init__(self, in_features, out_features, activation=None):
         super().__init__()

@@ -316,6 +316,10 @@ html,
   color: #c678dd;
 }
 
+.token.constant {
+  color: #e5c07b;
+}
+
 .token.function {
   color: #61afef;
 }
