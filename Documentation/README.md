@@ -6,7 +6,7 @@ This folder contains the **source** and **generated** documentation for the Four
 
 | File | Description |
 |------|-------------|
-| **Fourier_Language_Specification.md** | Language Specification (Markdown source, v0.2; §15 Physical Units v0.6, §15.7 Differentiable ODE v0.7) |
+| **Fourier_Language_Specification.md** | Language Specification (Markdown source, v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8) |
 | **Fourier_Research_and_Architecture.md** | Research foundation & architecture (Markdown source; §10 Sprachfeatures v0.6) |
 | **Fourier_Language_Specification_v0.1.pdf** | Legacy PDF (v0.1); for current spec use the Markdown or generate v0.2 PDF below |
 | **Fourier_Research_Papers_and_Architecture.pdf** | Legacy PDF; for current content use the Markdown or generate PDF below |
@@ -32,6 +32,10 @@ pandoc Fourier_Research_and_Architecture.md -o Fourier_Research_and_Architecture
 - **VS Code**: Use an extension such as "Markdown PDF" to export the open `.md` file to PDF.
 - **Online**: Paste the Markdown into a service that converts Markdown to PDF (e.g. markdown-to-pdf converters).
 - **Typora / other editors**: Open the `.md` file and export to PDF from the application.
+
+## What changed in v0.8 (documented here)
+
+- **Probabilistic Programming**: First-class distributions `Normal(mu, sigma)`, `Uniform(low, high)`, `Bernoulli(p)`; `sample(dist)` / `sample(dist, n)`; `log_prob(dist, value)`; Metropolis-Hastings `metropolis(log_prior, log_likelihood, data, init, steps)` for Bayesian inference. See **Fourier_Language_Specification.md** §15.8 and `examples/fourier/probabilistic.fourier`.
 
 ## What changed in v0.7 (documented here)
 

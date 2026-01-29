@@ -1,0 +1,57 @@
+fn main() {
+    print("--- Fourier: Probabilistic Programming ---")
+    
+    // 1. Verteilungen und Sampling
+    d = Normal(0, 1)
+    x = sample(d)
+    print("Sample from Normal(0,1):")
+    print(x)
+    
+    u = Uniform(0, 1)
+    y = sample(u)
+    print("Sample from Uniform(0,1):")
+    print(y)
+    
+    b = Bernoulli(0.7)
+    z = sample(b)
+    print("Sample from Bernoulli(0.7):")
+    print(z)
+    
+    // Mehrere Ziehungen
+    samples_10 = sample(d, 10)
+    print("10 samples from Normal(0,1):")
+    print(samples_10)
+    
+    // 2. Log-Probability (fuer Bayesian Inference)
+    lp = log_prob(d, x)
+    print("Log-prob of x under Normal(0,1):")
+    print(lp)
+    
+    // 3. Bayesian Inference: Daten ~ Normal(theta, 1), Prior theta ~ Normal(0, 1)
+    // Wir erzeugen kuenstliche Daten mit wahrem theta = 2.5
+    true_theta = 2.5
+    data_dist = Normal(true_theta, 1)
+    data = sample(data_dist, 20)
+    print("Generated 20 data points from Normal(2.5, 1)")
+    
+    prior = Normal(0, 1)
+    fn log_prior(theta) {
+        return log_prob(prior, theta)
+    }
+    fn log_likelihood(data, theta) {
+        return log_prob(Normal(theta, 1), data)
+    }
+    
+    init_theta = [0.0]
+    posterior_samples = metropolis(log_prior, log_likelihood, data, init_theta, 500, 0.5)
+    mean_theta = posterior_samples[400][0] + posterior_samples[401][0] + posterior_samples[402][0]
+    mean_theta = mean_theta / 3
+    print("Posterior samples (last 3):")
+    print(posterior_samples[497])
+    print(posterior_samples[498])
+    print(posterior_samples[499])
+    print("(Mean of posterior should be near 2.5)")
+    
+    print("\nProbabilistic Programming aktiv.")
+}
+main()

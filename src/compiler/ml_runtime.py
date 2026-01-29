@@ -520,6 +520,75 @@ def ode_solve(fun, y0, t, method="rk4"):
         out.append(y)
     return torch.stack(out, dim=0)
 
+# --- Standard Library: Probabilistic Programming ---
+# Verteilungen und Bayesian Inference (torch.distributions)
+
+def _to_loc_scale(mu, sigma):
+    """Scalar or tensor -> loc, scale for distributions."""
+    loc = _to_tensor(mu).float()
+    scale = _to_tensor(sigma).float()
+    return loc, scale
+
+def Normal(mu, sigma):
+    """Normal(mean, std). Returns a distribution; use sample(d) or d.sample()."""
+    loc, scale = _to_loc_scale(mu, sigma)
+    return torch.distributions.Normal(loc=loc, scale=scale.clamp(min=1e-6))
+
+def Uniform(low, high):
+    """Uniform(low, high). Returns a distribution."""
+    low = _to_tensor(low).float()
+    high = _to_tensor(high).float()
+    return torch.distributions.Uniform(low=low, high=high)
+
+def Bernoulli(p):
+    """Bernoulli(prob). Returns a distribution."""
+    p = _to_tensor(p).float().clamp(0.0, 1.0)
+    return torch.distributions.Bernoulli(probs=p)
+
+def sample(dist, sample_shape=None):
+    """Draw sample(s) from distribution. sample_shape: e.g. [] for one sample, [n] for n samples."""
+    if sample_shape is None:
+        sample_shape = []
+    if isinstance(sample_shape, (int, float)):
+        sample_shape = [int(sample_shape)]
+    s = dist.sample(sample_shape if sample_shape else ())
+    return _to_tensor(s) if not isinstance(s, torch.Tensor) else s
+
+def log_prob(dist, value):
+    """Log-probability of value under distribution (for Bayesian inference)."""
+    value = _to_tensor(value)
+    return dist.log_prob(value).sum()
+
+def _log_scalar(x):
+    """Convert log-probability result to float (for MCMC)."""
+    t = _to_tensor(x).detach()
+    return float(t.sum().item()) if t.numel() > 0 else float(t.item() if t.dim() == 0 else 0.0)
+
+def metropolis(log_prior_fn, log_likelihood_fn, data, init_theta, num_steps, step_size=0.1):
+    """
+    Simple Metropolis-Hastings MCMC. log_prior_fn(theta), log_likelihood_fn(data, theta) return log-probs (tensor or scalar).
+    init_theta: initial parameter (tensor or list); proposal is Normal(current, step_size).
+    Returns tensor of shape (num_steps, *theta_shape) with posterior samples.
+    """
+    theta = _to_tensor(init_theta).float().clone().detach()
+    samples = [theta.clone()]
+    data = _to_tensor(data)
+    for _ in range(num_steps - 1):
+        proposal = theta + step_size * torch.randn_like(theta)
+        try:
+            lp_cur = _log_scalar(log_prior_fn(theta))
+            lp_prop = _log_scalar(log_prior_fn(proposal))
+            ll_cur = _log_scalar(log_likelihood_fn(data, theta))
+            ll_prop = _log_scalar(log_likelihood_fn(data, proposal))
+        except Exception:
+            lp_cur = lp_prop = ll_cur = ll_prop = float("-inf")
+        log_accept = (lp_prop + ll_prop) - (lp_cur + ll_cur)
+        accept_prob = 1.0 if log_accept >= 0 else min(1.0, torch.exp(torch.tensor(log_accept)).item())
+        if torch.rand(1).item() < accept_prob:
+            theta = proposal.clone()
+        samples.append(theta.clone())
+    return torch.stack(samples, dim=0)
+
 # --- Standard Library: Sorting ---
 
 def sort(data, descending=False):

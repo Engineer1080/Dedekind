@@ -1,6 +1,6 @@
 # Fourier Programming Language
 
-![Version](https://img.shields.io/badge/Version-0.7.0-blue) ![Fourier Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-0.8.0-blue) ![Fourier Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Fourier** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -14,8 +14,12 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **Physical Units**: Literals with units (`10[m]`, `5[m/s]`, `1.0[kg]`); add/sub require same unit; multiply/divide combine units; `^` for powers (`r^2`); display simplified to J, N where applicable.
 - **4D Rotational Math**: Native Quaternion support (`i`, `j`, `k` suffixes) and `.rotate()` method; unary minus supported (`-1.0 + 0i`).
 - **Differentiable ODE Solvers**: `ode_solve(fun, y0, t)` (RK4/Euler); gradients via `grad()` for physics-informed ML; `linspace(start, stop, steps)` for time grids.
+- **Probabilistic Programming**: First-class distributions `Normal(mu, sigma)`, `Uniform(low, high)`, `Bernoulli(p)`; `sample(dist)`, `log_prob(dist, value)`; Bayesian inference via `metropolis(log_prior, log_likelihood, data, init, steps)`.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
-- **Modern IDE**: "Fourier Studio" – v0.7 with resizable terminal and file explorer.
+- **Modern IDE**: "Fourier Studio" – v0.8 with resizable terminal and file explorer.
+
+### What's New in v0.8
+- **Probabilistic Programming**: First-class distributions `Normal(mu, sigma)`, `Uniform(low, high)`, `Bernoulli(p)`; `sample(dist)` / `sample(dist, n)`; `log_prob(dist, value)`; Metropolis-Hastings `metropolis(log_prior, log_likelihood, data, init, steps)` for Bayesian inference. Example: `examples/fourier/probabilistic.fourier`.
 
 ### What's New in v0.7
 - **Differentiable ODE Solvers**: `ode_solve(fun, y0, t)` solves dy/dt = fun(t,y) with differentiable RK4 (default) or Euler; gradients flow through `y0` and parameters in `fun`. Use with `grad()` for physics-informed ML.
@@ -143,6 +147,7 @@ Example programs are in `examples/fourier/`, including:
 - `universal_constants.fourier` – physical constants and units (E = mc², gravitation, Coulomb)  
 - `signal_physics.fourier` – complex numbers (Quaternions) and FFT  
 - `differentiable_ode.fourier` – differentiable ODE solver with `ode_solve` and `grad`  
+- `probabilistic.fourier` – distributions, sampling, and Bayesian inference with `metropolis`  
 - `conditional_logic.fourier`, `basic_loops.fourier` – control flow  
 - `mnist_classifier.fourier` – neural network with `Sequential`/`Dense`  
 
@@ -205,18 +210,23 @@ From the `src/` directory: `python -m compiler.compiler ../examples/fourier/hell
 *   [x] **ode_solve**: Differenzierbarer ODE-Löser dy/dt = fun(t,y) mit RK4 (default) und Euler; Gradients durch y0 und Parameter in fun.
 *   [x] **linspace**: Zeitgitter für ODE-Integration; Integration mit `grad()` für Physics-Informed ML.
 
+### Phase 14: Probabilistic Programming (v0.8) ✅
+*   [x] **Distributions**: `Normal(mu, sigma)`, `Uniform(low, high)`, `Bernoulli(p)` (torch.distributions).
+*   [x] **sample** / **log_prob**: Ziehen und Log-Dichte für Bayesian Inference.
+*   [x] **metropolis**: Metropolis-Hastings MCMC für Posterior-Sampling (log_prior, log_likelihood, data, init, steps).
+
 ## 🔭 Beyond v1.0: Future Vision
 
 Fourier aims to become the "Standard Language for Nature's Laws." To achieve this, we are researching the native implementation of the following concepts:
 
 1. **Differentiable ODE Solvers**: Implemented in v0.7: `ode_solve(fun, y0, t, method="rk4")` solves dy/dt = fun(t,y) with differentiable RK4 (or Euler); gradients flow through y0 and parameters in `fun`. Use with `grad()` for physics-informed ML. See `examples/fourier/differentiable_ode.fourier`.
 2. **Physical Units**: Implemented at runtime: `10[m] / 2[s]` → `5[m/s]`, add/sub require same unit; future: compile-time unit checking.
-3. **Probabilistic Programming**: Native support for random variables and Bayesian inference, allowing variables to represent probability distributions rather than discrete values.
+3. **Probabilistic Programming**: Implemented in v0.8: `Normal`, `Uniform`, `Bernoulli`; `sample(dist)`, `log_prob(dist, value)`; `metropolis(log_prior, log_likelihood, data, init, steps)` for Bayesian inference. See `examples/fourier/probabilistic.fourier`. Future: more distributions, NUTS/VI, conditioning syntax.
 4. **Symbolic Simplification**: A compile-time algebraic engine that simplifies complex mathematical expressions before code generation to maximize efficiency.
 
 ## 📚 Documentation
 
-- **Language Specification**: `Documentation/Fourier_Language_Specification.md` (v0.2; §15 Physical Units v0.6, §15.7 Differentiable ODE v0.7). PDF can be generated with `pandoc` (see `Documentation/README.md`).
+- **Language Specification**: `Documentation/Fourier_Language_Specification.md` (v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8). PDF can be generated with `pandoc` (see `Documentation/README.md`).
 - **Research & Architecture**: `Documentation/Fourier_Research_and_Architecture.md` (includes §10 Sprachfeatures v0.6).
 - Legacy PDFs (v0.1) remain in `Documentation/`; the Markdown sources are the up-to-date references.
 

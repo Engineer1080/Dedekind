@@ -2,7 +2,7 @@
 
 **Language Specification v0.2**  
 Mario Michael Heinrich · github.com/Engineer1080  
-Draft: January 2026 · Updated for v0.6 (Physical Units) and v0.7 (Differentiable ODE)
+Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (Differentiable ODE), v0.8 (Probabilistic Programming)
 
 ---
 
@@ -189,6 +189,17 @@ Fourier provides a **differentiable ODE solver** for physics-informed ML and par
 - **Methods**: `"rk4"` (default, 4th-order Runge–Kutta) or `"euler"`.
 
 Example: exponential decay dy/dt = -0.1*y; then `grad(final_state, y0)` gives d y(T)/d y0. See `examples/fourier/differentiable_ode.fourier`.
+
+### 15.8 Probabilistic Programming (v0.8)
+
+Fourier provides **first-class distributions** and **Bayesian inference** via `torch.distributions`:
+
+- **Distributions**: `Normal(mu, sigma)`, `Uniform(low, high)`, `Bernoulli(p)` – return distribution objects.
+- **sample(dist)** / **sample(dist, n)**: Draw one or `n` samples from a distribution.
+- **log_prob(dist, value)**: Log-probability of `value` under `dist` (for inference).
+- **metropolis(log_prior_fn, log_likelihood_fn, data, init_theta, num_steps, step_size)**: Metropolis-Hastings MCMC. `log_prior_fn(theta)` and `log_likelihood_fn(data, theta)` return log-probs (tensor or scalar). Returns posterior samples of shape `(num_steps, *theta_shape)`.
+
+Example: infer mean `theta` of Normal data with prior Normal(0,1); see `examples/fourier/probabilistic.fourier`.
 
 ---
 
