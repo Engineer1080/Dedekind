@@ -8,15 +8,12 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 
 ---
 
-## 🚀 Features
-
-- **Parallel by Default**: Built-in support for vector and matrix operations.
-- **Hardware Acceleration**: Use `.gpu()` or `.cpu()` to control execution device via PyTorch.
-- **ML Framework**: Native `Dense` and `Sequential` primitives for Neural Networks.
-- **Differentiable Programming**: First-class `grad()` keyword and `.with_grad()` support.
-- **Tensor Inspection**: Direct property access like `.shape`.
-- **Modern IDE**: "Fourier Studio" - v0.2 with resizable terminal and file explorer.
-- **Fast Development**: Transpiles directly to highly optimized PyTorch code.
+- **Ricci Calculus**: Native index notation (`A^ij * B_jk`) for Einstein summation.
+- **Sparse Tensors**: Efficient `.sparse()` support for FEM/CFD simulations.
+- **Fundamental Constants**: Native access to `c`, `G`, `h`, `k_B`, and `k_e`.
+- **4D Rotational Math**: Native Quaternion support (`i`, `j`, `k` suffixes) and `.rotate()` method.
+- **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
+- **Modern IDE**: "Fourier Studio" - v0.5 with resizable terminal and file explorer.
 
 ## 🧠 Machine Learning Example
 
@@ -156,10 +153,25 @@ npm run electron:dev
 *   [x] **Einsum**: High-level elective tensor contraction syntax.
 *   [x] **Complex/Quaternion**: Built-in support for rotational math.
 
-### Phase 8: AOT Compilation & LLVM Backend (v0.4) 🚧
-*   [ ] **Static Binary**: Standalone `.exe` generation without Python.
-*   [ ] **MLIR Pipeline**: Fourier -> MLIR -> LLVM -> Binary.
-*   [ ] **Linear Types**: Advanced memory management for zero-overhead.
+### Phase 8: AOT Compilation & LLVM Backend ✅
+*   [x] **Static Binary**: Standalone `.exe` generation without Python.
+*   [x] **MLIR Pipeline**: Fourier -> MLIR -> LLVM -> Binary.
+*   [x] **Verification**: Native binary execution on Windows.
+
+### Phase 9: Ricci Calculus & Universal Constants ✅
+*   [x] **Index Notation**: Support for `^` and `_` suffixes.
+*   [x] **Auto-Einsum**: Lowering Ricci expressions to `torch.einsum`.
+*   [x] **Physics Constants**: Native high-precision constants (`c`, `G`, etc.).
+
+### Phase 10: Sparse Tensors & CFD ✅
+*   [x] **Sparse API**: `.sparse()` modifier for COO/CSR formats.
+*   [x] **Item Assignment**: `T[i][j] = val` for grid manipulation.
+*   [x] **CFD Simulation**: Heat diffusion on 10,000 node grids.
+
+### Phase 11: Quaternion & Rotational Math ✅
+*   [x] **Hamilton Notation**: Support for `i`, `j`, `k` quaternion components.
+*   [x] **Hamilton Product**: Native 4D arithmetic.
+*   [x] **Robotics Support**: Native `.rotate(vector)` method.
 
 ## 🔭 Beyond v1.0: Future Vision
 
