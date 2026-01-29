@@ -18,10 +18,15 @@ function App() {
   const editorRef = useRef(null);
   const highlightRef = useRef(null);
   const lineNumbersRef = useRef(null);
+  const editorWrapperRef = useRef(null);
+  const isResizingRef = useRef(false);
+  const isResizingSidebarRef = useRef(false);
 
   const [expandedFolders, setExpandedFolders] = useState({});
+  const [sidebarWidth, setSidebarWidth] = useState(260);
   const [consoleHeight, setConsoleHeight] = useState(200);
   const [isResizing, setIsResizing] = useState(false);
+  const [isResizingSidebar, setIsResizingSidebar] = useState(false);
   const [isBuilding, setIsBuilding] = useState(false);
 
   useEffect(() => {
@@ -159,13 +164,45 @@ function App() {
   };
 
   const handleScroll = (e) => {
-    if (highlightRef.current) {
-      highlightRef.current.scrollTop = e.target.scrollTop;
-      highlightRef.current.scrollLeft = e.target.scrollLeft;
+    /* Syntax-Highlight liegt im <pre>, nicht im <code> – das <pre> ist das scrollbare Element */
+    const highlightPre = highlightRef.current?.parentElement;
+    if (highlightPre) {
+      highlightPre.scrollTop = e.target.scrollTop;
+      highlightPre.scrollLeft = e.target.scrollLeft;
     }
     if (lineNumbersRef.current) {
       lineNumbersRef.current.scrollTop = e.target.scrollTop;
     }
+  };
+
+  /* Mausrad über Zeilennummern: Scrollen an die Textarea weiterleiten */
+  const handleLineNumbersWheel = (e) => {
+    if (editorRef.current) {
+      editorRef.current.scrollTop += e.deltaY;
+      editorRef.current.scrollLeft += e.deltaX;
+      handleScroll({ target: editorRef.current });
+    }
+  };
+
+  /* Mausrad über dem Code-Bereich: Scrollen erzwingen (falls Textarea das Rad nicht verarbeitet) */
+  const handleEditorWheel = (e) => {
+    if (!editorRef.current) return;
+    const el = editorRef.current;
+    const { scrollTop, scrollLeft, scrollHeight, scrollWidth, clientHeight, clientWidth } = el;
+    const maxScrollTop = scrollHeight - clientHeight;
+    const maxScrollLeft = scrollWidth - clientWidth;
+    let didScroll = false;
+    if (maxScrollTop > 0 && e.deltaY !== 0) {
+      el.scrollTop = Math.max(0, Math.min(maxScrollTop, scrollTop + e.deltaY));
+      handleScroll({ target: el });
+      didScroll = true;
+    }
+    if (maxScrollLeft > 0 && e.deltaX !== 0) {
+      el.scrollLeft = Math.max(0, Math.min(maxScrollLeft, scrollLeft + e.deltaX));
+      handleScroll({ target: el });
+      didScroll = true;
+    }
+    if (didScroll || maxScrollTop > 0 || maxScrollLeft > 0) e.preventDefault();
   };
 
   const updateContent = (content) => {
@@ -179,10 +216,45 @@ function App() {
     }
   }, [activeTabId, fileContents]);
 
-  // Terminal Resizing Logic
+  /* Mausrad-Scroll im Editor: Listener mit passive:false (damit preventDefault wirkt) */
+  useEffect(() => {
+    const wrapper = editorWrapperRef.current;
+    if (!wrapper) return;
+    const handleWheel = (e) => {
+      const el = editorRef.current;
+      if (!el) return;
+      const { scrollTop, scrollLeft, scrollHeight, scrollWidth, clientHeight, clientWidth } = el;
+      const maxScrollTop = scrollHeight - clientHeight;
+      const maxScrollLeft = scrollWidth - clientWidth;
+      if (maxScrollTop > 0 && e.deltaY !== 0) {
+        el.scrollTop = Math.max(0, Math.min(maxScrollTop, scrollTop + e.deltaY));
+        const highlightPre = highlightRef.current?.parentElement;
+        if (highlightPre) {
+          highlightPre.scrollTop = el.scrollTop;
+          highlightPre.scrollLeft = el.scrollLeft;
+        }
+        if (lineNumbersRef.current) lineNumbersRef.current.scrollTop = el.scrollTop;
+        e.preventDefault();
+      }
+      if (maxScrollLeft > 0 && e.deltaX !== 0) {
+        el.scrollLeft = Math.max(0, Math.min(maxScrollLeft, scrollLeft + e.deltaX));
+        const highlightPre = highlightRef.current?.parentElement;
+        if (highlightPre) highlightPre.scrollLeft = el.scrollLeft;
+        e.preventDefault();
+      }
+    };
+    wrapper.addEventListener('wheel', handleWheel, { passive: false });
+    return () => wrapper.removeEventListener('wheel', handleWheel);
+  }, [activeTabId]);
+
+  // Terminal-Resizer (Editor / Output)
+  useEffect(() => {
+    isResizingRef.current = isResizing;
+  }, [isResizing]);
+
   useEffect(() => {
     const handleMouseMove = (e) => {
-      if (!isResizing) return;
+      if (!isResizingRef.current) return;
       const newHeight = window.innerHeight - e.clientY;
       if (newHeight > 50 && newHeight < window.innerHeight * 0.8) {
         setConsoleHeight(newHeight);
@@ -190,14 +262,17 @@ function App() {
     };
 
     const handleMouseUp = () => {
+      isResizingRef.current = false;
       setIsResizing(false);
-      document.body.style.cursor = 'default';
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
     };
 
     if (isResizing) {
+      document.body.style.cursor = 'row-resize';
+      document.body.style.userSelect = 'none';
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = 'row-resize';
     }
 
     return () => {
@@ -206,11 +281,43 @@ function App() {
     };
   }, [isResizing]);
 
+  // Sidebar-Resizer (Projektstruktur / Editor)
+  useEffect(() => {
+    isResizingSidebarRef.current = isResizingSidebar;
+  }, [isResizingSidebar]);
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isResizingSidebarRef.current) return;
+      const w = Math.max(150, Math.min(500, e.clientX));
+      setSidebarWidth(w);
+    };
+
+    const handleMouseUp = () => {
+      isResizingSidebarRef.current = false;
+      setIsResizingSidebar(false);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+
+    if (isResizingSidebar) {
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizingSidebar]);
+
   const activeContent = activeTabId ? fileContents[activeTabId] : '';
 
   return (
     <div className="ide-container">
-      <div className="sidebar">
+      <div className="sidebar" style={{ width: sidebarWidth }}>
         <div className="sidebar-header">FOURIER</div>
         <div className="explorer-section">
           <div className="explorer-title">Project Explorer</div>
@@ -219,6 +326,18 @@ function App() {
           ))}
         </div>
       </div>
+
+      <div
+        className={`resizer-vertical ${isResizingSidebar ? 'active' : ''}`}
+        onMouseDown={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          isResizingSidebarRef.current = true;
+          setIsResizingSidebar(true);
+        }}
+        role="separator"
+        aria-label="Projektstruktur-Breite anpassen"
+      />
 
       <div className="main-area">
         <div className="tabs-bar">
@@ -256,6 +375,7 @@ function App() {
                 ref={lineNumbersRef}
                 className="line-numbers"
                 aria-hidden="true"
+                onWheel={handleLineNumbersWheel}
               >
                 {(activeContent.split('\n').length || 1) >= 1
                   ? Array.from({ length: Math.max(1, activeContent.split('\n').length) }, (_, i) => i + 1).map((n) => (
@@ -263,20 +383,22 @@ function App() {
                     ))
                   : <div className="line-number">1</div>}
               </div>
-              <div className="editor-wrapper">
-                <textarea
-                  ref={editorRef}
-                  className="code-textarea"
-                  value={activeContent}
-                  onChange={(e) => updateContent(e.target.value)}
-                  onScroll={handleScroll}
-                  spellCheck="false"
-                />
-                <pre className="code-highlight">
-                  <code ref={highlightRef} className="language-fourier">
-                    {activeContent}
-                  </code>
-                </pre>
+              <div className="editor-wrapper" ref={editorWrapperRef} onWheel={handleEditorWheel}>
+                <div className="editor-content-area">
+                  <pre className="code-highlight">
+                    <code ref={highlightRef} className="language-fourier">
+                      {activeContent}
+                    </code>
+                  </pre>
+                  <textarea
+                    ref={editorRef}
+                    className="code-textarea"
+                    value={activeContent}
+                    onChange={(e) => updateContent(e.target.value)}
+                    onScroll={handleScroll}
+                    spellCheck="false"
+                  />
+                </div>
               </div>
             </div>
           ) : (
@@ -288,7 +410,14 @@ function App() {
 
         <div
           className={`resizer ${isResizing ? 'active' : ''}`}
-          onMouseDown={() => setIsResizing(true)}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            isResizingRef.current = true;
+            setIsResizing(true);
+          }}
+          role="separator"
+          aria-label="Output-Bereich in der Höhe anpassen"
         ></div>
 
         <div className="console-container" style={{ height: `${consoleHeight}px` }}>
