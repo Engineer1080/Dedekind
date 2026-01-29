@@ -1,6 +1,6 @@
 # Fourier Programming Language
 
-![Version](https://img.shields.io/badge/Version-0.9.0-blue) ![Fourier Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-0.9.1-blue) ![Fourier Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Fourier** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -15,12 +15,18 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **4D Rotational Math**: Native Quaternion support (`i`, `j`, `k` suffixes) and `.rotate()` method; unary minus supported (`-1.0 + 0i`).
 - **Differentiable ODE Solvers**: `ode_solve(fun, y0, t)` (RK4/Euler); gradients via `grad()` for physics-informed ML; `linspace(start, stop, steps)` for time grids.
 - **Differentiable PDE Solvers**: `pde_heat_1d(u0, x, t, k)` and `pde_heat_2d(u0, x, y, t, k)` for the heat equation \(u_t = k \cdot \Delta u\); finite differences + `ode_solve`; gradients through `u0` and `k`.
-- **Probabilistic Programming**: First-class distributions `Normal(mu, sigma)`, `Uniform(low, high)`, `Bernoulli(p)`; `sample(dist)`, `log_prob(dist, value)`; Bayesian inference via `metropolis(log_prior, log_likelihood, data, init, steps)`.
+- **Probabilistic Programming**: First-class distributions `Normal(mu, sigma)`, `Uniform(low, high)`, `Bernoulli(p)`, `Exponential(rate)`, `Gamma(concentration, rate)`, `Beta(alpha, beta)`, `Poisson(rate)`; `sample(dist)`, `log_prob(dist, value)`; Bayesian inference via `metropolis(log_prior, log_likelihood, data, init, steps)`.
+- **Numerical Integration**: `integrate(f, a, b, n)` — trapezoidal quadrature; differentiable when `f` accepts a tensor; `sin(x)`, `cos(x)` for expressions.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
-- **Modern IDE**: "Fourier Studio" – v0.8 with resizable terminal and file explorer.
+- **Modern IDE**: "Fourier Studio" – v0.9.1 with resizable terminal and file explorer.
+
+### What's New in v0.9.1
+- **Version 0.9.1**: Run-Examples-Skript `run_examples.py` — alle `.fourier`-Beispiele automatisch kompilieren und ausführen (Optionen: `-q`, `-v`, `--compile`, `--filter`). Dokumentation ergänzt; Linter-Hinweise in `ml_runtime.py` behoben.
 
 ### What's New in v0.9
-- **Release**: Differentiable PDE Solvers (`pde_heat_1d`, `pde_heat_2d`) als stabile Erweiterung; Version 0.9.0.
+- **Release**: Differentiable PDE Solvers (`pde_heat_1d`, `pde_heat_2d`) als stabile Erweiterung.
+- **Extended Distributions**: `Exponential(rate)`, `Gamma(concentration, rate)`, `Beta(alpha, beta)`, `Poisson(rate)`; gleiche API wie `Normal`/`Uniform` (`sample`, `log_prob`). Example: `examples/fourier/distributions_extended.fourier`.
+- **Numerical Integration**: `integrate(f, a, b, n)` — Trapezregel; differenzierbar wenn `f` Tensor akzeptiert; `sin(x)`, `cos(x)` für Ausdrücke. Example: `examples/fourier/integration.fourier`.
 
 ### What's New in v0.8
 - **Probabilistic Programming**: First-class distributions `Normal(mu, sigma)`, `Uniform(low, high)`, `Bernoulli(p)`; `sample(dist)` / `sample(dist, n)`; `log_prob(dist, value)`; Metropolis-Hastings `metropolis(log_prior, log_likelihood, data, init, steps)` for Bayesian inference. Example: `examples/fourier/probabilistic.fourier`.
@@ -153,11 +159,15 @@ Example programs are in `examples/fourier/`, including:
 - `signal_physics.fourier` – complex numbers (Quaternions) and FFT  
 - `differentiable_ode.fourier` – differentiable ODE solver with `ode_solve` and `grad`  
 - `pde_heat.fourier` – differentiable PDE solver (1D/2D heat equation) with `pde_heat_1d` / `pde_heat_2d`  
+- `distributions_extended.fourier` – Exponential, Gamma, Beta, Poisson; `sample`, `log_prob`  
+- `integration.fourier` – numerical integration `integrate(f, a, b)` and `sin`/`cos`  
 - `probabilistic.fourier` – distributions, sampling, and Bayesian inference with `metropolis`  
 - `conditional_logic.fourier`, `basic_loops.fourier` – control flow  
 - `mnist_classifier.fourier` – neural network with `Sequential`/`Dense`  
 
 From the `src/` directory: `python -m compiler.compiler ../examples/fourier/hello.fourier`
+
+**Alle Beispiele auf einmal testen** (aus Projektroot): `python run_examples.py` — kompiliert und führt alle `.fourier`-Dateien in `examples/fourier` aus; Optionen: `-q` (nur Zusammenfassung), `-v` (vollständige Ausgabe), `--compile` (nur kompilieren), `--filter name` (nur Dateien mit „name“ im Dateinamen).
 
 ## 🗺️ Roadmap
 
@@ -237,9 +247,10 @@ Fourier aims to become the "Standard Language for Nature's Laws." To achieve thi
 
 ## 📚 Documentation
 
-- **Language Specification**: `Documentation/Fourier_Language_Specification.md` (v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8). PDF can be generated with `pandoc` (see `Documentation/README.md`).
+- **Language Specification**: `Documentation/Fourier_Language_Specification.md` (v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9; Stand v0.9.1). PDF can be generated with `pandoc` (see `Documentation/README.md`).
 - **Research & Architecture**: `Documentation/Fourier_Research_and_Architecture.md` (includes §10 Sprachfeatures v0.6).
 - **Symbolic Simplification**: `Documentation/Symbolic_Simplification_Roadmap.md` — Implementierungs-Roadmap (Phasen, Optionen, Integration).
+- **Features Roadmap**: `Documentation/Features_Implementation_Roadmap.md` — naturwissenschaftliche Features (Phase 1 abgeschlossen: Verteilungen, Integration).
 - Legacy PDFs (v0.1) remain in `Documentation/`; the Markdown sources are the up-to-date references.
 
 ## 📄 License

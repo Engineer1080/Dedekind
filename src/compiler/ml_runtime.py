@@ -1,5 +1,5 @@
-import torch
-import torch.nn as nn
+import torch  # type: ignore[import-untyped]
+import torch.nn as nn  # type: ignore[import-untyped]
 
 class Quantity:
     """Physikalische Größe mit Einheit (z. B. 10[m], 5[m/s]). Rechenregeln: gleiche Einheit für +/-, Einheiten multiplizieren/dividieren."""
@@ -607,6 +607,28 @@ def Bernoulli(p):
     p = _to_tensor(p).float().clamp(0.0, 1.0)
     return torch.distributions.Bernoulli(probs=p)
 
+def Exponential(rate):
+    """Exponential(rate). Returns a distribution; use sample(d) or sample(d, n)."""
+    rate = _to_tensor(rate).float().clamp(min=1e-6)
+    return torch.distributions.Exponential(rate=rate)
+
+def Gamma(concentration, rate):
+    """Gamma(concentration, rate). Returns a distribution."""
+    concentration = _to_tensor(concentration).float().clamp(min=1e-6)
+    rate = _to_tensor(rate).float().clamp(min=1e-6)
+    return torch.distributions.Gamma(concentration=concentration, rate=rate)
+
+def Beta(alpha, beta):
+    """Beta(alpha, beta). Returns a distribution."""
+    alpha = _to_tensor(alpha).float().clamp(min=1e-6)
+    beta = _to_tensor(beta).float().clamp(min=1e-6)
+    return torch.distributions.Beta(concentration1=alpha, concentration0=beta)
+
+def Poisson(rate):
+    """Poisson(rate). Returns a distribution; samples are integer-valued."""
+    rate = _to_tensor(rate).float().clamp(min=1e-6)
+    return torch.distributions.Poisson(rate=rate)
+
 def sample(dist, sample_shape=None):
     """Draw sample(s) from distribution. sample_shape: e.g. [] for one sample, [n] for n samples."""
     if sample_shape is None:
@@ -651,6 +673,36 @@ def metropolis(log_prior_fn, log_likelihood_fn, data, init_theta, num_steps, ste
         samples.append(theta.clone())
     return torch.stack(samples, dim=0)
 
+# --- Standard Library: Math (for integration and expressions) ---
+def sin(x):
+    """sin(x); x Tensor or scalar."""
+    return torch.sin(_to_tensor(x).float())
+def cos(x):
+    """cos(x); x Tensor or scalar."""
+    return torch.cos(_to_tensor(x).float())
+
+# --- Standard Library: Numerical Integration ---
+# Differenzierbar, wenn f Tensor-Argument akzeptiert und differenzierbar ist.
+
+def integrate(f, a, b, n=100):
+    """
+    Numerische Integration: int_a^b f(x) dx mit Trapezregel.
+    f: Callable mit einem Argument (Tensor oder Skalar); soll Tensor zurückgeben für Gradienten.
+    a, b: Integrationsgrenzen (Skalare); n: Anzahl Stützstellen (default 100).
+    Rückgabe: Skalar-Tensor; differenzierbar bzgl. in f verwendeter Parameter.
+    """
+    a_val = float(_to_tensor(a).float().squeeze().item())
+    b_val = float(_to_tensor(b).float().squeeze().item())
+    n_int = max(2, int(n))
+    x = torch.linspace(a_val, b_val, n_int)
+    y = f(x)
+    y = _to_tensor(y).float().flatten()
+    if y.numel() != n_int:
+        raise ValueError("integrate: f(x) muss gleiche Länge wie x haben.")
+    dx = (b_val - a_val) / (n_int - 1.0)
+    result = (dx / 2.0) * (y[0] + 2.0 * y[1:-1].sum() + y[-1])
+    return result.squeeze()
+
 # --- Standard Library: Sorting ---
 
 def sort(data, descending=False):
@@ -671,9 +723,9 @@ def _plot_ndarray(x, y=None, title=None, xlabel=None, ylabel=None):
     try:
         import base64
         import io
-        import matplotlib
+        import matplotlib  # type: ignore[import-untyped]
         matplotlib.use('Agg')
-        import matplotlib.pyplot as plt
+        import matplotlib.pyplot as plt  # type: ignore[import-untyped]
     except ImportError:
         print("plot(): matplotlib nicht installiert. pip install matplotlib")
         return

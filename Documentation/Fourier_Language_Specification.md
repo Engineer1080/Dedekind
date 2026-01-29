@@ -2,7 +2,7 @@
 
 **Language Specification v0.2**  
 Mario Michael Heinrich · github.com/Engineer1080  
-Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (Differentiable ODE), v0.8 (Probabilistic Programming, Differentiable PDE)
+Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples)
 
 ---
 
@@ -22,7 +22,7 @@ Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (Differentiable O
 12. [Implementation Roadmap](#12-implementation-roadmap)
 13. [Technical Foundation](#13-technical-foundation)
 14. [Conclusion](#14-conclusion)
-15. [**Physical Units and Universal Constants (v0.6)**](#15-physical-units-and-universal-constants-v06) (incl. §15.7 ODE, §15.8 Probabilistic, §15.9 PDE v0.8)
+15. [**Physical Units and Universal Constants (v0.6)**](#15-physical-units-and-universal-constants-v06) (incl. §15.7 ODE, §15.8 Probabilistic, §15.9 PDE, §15.10 Integration & Math v0.9)
 
 ---
 
@@ -194,12 +194,12 @@ Example: exponential decay dy/dt = -0.1*y; then `grad(final_state, y0)` gives d 
 
 Fourier provides **first-class distributions** and **Bayesian inference** via `torch.distributions`:
 
-- **Distributions**: `Normal(mu, sigma)`, `Uniform(low, high)`, `Bernoulli(p)` – return distribution objects.
+- **Distributions**: `Normal(mu, sigma)`, `Uniform(low, high)`, `Bernoulli(p)`, `Exponential(rate)`, `Gamma(concentration, rate)`, `Beta(alpha, beta)`, `Poisson(rate)` – return distribution objects.
 - **sample(dist)** / **sample(dist, n)**: Draw one or `n` samples from a distribution.
 - **log_prob(dist, value)**: Log-probability of `value` under `dist` (for inference).
 - **metropolis(log_prior_fn, log_likelihood_fn, data, init_theta, num_steps, step_size)**: Metropolis-Hastings MCMC. `log_prior_fn(theta)` and `log_likelihood_fn(data, theta)` return log-probs (tensor or scalar). Returns posterior samples of shape `(num_steps, *theta_shape)`.
 
-Example: infer mean `theta` of Normal data with prior Normal(0,1); see `examples/fourier/probabilistic.fourier`.
+Example: infer mean `theta` of Normal data with prior Normal(0,1); see `examples/fourier/probabilistic.fourier`. Extended distributions (Exponential, Gamma, Beta, Poisson): see `examples/fourier/distributions_extended.fourier`.
 
 ### 15.9 Differentiable PDE Solvers (v0.8)
 
@@ -209,6 +209,15 @@ Fourier provides **differentiable PDE solvers** for the heat equation \(u_t = k\
 - **`pde_heat_2d(u0, x, y, t, k, bc="dirichlet")`**: 2D heat equation \(u_t = k\,(u_{xx}+u_{yy})\). `u0` is the initial condition (2D tensor, shape `(nx, ny)`); `x`, `y` are 1D spatial grids; `t` is the time grid; `k` is the diffusivity. Returns a tensor of shape `(len(t), nx, ny)`.
 
 Example: 1D heat with a spike initial condition; see `examples/fourier/pde_heat.fourier`.
+
+### 15.10 Numerical Integration and Math (v0.9)
+
+Fourier provides **numerical integration** and basic **math functions** for scientific expressions:
+
+- **`integrate(f, a, b, n=100)`**: Numerically integrates \(f(x)\) from `a` to `b` using the trapezoidal rule with `n` points. `f` must accept a 1D tensor (the grid) and return a tensor of the same length; the integral is differentiable with respect to parameters in `f` when using autograd.
+- **`sin(x)`**, **`cos(x)`**: Element-wise sine and cosine; `x` may be a tensor or scalar (wrapped via `_to_tensor`).
+
+Example: \(\int_0^1 x^2\,dx = 1/3\), \(\int_0^\pi \sin(x)\,dx = 2\); see `examples/fourier/integration.fourier`.
 
 ---
 
