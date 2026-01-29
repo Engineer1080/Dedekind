@@ -37,6 +37,22 @@ fn main() {
 main()
 ```
 
+```fourier
+fn main() {
+    model = Sequential([
+        Dense(64, activation="relu"),
+        Dense(10, activation="softmax")
+    ])
+    
+    // Daten werden automatisch als Tensor verarbeitet
+    input = [[1.0, 2.0, 3.0]].gpu()
+    
+    print("Prediction:")
+    print(model.forward(input))
+}
+main()
+```
+
 ## 🏗️ Architecture
 
 The project consists of two main components:

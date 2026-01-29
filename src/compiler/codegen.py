@@ -12,7 +12,27 @@ class CodeGenerator:
         self.code.append("import sys")
         self.code.append("")
         
-        # Inject ML Runtime Library
+        self.add_line("def _to_tensor(data):")
+        self.add_line("    if isinstance(data, torch.Tensor): return data")
+        self.add_line("    if isinstance(data, (list, tuple)):")
+        self.add_line("        try:")
+        self.add_line("            converted = [_to_tensor(x) for x in data]")
+        self.add_line("            if any(isinstance(x, torch.Tensor) for x in converted):")
+        self.add_line("                return torch.stack(converted)")
+        self.add_line("        except: pass")
+        self.add_line("    try: return torch.as_tensor(data, dtype=torch.float32)")
+        self.add_line("    except: return data")
+        self.add_line("")
+        self.add_line("def _to_gpu(data):")
+        self.add_line("    data = _to_tensor(data)")
+        self.add_line("    if torch.cuda.is_available(): return data.to('cuda')")
+        self.add_line("    return data")
+        self.add_line("")
+        self.add_line("def _to_cpu(data):")
+        self.add_line("    data = _to_tensor(data)")
+        self.add_line("    return data.to('cpu')")
+        self.add_line("")
+        
         self.code.append("# Fourier ML Runtime")
         ml_runtime_path = __file__.replace('codegen.py', 'ml_runtime.py')
         try:
@@ -20,47 +40,17 @@ class CodeGenerator:
                 ml_code = f.read()
                 reached_code = False
                 for line in ml_code.split('\n'):
-                    # Start including only once we hit a class or function definition
                     if not reached_code:
                         if line.startswith('class ') or line.startswith('def '):
                             reached_code = True
                         else:
                             continue
-                    
                     if reached_code:
                         self.code.append(line.rstrip())
         except FileNotFoundError:
-            pass  # ML runtime not found, skip
+            pass
         
         self.code.append("")
-        
-        # Helper for Device Management
-        self.add_line("def _get_device():")
-        self.add_line("    if torch.cuda.is_available(): return 'cuda'")
-        self.add_line("    # logic for mps (mac) could go here")
-        self.add_line("    return 'cpu'")
-        self.add_line("")
-        
-        self.add_line("def _to_gpu(data):")
-        self.add_line("    data = _to_tensor(data)")
-        self.add_line("    if torch.cuda.is_available():")
-        self.add_line("        return data.to('cuda')")
-        self.add_line("    print('Warning: GPU not available, running on CPU', file=sys.stderr)")
-        self.add_line("    return data")
-        self.add_line("")
-
-        self.add_line("def _to_cpu(data):")
-        self.add_line("    data = _to_tensor(data)")
-        self.add_line("    return data.to('cpu')")
-        self.add_line("")
-
-        self.add_line("def _to_tensor(data):")
-        self.add_line("    if isinstance(data, torch.Tensor): return data")
-        self.add_line("    try:")
-        self.add_line("        return torch.tensor(data)")
-        self.add_line("    except:")
-        self.add_line("        return data")
-        self.add_line("")
         
         self.visit(node)
         return "\n".join(self.code)
@@ -91,17 +81,14 @@ class CodeGenerator:
         self.indent_level += 1
         for stmt in node.then_branch:
             res = self.visit(stmt)
-            if isinstance(res, str):
-                self.add_line(res)
+            if isinstance(res, str): self.add_line(res)
         self.indent_level -= 1
-        
         if node.else_branch:
             self.add_line("else:")
             self.indent_level += 1
             for stmt in node.else_branch:
                 res = self.visit(stmt)
-                if isinstance(res, str):
-                    self.add_line(res)
+                if isinstance(res, str): self.add_line(res)
             self.indent_level -= 1
 
     def visit_WhileStmt(self, node: WhileStmt):
@@ -110,8 +97,7 @@ class CodeGenerator:
         self.indent_level += 1
         for stmt in node.body:
             res = self.visit(stmt)
-            if isinstance(res, str):
-                self.add_line(res)
+            if isinstance(res, str): self.add_line(res)
         self.indent_level -= 1
 
     def visit_ForStmt(self, node: ForStmt):
@@ -120,8 +106,7 @@ class CodeGenerator:
         self.indent_level += 1
         for stmt in node.body:
             res = self.visit(stmt)
-            if isinstance(res, str):
-                self.add_line(res)
+            if isinstance(res, str): self.add_line(res)
         self.indent_level -= 1
 
     def visit_FunctionDef(self, node: FunctionDef):
@@ -130,8 +115,7 @@ class CodeGenerator:
         self.indent_level += 1
         for stmt in node.body:
             res = self.visit(stmt)
-            if isinstance(res, str):
-                self.add_line(res)
+            if isinstance(res, str): self.add_line(res)
         self.indent_level -= 1
         self.add_line("")
 
@@ -149,8 +133,7 @@ class CodeGenerator:
         return f"({left} {node.op} {right})"
 
     def visit_Literal(self, node: Literal):
-        if isinstance(node.value, str):
-            return f'"{node.value}"'
+        if isinstance(node.value, str): return f'"{node.value}"'
         return str(node.value)
 
     def visit_VectorLiteral(self, node: VectorLiteral):
@@ -161,7 +144,6 @@ class CodeGenerator:
         return node.name
 
     def visit_Call(self, node: Call):
-        func_name = ""
         if isinstance(node.func_name, Identifier):
             func_name = node.func_name.name
         else:
@@ -170,33 +152,18 @@ class CodeGenerator:
         args = [self.visit_expression(a) for a in node.args]
         kwargs = [f"{k}={self.visit_expression(v)}" for k, v in node.kwargs]
         
-        # Special handling: gpu/cpu are modifiers, not real functions
-        if func_name == "gpu" and len(args) >= 1:
-            return f"_to_gpu({args[0]})"
-        elif func_name == "cpu" and len(args) >= 1:
-            return f"_to_cpu({args[0]})"
-        
-        # Matrix Math Overrides
-        if func_name == "matmul":
-             if len(args) >= 2:
-                 return f"torch.matmul({args[0]}, {args[1]})"
-        
-        # ML Overrides: model.forward(x) -> model(x)
+        if func_name == "gpu": return f"_to_gpu({args[0]})"
+        if func_name == "cpu": return f"_to_cpu({args[0]})"
+        if func_name == "matmul": return f"torch.matmul({args[0]}, {args[1]})"
         if func_name == "forward":
-             if len(args) >= 1:
-                 # forward normally only takes positional args in this context, but we can pass kwargs too
-                 all_args = args[1:] + kwargs
-                 return f"{args[0]}({', '.join(all_args)})"
+             all_args = args[1:] + kwargs
+             return f"{args[0]}({', '.join(all_args)})"
         
         all_args_str = ", ".join(args + kwargs)
         call_str = f"{func_name}({all_args_str})"
         
-        # Modifiers -> PyTorch device moves (for chained calls)
-        if 'gpu' in node.modifiers:
-            call_str = f"_to_gpu({call_str})"
-        if 'cpu' in node.modifiers:
-            call_str = f"_to_cpu({call_str})"
-            
+        if 'gpu' in node.modifiers: call_str = f"_to_gpu({call_str})"
+        if 'cpu' in node.modifiers: call_str = f"_to_cpu({call_str})"
         return call_str
 
     def visit_expression(self, node: Node):

@@ -18,6 +18,9 @@ class Lexer:
         self.pos = 0
 
     def tokenize(self) -> List[Token]:
+        # Normalize line endings to prevent Windows \r issues
+        self.source = self.source.replace('\r\n', '\n').replace('\r', '\n')
+        
         token_specs = [
             ('NUMBER',   r'\d+(\.\d+)?'),       # Integer or decimal number
             ('STRING',   r'"[^"]*"'),           # String literal
@@ -45,7 +48,7 @@ class Lexer:
             ('DOT',      r'\.'),                # .
             ('ID',       r'[A-Za-z_][A-Za-z0-9_]*'), # Identifiers
             ('NEWLINE',  r'\n'),                # Line endings
-            ('SKIP',     r'[ \t]+'),            # Skip over spaces and tabs
+            ('SKIP',     r'[ \t\r]+'),           # Skip over spaces, tabs, and carriage returns
             ('MISMATCH', r'.'),                 # Any other character
         ]
 

@@ -1,19 +1,11 @@
-"""
-Fourier ML Runtime Library
-This code is injected into every compiled Fourier program that uses ML features.
-"""
-
 import torch
 import torch.nn as nn
 
 class FourierDense(nn.Module):
-    """Dense (Fully Connected) Layer"""
     def __init__(self, in_features, out_features, activation=None):
         super().__init__()
         self.linear = nn.Linear(in_features, out_features)
-        self.activation_name = activation
         
-        # Map activation names to PyTorch functions
         if activation == "relu":
             self.activation = nn.ReLU()
         elif activation == "sigmoid":
@@ -27,12 +19,11 @@ class FourierDense(nn.Module):
     
     def forward(self, x):
         x = self.linear(x)
-        if self.activation:
+        if self.activation is not None:
             x = self.activation(x)
         return x
 
 class FourierSequential(nn.Module):
-    """Sequential Model Container with Lazy Building"""
     def __init__(self, layers_data):
         super().__init__()
         self.raw_layers = layers_data
@@ -40,37 +31,61 @@ class FourierSequential(nn.Module):
         self.initialized = False
     
     def _build(self, input_data):
-        # Ensure input is a tensor
-        if not isinstance(input_data, torch.Tensor):
-            input_data = torch.as_tensor(input_data)
+        # Convert to tensor if not already
+        input_data = _to_tensor(input_data)
         
-        # Ensure we have a batch dimension [batch, features]
-        if input_data.ndim == 1:
+        # Ensure 2D (batch, features)
+        if input_data.dim() == 1:
             input_data = input_data.unsqueeze(0)
             
         current_size = input_data.shape[-1]
         for layer_item in self.raw_layers:
             if callable(layer_item) and not isinstance(layer_item, nn.Module):
-                # It's a constructor lambda: lambda in_feat: FourierDense(...)
                 built_layer = layer_item(current_size)
             else:
                 built_layer = layer_item
             
             self.built_layers.append(built_layer)
-            # Update current_size for next layer
             if hasattr(built_layer, 'linear'):
                 current_size = built_layer.linear.out_features
             elif isinstance(built_layer, nn.Linear):
                 current_size = built_layer.out_features
+            elif hasattr(built_layer, 'out_features'):
+                current_size = built_layer.out_features
         self.initialized = True
 
+    def _recursive_to_tensor(self, data):
+        if isinstance(data, torch.Tensor): return data
+        if isinstance(data, (list, tuple)):
+            try:
+                converted = [self._recursive_to_tensor(x) for x in data]
+                if any(isinstance(x, torch.Tensor) for x in converted):
+                    return torch.stack(converted)
+            except: pass
+        try: return torch.as_tensor(data, dtype=torch.float32)
+        except: return data
+
     def forward(self, x):
-        # Ensure input is a tensor and moved to model's device
+        # Robust tensor conversion
         if not isinstance(x, torch.Tensor):
-            x = torch.as_tensor(x)
+            x = self._recursive_to_tensor(x)
+            
+        # Fallback for nested lists that _to_tensor might have missed
+        if not isinstance(x, torch.Tensor):
+            try:
+                x = torch.as_tensor(x, dtype=torch.float32)
+            except:
+                pass
         
-        # Move input to same device as model
-        device = next(self.parameters()).device if any(self.parameters()) else "cpu"
+        # Automatic batch dimension
+        if x.dim() == 1:
+            x = x.unsqueeze(0)
+            
+        # Device management
+        device = "cpu"
+        params = list(self.parameters())
+        if params:
+            device = params[0].device
         x = x.to(device)
 
         if not self.initialized:
@@ -80,13 +95,74 @@ class FourierSequential(nn.Module):
             x = layer(x)
         return x
 
-# Convenience constructors
 def Dense(out_features, activation=None, in_features=None):
-    """Create a Dense layer. in_features is auto-inferred if not provided."""
     if in_features is None:
         return lambda in_feat: FourierDense(in_feat, out_features, activation)
     return FourierDense(in_features, out_features, activation)
 
 def Sequential(layers):
-    """Create a Sequential model from a list of layers."""
     return FourierSequential(layers)
+
+def random_vector(size):
+    return torch.randn(size)
+
+def random_matrix(rows, cols):
+    return torch.randn(rows, cols)
+
+# --- Standard Library: Matrix Operations ---
+
+def transpose(data):
+    data = _to_tensor(data)
+    return data.t()
+
+def inverse(data):
+    data = _to_tensor(data)
+    return torch.inverse(data)
+
+def dot_product(a, b):
+    a = _to_tensor(a)
+    b = _to_tensor(b)
+    return torch.dot(a.flatten(), b.flatten())
+
+# --- Standard Library: Machine Learning ---
+
+def relu(data):
+    data = _to_tensor(data)
+    return torch.relu(data)
+
+def softmax(data, dim=-1):
+    data = _to_tensor(data)
+    return torch.softmax(data, dim=dim)
+
+def convolution(input, kernel, padding=0, stride=1):
+    input = _to_tensor(input)
+    kernel = _to_tensor(kernel)
+    # Basic 2D convolution assumption for now
+    if input.dim() == 2: input = input.unsqueeze(0).unsqueeze(0)
+    if kernel.dim() == 2: kernel = kernel.unsqueeze(0).unsqueeze(0)
+    return torch.nn.functional.conv2d(input, kernel, padding=padding, stride=stride)
+
+def pooling(input, kernel_size=2):
+    input = _to_tensor(input)
+    if input.dim() == 2: input = input.unsqueeze(0).unsqueeze(0)
+    return torch.nn.functional.max_pool2d(input, kernel_size=kernel_size)
+
+# --- Standard Library: Signal Processing ---
+
+def fft(data):
+    data = _to_tensor(data)
+    return torch.fft.fft(data)
+
+def ifft(data):
+    data = _to_tensor(data)
+    return torch.fft.ifft(data)
+
+# --- Standard Library: Sorting ---
+
+def sort(data, descending=False):
+    data = _to_tensor(data)
+    sorted_values, _ = torch.sort(data, descending=descending)
+    return sorted_values
+
+def quicksort(data):
+    return sort(data)

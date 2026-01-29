@@ -1,0 +1,21 @@
+fn main() {
+    // Mathematische Vektoren
+    v1 = [10.5, 20.0, 30.2]
+    v2 = [1.0, 2.0, 3.0]
+    
+    print("Vektor 1:")
+    print(v1)
+    
+    print("Vektor 2:")
+    print(v2)
+    
+    // Einfache Addition (wird automatisch als Tensor behandelt)
+    summe = v1 + v2
+    print("Summe:")
+    print(summe)
+    
+    // Skalarprodukt-Ähnliche Operation
+    print("Vektor 1 skaliert:")
+    print(v1 * 5)
+}
+main()

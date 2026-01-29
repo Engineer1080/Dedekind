@@ -1,0 +1,14 @@
+fn main() {
+    // Definieren von Matrizen
+    A = [[1.0, 2.0], [3.0, 4.0]]
+    B = [[5.0, 6.0], [7.0, 8.0]]
+
+    print("Berechne Matrix-Multiplikation auf der GPU...")
+    
+    // Verschieben auf GPU und Matmul
+    result = matmul(A.gpu(), B.gpu())
+    
+    print("Ergebnis Matrix:")
+    print(result)
+}
+main()

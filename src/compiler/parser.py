@@ -178,6 +178,16 @@ class Parser:
         elif token.type == 'ID':
             name_token = self.consume('ID')
             node = Identifier(name_token.value)
+        elif token.type == 'MINUS':
+            self.consume('MINUS')
+            operand = self.parse_atom()
+            # We can simplify this by returning a BinaryOp(0, '-', operand) 
+            # or better, just wrap it in a special way. For Python gen, -operand works.
+            # But since our BinaryOp expects left and right, let's just make it a literal with negative value if it's a number, 
+            # or a custom representation.
+            if isinstance(operand, Literal) and isinstance(operand.value, (int, float)):
+                return Literal(-operand.value)
+            return BinaryOp(Literal(0), '-', operand)
         else:
             raise Exception(f"Unexpected token in expression: {token}")
 
