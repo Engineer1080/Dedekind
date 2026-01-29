@@ -183,6 +183,15 @@ class Parser:
         elif token.type == 'ID':
             name_token = self.consume()
             node = Identifier(name_token.value)
+            
+            # Ricci Calculus: A^ij or A_uv
+            if self.peek() and self.peek().type in ['CARET', 'UNDERSCORE']:
+                indices = ""
+                while self.peek() and self.peek().type in ['CARET', 'UNDERSCORE']:
+                    self.consume() # Consume ^ or _
+                    idx_token = self.consume('ID')
+                    indices += idx_token.value
+                node = IndexedVariable(name_token.value, indices)
         elif token.type == 'GRAD':
             name_token = self.consume('GRAD')
             node = Identifier('grad')

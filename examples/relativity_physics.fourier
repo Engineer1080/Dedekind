@@ -1,0 +1,34 @@
+fn main() {
+    print("--- Fourier: Relativity Physics (Ricci Calculus) ---")
+
+    // Define Tensors
+    A = [[1.0, 2.0], [3.0, 4.0]]
+    B = [[5.0, 6.0], [7.0, 8.0]]
+    
+    print("Tensor A:")
+    print(A)
+    print("Tensor B:")
+    print(B)
+
+    // 1. Standard Matrix Multiplication via Ricci Notation
+    // C = A^ij * B_jk (result indices: i, k)
+    // The compiler automatically lowers this to torch.einsum('ij,jk->ik', A, B)
+    C = A^ij * B_jk
+    print("1. Matrix Multiplication (A^ij * B_jk):")
+    print(C)
+
+    // 2. Double Contraction (Scalar Result)
+    // D = A^ij * B_ij
+    D = A^ij * B_ij
+    print("2. Double Contraction (A^ij * B_ij) -> Scalar:")
+    print(D)
+
+    // 3. Matrix-Vector Product
+    V = [10.0, 20.0]
+    Res = A^ij * V^j
+    print("3. Matrix-Vector Product (A^ij * V^j):")
+    print(Res)
+
+    print("--- Physics Success! Fourier understands Einstein's Indices. ---")
+}
+main()

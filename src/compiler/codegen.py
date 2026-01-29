@@ -128,6 +128,35 @@ class CodeGenerator:
         self.add_line(f"{node.target} = {val}")
 
     def visit_BinaryOp(self, node: BinaryOp):
+        if node.op == '*' and (isinstance(node.left, (IndexedVariable, BinaryOp)) or isinstance(node.right, (IndexedVariable, BinaryOp))):
+            # Try to build a Ricci contraction
+            def collect_indexed(n):
+                if isinstance(n, IndexedVariable): return [(n.name, n.indices)]
+                if isinstance(n, BinaryOp) and n.op == '*':
+                    l = collect_indexed(n.left)
+                    r = collect_indexed(n.right)
+                    if l is not None and r is not None: return l + r
+                return None
+            
+            items = collect_indexed(node)
+            if items and len(items) >= 2:
+                tensor_names = [it[0] for it in items]
+                index_groups = [it[1] for it in items]
+                
+                all_indices = "".join(index_groups)
+                from collections import Counter
+                counts = Counter(all_indices)
+                # Keep indices that appear exactly once
+                result_indices = ""
+                seen = set()
+                for c in all_indices:
+                    if counts[c] == 1 and c not in seen:
+                        result_indices += c
+                        seen.add(c)
+                
+                equation = f"{','.join(index_groups)}->{result_indices}"
+                return f"torch.einsum('{equation}', {', '.join(tensor_names)})"
+
         left = self.visit_expression(node.left)
         right = self.visit_expression(node.right)
         return f"({left} {node.op} {right})"
@@ -141,6 +170,10 @@ class CodeGenerator:
         return f"_to_tensor([{', '.join(elements)}])"
 
     def visit_Identifier(self, node: Identifier):
+        return node.name
+
+    def visit_IndexedVariable(self, node: IndexedVariable):
+        # If used standalone, it's just the tensor name
         return node.name
 
     def visit_Call(self, node: Call):

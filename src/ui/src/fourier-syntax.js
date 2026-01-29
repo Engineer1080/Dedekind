@@ -11,6 +11,6 @@ Prism.languages.fourier = {
     'boolean': /\b(?:true|false)\b/,
     'function': /\b[a-z_]\w*(?=\s*\()/i,
     'number': /\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?[i]?\b/,
-    'operator': /[-+*/%=<>!&|^~]+|=>/,
+    'operator': /[-+*/%=<>!&|^~_]+|=>/,
     'punctuation': /[()\[\]{},.;]/
 };

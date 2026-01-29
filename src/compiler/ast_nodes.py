@@ -75,3 +75,8 @@ class ForStmt(Node):
 class MemberAccess(Node):
     obj: Node
     member: str
+
+@dataclass
+class IndexedVariable(Node):
+    name: str
+    indices: str # String of indices, e.g., "ij"
