@@ -1,0 +1,143 @@
+:root {
+  --bg-color: #0f111a;
+  --panel-bg: rgba(30, 34, 46, 0.7);
+  --accent-color: #646cff;
+  --text-color: #e0e0e0;
+  --code-font: 'Fira Code', 'Consolas', monospace;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  overflow: hidden;
+  height: 100vh;
+}
+
+#root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.ide-container {
+  display: flex;
+  flex: 1;
+  height: 100%;
+  padding: 10px;
+  gap: 10px;
+  background: radial-gradient(circle at top right, #1a1d2e 0%, #0f111a 100%);
+}
+
+.sidebar {
+  width: 250px;
+  background: var(--panel-bg);
+  backdrop-filter: blur(10px);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar h2 {
+  font-size: 1.2rem;
+  margin-top: 0;
+  color: var(--accent-color);
+  letter-spacing: 1px;
+}
+
+.main-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.toolbar {
+  height: 50px;
+  background: var(--panel-bg);
+  backdrop-filter: blur(10px);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  padding: 0 15px;
+  gap: 15px;
+}
+
+.btn {
+  background: #2b3042;
+  border: none;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn:hover {
+  background: #3b425b;
+}
+
+.btn-primary {
+  background: var(--accent-color);
+}
+
+.btn-primary:hover {
+  background: #535bf2;
+  box-shadow: 0 0 15px rgba(100, 108, 255, 0.4);
+}
+
+.editor-container {
+  flex: 2;
+  background: #1e1e1e;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+}
+
+textarea.code-editor {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  color: #d4d4d4;
+  border: none;
+  resize: none;
+  padding: 20px;
+  font-family: var(--code-font);
+  font-size: 14px;
+  line-height: 1.5;
+  outline: none;
+}
+
+.console-container {
+  flex: 1;
+  background: #151515;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 15px;
+  font-family: var(--code-font);
+  overflow-y: auto;
+  font-size: 13px;
+}
+
+.console-header {
+  font-size: 0.8rem;
+  color: #888;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #333;
+  padding-bottom: 5px;
+}
+
+.console-output {
+  white-space: pre-wrap;
+  color: #ccc;
+}
