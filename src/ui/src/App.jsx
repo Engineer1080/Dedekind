@@ -28,6 +28,7 @@ function App() {
   const [isResizing, setIsResizing] = useState(false);
   const [isResizingSidebar, setIsResizingSidebar] = useState(false);
   const [isBuilding, setIsBuilding] = useState(false);
+  const [plots, setPlots] = useState([]);
 
   useEffect(() => {
     // Initial setup: Find project root
@@ -131,11 +132,14 @@ function App() {
       const data = await response.json();
       if (data.status === 'success') {
         setOutput(data.output);
+        setPlots(data.plots || []);
       } else {
+        setPlots([]);
         setOutput(`Error:\n${data.error}\n\nTraceback:\n${data.traceback}`);
       }
     } catch (err) {
       setOutput('Failed to connect to Compiler Backend.\nIs server.py running?');
+      setPlots([]);
     }
     setIsRunning(false);
   };
@@ -419,6 +423,19 @@ function App() {
           role="separator"
           aria-label="Output-Bereich in der Höhe anpassen"
         ></div>
+
+        {plots.length > 0 && (
+          <div className="plots-panel">
+            <div className="plots-header">Plots</div>
+            <div className="plots-grid">
+              {plots.map((base64, i) => (
+                <div key={i} className="plot-item">
+                  <img src={`data:image/png;base64,${base64}`} alt={`Plot ${i + 1}`} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="console-container" style={{ height: `${consoleHeight}px` }}>
           <div className="console-header">

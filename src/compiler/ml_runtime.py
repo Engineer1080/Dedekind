@@ -362,3 +362,56 @@ def sort(data, descending=False):
 
 def quicksort(data):
     return sort(data)
+
+# --- Standard Library: Visualization ---
+# Plots werden in _fourier_plots gesammelt und vom Server an die IDE zurückgegeben.
+
+_fourier_plots = []
+
+def _plot_ndarray(x, y=None, title=None, xlabel=None, ylabel=None):
+    """Intern: Erzeugt einen Plot und hängt ihn als Base64-PNG an _fourier_plots."""
+    try:
+        import base64
+        import io
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+    except ImportError:
+        print("plot(): matplotlib nicht installiert. pip install matplotlib")
+        return
+    if y is None:
+        y = x
+        x = list(range(len(y)))
+    if x is None:
+        x = list(range(len(y) if hasattr(y, '__len__') else 0))
+    if hasattr(x, 'cpu'): x = x.detach().cpu().numpy()
+    elif not isinstance(x, (list, tuple)): x = list(x)
+    if hasattr(y, 'cpu'): y = y.detach().cpu().numpy()
+    elif not isinstance(y, (list, tuple)): y = list(y)
+    fig, ax = plt.subplots()
+    ax.plot(x, y)
+    if title: ax.set_title(title)
+    if xlabel: ax.set_xlabel(xlabel)
+    if ylabel: ax.set_ylabel(ylabel)
+    buf = io.BytesIO()
+    fig.savefig(buf, format='png', dpi=100, bbox_inches='tight')
+    plt.close(fig)
+    _fourier_plots.append(base64.b64encode(buf.getvalue()).decode('ascii'))
+
+def plot(x=None, y=None, title=None, xlabel=None, ylabel=None):
+    """
+    Zeichnet Daten und zeigt sie in Fourier Studio an.
+    plot(y)           – y über Index
+    plot(x, y)        – y über x
+    plot(y, title="…") – mit Titel
+    """
+    if x is None and y is None:
+        return
+    if y is None:
+        y = _to_tensor(x) if isinstance(x, (list, tuple)) else x
+        x = None
+    elif not isinstance(x, (list, tuple)) and not hasattr(x, 'shape'):
+        x = _to_tensor(x) if hasattr(x, '__iter__') else x
+    if not isinstance(y, (list, tuple)) and not hasattr(y, 'shape'):
+        y = _to_tensor(y) if hasattr(y, '__iter__') else y
+    _plot_ndarray(x, y, title=title, xlabel=xlabel, ylabel=ylabel)

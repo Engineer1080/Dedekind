@@ -367,6 +367,51 @@ html,
   box-shadow: 0 0 10px var(--accent-glow);
 }
 
+/* Plots Panel – Visualisierung nach plot() im Code */
+.plots-panel {
+  flex-shrink: 0;
+  background: var(--bg-sidebar);
+  border-top: 1px solid var(--border-color);
+  max-height: 320px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.plots-header {
+  padding: 8px 16px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.plots-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px;
+  overflow-y: auto;
+  align-items: flex-start;
+}
+
+.plot-item {
+  flex-shrink: 0;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  overflow: hidden;
+  background: #1a1c24;
+}
+
+.plot-item img {
+  display: block;
+  max-width: 100%;
+  max-height: 240px;
+  object-fit: contain;
+}
+
 .console-container {
   background: var(--bg-sidebar);
   border-top: 1px solid var(--border-color);

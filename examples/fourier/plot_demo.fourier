@@ -1,0 +1,12 @@
+fn main() {
+    // Einfache Visualisierung: plot(y) zeichnet y über Index
+    data = [1.0, 2.0, 1.5, 3.0, 2.5, 4.0]
+    plot(data, title="Beispieldaten")
+
+    // Zweiter Plot: Kurve mit Titel und Achsenbeschriftung
+    curve = [0.0, 0.5, 1.0, 1.2, 1.0, 0.5, 0.0]
+    plot(curve, title="Kurve", xlabel="Index", ylabel="Wert")
+
+    print("Plots werden in Fourier Studio angezeigt.")
+}
+main()

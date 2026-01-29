@@ -63,9 +63,10 @@ def run_endpoint():
              traceback.print_exc(file=buffer)
         finally:
             sys.stdout = old_stdout
-            
+
         output = buffer.getvalue()
-        return jsonify({'status': 'success', 'output': output, 'code': python_code})
+        plots = exec_globals.get('_fourier_plots', [])
+        return jsonify({'status': 'success', 'output': output, 'code': python_code, 'plots': plots})
         
     except Exception as e:
         return jsonify({'status': 'error', 'error': str(e), 'traceback': traceback.format_exc()})

@@ -84,6 +84,8 @@ The backend requires Python and Flask to serve the compiler API.
 ```bash
 # Install dependencies
 pip install flask flask-cors numpy
+# Optional für plot()-Visualisierung in Fourier Studio:
+# pip install matplotlib
 
 # Run the Backend Server
 python src/server.py
