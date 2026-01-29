@@ -17,6 +17,7 @@ function App() {
   const [fileContents, setFileContents] = useState({});
   const editorRef = useRef(null);
   const highlightRef = useRef(null);
+  const lineNumbersRef = useRef(null);
 
   const [expandedFolders, setExpandedFolders] = useState({});
   const [consoleHeight, setConsoleHeight] = useState(200);
@@ -162,6 +163,9 @@ function App() {
       highlightRef.current.scrollTop = e.target.scrollTop;
       highlightRef.current.scrollLeft = e.target.scrollLeft;
     }
+    if (lineNumbersRef.current) {
+      lineNumbersRef.current.scrollTop = e.target.scrollTop;
+    }
   };
 
   const updateContent = (content) => {
@@ -247,19 +251,33 @@ function App() {
 
         <div className="editor-container">
           {activeTabId ? (
-            <div className="editor-wrapper">
-              <textarea
-                className="code-textarea"
-                value={activeContent}
-                onChange={(e) => updateContent(e.target.value)}
-                onScroll={handleScroll}
-                spellCheck="false"
-              />
-              <pre className="code-highlight">
-                <code ref={highlightRef} className="language-fourier">
-                  {activeContent}
-                </code>
-              </pre>
+            <div className="editor-with-linenumbers">
+              <div
+                ref={lineNumbersRef}
+                className="line-numbers"
+                aria-hidden="true"
+              >
+                {(activeContent.split('\n').length || 1) >= 1
+                  ? Array.from({ length: Math.max(1, activeContent.split('\n').length) }, (_, i) => i + 1).map((n) => (
+                      <div key={n} className="line-number">{n}</div>
+                    ))
+                  : <div className="line-number">1</div>}
+              </div>
+              <div className="editor-wrapper">
+                <textarea
+                  ref={editorRef}
+                  className="code-textarea"
+                  value={activeContent}
+                  onChange={(e) => updateContent(e.target.value)}
+                  onScroll={handleScroll}
+                  spellCheck="false"
+                />
+                <pre className="code-highlight">
+                  <code ref={highlightRef} className="language-fourier">
+                    {activeContent}
+                  </code>
+                </pre>
+              </div>
             </div>
           ) : (
             <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: '#666' }}>

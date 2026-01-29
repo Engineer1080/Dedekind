@@ -224,10 +224,37 @@ html,
   overflow: hidden;
 }
 
-.editor-wrapper {
-  position: relative;
+.editor-with-linenumbers {
+  display: flex;
   height: 100%;
   width: 100%;
+}
+
+.line-numbers {
+  flex-shrink: 0;
+  width: 52px;
+  height: 100%;
+  overflow: hidden;
+  padding: 24px 8px 24px 12px;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-dim);
+  text-align: right;
+  user-select: none;
+  border-right: 1px solid var(--border-color);
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.line-number {
+  min-height: 21px;
+}
+
+.editor-wrapper {
+  position: relative;
+  flex: 1;
+  height: 100%;
+  min-width: 0;
 }
 
 .code-textarea {
