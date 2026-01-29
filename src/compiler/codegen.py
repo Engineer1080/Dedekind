@@ -137,6 +137,12 @@ class CodeGenerator:
             
         args = [self.visit_expression(a) for a in node.args]
         
+        # Special handling: gpu/cpu are modifiers, not real functions
+        if func_name == "gpu" and len(args) >= 1:
+            return f"_to_gpu({args[0]})"
+        elif func_name == "cpu" and len(args) >= 1:
+            return f"_to_cpu({args[0]})"
+        
         # Matrix Math Overrides
         if func_name == "matmul":
              if len(args) >= 2:
@@ -145,7 +151,7 @@ class CodeGenerator:
         args_str = ", ".join(args)
         call_str = f"{func_name}({args_str})"
         
-        # Modifiers -> PyTorch device moves
+        # Modifiers -> PyTorch device moves (for chained calls)
         if 'gpu' in node.modifiers:
             call_str = f"_to_gpu({call_str})"
         if 'cpu' in node.modifiers:
