@@ -145,6 +145,28 @@ class FourierCompiledModel:
         # Proxy all other calls to the original model (e.g., parameters, to, cuda)
         return getattr(self.original_model, name)
 
+def _to_grad(data):
+    """Marks a tensor to require gradients."""
+    tensor = _to_tensor(data)
+    if tensor.is_floating_point():
+        tensor.requires_grad = True
+    return tensor
+
+def _to_tensor(data):
+    """Internal helper to convert nested lists/NumPy to PyTorch tensors."""
+    if isinstance(data, torch.Tensor):
+        return data
+    if isinstance(data, (list, tuple)):
+        # Handle empty lists
+        if not data: return torch.tensor([], dtype=torch.float32)
+        # Try converting directly
+        try:
+            return torch.as_tensor(data, dtype=torch.float32)
+        except:
+            # Fallback for complex nesting
+            return torch.stack([_to_tensor(x) for x in data])
+    return torch.as_tensor(data, dtype=torch.float32)
+
 def compile_model(model):
     """
     Fourier Native Compilation Hook.

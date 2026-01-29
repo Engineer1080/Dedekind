@@ -155,6 +155,12 @@ class CodeGenerator:
         if func_name == "gpu": return f"_to_gpu({args[0]})"
         if func_name == "cpu": return f"_to_cpu({args[0]})"
         if func_name == "fast": return f"compile_model({args[0]})"
+        if func_name == "with_grad": return f"_to_grad({args[0]})"
+        if func_name == "grad":
+            # Native Autograd implementation: grad(f, x)
+            # We map this to torch.autograd.grad(f(x), x)[0]
+            # args[0] is the function, args[1] is the parameter
+            return f"torch.autograd.grad({args[0]}({args[1]}), {args[1]}, create_graph=True)[0]"
         if func_name == "matmul": return f"torch.matmul({args[0]}, {args[1]})"
         if func_name == "forward":
              all_args = args[1:] + kwargs
