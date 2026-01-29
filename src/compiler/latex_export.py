@@ -12,7 +12,9 @@ from .ast_nodes import (
 # Bekannte Funktionen → LaTeX-Befehl (ohne Backslash)
 _LATEX_FUNCS = {
     "sin": "sin", "cos": "cos", "tan": "tan",
-    "exp": "exp", "log": "log", "sqrt": "sqrt",
+    "exp": "exp", "log": "log", "log10": "log_{10}", "sqrt": "sqrt", "abs": "abs",
+    "asin": "arcsin", "acos": "arccos", "atan": "arctan", "atan2": "atan2",
+    "sinh": "sinh", "cosh": "cosh", "tanh": "tanh",
     "diff": "frac", "grad": "nabla",
 }
 
@@ -128,8 +130,14 @@ class LatexExporter:
             cmd = _LATEX_FUNCS[fname_lower]
             if cmd == "sqrt":
                 return f"\\sqrt{{{args[0]}}}" if args else "\\sqrt{}"
+            if cmd == "abs":
+                return f"\\left| {args[0]} \\right|" if args else "|"
+            if cmd == "atan2" and len(args) >= 2:
+                return f"\\operatorname{{atan2}}\\left( {args[0]}, {args[1]} \\right)"
             if cmd == "frac" and len(args) >= 2:
                 return f"\\frac{{{args[0]}}}{{{args[1]}}}"
+            if cmd == "log_{10}" and args:
+                return f"\\log_{{10}}\\left( {args[0]} \\right)"
             if args:
                 return f"\\{cmd}\\left( {', '.join(args)} \\right)"
             return f"\\{cmd}"

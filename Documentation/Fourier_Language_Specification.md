@@ -2,7 +2,7 @@
 
 **Language Specification v0.2**  
 Mario Michael Heinrich · github.com/Engineer1080  
-Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit)
+Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit), v0.9.6 (Math-Funktionen: exp, log, sqrt, tan, abs, asin, acos, atan, atan2, sinh, cosh, tanh)
 
 ---
 
@@ -228,14 +228,25 @@ Fourier provides **differentiable PDE solvers** for the heat equation \(u_t = k\
 
 Example: 1D heat with a spike initial condition; see `examples/fourier/pde_heat.fourier`.
 
-### 15.10 Numerical Integration and Math (v0.9)
+### 15.10 Numerical Integration and Math (v0.9, erweitert v0.9.6)
 
-Fourier provides **numerical integration** and basic **math functions** for scientific expressions:
+Fourier provides **numerical integration** and **math functions** for scientific expressions. All math functions accept tensors or scalars (via `_to_tensor`), are element-wise and differentiable.
+
+**Numerical integration:**
 
 - **`integrate(f, a, b, n=100)`**: Numerically integrates \(f(x)\) from `a` to `b` using the trapezoidal rule with `n` points. `f` must accept a 1D tensor (the grid) and return a tensor of the same length; the integral is differentiable with respect to parameters in `f` when using autograd.
-- **`sin(x)`**, **`cos(x)`**: Element-wise sine and cosine; `x` may be a tensor or scalar (wrapped via `_to_tensor`).
 
-Example: \(\int_0^1 x^2\,dx = 1/3\), \(\int_0^\pi \sin(x)\,dx = 2\); see `examples/fourier/integration.fourier`.
+**Trigonometrie:** **`sin(x)`**, **`cos(x)`**, **`tan(x)`**.
+
+**Exponential und Logarithmus:** **`exp(x)`**, **`log(x)`** (natürlicher Logarithmus), **`log10(x)`**.
+
+**Wurzel und Betrag:** **`sqrt(x)`**, **`abs(x)`**.
+
+**Arkusfunktionen (Bogenmaß):** **`asin(x)`**, **`acos(x)`**, **`atan(x)`**, **`atan2(y, x)`** (Winkel der Richtung (x,y), Wertebereich \((-\pi,\pi]\)).
+
+**Hyperbelfunktionen:** **`sinh(x)`**, **`cosh(x)`**, **`tanh(x)`**.
+
+Examples: \(\int_0^1 x^2\,dx = 1/3\), \(\int_0^\pi \sin(x)\,dx = 2\); see `examples/fourier/integration.fourier`. Full math showcase: `examples/fourier/math_functions.fourier`.
 
 ### 15.11 Uncertainty Propagation and Fitting (v0.9.3)
 

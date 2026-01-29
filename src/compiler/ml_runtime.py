@@ -759,12 +759,67 @@ def hmc(log_prior_fn, log_likelihood_fn, data, init_theta, num_steps, step_size=
     return torch.stack(samples, dim=0)
 
 # --- Standard Library: Math (for integration and expressions) ---
+# Alle Funktionen: Tensor oder Skalar (via _to_tensor), elementweise, differenzierbar.
+
 def sin(x):
-    """sin(x); x Tensor or scalar."""
+    """sin(x); x Tensor oder Skalar."""
     return torch.sin(_to_tensor(x).float())
+
 def cos(x):
-    """cos(x); x Tensor or scalar."""
+    """cos(x); x Tensor oder Skalar."""
     return torch.cos(_to_tensor(x).float())
+
+def tan(x):
+    """tan(x); x Tensor oder Skalar."""
+    return torch.tan(_to_tensor(x).float())
+
+def exp(x):
+    """exp(x); x Tensor oder Skalar."""
+    return torch.exp(_to_tensor(x).float())
+
+def log(x):
+    """Natürlicher Logarithmus log(x) = ln(x); x Tensor oder Skalar."""
+    return torch.log(_to_tensor(x).float())
+
+def log10(x):
+    """Zehnerlogarithmus log10(x); x Tensor oder Skalar."""
+    return torch.log10(_to_tensor(x).float())
+
+def sqrt(x):
+    """Quadratwurzel sqrt(x); x Tensor oder Skalar (nicht negativ)."""
+    return torch.sqrt(_to_tensor(x).float())
+
+def abs(x):
+    """Betrag |x|; x Tensor oder Skalar."""
+    return torch.abs(_to_tensor(x).float())
+
+def asin(x):
+    """Arkussinus asin(x); x im Intervall [-1, 1]."""
+    return torch.asin(_to_tensor(x).float())
+
+def acos(x):
+    """Arkuskosinus acos(x); x im Intervall [-1, 1]."""
+    return torch.acos(_to_tensor(x).float())
+
+def atan(x):
+    """Arkustangens atan(x)."""
+    return torch.atan(_to_tensor(x).float())
+
+def atan2(y, x):
+    """Arkustangens atan2(y, x); Winkel der (x,y)-Richtung, Wertebereich (-pi, pi]."""
+    return torch.atan2(_to_tensor(y).float(), _to_tensor(x).float())
+
+def sinh(x):
+    """Sinus hyperbolicus sinh(x)."""
+    return torch.sinh(_to_tensor(x).float())
+
+def cosh(x):
+    """Kosinus hyperbolicus cosh(x)."""
+    return torch.cosh(_to_tensor(x).float())
+
+def tanh(x):
+    """Tangens hyperbolicus tanh(x)."""
+    return torch.tanh(_to_tensor(x).float())
 
 # --- Standard Library: Numerical Integration ---
 # Differenzierbar, wenn f Tensor-Argument akzeptiert und differenzierbar ist.
