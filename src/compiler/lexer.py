@@ -22,6 +22,7 @@ class Lexer:
         self.source = self.source.replace('\r\n', '\n').replace('\r', '\n')
         
         token_specs = [
+            ('COMPLEX',  r'\d+(\.\d+)?i\b'),     # Complex number 5.0i
             ('NUMBER',   r'\d+(\.\d+)?'),       # Integer or decimal number
             ('STRING',   r'"[^"]*"'),           # String literal
             ('MODIFIER', r'\.(gpu|cpu|single)'), # Modifiers .gpu, .cpu, .single

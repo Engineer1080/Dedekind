@@ -173,6 +173,11 @@ class Parser:
         if token.type == 'NUMBER':
             self.consume()
             node = Literal(float(token.value) if '.' in token.value else int(token.value))
+        elif token.type == 'COMPLEX':
+            self.consume()
+            # Convert "5.0i" to 5.0j (Python complex)
+            val = complex(0, float(token.value[:-1]))
+            node = Literal(val)
         elif token.type == 'STRING':
             self.consume()
             node = Literal(token.value.strip('"'))

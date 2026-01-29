@@ -134,7 +134,7 @@ class CodeGenerator:
 
     def visit_Literal(self, node: Literal):
         if isinstance(node.value, str): return f'"{node.value}"'
-        return str(node.value)
+        return repr(node.value)
 
     def visit_VectorLiteral(self, node: VectorLiteral):
         elements = [self.visit_expression(e) for e in node.elements]
