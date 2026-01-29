@@ -51,6 +51,13 @@ class CodeGenerator:
         self.add_line("def _to_cpu(data):")
         self.add_line("    return data.to('cpu')")
         self.add_line("")
+
+        self.add_line("def _to_tensor(data):")
+        self.add_line("    try:")
+        self.add_line("        return torch.tensor(data)")
+        self.add_line("    except:")
+        self.add_line("        return data")
+        self.add_line("")
         
         self.visit(node)
         return "\n".join(self.code)
@@ -145,8 +152,7 @@ class CodeGenerator:
 
     def visit_VectorLiteral(self, node: VectorLiteral):
         elements = [self.visit_expression(e) for e in node.elements]
-        # PyTorch Tensor creation
-        return f"torch.tensor([{', '.join(elements)}])"
+        return f"_to_tensor([{', '.join(elements)}])"
 
     def visit_Identifier(self, node: Identifier):
         return node.name
@@ -159,6 +165,7 @@ class CodeGenerator:
             func_name = self.visit_expression(node.func_name)
             
         args = [self.visit_expression(a) for a in node.args]
+        kwargs = [f"{k}={self.visit_expression(v)}" for k, v in node.kwargs]
         
         # Special handling: gpu/cpu are modifiers, not real functions
         if func_name == "gpu" and len(args) >= 1:
@@ -169,10 +176,17 @@ class CodeGenerator:
         # Matrix Math Overrides
         if func_name == "matmul":
              if len(args) >= 2:
-                 return f"torch.matmul({args[0]}, {args[1]})" # Better for Torch than @ sometimes
+                 return f"torch.matmul({args[0]}, {args[1]})"
         
-        args_str = ", ".join(args)
-        call_str = f"{func_name}({args_str})"
+        # ML Overrides: model.forward(x) -> model(x)
+        if func_name == "forward":
+             if len(args) >= 1:
+                 # forward normally only takes positional args in this context, but we can pass kwargs too
+                 all_args = args[1:] + kwargs
+                 return f"{args[0]}({', '.join(all_args)})"
+        
+        all_args_str = ", ".join(args + kwargs)
+        call_str = f"{func_name}({all_args_str})"
         
         # Modifiers -> PyTorch device moves (for chained calls)
         if 'gpu' in node.modifiers:

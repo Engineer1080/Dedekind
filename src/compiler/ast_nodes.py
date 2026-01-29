@@ -34,6 +34,7 @@ class BinaryOp(Node):
 class Call(Node):
     func_name: Node  # Can be an identifier or another call (chaining)
     args: List[Node]
+    kwargs: List[Any]  # List of (name, value) tuples
     modifiers: List[str]  # e.g., ['gpu', 'cpu']
 
 @dataclass

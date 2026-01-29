@@ -186,27 +186,17 @@ class Parser:
             
             if self.peek().type == 'LPAREN':
                 self.consume('LPAREN')
-                args = []
-                if self.peek().type != 'RPAREN':
-                    args.append(self.parse_expression())
-                    while self.peek().type == 'COMMA':
-                        self.consume('COMMA')
-                        args.append(self.parse_expression())
+                args, kwargs = self.parse_call_args()
                 self.consume('RPAREN')
-                node = Call(node, args, [])
+                node = Call(node, args, kwargs, [])
                 
             elif self.peek().type == 'DOT':
                 self.consume('DOT')
                 method_name = self.consume('ID').value
                 self.consume('LPAREN')
-                args = []
-                if self.peek().type != 'RPAREN':
-                    args.append(self.parse_expression())
-                    while self.peek().type == 'COMMA':
-                        self.consume('COMMA')
-                        args.append(self.parse_expression())
+                args, kwargs = self.parse_call_args()
                 self.consume('RPAREN')
-                node = Call(Identifier(method_name), [node] + args, [])
+                node = Call(Identifier(method_name), [node] + args, kwargs, [])
                 
             elif self.peek().type == 'MODIFIER':
                 modifier = self.consume('MODIFIER').value.strip('.') 
@@ -215,8 +205,28 @@ class Parser:
                 if isinstance(node, Call):
                     node.modifiers.append(modifier)
                 else:
-                    node = Call(Identifier(modifier), [node], [modifier])
+                    node = Call(Identifier(modifier), [node], [], [modifier])
                     
         return node
+
+    def parse_call_args(self):
+        args = []
+        kwargs = []
+        if self.peek().type != 'RPAREN':
+            while True:
+                # Named argument: ID = expression
+                if self.peek().type == 'ID' and self.peek(1) and self.peek(1).type == 'ASSIGN':
+                    name = self.consume('ID').value
+                    self.consume('ASSIGN')
+                    value = self.parse_expression()
+                    kwargs.append((name, value))
+                else:
+                    args.append(self.parse_expression())
+                
+                if self.peek().type == 'COMMA':
+                    self.consume('COMMA')
+                else:
+                    break
+        return args, kwargs
 
 
