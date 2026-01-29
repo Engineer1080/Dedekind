@@ -202,11 +202,14 @@ class Parser:
                 
             elif self.peek().type == 'DOT':
                 self.consume('DOT')
-                method_name = self.consume('ID').value
-                self.consume('LPAREN')
-                args, kwargs = self.parse_call_args()
-                self.consume('RPAREN')
-                node = Call(Identifier(method_name), [node] + args, kwargs, [])
+                member_name = self.consume('ID').value
+                if self.peek() and self.peek().type == 'LPAREN':
+                    self.consume('LPAREN')
+                    args, kwargs = self.parse_call_args()
+                    self.consume('RPAREN')
+                    node = Call(Identifier(member_name), [node] + args, kwargs, [])
+                else:
+                    node = MemberAccess(node, member_name)
                 
             elif self.peek().type == 'MODIFIER':
                 modifier = self.consume('MODIFIER').value.strip('.') 

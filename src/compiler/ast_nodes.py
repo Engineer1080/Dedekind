@@ -70,3 +70,8 @@ class ForStmt(Node):
     variable: str
     collection: Node
     body: List[Node]
+
+@dataclass
+class MemberAccess(Node):
+    obj: Node
+    member: str

@@ -168,6 +168,10 @@ class CodeGenerator:
         if 'fast' in node.modifiers: call_str = f"compile_model({call_str})"
         return call_str
 
+    def visit_MemberAccess(self, node: MemberAccess):
+        obj = self.visit_expression(node.obj)
+        return f"{obj}.{node.member}"
+
     def visit_expression(self, node: Node):
         method_name = f'visit_{self.type_name(node)}'
         visitor = getattr(self, method_name, self.generic_visit)

@@ -17,6 +17,10 @@ class FourierDense(nn.Module):
         else:
             self.activation = None
     
+    @property
+    def shape(self):
+        return self.linear.weight.shape
+
     def forward(self, x):
         x = self.linear(x)
         if self.activation is not None:
@@ -30,6 +34,14 @@ class FourierSequential(nn.Module):
         self.built_layers = nn.ModuleList()
         self.initialized = False
     
+    @property
+    def shape(self):
+        # For a model, we return the internal weights or informative string
+        # if not built yet.
+        if not self.initialized: return "uninitialized"
+        # Just return a summary for now
+        return [l.shape if hasattr(l, 'shape') else 'unknown' for l in self.built_layers]
+
     def _build(self, input_data):
         # Convert to tensor if not already
         input_data = _to_tensor(input_data)
