@@ -520,6 +520,68 @@ def ode_solve(fun, y0, t, method="rk4"):
         out.append(y)
     return torch.stack(out, dim=0)
 
+# --- Standard Library: Differentiable PDE Solvers ---
+# 1D/2D Heat equation u_t = k * Laplacian(u); Finite-Differenzen + ode_solve (differenzierbar in u0, k).
+
+def pde_heat_1d(u0, x, t, k, bc="dirichlet"):
+    """
+    Differenzierbarer 1D-Heat-Solver: u_t = k * u_xx.
+    u0: Anfangsbedingung (1D, Länge = len(x)); x: Ortsgitter (1D); t: Zeitgitter (1D); k: Diffusivität.
+    bc: 'dirichlet' = Randwerte u[0], u[-1] aus u0 fest. Rückgabe: (len(t), len(x)).
+    """
+    u0 = _to_tensor(u0).float().flatten()
+    x = _to_tensor(x).float().flatten().to(u0.device)
+    t = _to_tensor(t).float().flatten().to(u0.device)
+    k = _to_tensor(k).float()
+    n = u0.numel()
+    if x.numel() != n:
+        raise ValueError("pde_heat_1d: len(u0) muss len(x) entsprechen.")
+    if n < 3:
+        raise ValueError("pde_heat_1d: mindestens 3 Gitterpunkte.")
+    dx = (x[-1] - x[0]) / (n - 1.0)
+    dx2 = dx * dx
+
+    def rhs(t_cur, u):
+        u = u.flatten()
+        lap = (u[2:] - 2.0 * u[1:-1] + u[:-2]) / dx2
+        dudt = torch.zeros_like(u)
+        dudt[1:-1] = k * lap if k.dim() == 0 or k.numel() == 1 else k.expand_as(lap).clone() * lap
+        return dudt
+
+    return ode_solve(rhs, u0, t)
+
+def pde_heat_2d(u0, x, y, t, k, bc="dirichlet"):
+    """
+    Differenzierbarer 2D-Heat-Solver: u_t = k * (u_xx + u_yy).
+    u0: Anfangsbedingung 2D (shape nx*ny); x, y: 1D-Gitter; t: Zeitgitter; k: Diffusivität.
+    bc: 'dirichlet' = Rand aus u0 fest. Rückgabe: (len(t), nx, ny).
+    """
+    u0 = _to_tensor(u0).float()
+    if u0.dim() == 1:
+        raise ValueError("pde_heat_2d: u0 muss 2D-Gitter (nx, ny) sein.")
+    nx, ny = u0.shape[0], u0.shape[1]
+    x = _to_tensor(x).float().flatten().to(u0.device)
+    y = _to_tensor(y).float().flatten().to(u0.device)
+    t = _to_tensor(t).float().flatten().to(u0.device)
+    k = _to_tensor(k).float()
+    if x.numel() != nx or y.numel() != ny:
+        raise ValueError("pde_heat_2d: x/y Länge muss zu u0 passen.")
+    dx = float((x[-1] - x[0]).item()) / max(nx - 1, 1)
+    dy = float((y[-1] - y[0]).item()) / max(ny - 1, 1)
+    dx2, dy2 = dx * dx, dy * dy
+
+    def rhs(t_cur, u_flat):
+        u = u_flat.reshape(nx, ny)
+        lap = torch.zeros_like(u)
+        lap[1:-1, 1:-1] = (
+            (u[2:, 1:-1] - 2.0 * u[1:-1, 1:-1] + u[:-2, 1:-1]) / dx2
+            + (u[1:-1, 2:] - 2.0 * u[1:-1, 1:-1] + u[1:-1, :-2]) / dy2
+        )
+        dudt = k * lap
+        return dudt.flatten()
+
+    return ode_solve(rhs, u0.flatten(), t).reshape(t.numel(), nx, ny)
+
 # --- Standard Library: Probabilistic Programming ---
 # Verteilungen und Bayesian Inference (torch.distributions)
 

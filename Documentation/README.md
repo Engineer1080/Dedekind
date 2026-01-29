@@ -6,7 +6,7 @@ This folder contains the **source** and **generated** documentation for the Four
 
 | File | Description |
 |------|-------------|
-| **Fourier_Language_Specification.md** | Language Specification (Markdown source, v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8) |
+| **Fourier_Language_Specification.md** | Language Specification (Markdown source, v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8) |
 | **Fourier_Research_and_Architecture.md** | Research foundation & architecture (Markdown source; §10 Sprachfeatures v0.6) |
 | **Symbolic_Simplification_Roadmap.md** | Implementierungs-Roadmap für Symbolic Simplification (Phasen, Optionen, Integration) |
 | **Fourier_Language_Specification_v0.1.pdf** | Legacy PDF (v0.1); for current spec use the Markdown or generate v0.2 PDF below |
@@ -37,6 +37,7 @@ pandoc Fourier_Research_and_Architecture.md -o Fourier_Research_and_Architecture
 ## What changed in v0.8 (documented here)
 
 - **Probabilistic Programming**: First-class distributions `Normal(mu, sigma)`, `Uniform(low, high)`, `Bernoulli(p)`; `sample(dist)` / `sample(dist, n)`; `log_prob(dist, value)`; Metropolis-Hastings `metropolis(log_prior, log_likelihood, data, init, steps)` for Bayesian inference. See **Fourier_Language_Specification.md** §15.8 and `examples/fourier/probabilistic.fourier`.
+- **Differentiable PDE Solvers**: `pde_heat_1d(u0, x, t, k)` and `pde_heat_2d(u0, x, y, t, k)` for the heat equation; finite differences + `ode_solve`; Dirichlet BC; gradients through `u0` and `k`. See **Fourier_Language_Specification.md** §15.9 and `examples/fourier/pde_heat.fourier`.
 
 ## What changed in v0.7 (documented here)
 

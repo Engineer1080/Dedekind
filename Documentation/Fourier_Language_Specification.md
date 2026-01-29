@@ -2,7 +2,7 @@
 
 **Language Specification v0.2**  
 Mario Michael Heinrich · github.com/Engineer1080  
-Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (Differentiable ODE), v0.8 (Probabilistic Programming)
+Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (Differentiable ODE), v0.8 (Probabilistic Programming, Differentiable PDE)
 
 ---
 
@@ -22,7 +22,7 @@ Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (Differentiable O
 12. [Implementation Roadmap](#12-implementation-roadmap)
 13. [Technical Foundation](#13-technical-foundation)
 14. [Conclusion](#14-conclusion)
-15. [**Physical Units and Universal Constants (v0.6)**](#15-physical-units-and-universal-constants-v06) ← **NEW**
+15. [**Physical Units and Universal Constants (v0.6)**](#15-physical-units-and-universal-constants-v06) (incl. §15.7 ODE, §15.8 Probabilistic, §15.9 PDE v0.8)
 
 ---
 
@@ -200,6 +200,15 @@ Fourier provides **first-class distributions** and **Bayesian inference** via `t
 - **metropolis(log_prior_fn, log_likelihood_fn, data, init_theta, num_steps, step_size)**: Metropolis-Hastings MCMC. `log_prior_fn(theta)` and `log_likelihood_fn(data, theta)` return log-probs (tensor or scalar). Returns posterior samples of shape `(num_steps, *theta_shape)`.
 
 Example: infer mean `theta` of Normal data with prior Normal(0,1); see `examples/fourier/probabilistic.fourier`.
+
+### 15.9 Differentiable PDE Solvers (v0.8)
+
+Fourier provides **differentiable PDE solvers** for the heat equation \(u_t = k\,\Delta u\), built on finite differences and the differentiable `ode_solve` (RK4). Gradients flow through the initial condition `u0` and the diffusivity `k`, enabling inverse problems and physics-informed ML.
+
+- **`pde_heat_1d(u0, x, t, k, bc="dirichlet")`**: 1D heat equation \(u_t = k\,u_{xx}\). `u0` is the initial condition (1D tensor, length = `len(x)`); `x` is the spatial grid (1D); `t` is the time grid (1D); `k` is the diffusivity (scalar or tensor). Returns a tensor of shape `(len(t), len(x))`. With `bc="dirichlet"`, boundary values from `u0` are held fixed.
+- **`pde_heat_2d(u0, x, y, t, k, bc="dirichlet")`**: 2D heat equation \(u_t = k\,(u_{xx}+u_{yy})\). `u0` is the initial condition (2D tensor, shape `(nx, ny)`); `x`, `y` are 1D spatial grids; `t` is the time grid; `k` is the diffusivity. Returns a tensor of shape `(len(t), nx, ny)`.
+
+Example: 1D heat with a spike initial condition; see `examples/fourier/pde_heat.fourier`.
 
 ---
 
