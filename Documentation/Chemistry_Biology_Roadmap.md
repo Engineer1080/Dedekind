@@ -42,6 +42,7 @@ Damit sind viele chemische und biologische Rechnungen (Kinetik, Fitting, Fehlerf
 | **Doku „Fourier für Chemie & Biologie“** | README/Spec-Abschnitt + Verweise auf Beispiele; klare Zielgruppe. | Gering | 1 |
 | **Convenience-Funktionen** | `michaelis_menten(S, Vmax, Km)`, `logistic(t, r, K, N0)`, `logistic_growth_dt(N, r, K)`, `arrhenius(T, A, Ea)`. | Gering | 2 ✅ |
 | **Linear-Regression-Wrapper** | `linear_regression(x, y)` → [Steigung, Achsenabschnitt] (intern `fit`). | Gering | 2 ✅ |
+| **Chemische Elemente** | `atomic_mass("C")` (g/mol), `atomic_number("C")`; IUPAC-nah, ca. 50 Elemente; Molare Masse z. B. 2*atomic_mass("H")+atomic_mass("O"). | Gering | 2 ✅ |
 | **Weitere Einheiten** | bar, atm, pH-Hinweis (pH = -log10([H+]); % w/v optional. | Gering | 3 |
 | **Tutorial / Blog** | „Kinetik in Fourier“, „EC50-Fitting mit Fourier“ (optional). | Mittel | 4 |
 
@@ -100,6 +101,13 @@ Abstimmung mit [Features_Implementation_Roadmap](Features_Implementation_Roadmap
 2. **Beispiele**: `dose_response.fourier` nutzt `michaelis_menten`; `biology_growth.fourier` nutzt `logistic_growth_dt` und `logistic`; `chemistry_arrhenius.fourier`, `linear_regression.fourier` neu.
 
 **Erfolgskriterium**: Erfüllt — Michaelis-Menten, logistisches Wachstum, Arrhenius und lineare Regression sind einzeilig aufrufbar; Beispiele laufen.
+
+**Phase 2 ergänzt: Chemische Elemente** ✅
+
+- **`atomic_mass(symbol)`**: Atommasse in g/mol (Quantity); IUPAC-nah für ca. 50 Elemente (H, C, N, O, S, P, Na, Cl, Fe, Cu, Zn, …).
+- **`atomic_number(symbol)`**: Ordnungszahl (int).
+- **Nutzen**: Molare Masse z. B. H₂O = `2*atomic_mass("H") + atomic_mass("O")`; Ethan C₂H₆ = `2*atomic_mass("C") + 6*atomic_mass("H")`.
+- **Beispiel**: `chemistry_elements.fourier`.
 
 ---
 

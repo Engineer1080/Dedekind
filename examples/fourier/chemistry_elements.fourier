@@ -1,0 +1,24 @@
+fn main() {
+    print("--- Fourier: Chemische Elemente (Atommassen) ---")
+
+    // Molare Masse H2O: 2*M(H) + M(O)
+    M_H2O = 2 * atomic_mass("H") + atomic_mass("O")
+    print("Molare Masse H2O (g/mol):")
+    print(M_H2O)
+
+    // Molare Masse C2H6 (Ethan): 2*M(C) + 6*M(H)
+    M_ethane = 2 * atomic_mass("C") + 6 * atomic_mass("H")
+    print("Molare Masse C2H6 / Ethan (g/mol):")
+    print(M_ethane)
+
+    // Ordnungszahl
+    Z_C = atomic_number("C")
+    Z_Na = atomic_number("Na")
+    print("Ordnungszahl C:")
+    print(Z_C)
+    print("Ordnungszahl Na:")
+    print(Z_Na)
+
+    print("\nChemische Elemente (atomic_mass, atomic_number) aktiv.")
+}
+main()

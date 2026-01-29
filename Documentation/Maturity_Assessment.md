@@ -124,7 +124,8 @@ Fourier ist aktuell ein **Prototyp (v0.9.7)**. Die folgende Einschätzung bezieh
 - **Convenience-Funktionen**: `michaelis_menten(S, Vmax, Km)`, `arrhenius(T, A, Ea)` noch nicht als eingebaute API; Phase 2 geplant.
 - **Weitere Einheiten**: bar, atm, pH-Hinweis (pH = -log10([H+])), % w/v optional — Phase 3.
 - **Gleichgewichte**: Keine vordefinierten Gleichgewichts- oder Titrationsmodelle als Standard-API.
-- **Stöchiometrie**: Keine dedizierte Stöchiometrie- oder Reaktionsnetzwerk-API.
+- **Elemente**: `atomic_mass("C")` (g/mol), `atomic_number("C")`; ca. 50 Elemente (IUPAC-nah); Molare Masse z. B. 2*atomic_mass("H")+atomic_mass("O"). Beispiel: `chemistry_elements.fourier`.
+- **Stöchiometrie**: Keine dedizierte Reaktionsgleichungs- oder Reaktionsnetzwerk-API (Gleichungen ausbalancieren o. Ä.).
 
 **Fazit Chemie**: Für **Kinetik 1. Ordnung, Konzentrationen, Einheiten, Dosis-Wirkung und Fitting** grundlegend nutzbar; Convenience und weitere Einheiten sind in der Roadmap. **Ausgereiftheit: grundlegend.**
 

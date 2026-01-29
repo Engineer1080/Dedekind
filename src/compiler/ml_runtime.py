@@ -1166,6 +1166,53 @@ def linear_regression(x, y):
     params_opt = fit(loss, params_init, data, method="gd", lr=0.01, steps=500)
     return params_opt  # [slope, intercept]
 
+# --- Standard Library: Chemische Elemente (Atommassen, Ordnungszahlen) ---
+# IUPAC-nah (g/mol); häufigste Elemente für Chemie/Biologie.
+
+ATOMIC_MASSES = {
+    "H": 1.008, "He": 4.003, "Li": 6.941, "Be": 9.012, "B": 10.81, "C": 12.011, "N": 14.007,
+    "O": 15.999, "F": 18.998, "Ne": 20.180, "Na": 22.990, "Mg": 24.305, "Al": 26.982,
+    "Si": 28.085, "P": 30.974, "S": 32.065, "Cl": 35.45, "Ar": 39.948, "K": 39.098,
+    "Ca": 40.078, "Sc": 44.956, "Ti": 47.867, "V": 50.942, "Cr": 51.996, "Mn": 54.938,
+    "Fe": 55.845, "Co": 58.933, "Ni": 58.693, "Cu": 63.546, "Zn": 65.38, "Ga": 69.723,
+    "Ge": 72.63, "As": 74.922, "Se": 78.96, "Br": 79.904, "Kr": 83.798, "Rb": 85.468,
+    "Sr": 87.62, "Ag": 107.87, "Cd": 112.41, "I": 126.90, "Ba": 137.33, "Pt": 195.08,
+    "Au": 196.97, "Hg": 200.59, "Pb": 207.2, "U": 238.03,
+}
+
+ATOMIC_NUMBERS = {
+    "H": 1, "He": 2, "Li": 3, "Be": 4, "B": 5, "C": 6, "N": 7, "O": 8, "F": 9,
+    "Ne": 10, "Na": 11, "Mg": 12, "Al": 13, "Si": 14, "P": 15, "S": 16, "Cl": 17,
+    "Ar": 18, "K": 19, "Ca": 20, "Sc": 21, "Ti": 22, "V": 23, "Cr": 24, "Mn": 25,
+    "Fe": 26, "Co": 27, "Ni": 28, "Cu": 29, "Zn": 30, "Ga": 31, "Ge": 32, "As": 33,
+    "Se": 34, "Br": 35, "Kr": 36, "Rb": 37, "Sr": 38, "Ag": 47, "Cd": 48, "I": 53,
+    "Ba": 56, "Pt": 78, "Au": 79, "Hg": 80, "Pb": 82, "U": 92,
+}
+
+
+def atomic_mass(symbol):
+    """
+    Atommasse des Elements (IUPAC-nah) in g/mol.
+    symbol: String, z. B. \"H\", \"C\", \"O\", \"Na\".
+    Rückgabe: Quantity(value, \"g/mol\").
+    """
+    s = str(symbol).strip()
+    if s not in ATOMIC_MASSES:
+        raise ValueError(f"atomic_mass: unbekanntes Element '{s}'. Bekannt: H, C, N, O, S, P, Cl, Na, K, Fe, ...")
+    return Quantity(ATOMIC_MASSES[s], "g/mol")
+
+
+def atomic_number(symbol):
+    """
+    Ordnungszahl des Elements.
+    symbol: String, z. B. \"C\", \"Na\".
+    Rückgabe: int (dimensionslos).
+    """
+    s = str(symbol).strip()
+    if s not in ATOMIC_NUMBERS:
+        raise ValueError(f"atomic_number: unbekanntes Element '{s}'.")
+    return ATOMIC_NUMBERS[s]
+
 # --- Standard Library: Sorting ---
 
 def sort(data, descending=False):
