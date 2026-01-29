@@ -479,6 +479,47 @@ def ifft(data):
     data = _to_complex_tensor(data)
     return torch.fft.ifft(data)
 
+# --- Standard Library: Differentiable ODE Solvers ---
+
+def linspace(start, stop, steps):
+    """Erzeugt einen 1D-Tensor mit `steps` äquidistanten Werten von start bis stop."""
+    s = _to_tensor(start).float().squeeze()
+    e = _to_tensor(stop).float().squeeze()
+    n = int(steps)
+    return torch.linspace(float(s.item()) if s.numel() == 1 else float(s.item()),
+                          float(e.item()) if e.numel() == 1 else float(e.item()),
+                          n)
+
+def ode_solve(fun, y0, t, method="rk4"):
+    """
+    Differenzierbarer ODE-Löser: dy/dt = fun(t, y).
+    fun(t, y) muss dy/dt zurückgeben (t Skalar, y Tensor); y0 Anfangsbedingung, t 1D-Zeitgitter.
+    Rückgabe: Tensor der Form (len(t), *y0.shape) mit Lösung y(t).
+    Gradients fließen durch y0 und durch in fun verwendete Parameter (z.B. für Physics-Informed ML).
+    """
+    y0 = _to_tensor(y0).float()
+    t = _to_tensor(t).float().flatten()
+    if t.dim() != 1 or t.numel() < 2:
+        raise ValueError("ode_solve: t muss ein 1D-Vektor mit mindestens 2 Zeitpunkten sein.")
+    t = t.to(y0.device)
+    out = [y0]
+    y = y0.clone()
+    for i in range(t.numel() - 1):
+        t_cur = t[i]
+        h = t[i + 1] - t[i]
+        if method == "euler":
+            dy = fun(t_cur, y)
+            y = y + h * dy
+        else:
+            # RK4 (default)
+            k1 = fun(t_cur, y)
+            k2 = fun(t_cur + h * 0.5, y + h * 0.5 * k1)
+            k3 = fun(t_cur + h * 0.5, y + h * 0.5 * k2)
+            k4 = fun(t_cur + h, y + h * k3)
+            y = y + (h / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
+        out.append(y)
+    return torch.stack(out, dim=0)
+
 # --- Standard Library: Sorting ---
 
 def sort(data, descending=False):
