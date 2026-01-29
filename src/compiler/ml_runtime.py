@@ -5,8 +5,18 @@ import torch.nn as nn  # type: ignore[import-untyped]
 _builtin_min = builtins.min
 _builtin_max = builtins.max
 
+def _normalize_unit_for_compare(unit):
+    """Normalisiert Einheiten für Vergleich: M, mol/L, mol*L^-1 gelten als gleich (chemische Konzentration)."""
+    if not unit:
+        return unit
+    u = str(unit).strip()
+    if u in ("M", "mol/L", "mol*L^-1", "mol*L^(-1)"):
+        return "M"
+    return u
+
+
 class Quantity:
-    """Physikalische Größe mit Einheit (z. B. 10[m], 5[m/s]). Rechenregeln: gleiche Einheit für +/-, Einheiten multiplizieren/dividieren."""
+    """Physikalische Größe mit Einheit (z. B. 10[m], 5[m/s], 0.1[M], 50[ppm]). Rechenregeln: gleiche Einheit für +/-, Einheiten multiplizieren/dividieren. Chemie: mol, L, M (= mol/L), ppm unterstützt."""
     def __init__(self, value, unit=""):
         self.value = float(value)
         self.unit = str(unit) if unit else ""
@@ -14,7 +24,7 @@ class Quantity:
     def _same_unit(self, other):
         if not isinstance(other, Quantity):
             return False
-        return self.unit == other.unit
+        return _normalize_unit_for_compare(self.unit) == _normalize_unit_for_compare(other.unit)
 
     def __add__(self, other):
         if isinstance(other, (int, float)):
@@ -126,10 +136,17 @@ def _unit_pow(u, exp):
     return f"{base}^{e}"
 
 def _unit_simplify(u):
-    """Vereinfacht Einheiten-String für Anzeige (z. B. (kg)*((m/s)^2) -> J)."""
-    if not u: return u
+    """Vereinfacht Einheiten-String für Anzeige (z. B. (kg)*((m/s)^2) -> J; mol/L -> M). Chemie: mol, L, M, ppm unterstützt."""
+    if not u:
+        return u
+    u = u.strip()
+    # Chemie: Konzentration mol/L -> M; ppm bleibt ppm
+    if u in ("mol/L", "mol*L^-1", "mol*L^(-1)", "mol/L"):
+        return "M"
+    if u.replace(" ", "") in ("mol/L", "mol*L^-1"):
+        return "M"
     # Joule: kg*m^2/s^2 bzw. (kg)*((m/s)^2)
-    if "(kg)*((m/s)^2)" in u or u.strip() == "kg*m^2/s^2":
+    if "(kg)*((m/s)^2)" in u or u == "kg*m^2/s^2":
         return "J"
     if "(J*s)*(Hz)" in u or "J*s*Hz" in u or ("J*s" in u and "Hz" in u):
         return "J"
@@ -138,7 +155,7 @@ def _unit_simplify(u):
         return "N"
     if "N*m^2/C^2" in u and "m^2" in u:
         return "N"
-    if "kg*m/s^2" in u or u.strip() == "N":
+    if "kg*m/s^2" in u or u == "N":
         return "N"
     return u
 

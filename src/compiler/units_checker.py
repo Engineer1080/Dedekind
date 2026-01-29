@@ -20,6 +20,16 @@ KNOWN_UNITS: Dict[str, str] = {
 }
 
 
+def _normalize_chemical_unit(u: Optional[str]) -> Optional[str]:
+    """Normalisiert chemische Einheiten für Vergleich: mol/L und M gelten als gleich."""
+    if u is None or u == "":
+        return u
+    u = u.strip()
+    if u in ("M", "mol/L", "mol*L^-1", "mol*L^(-1)"):
+        return "M"
+    return u
+
+
 def _unit_mul(u1: str, u2: str) -> str:
     if not u1:
         return u2
@@ -104,10 +114,13 @@ def _check_expr(node: Node, filepath: Optional[str]) -> None:
                         return
                 except (TypeError, ValueError):
                     pass
-            if left_u is not None and right_u is not None and left_u != right_u:
+            # Chemische Einheiten: M und mol/L gelten als gleich
+            left_n = _normalize_chemical_unit(left_u)
+            right_n = _normalize_chemical_unit(right_u)
+            if left_n is not None and right_n is not None and left_n != right_n:
                 line = getattr(node, "line", None)
                 raise CompileError(
-                    f"Einheiten passen nicht für {node.op}: [{left_u}] vs [{right_u}]. "
+                    f"Einheiten passen nicht für {node.op}: [{left_u or left_n}] vs [{right_u or right_n}]. "
                     "Für Addition/Subtraktion muss die gleiche Einheit verwendet werden.",
                     line=line,
                     filepath=filepath,

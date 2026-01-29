@@ -1,6 +1,6 @@
 # Fourier Programming Language
 
-![Version](https://img.shields.io/badge/Version-0.9.6-blue) ![Fourier Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-0.9.7-blue) ![Fourier Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Fourier** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -11,7 +11,7 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **Ricci Calculus**: Native index notation (`A^ij * B_jk`) for Einstein summation.
 - **Sparse Tensors**: Efficient `.sparse()` support for FEM/CFD simulations.
 - **Fundamental Constants**: Mathematical `pi`, `e`; physical CODATA constants: `c`, `G`, `h`, `hbar`, `k_B`, `k_e`, `e_charge`, `epsilon_0`, `mu_0`, `m_e`, `m_p`, `N_A`, `R_gas`, `alpha`, `sigma_SB`, `F_faraday` — all as **Quantity** with SI units.
-- **Physical Units**: Literals with units (`10[m]`, `5[m/s]`, `1.0[kg]`); add/sub require same unit; multiply/divide combine units; `^` for powers (`r^2`); display simplified to J, N where applicable.
+- **Physical Units**: Literals with units (`10[m]`, `5[m/s]`, `1.0[kg]`); add/sub require same unit; multiply/divide combine units; `^` for powers (`r^2`); display simplified to J, N where applicable. **Chemie**: mol, L, M (= mol/L), ppm; `0.1[M]`, `1[mol]`, `50[ppm]`; M und mol/L gelten als gleiche Einheit.
 - **4D Rotational Math**: Native Quaternion support (`i`, `j`, `k` suffixes) and `.rotate()` method; unary minus supported (`-1.0 + 0i`).
 - **Differentiable ODE Solvers**: `ode_solve(fun, y0, t)` (RK4/Euler); gradients via `grad()` for physics-informed ML; `linspace(start, stop, steps)` for time grids.
 - **Differentiable PDE Solvers**: `pde_heat_1d(u0, x, t, k)` and `pde_heat_2d(u0, x, y, t, k)` for the heat equation \(u_t = k \cdot \Delta u\); finite differences + `ode_solve`; gradients through `u0` and `k`.
@@ -24,7 +24,12 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **Bessere Fehlermeldungen**: Compiler-Fehler mit Zeile (`CompileError`); Parser setzt `line` im AST; Runtime-Quantity-Meldungen mit Kontext.
 - **Einheiten zur Compile-Zeit**: `1[m] + 1[s]` → Compiler-Fehler mit Zeile; `compile_source(..., check_units=True)` (Default), CLI `--no-units-check`.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
-- **Modern IDE**: "Fourier Studio" – v0.9.6 with resizable terminal and file explorer.
+- **Modern IDE**: "Fourier Studio" – v0.9.7 with resizable terminal and file explorer.
+
+### What's New in v0.9.7
+- **Fourier für Chemie & Biologie**: Chemische Einheiten **mol**, **L**, **M** (= mol/L), **ppm** in Runtime und Compile-Check; M und mol/L gelten als gleiche Einheit. Einheiten-Literal `[1/s]` im Parser unterstützt (z. B. `0.05[1/s]`).
+- **Beispiele**: `chemistry_kinetics.fourier` (Reaktion 1. Ordnung mit `ode_solve`, [M], [1/s]), `dose_response.fourier` (Dosis-Wirkung/EC50 mit `fit`), `biology_growth.fourier` (logistisches Wachstum mit `ode_solve`).
+- **Dokumentation**: Abschnitt „Fourier für Chemie & Biologie“ im README; Verweis auf `Documentation/Chemistry_Biology_Roadmap.md`.
 
 ### What's New in v0.9.6
 - **Grundlegende Math-Funktionen**: Erweiterung der Standard-Bibliothek um `tan`, `exp`, `log`, `log10`, `sqrt`, `abs`; Arkusfunktionen `asin`, `acos`, `atan`, `atan2(y,x)`; Hyperbelfunktionen `sinh`, `cosh`, `tanh`. Alle elementweise, differenzierbar; LaTeX-Export angepasst.
@@ -66,6 +71,17 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **Physical Units (Option B)**: Constants `c`, `G`, `h`, `k_B`, `k_e` are now `Quantity` values with SI units; expressions like `m * c^2` and `G * m1 * m2 / r^2` yield results with correct dimensions; output simplified to **J** (Joule) and **N** (Newton) where applicable.
 - **Quantity**: Full arithmetic including `__pow__` (e.g. `c^2`, `r^2`) and `__neg__`; unary minus for literals and Quaternions fixed in codegen.
 - **Quaternion**: `__neg__` support so expressions such as `-1.0 + 0i` and signal lists with negative imaginary parts work correctly (e.g. `signal_physics.fourier`).
+
+## 🧪 Fourier für Chemie & Biologie
+
+Fourier unterstützt **chemische und biologische Anwendungen** mit denselben Bausteinen wie für Physik und ML: Einheiten, ODE-Löser, Fitting und Unsicherheitsfortpflanzung.
+
+- **Einheiten**: Konzentration in `[M]` (Molarität), Stoffmenge in `[mol]`, Volumen in `[L]`, Verdünnungen in `[ppm]`; `M` und `mol/L` werden als gleich behandelt (Runtime und Compile-Check).
+- **Kinetik**: Reaktion 1. Ordnung \(c(t) = c_0 e^{-kt}\) mit `ode_solve` und Einheiten `[M]`, `[1/s]` — Beispiel: `chemistry_kinetics.fourier`.
+- **Dosis-Wirkung / Michaelis-Menten**: Hill-Gleichung oder \(v = V_{\max}[S]/(K_M + [S])\); Parameterfitting mit `fit` (EC50, \(K_M\), \(V_{\max}\)) — Beispiel: `dose_response.fourier`.
+- **Wachstum**: Logistisches Wachstum \(dN/dt = r N (1 - N/K)\) mit `ode_solve` — Beispiel: `biology_growth.fourier`.
+
+Konstanten wie `N_A`, `R_gas`, `F_faraday` sind als **Quantity** mit SI-Einheiten (`1/mol`, `J/(K*mol)`, `C/mol`) verfügbar. Ausführliche Roadmap: `Documentation/Chemistry_Biology_Roadmap.md`.
 
 ## 🧠 Machine Learning Example
 
@@ -190,6 +206,9 @@ Example programs are in `examples/fourier/`, including:
 - `integration.fourier` – numerical integration `integrate(f, a, b)` and `sin`/`cos`  
 - `uncertainty_propagation.fourier` – `uncertain(value, std)`; Gauß'sche Fehlerfortpflanzung  
 - `curve_fitting.fourier` – `fit(loss_fn, params_init, data)` für lineare Regression  
+- `chemistry_kinetics.fourier` – Reaktion 1. Ordnung mit Einheiten [M], [1/s] und `ode_solve`  
+- `dose_response.fourier` – Dosis-Wirkung (EC50/Vmax/Km) mit `fit`  
+- `biology_growth.fourier` – logistisches Wachstum mit `ode_solve`  
 - `probabilistic.fourier` – distributions, sampling, and Bayesian inference with `metropolis`  
 - `conditional_logic.fourier`, `basic_loops.fourier` – control flow  
 - `mnist_classifier.fourier` – neural network with `Sequential`/`Dense`  
@@ -276,10 +295,11 @@ Fourier aims to become the "Standard Language for Nature's Laws." To achieve thi
 
 ## 📚 Documentation
 
-- **Language Specification**: `Documentation/Fourier_Language_Specification.md` (v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9/v0.9.6; Stand v0.9.6). PDF can be generated with `pandoc` (see `Documentation/README.md`).
+- **Language Specification**: `Documentation/Fourier_Language_Specification.md` (v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9/v0.9.6; Chemie/Biologie v0.9.7; Stand v0.9.7). PDF can be generated with `pandoc` (see `Documentation/README.md`).
 - **Research & Architecture**: `Documentation/Fourier_Research_and_Architecture.md` (includes §10 Sprachfeatures v0.6).
 - **Symbolic Simplification**: `Documentation/Symbolic_Simplification_Roadmap.md` — Implementierungs-Roadmap (Phasen, Optionen, Integration).
 - **Features Roadmap**: `Documentation/Features_Implementation_Roadmap.md` — naturwissenschaftliche Features (Phase 1 abgeschlossen: Verteilungen, Integration).
+- **Chemie & Biologie**: `Documentation/Chemistry_Biology_Roadmap.md` — Einheiten mol/L/M/ppm, Beispiele (Kinetik, Dosis-Wirkung, Wachstum), Convenience-Funktionen.
 - Legacy PDFs (v0.1) remain in `Documentation/`; the Markdown sources are the up-to-date references.
 
 ## 📄 License

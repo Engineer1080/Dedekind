@@ -1,0 +1,33 @@
+fn main() {
+    print("--- Fourier: Dosis-Wirkung (Hill / Michaelis-Menten) ---")
+
+    // Hill: v = Vmax * S^n / (K^n + S^n); Fitting an künstliche Daten
+    // Hier: Wirkung = Vmax * dose / (EC50 + dose)  (n=1 wie Michaelis-Menten)
+    x_data = [0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0]
+    y_data = [0.15, 0.6, 1.0, 1.6, 2.2, 2.6, 2.85]
+
+    fn loss(params, data) {
+        x = data[0]
+        y = data[1]
+        Vmax = params[0]
+        EC50 = params[1]
+        y_pred = Vmax * x / (EC50 + x)
+        diff = y_pred - y
+        return (diff * diff).sum()
+    }
+
+    data = [x_data, y_data]
+    params_init = [3.0, 2.0]
+    params_opt = fit(loss, params_init, data, method="gd", lr=0.01, steps=800)
+
+    Vmax_fit = params_opt[0]
+    EC50_fit = params_opt[1]
+    print("Gefittete Parameter:")
+    print("Vmax:")
+    print(Vmax_fit)
+    print("EC50:")
+    print(EC50_fit)
+
+    print("\nDosis-Wirkung (EC50-Fitting) aktiv.")
+}
+main()

@@ -246,6 +246,8 @@ class Parser:
                     t = self.consume()
                     if t.type == 'ID':
                         unit_parts.append(t.value)
+                    elif t.type == 'NUMBER':
+                        unit_parts.append(str(t.value))
                     elif t.type == 'MUL':
                         unit_parts.append('*')
                     elif t.type == 'DIV':

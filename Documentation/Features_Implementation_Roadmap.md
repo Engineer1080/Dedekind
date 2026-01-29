@@ -159,6 +159,7 @@ Diese Roadmap priorisiert und plant **sinnvolle Erweiterungen** der Fourier-Spra
 ## 7. Referenzen und nächste Schritte
 
 - **Bestehende Roadmap**: [Symbolic_Simplification_Roadmap.md](Symbolic_Simplification_Roadmap.md) — Einheiten in Vereinfachung (Phase 5 dort) mit Phase 3 hier abstimmen.
+- **Chemie & Biologie**: [Chemistry_Biology_Roadmap.md](Chemistry_Biology_Roadmap.md) — Einheiten mol/L/M, Beispiele (Kinetik, Dosis-Wirkung, Wachstum), Convenience-Funktionen, Doku „Fourier für Chemie & Biologie“.
 - **Language Specification**: §15 Standard Library; §12 Implementation Roadmap; „Beyond v1.0“.
 - **Codebasis**: `src/compiler/ml_runtime.py` (Stdlib), `src/compiler/codegen.py` (Built-ins), `src/compiler/compiler.py` (Pipeline), `src/compiler/parser.py` (AST, Zeileninfo).
 - **Nächster konkreter Schritt**: Phase 5 — Symbolische Ableitungen (`diff(expr, x)` als Formel); optional Phase 2/3 verfeinern (z. B. Spalte, IDE-Anzeige).

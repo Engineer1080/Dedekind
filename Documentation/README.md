@@ -6,10 +6,11 @@ This folder contains the **source** and **generated** documentation for the Four
 
 | File | Description |
 |------|-------------|
-| **Fourier_Language_Specification.md** | Language Specification (Markdown source, v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9/v0.9.6; Stand v0.9.6) |
+| **Fourier_Language_Specification.md** | Language Specification (Markdown source, v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9/v0.9.6; Chemie/Biologie v0.9.7; Stand v0.9.7) |
 | **Fourier_Research_and_Architecture.md** | Research foundation & architecture (Markdown source; §10 Sprachfeatures v0.6) |
 | **Symbolic_Simplification_Roadmap.md** | Implementierungs-Roadmap für Symbolic Simplification (Phasen, Optionen, Integration) |
 | **Features_Implementation_Roadmap.md** | Implementierungs-Roadmap für naturwissenschaftliche Features (Verteilungen, Integration, Einheiten Compile-Zeit, NUTS/VI, Fitting, LaTeX, symbolische Ableitungen) |
+| **Chemistry_Biology_Roadmap.md** | Roadmap für Chemie und Biologie (Einheiten mol/L/M, Beispiele Kinetik/Dosis-Wirkung/Wachstum, Convenience-Funktionen, Doku „Fourier für Chemie & Biologie“) |
 | **Fourier_Language_Specification_v0.1.pdf** | Legacy PDF (v0.1); for current spec use the Markdown or generate v0.2 PDF below |
 | **Fourier_Research_Papers_and_Architecture.pdf** | Legacy PDF; for current content use the Markdown or generate PDF below |
 
@@ -35,6 +36,10 @@ pandoc Fourier_Research_and_Architecture.md -o Fourier_Research_and_Architecture
 - **Online**: Paste the Markdown into a service that converts Markdown to PDF (e.g. markdown-to-pdf converters).
 - **Typora / other editors**: Open the `.md` file and export to PDF from the application.
 
+
+## What changed in v0.9.7 (documented here)
+
+- **Version 0.9.7**: Fourier für Chemie & Biologie — chemische Einheiten mol, L, M (= mol/L), ppm in Runtime und Compile-Check; M und mol/L gelten als gleiche Einheit. Einheiten-Literal `[1/s]` im Parser. Beispiele: `chemistry_kinetics.fourier`, `dose_response.fourier`, `biology_growth.fourier`. Abschnitt im README; Roadmap: **Chemistry_Biology_Roadmap.md**.
 
 ## What changed in v0.9.6 (documented here)
 
