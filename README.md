@@ -8,13 +8,34 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 
 ---
 
-## 🚀 Key Features
+## 🚀 Features
 
-*   **Parallel by Default**: Operations are automatically distributed across available compute resources (CPU cores, GPUs) without manual thread management.
-*   **Hardware Agnostic**: Write once, run efficiently on any supported hardware. The compiler handles the complexity of CUDA/ROCm/TPU kernels.
-*   **Modern Imperative Syntax**: Familiar C-style syntax with functional power. Easy to read, easy to write.
-*   **Fourier Studio**: A built-in, premium Web-based IDE for immediate productivity.
-*   **Explicit Control**: Simple modifiers like `.gpu()`, `.cpu()`, and `.single()` allow developers to override compiler decisions when necessary.
+- **Parallel by Default**: Built-in support for vector and matrix operations.
+- **Hardware Acceleration**: Use `.gpu()` or `.cpu()` to control execution device via PyTorch.
+- **ML Framework**: Native `Dense` and `Sequential` primitives for Neural Networks.
+- **Modern IDE**: "Fourier Studio" - a premium Electron-based environment.
+- **Fast Development**: Transpiles directly to highly optimized PyTorch code.
+
+## 🧠 Machine Learning Example
+
+```fourier
+fn main() {
+    // Define a Neural Network
+    model = Sequential([
+        Dense(128, activation="relu"),
+        Dense(64, activation="relu"),
+        Dense(10, activation="softmax")
+    ])
+    
+    // Create data on GPU
+    input = [[1.0, 2.0, 3.0]].gpu()
+    
+    // Run inference
+    output = model.forward(input)
+    print(output)
+}
+main()
+```
 
 ## 🏗️ Architecture
 
