@@ -1,0 +1,113 @@
+# Fourier Programming Language
+
+![Fourier Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+
+**Fourier** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
+
+Unlike general-purpose languages retrofitted with parallel computing capabilities, Fourier is built from the ground up with **GPU/TPU acceleration** and **Automatic Parallelization** as core features.
+
+---
+
+## 🚀 Key Features
+
+*   **Parallel by Default**: Operations are automatically distributed across available compute resources (CPU cores, GPUs) without manual thread management.
+*   **Hardware Agnostic**: Write once, run efficiently on any supported hardware. The compiler handles the complexity of CUDA/ROCm/TPU kernels.
+*   **Modern Imperative Syntax**: Familiar C-style syntax with functional power. Easy to read, easy to write.
+*   **Fourier Studio**: A built-in, premium Web-based IDE for immediate productivity.
+*   **Explicit Control**: Simple modifiers like `.gpu()`, `.cpu()`, and `.single()` allow developers to override compiler decisions when necessary.
+
+## 🏗️ Architecture
+
+The project consists of two main components:
+
+1.  **Fourier Compiler Backend (`src/compiler`)**
+    *   Implemented in Python (Prototype Phase).
+    *   Transpiles Fourier source code (`.fourier`) into optimized high-performance Python/NumPy code (future target: MLIR/LLVM).
+    *   Exposes a REST API (`src/server.py`) for the IDE.
+
+2.  **Fourier Studio (`src/ui`)**
+    *   A modern, dark-themed Integrated Development Environment.
+    *   Built with **React**, **Vite**, and **Vanilla CSS**.
+    *   Features a code editor, real-time console output, and syntax highlighting.
+
+## 🛠️ Installation & Setup
+
+### Prerequisites
+*   **Python 3.10+**
+*   **Node.js 18+** & `npm`
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/Engineer1080/FourierLanguage.git
+cd FourierLanguage
+```
+
+### 2. Setup Compiler Backend
+The backend requires Python and Flask to serve the compiler API.
+
+```bash
+# Install dependencies
+pip install flask flask-cors numpy
+
+# Run the Backend Server
+python src/server.py
+```
+*The server will start on `http://localhost:5000`.*
+
+### 3. Setup Fourier Studio (Frontend)
+Open a new terminal window for the frontend.
+
+```bash
+cd src/ui
+
+# Install Node dependencies
+npm install
+
+# Start the Development Server
+npm run dev
+```
+*The IDE will open at `http://localhost:5173`.*
+
+## 💻 Usage
+
+1.  Open **Fourier Studio** in your browser.
+2.  Write your Fourier code in the editor.
+    ```fourier
+    fn main() {
+        print("Hello, Fourier!")
+        
+        // Automatic matrix operations
+        data = [1.0, 2.0, 3.0, 4.0]
+        result = data * 2.0
+        
+        print("Result:")
+        print(result)
+    }
+    main()
+    ```
+3.  Click the **▶ Run Code** button.
+4.  View the compilation result and program output in the terminal panel.
+
+## 🗺️ Roadmap
+
+### Phase 1: Foundation (Current) ✅
+*   [x] Language Specification & Design
+*   [x] Proof-of-Concept Compiler (Python Backend)
+*   [x] Fourier Studio IDE (React Frontend)
+
+### Phase 2: Core Development 🚧
+*   [ ] Implement Affine Type System (Memory Safety)
+*   [ ] Advanced Semantic Analysis
+*   [ ] Work-Stealing Scheduler for CPU Parallelism
+
+### Phase 3: Hardware Acceleration
+*   [ ] Integration with **Triton** or **PyTorch** for real GPU execution.
+*   [ ] Implementation of `.gpu()` modifiers for kernel generation.
+
+### Phase 4: Production
+*   [ ] LLVM/MLIR Backend for native code generation.
+*   [ ] Standard Library (Linear Algebra, Neural Network Layers).
+
+## 📄 License
+
+This project is licensed under the MIT License.
