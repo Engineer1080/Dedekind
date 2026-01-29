@@ -49,8 +49,8 @@ class Lexer:
             ('COMMA',    r','),                 # ,
             ('DOT',      r'\.'),                # .
             ('CARET',    r'\^'),                # ^ (contravariant index)
-            ('UNDERSCORE', r'_'),               # _ (covariant index)
-            ('ID',       r'[A-Za-z][A-Za-z0-9]*'), # Identifiers (No underscores to allow _ as index op)
+            ('UNDERSCORE', r'_'),               # _ (covariant index, nur wenn nicht in ID)
+            ('ID',       r'[A-Za-z][A-Za-z0-9_]*'), # Identifiers (mit _ z.B. check_value)
             ('NEWLINE',  r'\n'),                # Line endings
             ('SKIP',     r'[ \t\r]+'),           # Skip over spaces, tabs, and carriage returns
             ('MISMATCH', r'.'),                 # Any other character

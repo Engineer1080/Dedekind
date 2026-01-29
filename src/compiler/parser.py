@@ -20,6 +20,14 @@ class Parser:
             return self.tokens[self.pos + offset]
         return None
 
+    @staticmethod
+    def _looks_like_ricci_suffix(id_value: str) -> bool:
+        """True wenn id_value die Form name_indices hat und indices wie Tensor-Indizes (i,j,k) aussehen."""
+        if '_' not in id_value:
+            return False
+        _, _, suffix = id_value.rpartition('_')
+        return 1 <= len(suffix) <= 4 and all(c in 'ijk' for c in suffix)
+
     def parse(self) -> Program:
         statements = []
         while self.pos < len(self.tokens):
@@ -242,18 +250,23 @@ class Parser:
             self.consume('RPAREN')
         elif token.type == 'ID':
             name_token = self.consume()
-            node = Identifier(name_token.value)
+            value = name_token.value
+            node = Identifier(value)
             
-            # Ricci Calculus: A^ij or A_uv
-            # ONLY if followed by an ID. Otherwise it's a power operation.
+            # Ricci: A^ij / A_ij (entweder getrennte Tokens oder ein ID "A_ij")
             if self.peek() and self.peek().type in ['CARET', 'UNDERSCORE']:
                 if self.peek(1) and self.peek(1).type == 'ID':
                     indices = ""
                     while self.peek() and self.peek().type in ['CARET', 'UNDERSCORE'] and self.peek(1) and self.peek(1).type == 'ID':
-                        self.consume() # Consume ^ or _
+                        self.consume()
                         idx_token = self.consume('ID')
                         indices += idx_token.value
-                    node = IndexedVariable(name_token.value, indices)
+                    node = IndexedVariable(value, indices)
+            elif '_' in value and self._looks_like_ricci_suffix(value):
+                # Ein Token "A_ij" -> IndexedVariable
+                name, _, indices = value.rpartition('_')
+                if name and indices:
+                    node = IndexedVariable(name, indices)
         elif token.type == 'GRAD':
             name_token = self.consume('GRAD')
             node = Identifier('grad')

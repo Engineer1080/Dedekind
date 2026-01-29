@@ -228,19 +228,36 @@ def _to_grad(data):
     return tensor
 
 def _to_tensor(data):
-    """Internal helper to convert nested lists/NumPy to PyTorch tensors."""
+    """Internal helper to convert nested lists/NumPy to PyTorch tensors.
+    Lists that contain non-tensor items (e.g. functions, nn.Modules) are returned unchanged
+    so that e.g. Sequential([Dense(...), ...]) receives the list of layers as-is."""
     if isinstance(data, torch.Tensor):
         return data
     if isinstance(data, (list, tuple)):
-        # Handle empty lists
-        if not data: return torch.tensor([], dtype=torch.float32)
-        # Try converting directly, let PyTorch infer the type (Float or Complex)
+        if not data:
+            return torch.tensor([], dtype=torch.float32)
         try:
             return torch.as_tensor(data)
-        except:
-            # Fallback for complex nesting
-            return torch.stack([_to_tensor(x) for x in data])
-    return torch.as_tensor(data)
+        except (TypeError, ValueError, RuntimeError):
+            pass
+        # Recursively convert; if any element is not a tensor (e.g. function, module), return list unchanged
+        converted = []
+        for x in data:
+            try:
+                t = _to_tensor(x)
+                if isinstance(t, torch.Tensor):
+                    converted.append(t)
+                else:
+                    return data
+            except (TypeError, ValueError, RuntimeError):
+                return data
+        if converted and len(converted) == len(data):
+            return torch.stack(converted)
+        return data
+    try:
+        return torch.as_tensor(data, dtype=torch.float32)
+    except (TypeError, ValueError, RuntimeError):
+        return data
 
 def _to_sparse(data):
     """Converts a dense tensor to a sparse representation (COO)."""
