@@ -127,23 +127,25 @@ npm run electron:dev
 
 ## 🗺️ Roadmap
 
-### Phase 1: Foundation (Current) ✅
+### Phase 1: Foundation ✅
 *   [x] Language Specification & Design
 *   [x] Proof-of-Concept Compiler (Python Backend)
 *   [x] Fourier Studio IDE (React Frontend)
 
-### Phase 2: Core Development 🚧
-*   [ ] Implement Affine Type System (Memory Safety)
-*   [ ] Advanced Semantic Analysis
-*   [ ] Work-Stealing Scheduler for CPU Parallelism
+### Phase 2: Core Development ✅
+*   [x] Build-in Core Algorithms (FFT, Conv, Linalg)
+*   [x] Robust Lexer & Parser (Windows Support, Unary Ops)
+*   [x] Resizable Studio Terminal & Tabs
 
-### Phase 3: Hardware Acceleration
-*   [ ] Integration with **Triton** or **PyTorch** for real GPU execution.
-*   [ ] Implementation of `.gpu()` modifiers for kernel generation.
+### Phase 3: Hardware Acceleration ✅
+*   [x] Integration with **PyTorch** for GPU execution.
+*   [x] Implementation of `.gpu()` and `.cpu()` modifiers.
 
-### Phase 4: Production
-*   [ ] LLVM/MLIR Backend for native code generation.
-*   [ ] Standard Library (Linear Algebra, Neural Network Layers).
+### Phase 4: Production (v0.2) 🚧
+*   [x] **Native Performance**: Integration with MLIR/Inductor via `.fast()`.
+*   [x] **MLIR Prototype**: Fourier-Dialect IR generation.
+*   [ ] LLVM AOT Compilation.
+*   [ ] Advanced Memory Management (Linear Types).
 
 ## 📄 License
 

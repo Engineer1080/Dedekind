@@ -103,6 +103,45 @@ def Dense(out_features, activation=None, in_features=None):
 def Sequential(layers):
     return FourierSequential(layers)
 
+class FourierCompiledModel:
+    """
+    Robust wrapper for torch.compile that handles lazy compilation errors.
+    If the native compiler is missing, it falls back to the interpreted model.
+    """
+    def __init__(self, original_model):
+        self.original_model = original_model
+        self.failed = False
+        try:
+            self.compiled = torch.compile(original_model)
+        except:
+            self.failed = True
+
+    def __call__(self, *args, **kwargs):
+        if not self.failed:
+            try:
+                # First call triggers lazy compilation in Inductor
+                return self.compiled(*args, **kwargs)
+            except Exception as e:
+                print(f"Fourier Warning: Runtime compilation failed ({type(e).__name__}). Falling back to interpreted mode.")
+                self.failed = True
+        return self.original_model(*args, **kwargs)
+
+    def forward(self, *args, **kwargs):
+        return self.__call__(*args, **kwargs)
+
+    def __getattr__(self, name):
+        # Proxy all other calls to the original model (e.g., parameters, to, cuda)
+        return getattr(self.original_model, name)
+
+def compile_model(model):
+    """
+    Fourier Native Compilation Hook.
+    Returns a robust wrapper that manages the transition to native code.
+    """
+    if hasattr(torch, 'compile'):
+        return FourierCompiledModel(model)
+    return model
+
 def random_vector(size):
     return torch.randn(size)
 

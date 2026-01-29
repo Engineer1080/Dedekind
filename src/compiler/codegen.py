@@ -154,6 +154,7 @@ class CodeGenerator:
         
         if func_name == "gpu": return f"_to_gpu({args[0]})"
         if func_name == "cpu": return f"_to_cpu({args[0]})"
+        if func_name == "fast": return f"compile_model({args[0]})"
         if func_name == "matmul": return f"torch.matmul({args[0]}, {args[1]})"
         if func_name == "forward":
              all_args = args[1:] + kwargs
@@ -164,6 +165,7 @@ class CodeGenerator:
         
         if 'gpu' in node.modifiers: call_str = f"_to_gpu({call_str})"
         if 'cpu' in node.modifiers: call_str = f"_to_cpu({call_str})"
+        if 'fast' in node.modifiers: call_str = f"compile_model({call_str})"
         return call_str
 
     def visit_expression(self, node: Node):

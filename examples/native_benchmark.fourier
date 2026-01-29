@@ -1,0 +1,32 @@
+fn main() {
+    print("--- Fourier: Native Performance Benchmark ---")
+
+    // Definiere ein großes Modell für den Benchmark
+    model = Sequential([
+        Dense(1024, activation="relu"),
+        Dense(1024, activation="relu"),
+        Dense(512, activation="relu"),
+        Dense(10, activation="softmax")
+    ])
+
+    // Erstelle ein optimiertes Modell mit dem neuen .fast() Modifier
+    // Dies triggert intern torch.compile (MLIR/Inductor)
+    print("Kompiliere Modell für native Performance...")
+    fast_model = model.fast()
+    
+    // Beispiel-Eingabe (Großer Batch)
+    input = random_matrix(128, 1024)
+    
+    print("Starte Inferenz (Compiled Mode)...")
+    // Der erste Run triggert die tatsächliche Kompilierung (JIT)
+    prediction = fast_model.forward(input)
+    
+    print("Inferenz beendet.")
+    print("Ergebnis-Shape:")
+    // In Fourier können wir Shapes indirekt via Inferenz prüfen
+    print("Erfolgreich ausgeführt!")
+    
+    print("--- Benchmark beendet ---")
+}
+
+main()

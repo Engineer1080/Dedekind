@@ -12,13 +12,15 @@ function App() {
   const [files, setFiles] = useState([]);
   const [openTabs, setOpenTabs] = useState([]);
   const [activeTabId, setActiveTabId] = useState(null);
-  const [output, setOutput] = useState('Fourier Studio v0.1 Ready...')
+  const [output, setOutput] = useState('Fourier Studio v0.2 Ready...')
   const [isRunning, setIsRunning] = useState(false)
   const [fileContents, setFileContents] = useState({});
   const editorRef = useRef(null);
   const highlightRef = useRef(null);
 
   const [expandedFolders, setExpandedFolders] = useState({});
+  const [consoleHeight, setConsoleHeight] = useState(200);
+  const [isResizing, setIsResizing] = useState(false);
 
   useEffect(() => {
     // Initial setup: Find project root
@@ -150,6 +152,33 @@ function App() {
     }
   }, [activeTabId, fileContents]);
 
+  // Terminal Resizing Logic
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isResizing) return;
+      const newHeight = window.innerHeight - e.clientY;
+      if (newHeight > 50 && newHeight < window.innerHeight * 0.8) {
+        setConsoleHeight(newHeight);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      document.body.style.cursor = 'default';
+    };
+
+    if (isResizing) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'row-resize';
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing]);
+
   const activeContent = activeTabId ? fileContents[activeTabId] : '';
 
   return (
@@ -213,7 +242,12 @@ function App() {
           )}
         </div>
 
-        <div className="console-container">
+        <div
+          className={`resizer ${isResizing ? 'active' : ''}`}
+          onMouseDown={() => setIsResizing(true)}
+        ></div>
+
+        <div className="console-container" style={{ height: `${consoleHeight}px` }}>
           <div className="console-header">
             <span>Terminal Output</span>
             <button style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer' }} onClick={() => setOutput('')}>Clear</button>

@@ -256,12 +256,26 @@ html,
 }
 
 /* Console Section */
+.resizer {
+  height: 4px;
+  background: var(--border-color);
+  cursor: row-resize;
+  transition: background 0.2s;
+  z-index: 10;
+}
+
+.resizer:hover,
+.resizer.active {
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent-glow);
+}
+
 .console-container {
-  height: 30%;
   background: var(--bg-sidebar);
   border-top: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
 }
 
 .console-header {
