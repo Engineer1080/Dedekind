@@ -1,6 +1,6 @@
 # Fourier Programming Language
 
-![Version](https://img.shields.io/badge/Version-0.9.7-blue) ![Fourier Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-0.9.8-blue) ![Fourier Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Fourier** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -23,8 +23,17 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **LaTeX-Export**: `export_to_latex(source)` bzw. CLI `--latex` — Formeln aus Fourier-Code als LaTeX (für Papers/Notizen).
 - **Bessere Fehlermeldungen**: Compiler-Fehler mit Zeile (`CompileError`); Parser setzt `line` im AST; Runtime-Quantity-Meldungen mit Kontext.
 - **Einheiten zur Compile-Zeit**: `1[m] + 1[s]` → Compiler-Fehler mit Zeile; `compile_source(..., check_units=True)` (Default), CLI `--no-units-check`.
+- **Datei-I/O**: `read_file(path)` (Text UTF-8), `write_file(path, content)`, `file_exists(path)`.
+- **Netzwerk**: `http_get(url)`, `http_post(url, data)` (data String oder Dict/List als JSON); Antworttext UTF-8.
+- **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
-- **Modern IDE**: "Fourier Studio" – v0.9.7 with resizable terminal and file explorer.
+- **Modern IDE**: "Fourier Studio" – v0.9.8 with resizable terminal and file explorer.
+
+### What's New in v0.9.8
+- **Convenience (Chemie/Biologie)**: `michaelis_menten(S, Vmax, Km)`, `logistic(t, r, K, N0)`, `logistic_growth_dt(N, r, K)`, `arrhenius(T, A, Ea)`, `linear_regression(x, y)` — einzeilig aufrufbar; Beispiele `dose_response.fourier`, `biology_growth.fourier`, `chemistry_arrhenius.fourier`, `linear_regression.fourier`.
+- **Chemische Elemente**: `atomic_mass("C")` (g/mol), `atomic_number("C")`; ca. 50 Elemente (IUPAC-nah); Molare Masse z. B. 2*atomic_mass("H")+atomic_mass("O"); Beispiel `chemistry_elements.fourier`.
+- **Datei-I/O, Netzwerk, JSON**: `read_file(path)`, `write_file(path, content)`, `file_exists(path)`; `http_get(url)`, `http_post(url, data)`; `json_parse(s)` → Objekt (Zugriff `obj["key"]`), `json_stringify(obj)`; Beispiel `file_io_json.fourier`.
+- **Dokumentation**: Maturity_Assessment (Mathematik, Physik, Informatik, Biologie, Chemie); Chemistry_Biology_Roadmap Phase 2 (Convenience, Elemente) abgeschlossen.
 
 ### What's New in v0.9.7
 - **Fourier für Chemie & Biologie**: Chemische Einheiten **mol**, **L**, **M** (= mol/L), **ppm** in Runtime und Compile-Check; M und mol/L gelten als gleiche Einheit. Einheiten-Literal `[1/s]` im Parser unterstützt (z. B. `0.05[1/s]`).
@@ -208,6 +217,7 @@ Example programs are in `examples/fourier/`, including:
 - `integration.fourier` – numerical integration `integrate(f, a, b)` and `sin`/`cos`  
 - `uncertainty_propagation.fourier` – `uncertain(value, std)`; Gauß'sche Fehlerfortpflanzung  
 - `curve_fitting.fourier` – `fit(loss_fn, params_init, data)` für lineare Regression  
+- `file_io_json.fourier` – Datei-I/O (`read_file`, `write_file`, `file_exists`), JSON (`json_parse`, `json_stringify`), Schlüsselzugriff `obj["key"]`  
 - `linear_regression.fourier` – Quick-Win: `linear_regression(x, y)` → Steigung, Achsenabschnitt  
 - `chemistry_kinetics.fourier` – Reaktion 1. Ordnung mit Einheiten [M], [1/s] und `ode_solve`  
 - `chemistry_arrhenius.fourier` – Quick-Win: `arrhenius(T, A, Ea)` (Arrhenius-Gleichung)  
@@ -300,7 +310,7 @@ Fourier aims to become the "Standard Language for Nature's Laws." To achieve thi
 
 ## 📚 Documentation
 
-- **Language Specification**: `Documentation/Fourier_Language_Specification.md` (v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9/v0.9.6; Chemie/Biologie v0.9.7; Stand v0.9.7). PDF can be generated with `pandoc` (see `Documentation/README.md`).
+- **Language Specification**: `Documentation/Fourier_Language_Specification.md` (v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9/v0.9.6; Chemie/Biologie v0.9.7; I/O/JSON v0.9.8; Stand v0.9.8). PDF can be generated with `pandoc` (see `Documentation/README.md`).
 - **Research & Architecture**: `Documentation/Fourier_Research_and_Architecture.md` (includes §10 Sprachfeatures v0.6).
 - **Symbolic Simplification**: `Documentation/Symbolic_Simplification_Roadmap.md` — Implementierungs-Roadmap (Phasen, Optionen, Integration).
 - **Features Roadmap**: `Documentation/Features_Implementation_Roadmap.md` — naturwissenschaftliche Features (Phase 1 abgeschlossen: Verteilungen, Integration).

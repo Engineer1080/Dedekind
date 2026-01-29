@@ -1213,6 +1213,87 @@ def atomic_number(symbol):
         raise ValueError(f"atomic_number: unbekanntes Element '{s}'.")
     return ATOMIC_NUMBERS[s]
 
+# --- Standard Library: File I/O, Network, JSON ---
+
+def read_file(path):
+    """
+    Liest eine Datei als Text (UTF-8).
+    path: String (Dateipfad).
+    Rückgabe: String (Inhalt).
+    """
+    p = str(path)
+    with open(p, 'r', encoding='utf-8') as f:
+        return f.read()
+
+
+def write_file(path, content):
+    """
+    Schreibt Text in eine Datei (UTF-8); überschreibt bei Existenz.
+    path: String (Dateipfad). content: String (Inhalt).
+    """
+    p = str(path)
+    with open(p, 'w', encoding='utf-8') as f:
+        f.write(str(content))
+
+
+def file_exists(path):
+    """
+    Prüft, ob eine Datei existiert.
+    path: String (Dateipfad). Rückgabe: bool.
+    """
+    import os
+    return os.path.isfile(str(path))
+
+
+def http_get(url):
+    """
+    HTTP GET-Anfrage; gibt Antworttext (UTF-8) zurück.
+    url: String (z. B. \"https://example.com\").
+    """
+    import urllib.request
+    req = urllib.request.Request(str(url), method='GET')
+    with urllib.request.urlopen(req) as resp:
+        return resp.read().decode('utf-8')
+
+
+def http_post(url, data):
+    """
+    HTTP POST-Anfrage. data: String (Body) oder Dict/List (wird als JSON gesendet).
+    url: String. Rückgabe: Antworttext (UTF-8).
+    """
+    import urllib.request
+    import json
+    u = str(url)
+    if isinstance(data, dict) or isinstance(data, list):
+        body = json.dumps(data).encode('utf-8')
+        req = urllib.request.Request(u, data=body, method='POST', headers={'Content-Type': 'application/json'})
+    else:
+        body = str(data).encode('utf-8')
+        req = urllib.request.Request(u, data=body, method='POST')
+    with urllib.request.urlopen(req) as resp:
+        return resp.read().decode('utf-8')
+
+
+def json_parse(s):
+    """
+    Parst einen JSON-String zu einem Objekt (Dict/List); für Zugriff z. B. obj[\"key\"].
+    s: String (gültiger JSON).
+    """
+    import json
+    return json.loads(str(s))
+
+
+def json_stringify(obj):
+    """
+    Wandelt ein Objekt (Dict, List, Zahl, String) in einen JSON-String um.
+    """
+    import json
+    if hasattr(obj, 'tolist'):
+        obj = obj.tolist()
+    elif hasattr(obj, 'item'):
+        obj = obj.item()
+    return json.dumps(obj, ensure_ascii=False)
+
 # --- Standard Library: Sorting ---
 
 def sort(data, descending=False):

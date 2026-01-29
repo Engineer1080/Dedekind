@@ -1,13 +1,13 @@
 # Fourier — Ausgereiftheit für Mathematik, Physik, Informatik, Biologie und Chemie
 
 **Fourier Language**  
-Draft: January 2026 · Stand: v0.9.7 (Prototyp)
+Draft: January 2026 · Stand: v0.9.8 (Prototyp)
 
 ---
 
 ## Übersicht
 
-Fourier ist aktuell ein **Prototyp (v0.9.7)**. Die folgende Einschätzung bezieht sich auf den **aktuellen Implementierungsstand** und nennt Lücken sowie Roadmap-Punkte.
+Fourier ist aktuell ein **Prototyp (v0.9.8)**. Die folgende Einschätzung bezieht sich auf den **aktuellen Implementierungsstand** und nennt Lücken sowie Roadmap-Punkte.
 
 | Domäne       | Ausgereiftheit (kurz) | Nutzbar für …                          | Wichtige Lücken / Roadmap          |
 |-------------|------------------------|----------------------------------------|------------------------------------|
@@ -80,7 +80,7 @@ Fourier ist aktuell ein **Prototyp (v0.9.7)**. Die folgende Einschätzung bezieh
 
 - **Typsystem**: Kein statisches Typing; nur Laufzeit- und Einheiten-Check.
 - **Module/Imports**: Kein `import`; alles in einer Datei oder über Compiler-Pipeline.
-- **Standardbibliothek**: Keine Datei-I/O, Netzwerk, JSON etc. in der Sprache.
+- **Standardbibliothek**: **Datei-I/O** (`read_file`, `write_file`, `file_exists`), **Netzwerk** (`http_get`, `http_post`), **JSON** (`json_parse`, `json_stringify`); Zugriff auf geparste Objekte z. B. `obj["key"]`. Beispiel: `file_io_json.fourier`.
 - **Tooling**: Fourier Studio (IDE) vorhanden; Debugger, Profiler, Test-Runner nicht als Teil der Sprache.
 - **Performance**: AOT/MLIR/LLVM als Ziel; aktuell Transpilation zu Python/PyTorch; native Binaries experimentell.
 

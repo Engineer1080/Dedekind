@@ -1,0 +1,43 @@
+fn main() {
+    print("--- Fourier: Datei-I/O und JSON ---")
+
+    // Datei schreiben und lesen
+    path = "fourier_test_output.txt"
+    content = "Hallo Fourier\nZeile 2"
+    write_file(path, content)
+    back = read_file(path)
+    print("Geschrieben und gelesen:")
+    print(back)
+
+    // Prüfen ob Datei existiert
+    exists = file_exists(path)
+    print("Datei existiert:")
+    print(exists)
+
+    // JSON: Liste als String ausgeben und wieder parsen
+    list_data = [1.0, 2.0, 3.0]
+    json_str = json_stringify(list_data)
+    print("JSON-String (Liste):")
+    print(json_str)
+
+    parsed = json_parse(json_str)
+    print("Zurück geparst (erster Eintrag):")
+    print(parsed[0])
+
+    // JSON-Datei schreiben und lesen
+    json_path = "fourier_test_data.json"
+    write_file(json_path, json_str)
+    from_disk = read_file(json_path)
+    from_disk_parsed = json_parse(from_disk)
+    print("Aus Datei gelesen und geparst:")
+    print(from_disk_parsed[1])
+
+    // JSON-Objekt aus Datei lesen und Schlüsselzugriff (obj["key"])
+    obj_content = read_file("examples/fourier/test_data.json")
+    obj = json_parse(obj_content)
+    print("JSON-Objekt name:")
+    print(obj["name"])
+
+    print("\nDatei-I/O und JSON aktiv.")
+}
+main()
