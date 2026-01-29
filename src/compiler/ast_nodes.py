@@ -46,6 +46,11 @@ class Literal(Node):
     value: Any
 
 @dataclass
+class QuaternionLiteral(Node):
+    value: float
+    component: str # 'i', 'j', or 'k'
+
+@dataclass
 class VectorLiteral(Node):
     elements: List[Node]
 

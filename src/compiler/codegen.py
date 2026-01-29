@@ -165,7 +165,13 @@ class CodeGenerator:
 
     def visit_Literal(self, node: Literal):
         if isinstance(node.value, str): return f'"{node.value}"'
-        return repr(node.value)
+        return str(node.value)
+
+    def visit_QuaternionLiteral(self, node: QuaternionLiteral):
+        if node.component == 'i': return f"Quaternion(0, {node.value}, 0, 0)"
+        if node.component == 'j': return f"Quaternion(0, 0, {node.value}, 0)"
+        if node.component == 'k': return f"Quaternion(0, 0, 0, {node.value})"
+        return "Quaternion()"
 
     def visit_VectorLiteral(self, node: VectorLiteral):
         elements = [self.visit_expression(e) for e in node.elements]
@@ -179,35 +185,43 @@ class CodeGenerator:
         return f"{node.name}_{node.indices}"
 
     def visit_Call(self, node: Call):
+        obj_expr = None
         if isinstance(node.func_name, Identifier):
             func_name = node.func_name.name
+        elif isinstance(node.func_name, MemberAccess):
+            func_name = node.func_name.member
+            obj_expr = self.visit_expression(node.func_name.obj)
         else:
             func_name = self.visit_expression(node.func_name)
             
         args = [self.visit_expression(a) for a in node.args]
         kwargs = [f"{k}={self.visit_expression(v)}" for k, v in node.kwargs]
         
-        if func_name == "gpu": return f"_to_gpu({args[0]})"
-        if func_name == "cpu": return f"_to_cpu({args[0]})"
-        if func_name == "fast": return f"compile_model({args[0]})"
-        if func_name == "with_grad": return f"_to_grad({args[0]})"
-        if func_name == "sparse": return f"_to_sparse({args[0]})"
+        # Unified Target Selection (obj.func() or func(obj))
+        target = obj_expr if obj_expr else (args[0] if args else None)
+        other_args = args if obj_expr else args[1:]
+        
+        if func_name == "gpu": return f"_to_gpu({target})"
+        if func_name == "cpu": return f"_to_cpu({target})"
+        if func_name == "fast": return f"compile_model({target})"
+        if func_name == "with_grad": return f"_to_grad({target})"
+        if func_name == "sparse": return f"_to_sparse({target})"
+        
         if func_name == "grad":
             # Native Autograd implementation: grad(f, x)
-            # We map this to torch.autograd.grad(f(x), x)[0]
-            # args[0] is the function, args[1] is the parameter
             return f"torch.autograd.grad({args[0]}({args[1]}), {args[1]}, create_graph=True)[0]"
         if func_name == "einsum":
-            # Map Fourier einsum("equation", ...) to torch.einsum("equation", ...)
-            # The first argument is the string equation
             return f"torch.einsum({args[0]}, {', '.join(args[1:])})"
         if func_name == "matmul": return f"torch.matmul({args[0]}, {args[1]})"
         if func_name == "forward":
-             all_args = args[1:] + kwargs
-             return f"{args[0]}({', '.join(all_args)})"
+             all_args = other_args + kwargs
+             return f"{target}({', '.join(all_args)})"
         
         all_args_str = ", ".join(args + kwargs)
-        call_str = f"{func_name}({all_args_str})"
+        if obj_expr:
+            return f"{obj_expr}.{func_name}({all_args_str})"
+        else:
+            return f"{func_name}({all_args_str})"
         
         if 'gpu' in node.modifiers: call_str = f"_to_gpu({call_str})"
         if 'cpu' in node.modifiers: call_str = f"_to_cpu({call_str})"

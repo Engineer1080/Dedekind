@@ -9,6 +9,72 @@ k_B = 1.380649e-23     # Boltzmann constant in J/K
 k_e = 8.9875517923e9   # Coulomb constant in N m^2 / C^2
 # --------------------------------------------------------
 
+class Quaternion:
+    def __init__(self, w=0.0, x=0.0, y=0.0, z=0.0):
+        self.w = float(w)
+        self.x = float(x)
+        self.y = float(y)
+        self.z = float(z)
+
+    def __add__(self, other):
+        if isinstance(other, (int, float)):
+            return Quaternion(self.w + other, self.x, self.y, self.z)
+        if isinstance(other, Quaternion):
+            return Quaternion(self.w + other.w, self.x + other.x, self.y + other.y, self.z + other.z)
+        return NotImplemented
+
+    def __radd__(self, other):
+        return self.__add__(other)
+
+    def __sub__(self, other):
+        if isinstance(other, (int, float)):
+            return Quaternion(self.w - other, self.x, self.y, self.z)
+        if isinstance(other, Quaternion):
+            return Quaternion(self.w - other.w, self.x - other.x, self.y - other.y, self.z - other.z)
+        return NotImplemented
+
+    def __rsub__(self, other):
+        if isinstance(other, (int, float)):
+            return Quaternion(other - self.w, -self.x, -self.y, -self.z)
+        return NotImplemented
+
+    def __mul__(self, other):
+        if isinstance(other, (int, float)):
+            return Quaternion(self.w * other, self.x * other, self.y * other, self.z * other)
+        if isinstance(other, Quaternion):
+            # Hamilton Product
+            w = self.w * other.w - self.x * other.x - self.y * other.y - self.z * other.z
+            x = self.w * other.x + self.x * other.w + self.y * other.z - self.z * other.y
+            y = self.w * other.y - self.x * other.z + self.y * other.w + self.z * other.x
+            z = self.w * other.z + self.x * other.y - self.y * other.x + self.z * other.w
+            return Quaternion(w, x, y, z)
+        return NotImplemented
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
+    def conjugate(self):
+        return Quaternion(self.w, -self.x, -self.y, -self.z)
+
+    def norm(self):
+        return (self.w**2 + self.x**2 + self.y**2 + self.z**2)**0.5
+
+    def normalize(self):
+        n = self.norm()
+        if n == 0: return self
+        return self * (1.0 / n)
+
+    def rotate(self, v):
+        """Rotates a 3D vector v (list or tensor) using this quaternion."""
+        if isinstance(v, (list, tuple, torch.Tensor)):
+            v_q = Quaternion(0, v[0], v[1], v[2])
+            res_q = self * v_q * self.conjugate()
+            return [res_q.x, res_q.y, res_q.z]
+        return NotImplemented
+
+    def __repr__(self):
+        return f"({self.w} + {self.x}i + {self.y}j + {self.z}k)"
+
 class FourierDense(nn.Module):
     def __init__(self, in_features, out_features, activation=None):
         super().__init__()

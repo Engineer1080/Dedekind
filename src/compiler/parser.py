@@ -212,11 +212,17 @@ class Parser:
         if token.type == 'NUMBER':
             self.consume()
             node = Literal(float(token.value) if '.' in token.value else int(token.value))
+        elif token.type == 'QUATERNION':
+            self.consume()
+            # Convert "5.0j" or "3k" to QuaternionLiteral
+            suffix = token.value[-1]
+            val = float(token.value[:-1])
+            node = QuaternionLiteral(val, suffix)
         elif token.type == 'COMPLEX':
             self.consume()
-            # Convert "5.0i" to 5.0j (Python complex)
-            val = complex(0, float(token.value[:-1]))
-            node = Literal(val)
+            # In Fourier, 'i' is the first quaternion component
+            val = float(token.value[:-1])
+            node = QuaternionLiteral(val, 'i')
         elif token.type == 'STRING':
             self.consume()
             node = Literal(token.value.strip('"'))
@@ -283,7 +289,8 @@ class Parser:
                     self.consume('LPAREN')
                     args, kwargs = self.parse_call_args()
                     self.consume('RPAREN')
-                    node = Call(Identifier(member_name), [node] + args, kwargs, [])
+                    # Keep it as a method call: obj.method(args)
+                    node = Call(MemberAccess(node, member_name), args, kwargs, [])
                 else:
                     node = MemberAccess(node, member_name)
                 
