@@ -42,6 +42,7 @@ class CodeGenerator:
         self.add_line("")
         
         self.add_line("def _to_gpu(data):")
+        self.add_line("    data = _to_tensor(data)")
         self.add_line("    if torch.cuda.is_available():")
         self.add_line("        return data.to('cuda')")
         self.add_line("    print('Warning: GPU not available, running on CPU', file=sys.stderr)")
@@ -49,10 +50,12 @@ class CodeGenerator:
         self.add_line("")
 
         self.add_line("def _to_cpu(data):")
+        self.add_line("    data = _to_tensor(data)")
         self.add_line("    return data.to('cpu')")
         self.add_line("")
 
         self.add_line("def _to_tensor(data):")
+        self.add_line("    if isinstance(data, torch.Tensor): return data")
         self.add_line("    try:")
         self.add_line("        return torch.tensor(data)")
         self.add_line("    except:")

@@ -40,6 +40,14 @@ class FourierSequential(nn.Module):
         self.initialized = False
     
     def _build(self, input_data):
+        # Ensure input is a tensor
+        if not isinstance(input_data, torch.Tensor):
+            input_data = torch.as_tensor(input_data)
+        
+        # Ensure we have a batch dimension [batch, features]
+        if input_data.ndim == 1:
+            input_data = input_data.unsqueeze(0)
+            
         current_size = input_data.shape[-1]
         for layer_item in self.raw_layers:
             if callable(layer_item) and not isinstance(layer_item, nn.Module):
@@ -57,8 +65,17 @@ class FourierSequential(nn.Module):
         self.initialized = True
 
     def forward(self, x):
+        # Ensure input is a tensor and moved to model's device
+        if not isinstance(x, torch.Tensor):
+            x = torch.as_tensor(x)
+        
+        # Move input to same device as model
+        device = next(self.parameters()).device if any(self.parameters()) else "cpu"
+        x = x.to(device)
+
         if not self.initialized:
             self._build(x)
+            
         for layer in self.built_layers:
             x = layer(x)
         return x
