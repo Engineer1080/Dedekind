@@ -218,8 +218,29 @@ class Parser:
         
         node = None
         if token.type == 'NUMBER':
-            self.consume()
-            node = Literal(float(token.value) if '.' in token.value else int(token.value))
+            num_tok = self.consume()
+            value = float(num_tok.value) if '.' in num_tok.value else int(num_tok.value)
+            if self.peek() and self.peek().type == 'LBRACKET':
+                self.consume('LBRACKET')
+                unit_parts = []
+                while self.peek() and self.peek().type != 'RBRACKET':
+                    t = self.consume()
+                    if t.type == 'ID':
+                        unit_parts.append(t.value)
+                    elif t.type == 'MUL':
+                        unit_parts.append('*')
+                    elif t.type == 'DIV':
+                        unit_parts.append('/')
+                    elif t.type == 'CARET' and self.peek() and self.peek().type == 'NUMBER':
+                        unit_parts.append('^')
+                        unit_parts.append(self.consume().value)
+                    else:
+                        break
+                self.consume('RBRACKET')
+                unit_str = ''.join(unit_parts) if unit_parts else ''
+                node = Quantity(value, unit_str)
+            else:
+                node = Literal(value)
         elif token.type == 'QUATERNION':
             self.consume()
             # Convert "5.0j" or "3k" to QuaternionLiteral

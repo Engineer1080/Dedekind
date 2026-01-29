@@ -1,6 +1,6 @@
 # Fourier Programming Language
 
-![Fourier Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-0.6.0-blue) ![Fourier Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Fourier** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -10,10 +10,16 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 
 - **Ricci Calculus**: Native index notation (`A^ij * B_jk`) for Einstein summation.
 - **Sparse Tensors**: Efficient `.sparse()` support for FEM/CFD simulations.
-- **Fundamental Constants**: Native access to `c`, `G`, `h`, `k_B`, and `k_e`.
+- **Fundamental Constants**: Native access to `c`, `G`, `h`, `k_B`, and `k_e` as **Quantity** with SI units (e.g. `c` in m/s).
+- **Physical Units**: Literals with units (`10[m]`, `5[m/s]`, `1.0[kg]`); add/sub require same unit; multiply/divide combine units; `^` for powers (`r^2`); display simplified to J, N where applicable.
 - **4D Rotational Math**: Native Quaternion support (`i`, `j`, `k` suffixes) and `.rotate()` method.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
-- **Modern IDE**: "Fourier Studio" - v0.5 with resizable terminal and file explorer.
+- **Modern IDE**: "Fourier Studio" – v0.6 with resizable terminal and file explorer.
+
+### What's New in v0.6
+- **Physical Units (Option B)**: Constants `c`, `G`, `h`, `k_B`, `k_e` are now `Quantity` values with SI units; expressions like `m * c^2` and `G * m1 * m2 / r^2` yield results with correct dimensions; output simplified to **J** (Joule) and **N** (Newton) where applicable.
+- **Quantity**: Full arithmetic including `__pow__` (e.g. `c^2`, `r^2`) and `__neg__`; unary minus for literals and Quaternions fixed in codegen.
+- **Quaternion**: `__neg__` support so expressions such as `-1.0 + 0i` and signal lists with negative imaginary parts work correctly (e.g. `signal_physics.fourier`).
 
 ## 🧠 Machine Learning Example
 
@@ -79,18 +85,18 @@ cd FourierLanguage
 ```
 
 ### 2. Setup Compiler Backend
-The backend requires Python and Flask to serve the compiler API.
+The backend requires Python, Flask, and PyTorch (for tensor/ML runtime).
 
 ```bash
-# Install dependencies
-pip install flask flask-cors numpy
-# Optional für plot()-Visualisierung in Fourier Studio:
-# pip install matplotlib
+# Install dependencies (ein Befehl)
+pip install -r requirements.txt
 
 # Run the Backend Server
 python src/server.py
 ```
 *The server will start on `http://localhost:5000`.*
+
+**Abhängigkeiten im Überblick:** `flask`, `flask-cors` (API), `torch` (PyTorch für Tensoren, FFT, ML), `matplotlib` (für `plot()`-Visualisierung).
 
 ### 3. Setup Fourier Studio (Native App)
 Open a new terminal window for the frontend.
@@ -125,6 +131,16 @@ npm run electron:dev
     ```
 3.  Click the **▶ Run Code** button.
 4.  View the compilation result and program output in the terminal panel.
+
+### Examples
+Example programs are in `examples/fourier/`, including:
+- `hello.fourier` – basic I/O and tensors  
+- `universal_constants.fourier` – physical constants and units (E = mc², gravitation, Coulomb)  
+- `signal_physics.fourier` – complex numbers (Quaternions) and FFT  
+- `conditional_logic.fourier`, `basic_loops.fourier` – control flow  
+- `mnist_classifier.fourier` – neural network with `Sequential`/`Dense`  
+
+From the `src/` directory: `python -m compiler.compiler ../examples/fourier/hello.fourier`
 
 ## 🗺️ Roadmap
 
@@ -175,12 +191,16 @@ npm run electron:dev
 *   [x] **Hamilton Product**: Native 4D arithmetic.
 *   [x] **Robotics Support**: Native `.rotate(vector)` method.
 
+### Phase 12: Physical Units & Constants (v0.6) ✅
+*   [x] **Constants as Quantity**: `c`, `G`, `h`, `k_B`, `k_e` with SI units; `Quantity.__pow__` and unit simplification (J, N).
+*   [x] **Unary Minus**: Codegen emits `-expr`; `Quantity` and `Quaternion` implement `__neg__` for correct behaviour in expressions like `-1.0[C]` and `-1.0 + 0i`.
+
 ## 🔭 Beyond v1.0: Future Vision
 
 Fourier aims to become the "Standard Language for Nature's Laws." To achieve this, we are researching the native implementation of the following concepts:
 
 1. **Differentiable ODE Solvers**: Native support for solving Differential Equations integrated directly with the `grad()` engine for physics-informed machine learning.
-2. **Physical Units (Unit Safety)**: A type system that understands physics (e.g., `10[m] / 2[s] = 5[m/s]`) and prevents unit-mismatch errors at compile time.
+2. **Physical Units**: Implemented at runtime: `10[m] / 2[s]` → `5[m/s]`, add/sub require same unit; future: compile-time unit checking.
 3. **Probabilistic Programming**: Native support for random variables and Bayesian inference, allowing variables to represent probability distributions rather than discrete values.
 4. **Symbolic Simplification**: A compile-time algebraic engine that simplifies complex mathematical expressions before code generation to maximize efficiency.
 

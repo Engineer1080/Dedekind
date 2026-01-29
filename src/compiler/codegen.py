@@ -135,6 +135,10 @@ class CodeGenerator:
         self.add_line(f"{node.target} = {val}")
 
     def visit_BinaryOp(self, node: BinaryOp):
+        # Unäres Minus: 0 - expr -> -expr (für Quantity und andere Typen)
+        if node.op == '-' and isinstance(node.left, Literal) and node.left.value == 0:
+            right = self.visit_expression(node.right)
+            return f"(-{right})"
         if node.op == '*' and (isinstance(node.left, (IndexedVariable, BinaryOp)) or isinstance(node.right, (IndexedVariable, BinaryOp))):
             # Try to build a Ricci contraction
             def collect_indexed(n):
@@ -173,6 +177,10 @@ class CodeGenerator:
     def visit_Literal(self, node: Literal):
         if isinstance(node.value, str): return f'"{node.value}"'
         return str(node.value)
+
+    def visit_Quantity(self, node):
+        unit = (node.unit or "").replace('\\', '\\\\').replace('"', '\\"')
+        return f'Quantity({node.value}, "{unit}")'
 
     def visit_QuaternionLiteral(self, node: QuaternionLiteral):
         if node.component == 'i': return f"Quaternion(0, {node.value}, 0, 0)"

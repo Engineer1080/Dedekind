@@ -1,13 +1,136 @@
 import torch
 import torch.nn as nn
 
-# --- Fundamental Physical Constants (CODATA 2018/2022) ---
-c   = 299792458.0      # Speed of light in m/s
-G   = 6.67430e-11      # Gravitational constant in m^3 kg^-1 s^-2
-h   = 6.62607015e-34   # Planck constant in J s
-k_B = 1.380649e-23     # Boltzmann constant in J/K
-k_e = 8.9875517923e9   # Coulomb constant in N m^2 / C^2
-# --------------------------------------------------------
+class Quantity:
+    """Physikalische Größe mit Einheit (z. B. 10[m], 5[m/s]). Rechenregeln: gleiche Einheit für +/-, Einheiten multiplizieren/dividieren."""
+    def __init__(self, value, unit=""):
+        self.value = float(value)
+        self.unit = str(unit) if unit else ""
+
+    def _same_unit(self, other):
+        if not isinstance(other, Quantity):
+            return False
+        return self.unit == other.unit
+
+    def __add__(self, other):
+        if isinstance(other, (int, float)):
+            if self.unit: raise ValueError(f"Kann Zahl nicht zu Größe mit Einheit [{self.unit}] addieren.")
+            return Quantity(self.value + other, "")
+        if isinstance(other, Quantity):
+            if not self._same_unit(other):
+                raise ValueError(f"Einheiten passen nicht: [{self.unit}] vs [{other.unit}]")
+            return Quantity(self.value + other.value, self.unit)
+        return NotImplemented
+
+    def __radd__(self, other):
+        return self.__add__(other)
+
+    def __sub__(self, other):
+        if isinstance(other, (int, float)):
+            if self.unit: raise ValueError(f"Kann Zahl nicht von Größe mit Einheit [{self.unit}] subtrahieren.")
+            return Quantity(self.value - other, "")
+        if isinstance(other, Quantity):
+            if not self._same_unit(other):
+                raise ValueError(f"Einheiten passen nicht: [{self.unit}] vs [{other.unit}]")
+            return Quantity(self.value - other.value, self.unit)
+        return NotImplemented
+
+    def __rsub__(self, other):
+        if isinstance(other, (int, float)) and not self.unit:
+            return Quantity(other - self.value, "")
+        return NotImplemented
+
+    def __neg__(self):
+        return Quantity(-self.value, self.unit)
+
+    def __mul__(self, other):
+        if isinstance(other, (int, float)):
+            return Quantity(self.value * other, self.unit)
+        if isinstance(other, Quantity):
+            v = self.value * other.value
+            u = _unit_mul(self.unit, other.unit)
+            return Quantity(v, u)
+        return NotImplemented
+
+    def __rmul__(self, other):
+        if isinstance(other, (int, float)):
+            return Quantity(other * self.value, self.unit)
+        return NotImplemented
+
+    def __truediv__(self, other):
+        if isinstance(other, (int, float)):
+            return Quantity(self.value / other, self.unit)
+        if isinstance(other, Quantity):
+            v = self.value / other.value
+            u = _unit_div(self.unit, other.unit)
+            return Quantity(v, u)
+        return NotImplemented
+
+    def __rtruediv__(self, other):
+        if isinstance(other, (int, float)):
+            return Quantity(other / self.value, _unit_inv(self.unit))
+        return NotImplemented
+
+    def __pow__(self, exp):
+        if isinstance(exp, (int, float)):
+            return Quantity(self.value ** exp, _unit_pow(self.unit, exp))
+        return NotImplemented
+
+    def __repr__(self):
+        if not self.unit:
+            return str(self.value)
+        display_unit = _unit_simplify(self.unit)
+        return f"{self.value}[{display_unit}]"
+
+def _unit_mul(u1, u2):
+    if not u1: return u2
+    if not u2: return u1
+    return f"{u1}*{u2}" if "*" not in u1 and "/" not in u1 and "*" not in u2 and "/" not in u2 else f"({u1})*({u2})"
+
+def _unit_div(u1, u2):
+    if not u2: return u1
+    if not u1: return f"1/{u2}" if "*" not in u2 and "/" not in u2 else f"1/({u2})"
+    return f"{u1}/{u2}" if "*" not in u1 and "/" not in u1 and "*" not in u2 and "/" not in u2 else f"({u1})/({u2})"
+
+def _unit_inv(u):
+    if not u: return ""
+    return f"1/{u}" if "*" not in u and "/" not in u else f"1/({u})"
+
+def _unit_pow(u, exp):
+    """Einheit hoch exp (z. B. m^2, (m/s)^2)."""
+    if not u: return ""
+    e = float(exp)
+    if abs(e - 1.0) < 1e-12: return u
+    if abs(e + 1.0) < 1e-12: return _unit_inv(u)
+    base = u if ("*" not in u and "/" not in u) else f"({u})"
+    if abs(e - round(e)) < 1e-12:
+        return f"{base}^{int(round(e))}"
+    return f"{base}^{e}"
+
+def _unit_simplify(u):
+    """Vereinfacht Einheiten-String für Anzeige (z. B. (kg)*((m/s)^2) -> J)."""
+    if not u: return u
+    # Joule: kg*m^2/s^2 bzw. (kg)*((m/s)^2)
+    if "(kg)*((m/s)^2)" in u or u.strip() == "kg*m^2/s^2":
+        return "J"
+    if "(J*s)*(Hz)" in u or "J*s*Hz" in u or ("J*s" in u and "Hz" in u):
+        return "J"
+    # Newton: Gravitation G*m1*m2/r^2 oder Coulomb k_e*q1*q2/r^2
+    if "m^3/(kg*s^2)" in u and "m^2" in u:
+        return "N"
+    if "N*m^2/C^2" in u and "m^2" in u:
+        return "N"
+    if "kg*m/s^2" in u or u.strip() == "N":
+        return "N"
+    return u
+
+# --- Fundamental Physical Constants (CODATA 2018/2022) as Quantity with SI units ---
+c   = Quantity(299792458.0, "m/s")
+G   = Quantity(6.67430e-11, "m^3/(kg*s^2)")
+h   = Quantity(6.62607015e-34, "J*s")
+k_B = Quantity(1.380649e-23, "J/K")
+k_e = Quantity(8.9875517923e9, "N*m^2/C^2")
+# ----------------------------------------------------------------------------------
 
 class Quaternion:
     def __init__(self, w=0.0, x=0.0, y=0.0, z=0.0):
@@ -37,6 +160,9 @@ class Quaternion:
         if isinstance(other, (int, float)):
             return Quaternion(other - self.w, -self.x, -self.y, -self.z)
         return NotImplemented
+
+    def __neg__(self):
+        return Quaternion(-self.w, -self.x, -self.y, -self.z)
 
     def __mul__(self, other):
         if isinstance(other, (int, float)):

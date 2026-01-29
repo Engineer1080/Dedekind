@@ -46,6 +46,12 @@ class Literal(Node):
     value: Any
 
 @dataclass
+class Quantity(Node):
+    """Physikalische Größe: Zahl mit Einheit, z. B. 10[m], 5[m/s]."""
+    value: Union[int, float]
+    unit: str
+
+@dataclass
 class QuaternionLiteral(Node):
     value: float
     component: str # 'i', 'j', or 'k'
