@@ -388,6 +388,8 @@ def _to_tensor(data):
         return data
     if isinstance(data, Quantity):
         return torch.tensor(data.value, dtype=torch.float32)
+    if isinstance(data, UncertainQuantity):
+        return torch.tensor(data.value, dtype=torch.float32)
     if isinstance(data, (list, tuple)):
         if not data:
             return torch.tensor([], dtype=torch.float32)
@@ -720,6 +722,143 @@ def integrate(f, a, b, n=100):
     dx = (b_val - a_val) / (n_int - 1.0)
     result = (dx / 2.0) * (y[0] + 2.0 * y[1:-1].sum() + y[-1])
     return result.squeeze()
+
+# --- Standard Library: Uncertainty Propagation (Gaussian) ---
+# Fehlerfortpflanzung für Wissenschaftler: value ± std; Gauß'sche Näherung für +, -, *, /, ^.
+
+class UncertainQuantity:
+    """Größe mit Unsicherheit: value ± std. Gauß'sche Fehlerfortpflanzung für +, -, *, /, ^."""
+    def __init__(self, value, std=0.0, unit=""):
+        self.value = float(value)
+        self.std = max(0.0, float(std))
+        self.unit = str(unit) if unit else ""
+
+    def _same_unit(self, other):
+        if not isinstance(other, UncertainQuantity):
+            return False
+        return self.unit == other.unit
+
+    def __add__(self, other):
+        if isinstance(other, (int, float)):
+            if self.unit:
+                raise ValueError("UncertainQuantity: Kann Zahl nicht zu Größe mit Einheit addieren.")
+            return UncertainQuantity(self.value + other, self.std, "")
+        if isinstance(other, UncertainQuantity):
+            if not self._same_unit(other):
+                raise ValueError(f"Einheiten passen nicht: [{self.unit}] vs [{other.unit}]")
+            v = self.value + other.value
+            s = (self.std ** 2 + other.std ** 2) ** 0.5
+            return UncertainQuantity(v, s, self.unit)
+        return NotImplemented
+
+    def __radd__(self, other):
+        return self.__add__(other)
+
+    def __sub__(self, other):
+        if isinstance(other, (int, float)):
+            if self.unit:
+                raise ValueError("UncertainQuantity: Kann Zahl nicht subtrahieren.")
+            return UncertainQuantity(self.value - other, self.std, "")
+        if isinstance(other, UncertainQuantity):
+            if not self._same_unit(other):
+                raise ValueError(f"Einheiten passen nicht: [{self.unit}] vs [{other.unit}]")
+            v = self.value - other.value
+            s = (self.std ** 2 + other.std ** 2) ** 0.5
+            return UncertainQuantity(v, s, self.unit)
+        return NotImplemented
+
+    def __rsub__(self, other):
+        if isinstance(other, (int, float)) and not self.unit:
+            return UncertainQuantity(other - self.value, self.std, "")
+        return NotImplemented
+
+    def __mul__(self, other):
+        if isinstance(other, (int, float)):
+            return UncertainQuantity(self.value * other, abs(other) * self.std, self.unit)
+        if isinstance(other, UncertainQuantity):
+            v = self.value * other.value
+            if abs(v) < 1e-300:
+                s = 0.0
+            else:
+                r1 = (self.std / self.value) ** 2 if self.value != 0 else 0.0
+                r2 = (other.std / other.value) ** 2 if other.value != 0 else 0.0
+                s = abs(v) * (r1 + r2) ** 0.5
+            u = _unit_mul(self.unit, other.unit)
+            return UncertainQuantity(v, s, u)
+        return NotImplemented
+
+    def __rmul__(self, other):
+        if isinstance(other, (int, float)):
+            return UncertainQuantity(other * self.value, abs(other) * self.std, self.unit)
+        return NotImplemented
+
+    def __truediv__(self, other):
+        if isinstance(other, (int, float)):
+            if other == 0:
+                raise ValueError("UncertainQuantity: Division durch null.")
+            return UncertainQuantity(self.value / other, self.std / abs(other), self.unit)
+        if isinstance(other, UncertainQuantity):
+            v = self.value / other.value
+            if other.value == 0:
+                raise ValueError("UncertainQuantity: Division durch null.")
+            r1 = (self.std / self.value) ** 2 if self.value != 0 else 0.0
+            r2 = (other.std / other.value) ** 2
+            s = abs(v) * (r1 + r2) ** 0.5
+            u = _unit_div(self.unit, other.unit)
+            return UncertainQuantity(v, s, u)
+        return NotImplemented
+
+    def __pow__(self, exp):
+        if isinstance(exp, (int, float)):
+            v = self.value ** exp
+            if self.value == 0 and exp != 0:
+                s = 0.0
+            else:
+                s = abs(v) * abs(exp) * (self.std / abs(self.value)) if self.value != 0 else 0.0
+            u = _unit_pow(self.unit, exp)
+            return UncertainQuantity(v, s, u)
+        return NotImplemented
+
+    def __repr__(self):
+        u = f" [{self.unit}]" if self.unit else ""
+        return f"{self.value} ± {self.std}{u}"
+
+def uncertain(value, std, unit=""):
+    """Größe mit Unsicherheit: value ± std. Nutze für Fehlerfortpflanzung (Gauß'sche Näherung)."""
+    return UncertainQuantity(value, std, unit)
+
+# --- Standard Library: Fitting / Regression ---
+# Minimiert loss_fn(params, data) via Gradient Descent (oder MCMC).
+
+def fit(loss_fn, params_init, data, method="gd", lr=0.01, steps=500):
+    """
+    Kurvenanpassung: minimiert loss_fn(params, data).
+    params_init: Startparameter (Tensor oder Liste); werden kopiert und mit Gradienten versehen.
+    data: beliebige Daten (an loss_fn übergeben).
+    method: 'gd' (Gradient Descent, default) oder 'mcmc' (Metropolis-Hastings).
+    lr: Lernrate (nur bei gd). steps: Anzahl Schritte.
+    Rückgabe: Tensor der optimalen Parameter (bei gd); bei mcmc Tensor (steps, *params_shape).
+    """
+    params = _to_tensor(params_init).float().clone().detach()
+    params = params.requires_grad_(True)
+    data_t = _to_tensor(data)
+
+    if method == "mcmc":
+        def log_prior(p):
+            return torch.tensor(0.0)
+        def log_likelihood(d, p):
+            return -loss_fn(p, d)
+        return metropolis(log_prior, log_likelihood, data_t, params.detach(), steps, step_size=lr)
+
+    # Gradient Descent
+    for _ in range(steps):
+        loss = loss_fn(params, data_t)
+        if params.grad is not None:
+            params.grad.zero_()
+        loss.backward()
+        with torch.no_grad():
+            params.sub_(lr * params.grad)
+    return params.detach()
 
 # --- Standard Library: Sorting ---
 

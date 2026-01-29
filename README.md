@@ -1,6 +1,6 @@
 # Fourier Programming Language
 
-![Version](https://img.shields.io/badge/Version-0.9.2-blue) ![Fourier Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-0.9.3-blue) ![Fourier Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Fourier** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -17,11 +17,18 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **Differentiable PDE Solvers**: `pde_heat_1d(u0, x, t, k)` and `pde_heat_2d(u0, x, y, t, k)` for the heat equation \(u_t = k \cdot \Delta u\); finite differences + `ode_solve`; gradients through `u0` and `k`.
 - **Probabilistic Programming**: First-class distributions `Normal(mu, sigma)`, `Uniform(low, high)`, `Bernoulli(p)`, `Exponential(rate)`, `Gamma(concentration, rate)`, `Beta(alpha, beta)`, `Poisson(rate)`; `sample(dist)`, `log_prob(dist, value)`; Bayesian inference via `metropolis(log_prior, log_likelihood, data, init, steps)`.
 - **Numerical Integration**: `integrate(f, a, b, n)` — trapezoidal quadrature; differentiable when `f` accepts a tensor; `sin(x)`, `cos(x)` for expressions.
+- **Uncertainty Propagation**: `uncertain(value, std)` bzw. `UncertainQuantity` — Gauß'sche Fehlerfortpflanzung für +, -, *, /, ^; optional mit Einheit.
+- **Fitting / Regression**: `fit(loss_fn, params_init, data, method="gd"|"mcmc", lr=0.01, steps=500)` — minimiert `loss_fn(params, data)` via Gradient Descent oder MCMC.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
-- **Modern IDE**: "Fourier Studio" – v0.9.2 with resizable terminal and file explorer.
+- **Modern IDE**: "Fourier Studio" – v0.9.3 with resizable terminal and file explorer.
+
+### What's New in v0.9.3
+- **Version 0.9.3**: Release mit Uncertainty Propagation (`uncertain`, `UncertainQuantity`) und Fitting (`fit`); siehe §15.11 und Beispiele `uncertainty_propagation.fourier`, `curve_fitting.fourier`.
 
 ### What's New in v0.9.2
 - **Version 0.9.2**: Mathematische Konstanten `pi`, `e`; erweiterte physikalische Konstanten (CODATA): `hbar`, `e_charge`, `epsilon_0`, `mu_0`, `m_e`, `m_p`, `N_A`, `R_gas`, `alpha`, `sigma_SB`, `F_faraday`. Beispiel: `constants_extended.fourier`; `integrate(f, 0, pi)` nutzt native `pi`.
+- **Uncertainty Propagation**: `uncertain(value, std)` und `UncertainQuantity` — Fehlerfortpflanzung (Gauß) für +, -, *, /, ^; optional Einheit. Beispiel: `uncertainty_propagation.fourier`.
+- **Fitting**: `fit(loss_fn, params_init, data, method="gd"|"mcmc", lr=0.01, steps=500)` — Kurvenanpassung via Gradient Descent oder MCMC. Beispiel: `curve_fitting.fourier`.
 
 ### What's New in v0.9.1
 - **Version 0.9.1**: Run-Examples-Skript `run_examples.py` — alle `.fourier`-Beispiele automatisch kompilieren und ausführen (Optionen: `-q`, `-v`, `--compile`, `--filter`). Dokumentation ergänzt; Linter-Hinweise in `ml_runtime.py` behoben.
@@ -165,6 +172,8 @@ Example programs are in `examples/fourier/`, including:
 - `pde_heat.fourier` – differentiable PDE solver (1D/2D heat equation) with `pde_heat_1d` / `pde_heat_2d`  
 - `distributions_extended.fourier` – Exponential, Gamma, Beta, Poisson; `sample`, `log_prob`  
 - `integration.fourier` – numerical integration `integrate(f, a, b)` and `sin`/`cos`  
+- `uncertainty_propagation.fourier` – `uncertain(value, std)`; Gauß'sche Fehlerfortpflanzung  
+- `curve_fitting.fourier` – `fit(loss_fn, params_init, data)` für lineare Regression  
 - `probabilistic.fourier` – distributions, sampling, and Bayesian inference with `metropolis`  
 - `conditional_logic.fourier`, `basic_loops.fourier` – control flow  
 - `mnist_classifier.fourier` – neural network with `Sequential`/`Dense`  
@@ -251,7 +260,7 @@ Fourier aims to become the "Standard Language for Nature's Laws." To achieve thi
 
 ## 📚 Documentation
 
-- **Language Specification**: `Documentation/Fourier_Language_Specification.md` (v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9; Stand v0.9.2). PDF can be generated with `pandoc` (see `Documentation/README.md`).
+- **Language Specification**: `Documentation/Fourier_Language_Specification.md` (v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9; Stand v0.9.3). PDF can be generated with `pandoc` (see `Documentation/README.md`).
 - **Research & Architecture**: `Documentation/Fourier_Research_and_Architecture.md` (includes §10 Sprachfeatures v0.6).
 - **Symbolic Simplification**: `Documentation/Symbolic_Simplification_Roadmap.md` — Implementierungs-Roadmap (Phasen, Optionen, Integration).
 - **Features Roadmap**: `Documentation/Features_Implementation_Roadmap.md` — naturwissenschaftliche Features (Phase 1 abgeschlossen: Verteilungen, Integration).

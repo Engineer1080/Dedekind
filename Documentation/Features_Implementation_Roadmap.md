@@ -23,9 +23,9 @@ Diese Roadmap priorisiert und plant **sinnvolle Erweiterungen** der Fourier-Spra
 | **Mehr Verteilungen** | Exponential, Gamma, Beta, Poisson für Statistik, Strahlung, Zählexperimente. | Gering | ✅ **Implementiert** (v0.9: `Exponential`, `Gamma`, `Beta`, `Poisson`) |
 | **Numerische Integration** | `integrate(f, a, b)` für Flächen, Erwartungswerte, Normalisierung. | Gering | ✅ **Implementiert** (v0.9: `integrate(f, a, b, n)`; `sin`, `cos`) |
 | **Bessere Fehlermeldungen** | Einheitenfehler, Dimensionskonflikte, „expected tensor, got Quantity“ mit Zeile/Kontext. | Mittel | Phase 2 |
-| **Uncertainty-Propagation** | Fehlerfortpflanzung: f(x ± Δx) → Ergebnis mit Unsicherheit; Standard in Messtechnik. | Mittel | Phase 3 |
+| **Uncertainty-Propagation** | Fehlerfortpflanzung: f(x ± Δx) → Ergebnis mit Unsicherheit; Standard in Messtechnik. | Mittel | ✅ **Implementiert** (v0.9.2: `uncertain(value, std)`, `UncertainQuantity`) |
 | **Einheiten zur Compile-Zeit** | `1[m] + 1[s]` → Fehler beim Kompilieren statt zur Laufzeit; weniger Unit-Bugs. | Mittel | Phase 3 |
-| **Fitting / Regression** | `fit(model, data)` mit Gradient Descent oder MCMC; typisch für Kurvenanpassung. | Mittel | Phase 4 |
+| **Fitting / Regression** | `fit(model, data)` mit Gradient Descent oder MCMC; typisch für Kurvenanpassung. | Mittel | ✅ **Implementiert** (v0.9.2: `fit(loss_fn, params_init, data, method="gd"|"mcmc")`) |
 | **NUTS / VI** | Robusteres Bayesian Inference (NUTS) oder schnelle Approximation (VI); Metropolis oft langsam. | Mittel | Phase 4 |
 | **LaTeX-Export von Formeln** | Aus Fourier-Ausdrücken LaTeX erzeugen (für Papers/Notizen). | Mittel | Phase 4 |
 | **Symbolische Ableitungen** | `diff(expr, x)` liefert Formel statt numerisches `grad()`; für Paper, Stabilitätsanalyse. | Mittel–hoch | Phase 5 |
@@ -100,11 +100,10 @@ Diese Roadmap priorisiert und plant **sinnvolle Erweiterungen** der Fourier-Spra
 
 **Ziel**: Kurvenanpassung, bessere Bayesian-Tools und Formel-Export für Papers.
 
-**4a) Fitting / Regression**
+**4a) Fitting / Regression** ✅ (v0.9.2)
 
-1. **API**: `fit(loss_fn, params_init, data, method="gd"|"mcmc")` — `loss_fn(params, data)` minimieren via Gradient Descent (nutzt `grad()`) oder MCMC (nutzt `metropolis`).
-2. **Einfache Variante**: `fit(model_fn, x, y)` mit MSE-Verlust; `model_fn(params, x)` z. B. lineares Modell oder benutzerdefinierte Funktion.
-3. **Implementierung**: In `ml_runtime.py`; Optimizer (SGD/Adam) über PyTorch; Dokumentation und Beispiel `curve_fitting.fourier`.
+1. **API**: `fit(loss_fn, params_init, data, method="gd"|"mcmc", lr=0.01, steps=500)` — minimiert `loss_fn(params, data)` via Gradient Descent (in-place `params.sub_(lr * grad)`) oder MCMC (nutzt `metropolis`).
+2. **Implementierung**: In `ml_runtime.py`; GD mit PyTorch backward; Beispiel `curve_fitting.fourier` (lineare Regression y = a*x + b).
 
 **4b) NUTS / VI**
 
