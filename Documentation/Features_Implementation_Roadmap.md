@@ -26,8 +26,8 @@ Diese Roadmap priorisiert und plant **sinnvolle Erweiterungen** der Fourier-Spra
 | **Uncertainty-Propagation** | Fehlerfortpflanzung: f(x ± Δx) → Ergebnis mit Unsicherheit; Standard in Messtechnik. | Mittel | ✅ **Implementiert** (v0.9.2: `uncertain(value, std)`, `UncertainQuantity`) |
 | **Einheiten zur Compile-Zeit** | `1[m] + 1[s]` → Fehler beim Kompilieren statt zur Laufzeit; weniger Unit-Bugs. | Mittel | Phase 3 |
 | **Fitting / Regression** | `fit(model, data)` mit Gradient Descent oder MCMC; typisch für Kurvenanpassung. | Mittel | ✅ **Implementiert** (v0.9.2: `fit(loss_fn, params_init, data, method="gd"|"mcmc")`) |
-| **NUTS / VI** | Robusteres Bayesian Inference (NUTS) oder schnelle Approximation (VI); Metropolis oft langsam. | Mittel | Phase 4 |
-| **LaTeX-Export von Formeln** | Aus Fourier-Ausdrücken LaTeX erzeugen (für Papers/Notizen). | Mittel | Phase 4 |
+| **NUTS / VI** | Robusteres Bayesian Inference (NUTS) oder schnelle Approximation (VI); Metropolis oft langsam. | Mittel | Phase 4 (HMC ✅) |
+| **LaTeX-Export von Formeln** | Aus Fourier-Ausdrücken LaTeX erzeugen (für Papers/Notizen). | Mittel | ✅ **Implementiert** (v0.9.4: `export_to_latex(source)`, CLI `--latex`) |
 | **Symbolische Ableitungen** | `diff(expr, x)` liefert Formel statt numerisches `grad()`; für Paper, Stabilitätsanalyse. | Mittel–hoch | Phase 5 |
 
 ---
@@ -100,24 +100,23 @@ Diese Roadmap priorisiert und plant **sinnvolle Erweiterungen** der Fourier-Spra
 
 **Ziel**: Kurvenanpassung, bessere Bayesian-Tools und Formel-Export für Papers.
 
-**4a) Fitting / Regression** ✅ (v0.9.2)
+**4a) Fitting / Regression** ✅ (v0.9.2, erweitert v0.9.4)
 
-1. **API**: `fit(loss_fn, params_init, data, method="gd"|"mcmc", lr=0.01, steps=500)` — minimiert `loss_fn(params, data)` via Gradient Descent (in-place `params.sub_(lr * grad)`) oder MCMC (nutzt `metropolis`).
-2. **Implementierung**: In `ml_runtime.py`; GD mit PyTorch backward; Beispiel `curve_fitting.fourier` (lineare Regression y = a*x + b).
+1. **API**: `fit(loss_fn, params_init, data, method="gd"|"mcmc"|"hmc", lr=0.01, steps=500)` — minimiert `loss_fn(params, data)` via Gradient Descent, Metropolis-Hastings oder **HMC** (Hamiltonian Monte Carlo).
+2. **Implementierung**: In `ml_runtime.py`; GD mit PyTorch backward; MCMC via `metropolis`; HMC mit Leapfrog-Integration und Gradienten. Beispiele: `curve_fitting.fourier`, `hmc_fitting.fourier`.
 
-**4b) NUTS / VI**
+**4b) HMC** ✅ (v0.9.4), NUTS / VI optional
 
-1. **NUTS**: Nutzer von Pyro/NumPyro-ähnlicher API — z. B. `nuts(log_prior, log_likelihood, data, init_theta, num_samples)`; Implementierung über PyTorch-Implementierung von NUTS oder externe Bibliothek (optional).
-2. **VI**: Variational Inference — `vi(model, guide, data, num_steps)`; aufwändiger; optional oder als zweite Priorität nach NUTS.
-3. **Dokumentation**: Language Spec §15.8 erweitern; Beispiel für NUTS vs. Metropolis.
+1. **HMC**: `hmc(log_prior_fn, log_likelihood_fn, data, init_theta, num_steps, step_size=0.1, num_leapfrog=10)` — gleiche API wie `metropolis`; nutzt Gradienten für bessere Proposals. Auch als `fit(..., method="hmc")` nutzbar.
+2. **NUTS/VI**: Optional später (Pyro/NumPyro oder Eigenbau).
 
-**4c) LaTeX-Export**
+**4c) LaTeX-Export** ✅ (v0.9.4)
 
-1. **AST → LaTeX**: Visitor über Fourier-AST, der unterstützte Ausdrücke (Literal, Identifier, +, -, *, /, ^, bekannte Funktionen) in LaTeX-Strings übersetzt.
-2. **API**: `latex(expr)` als Built-in oder Compiler-Option `--latex expr`; Ausgabe in Konsole oder Datei.
-3. **Einschränkung**: Zunächst nur mathematische Ausdrücke (kein vollständiges Programm); ausreichend für Formeln in Papers.
+1. **AST → LaTeX**: Visitor in `src/compiler/latex_export.py` — Literal, Identifier, BinaryOp (+, -, *, /, ^), Call (sin, cos, exp, log, sqrt, …), Quantity, Subscript, Lambda in LaTeX-Strings.
+2. **API**: `export_to_latex(source_code)` im Modul `compiler`; CLI: `python -m src.compiler.compiler <file.fourier> --latex`. Ausgabe: Gleichungen (Zuweisungen/Returns) als LaTeX.
+3. **Beispiel**: `examples/fourier/latex_demo.fourier`; Ausgabe z. B. `E = m \cdot {c}^{2}`.
 
-**Erfolgskriterium**: `fit(...)` konvergiert für einfache Modelle; NUTS liefert Posterior-Samples; `latex(expr)` erzeugt lesbaren LaTeX-Code für typische Ausdrücke.
+**Erfolgskriterium**: Erfüllt — `fit(..., method="hmc")` liefert Posterior-Samples; `export_to_latex(source)` erzeugt lesbaren LaTeX für typische Formeln.
 
 ---
 

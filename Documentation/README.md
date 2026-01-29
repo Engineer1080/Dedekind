@@ -6,7 +6,7 @@ This folder contains the **source** and **generated** documentation for the Four
 
 | File | Description |
 |------|-------------|
-| **Fourier_Language_Specification.md** | Language Specification (Markdown source, v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9; Stand v0.9.3) |
+| **Fourier_Language_Specification.md** | Language Specification (Markdown source, v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9; Stand v0.9.4) |
 | **Fourier_Research_and_Architecture.md** | Research foundation & architecture (Markdown source; §10 Sprachfeatures v0.6) |
 | **Symbolic_Simplification_Roadmap.md** | Implementierungs-Roadmap für Symbolic Simplification (Phasen, Optionen, Integration) |
 | **Features_Implementation_Roadmap.md** | Implementierungs-Roadmap für naturwissenschaftliche Features (Verteilungen, Integration, Einheiten Compile-Zeit, NUTS/VI, Fitting, LaTeX, symbolische Ableitungen) |
@@ -35,6 +35,10 @@ pandoc Fourier_Research_and_Architecture.md -o Fourier_Research_and_Architecture
 - **Online**: Paste the Markdown into a service that converts Markdown to PDF (e.g. markdown-to-pdf converters).
 - **Typora / other editors**: Open the `.md` file and export to PDF from the application.
 
+
+## What changed in v0.9.4 (documented here)
+
+- **Version 0.9.4**: HMC (Hamiltonian Monte Carlo) — `hmc(...)` und `fit(..., method="hmc")`; LaTeX-Export — `export_to_latex(source)` bzw. CLI `--latex`. Siehe **Fourier_Language_Specification.md** und `examples/fourier/hmc_fitting.fourier`, `examples/fourier/latex_demo.fourier`.
 
 ## What changed in v0.9.3 (documented here)
 

@@ -693,6 +693,57 @@ def metropolis(log_prior_fn, log_likelihood_fn, data, init_theta, num_steps, ste
         samples.append(theta.clone())
     return torch.stack(samples, dim=0)
 
+def hmc(log_prior_fn, log_likelihood_fn, data, init_theta, num_steps, step_size=0.1, num_leapfrog=10):
+    """
+    Hamiltonian Monte Carlo (HMC). Gleiche API wie metropolis; nutzt Gradienten für bessere Proposals.
+    log_prior_fn(theta), log_likelihood_fn(data, theta) liefern Log-Wahrscheinlichkeiten (Tensor/Skalar).
+    init_theta: Startparameter (Tensor/Liste); step_size: Schrittweite; num_leapfrog: Leapfrog-Schritte.
+    Rückgabe: Tensor (num_steps, *theta_shape) mit Posterior-Samples.
+    """
+    theta = _to_tensor(init_theta).float().clone().detach()
+    data_t = _to_tensor(data)
+    samples = [theta.clone()]
+
+    def neg_log_post(th):
+        th = th.detach().clone().requires_grad_(True)
+        lp = log_prior_fn(th)
+        ll = log_likelihood_fn(data_t, th)
+        lp_t = _to_tensor(lp).sum()
+        ll_t = _to_tensor(ll).sum()
+        nlp = -(lp_t + ll_t)
+        if th.grad is not None:
+            th.grad.zero_()
+        nlp.backward()
+        grad = th.grad.clone() if th.grad is not None else torch.zeros_like(th)
+        return nlp.detach().item(), grad
+
+    for _ in range(num_steps - 1):
+        p = torch.randn_like(theta)
+        q = theta.clone()
+        eps = float(step_size)
+        L = max(1, int(num_leapfrog))
+        U_cur = neg_log_post(theta)[0]
+        K_cur = 0.5 * (p ** 2).sum().item()
+        H_cur = U_cur + K_cur
+        _, g = neg_log_post(q)
+        p = p + 0.5 * eps * g
+        for _ in range(L - 1):
+            q = q + eps * p
+            _, g = neg_log_post(q)
+            p = p + eps * g
+        q = q + eps * p
+        _, g = neg_log_post(q)
+        p = p + 0.5 * eps * g
+        U_prop = neg_log_post(q)[0]
+        K_prop = 0.5 * (p ** 2).sum().item()
+        H_prop = U_prop + K_prop
+        log_accept = H_cur - H_prop
+        accept_prob = min(1.0, float(torch.exp(torch.tensor(log_accept)).item()))
+        if torch.rand(1).item() < accept_prob:
+            theta = q.clone()
+        samples.append(theta.clone())
+    return torch.stack(samples, dim=0)
+
 # --- Standard Library: Math (for integration and expressions) ---
 def sin(x):
     """sin(x); x Tensor or scalar."""
@@ -835,9 +886,9 @@ def fit(loss_fn, params_init, data, method="gd", lr=0.01, steps=500):
     Kurvenanpassung: minimiert loss_fn(params, data).
     params_init: Startparameter (Tensor oder Liste); werden kopiert und mit Gradienten versehen.
     data: beliebige Daten (an loss_fn übergeben).
-    method: 'gd' (Gradient Descent, default) oder 'mcmc' (Metropolis-Hastings).
-    lr: Lernrate (nur bei gd). steps: Anzahl Schritte.
-    Rückgabe: Tensor der optimalen Parameter (bei gd); bei mcmc Tensor (steps, *params_shape).
+    method: 'gd' (Gradient Descent), 'mcmc' (Metropolis-Hastings) oder 'hmc' (Hamiltonian Monte Carlo).
+    lr: Lernrate (gd) bzw. Schrittweite (mcmc/hmc). steps: Anzahl Schritte.
+    Rückgabe: Tensor der optimalen Parameter (bei gd); bei mcmc/hmc Tensor (steps, *params_shape).
     """
     params = _to_tensor(params_init).float().clone().detach()
     params = params.requires_grad_(True)
@@ -849,6 +900,12 @@ def fit(loss_fn, params_init, data, method="gd", lr=0.01, steps=500):
         def log_likelihood(d, p):
             return -loss_fn(p, d)
         return metropolis(log_prior, log_likelihood, data_t, params.detach(), steps, step_size=lr)
+    if method == "hmc":
+        def log_prior(p):
+            return torch.tensor(0.0)
+        def log_likelihood(d, p):
+            return -loss_fn(p, d)
+        return hmc(log_prior, log_likelihood, data_t, params.detach(), steps, step_size=lr, num_leapfrog=10)
 
     # Gradient Descent
     for _ in range(steps):

@@ -1,6 +1,6 @@
 # Fourier Programming Language
 
-![Version](https://img.shields.io/badge/Version-0.9.3-blue) ![Fourier Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-0.9.4-blue) ![Fourier Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Fourier** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -18,9 +18,14 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **Probabilistic Programming**: First-class distributions `Normal(mu, sigma)`, `Uniform(low, high)`, `Bernoulli(p)`, `Exponential(rate)`, `Gamma(concentration, rate)`, `Beta(alpha, beta)`, `Poisson(rate)`; `sample(dist)`, `log_prob(dist, value)`; Bayesian inference via `metropolis(log_prior, log_likelihood, data, init, steps)`.
 - **Numerical Integration**: `integrate(f, a, b, n)` — trapezoidal quadrature; differentiable when `f` accepts a tensor; `sin(x)`, `cos(x)` for expressions.
 - **Uncertainty Propagation**: `uncertain(value, std)` bzw. `UncertainQuantity` — Gauß'sche Fehlerfortpflanzung für +, -, *, /, ^; optional mit Einheit.
-- **Fitting / Regression**: `fit(loss_fn, params_init, data, method="gd"|"mcmc", lr=0.01, steps=500)` — minimiert `loss_fn(params, data)` via Gradient Descent oder MCMC.
+- **Fitting / Regression**: `fit(loss_fn, params_init, data, method="gd"|"mcmc"|"hmc", lr=0.01, steps=500)` — minimiert `loss_fn(params, data)` via Gradient Descent, Metropolis-Hastings oder **HMC** (Hamiltonian Monte Carlo).
+- **LaTeX-Export**: `export_to_latex(source)` bzw. CLI `--latex` — Formeln aus Fourier-Code als LaTeX (für Papers/Notizen).
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
-- **Modern IDE**: "Fourier Studio" – v0.9.3 with resizable terminal and file explorer.
+- **Modern IDE**: "Fourier Studio" – v0.9.4 with resizable terminal and file explorer.
+
+### What's New in v0.9.4
+- **HMC (Hamiltonian Monte Carlo)**: `hmc(log_prior_fn, log_likelihood_fn, data, init_theta, num_steps, step_size, num_leapfrog)` und `fit(..., method="hmc")` — gradientenbasierte MCMC-Proposals. Beispiel: `hmc_fitting.fourier`.
+- **LaTeX-Export**: `export_to_latex(source_code)` im Compiler; CLI: `python -m src.compiler.compiler <file.fourier> --latex`. Formeln (Zuweisungen, Returns) werden als LaTeX ausgegeben. Beispiel: `latex_demo.fourier`.
 
 ### What's New in v0.9.3
 - **Version 0.9.3**: Release mit Uncertainty Propagation (`uncertain`, `UncertainQuantity`) und Fitting (`fit`); siehe §15.11 und Beispiele `uncertainty_propagation.fourier`, `curve_fitting.fourier`.
@@ -260,7 +265,7 @@ Fourier aims to become the "Standard Language for Nature's Laws." To achieve thi
 
 ## 📚 Documentation
 
-- **Language Specification**: `Documentation/Fourier_Language_Specification.md` (v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9; Stand v0.9.3). PDF can be generated with `pandoc` (see `Documentation/README.md`).
+- **Language Specification**: `Documentation/Fourier_Language_Specification.md` (v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9; Stand v0.9.4). PDF can be generated with `pandoc` (see `Documentation/README.md`).
 - **Research & Architecture**: `Documentation/Fourier_Research_and_Architecture.md` (includes §10 Sprachfeatures v0.6).
 - **Symbolic Simplification**: `Documentation/Symbolic_Simplification_Roadmap.md` — Implementierungs-Roadmap (Phasen, Optionen, Integration).
 - **Features Roadmap**: `Documentation/Features_Implementation_Roadmap.md` — naturwissenschaftliche Features (Phase 1 abgeschlossen: Verteilungen, Integration).
