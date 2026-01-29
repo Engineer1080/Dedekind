@@ -107,7 +107,10 @@ class FourierSequential(nn.Module):
         self.raw_layers = layers_data
         self.built_layers = nn.ModuleList()
         self.initialized = False
-    
+
+    def __len__(self):
+        return len(self.built_layers) if self.initialized else len(self.raw_layers)
+
     @property
     def shape(self):
         # For a model, we return the internal weights or informative string
@@ -192,24 +195,33 @@ def Sequential(layers):
 
 class FourierCompiledModel:
     """
-    Robust wrapper for torch.compile that handles lazy compilation errors.
-    If the native compiler is missing, it falls back to the interpreted model.
+    Robust wrapper for torch.compile. Builds the model on first forward (if lazy),
+    then compiles so Inductor sees a static graph. Falls back to interpreted mode on failure.
     """
     def __init__(self, original_model):
         self.original_model = original_model
         self.failed = False
-        try:
-            self.compiled = torch.compile(original_model)
-        except:
-            self.failed = True
+        self._compiled = None  # compile after first forward (once model is built)
 
     def __call__(self, *args, **kwargs):
-        if not self.failed:
+        # First call: ensure lazy Sequential is built, then compile once
+        if self._compiled is None and not self.failed:
+            if isinstance(self.original_model, FourierSequential) and not self.original_model.initialized:
+                self.original_model(*args, **kwargs)  # trigger _build
             try:
-                # First call triggers lazy compilation in Inductor
-                return self.compiled(*args, **kwargs)
+                self._compiled = torch.compile(
+                    self.original_model,
+                    mode="reduce-overhead",
+                    fullgraph=False,
+                )
+            except Exception:
+                self.failed = True
+                self._compiled = False
+        if self._compiled and not self.failed:
+            try:
+                return self._compiled(*args, **kwargs)
             except Exception as e:
-                print(f"Fourier Warning: Runtime compilation failed ({type(e).__name__}). Falling back to interpreted mode.")
+                print(f"Fourier: Compilation failed ({type(e).__name__}); using interpreted mode. Result is correct.")
                 self.failed = True
         return self.original_model(*args, **kwargs)
 
@@ -217,7 +229,6 @@ class FourierCompiledModel:
         return self.__call__(*args, **kwargs)
 
     def __getattr__(self, name):
-        # Proxy all other calls to the original model (e.g., parameters, to, cuda)
         return getattr(self.original_model, name)
 
 def _to_grad(data):
