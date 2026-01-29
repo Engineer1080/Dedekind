@@ -332,12 +332,25 @@ def pooling(input, kernel_size=2):
 
 # --- Standard Library: Signal Processing ---
 
-def fft(data):
+def _to_complex_tensor(data):
+    """Convert list of Quaternions (w+xi) or numbers to 1D complex tensor for FFT."""
+    if isinstance(data, torch.Tensor):
+        return data if data.is_complex() else data.to(torch.complex64)
+    if isinstance(data, (list, tuple)) and data:
+        first = data[0]
+        if isinstance(first, Quaternion):
+            return torch.tensor([complex(q.w, q.x) for q in data], dtype=torch.complex64)
+        if isinstance(first, (int, float)):
+            return torch.tensor(data, dtype=torch.complex64)
     data = _to_tensor(data)
+    return data if data.is_complex() else data.to(torch.complex64)
+
+def fft(data):
+    data = _to_complex_tensor(data)
     return torch.fft.fft(data)
 
 def ifft(data):
-    data = _to_tensor(data)
+    data = _to_complex_tensor(data)
     return torch.fft.ifft(data)
 
 # --- Standard Library: Sorting ---
