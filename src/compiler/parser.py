@@ -34,10 +34,62 @@ class Parser:
             self.consume('RETURN')
             expr = self.parse_expression()
             return ReturnStmt(expr)
+        elif token.type == 'IF':
+            return self.parse_if_stmt()
+        elif token.type == 'WHILE':
+            return self.parse_while_stmt()
+        elif token.type == 'FOR':
+            return self.parse_for_stmt()
         elif token.type == 'ID' and self.peek(1) and self.peek(1).type == 'ASSIGN':
             return self.parse_assignment()
         else:
             return self.parse_expression()
+
+    def parse_if_stmt(self):
+        self.consume('IF')
+        condition = self.parse_expression()
+        self.consume('LBRACE')
+        then_branch = []
+        while self.peek().type != 'RBRACE':
+            then_branch.append(self.parse_statement())
+        self.consume('RBRACE')
+        
+        else_branch = None
+        if self.peek() and self.peek().type == 'ELSE':
+            self.consume('ELSE')
+            self.consume('LBRACE')
+            else_branch = []
+            while self.peek().type != 'RBRACE':
+                else_branch.append(self.parse_statement())
+            self.consume('RBRACE')
+            
+        return IfStmt(condition, then_branch, else_branch)
+
+    def parse_while_stmt(self):
+        self.consume('WHILE')
+        condition = self.parse_expression()
+        self.consume('LBRACE')
+        body = []
+        while self.peek().type != 'RBRACE':
+            body.append(self.parse_statement())
+        self.consume('RBRACE')
+        return WhileStmt(condition, body)
+        
+    def parse_for_stmt(self):
+        self.consume('FOR')
+        var_name = self.consume('ID').value
+        if self.peek().type == 'ID' and self.peek().value == 'in': 
+             self.consume() # consume 'in' (lexer sees it as ID)
+        elif self.tokens[self.pos].value == 'in': # Fallback if 'in' keyword handling varies
+             self.consume()
+
+        collection = self.parse_expression()
+        self.consume('LBRACE')
+        body = []
+        while self.peek().type != 'RBRACE':
+            body.append(self.parse_statement())
+        self.consume('RBRACE')
+        return ForStmt(var_name, collection, body)
 
     def parse_function_def(self):
         self.consume('FN')
@@ -64,26 +116,46 @@ class Parser:
         return Assignment(target, value)
 
     def parse_expression(self):
-        left = self.parse_term()
+        # Lowest precedence: Comparisons
+        return self.parse_comparison()
+        
+    def parse_comparison(self):
+        left = self.parse_term_expr()
+        
+        while self.peek() and self.peek().type in ['EQ', 'NEQ', 'LT', 'GT', 'LE', 'GE']:
+            op = self.consume().value
+            right = self.parse_term_expr()
+            left = BinaryOp(left, op, right)
+            
+        return left
+
+    def parse_term_expr(self):
+        # Addition/Subtraction
+        left = self.parse_factor_expr()
         
         while self.peek() and self.peek().type in ['PLUS', 'MINUS']:
             op = self.consume().value
-            right = self.parse_term()
+            right = self.parse_factor_expr()
             left = BinaryOp(left, op, right)
             
         return left
 
-    def parse_term(self):
-        left = self.parse_factor()
+    def parse_factor_expr(self):
+        # Multiplication/Division
+        left = self.parse_atom()
         
         while self.peek() and self.peek().type in ['MUL', 'DIV']:
             op = self.consume().value
-            right = self.parse_factor()
+            right = self.parse_atom()
             left = BinaryOp(left, op, right)
             
         return left
 
-    def parse_factor(self):
+    def parse_atom(self):
+        # Replaces old parse_factor logic
+        token = self.peek()
+
+
         token = self.peek()
         
         if token.type == 'NUMBER':

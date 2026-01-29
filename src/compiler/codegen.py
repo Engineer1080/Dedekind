@@ -37,6 +37,45 @@ class CodeGenerator:
             if isinstance(res, str):
                 self.add_line(res)
 
+    def visit_IfStmt(self, node: IfStmt):
+        cond = self.visit_expression(node.condition)
+        self.add_line(f"if {cond}:")
+        self.indent_level += 1
+        for stmt in node.then_branch:
+            res = self.visit(stmt)
+            if isinstance(res, str):
+                self.add_line(res)
+        self.indent_level -= 1
+        
+        if node.else_branch:
+            self.add_line("else:")
+            self.indent_level += 1
+            for stmt in node.else_branch:
+                res = self.visit(stmt)
+                if isinstance(res, str):
+                    self.add_line(res)
+            self.indent_level -= 1
+
+    def visit_WhileStmt(self, node: WhileStmt):
+        cond = self.visit_expression(node.condition)
+        self.add_line(f"while {cond}:")
+        self.indent_level += 1
+        for stmt in node.body:
+            res = self.visit(stmt)
+            if isinstance(res, str):
+                self.add_line(res)
+        self.indent_level -= 1
+
+    def visit_ForStmt(self, node: ForStmt):
+        collection = self.visit_expression(node.collection)
+        self.add_line(f"for {node.variable} in {collection}:")
+        self.indent_level += 1
+        for stmt in node.body:
+            res = self.visit(stmt)
+            if isinstance(res, str):
+                self.add_line(res)
+        self.indent_level -= 1
+
     def visit_FunctionDef(self, node: FunctionDef):
         args_str = ", ".join(node.args)
         self.add_line(f"def {node.name}({args_str}):")
@@ -81,6 +120,15 @@ class CodeGenerator:
             func_name = self.visit_expression(node.func_name)
             
         args = [self.visit_expression(a) for a in node.args]
+        
+        # Special handling for matrix operations
+        if func_name == "matmul" or func_name == "dot":
+             # Assuming method call syntax: matrix.matmul(other) -> matmul(matrix, other) 
+             # In our parser logic for method chaining: node = Call(Identifier(method), [node] + args, [])
+             # So args[0] is the matrix found, args[1] is the argument.
+             if len(args) >= 2:
+                 return f"({args[0]} @ {args[1]})"
+        
         args_str = ", ".join(args)
         
         call_str = f"{func_name}({args_str})"

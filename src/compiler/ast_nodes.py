@@ -52,3 +52,20 @@ class VectorLiteral(Node):
 class Lambda(Node):
     arg: str
     body: Node
+
+@dataclass
+class IfStmt(Node):
+    condition: Node
+    then_branch: List[Node]
+    else_branch: Optional[List[Node]]
+
+@dataclass
+class WhileStmt(Node):
+    condition: Node
+    body: List[Node]
+
+@dataclass
+class ForStmt(Node):
+    variable: str
+    collection: Node
+    body: List[Node]

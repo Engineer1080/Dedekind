@@ -23,7 +23,13 @@ class Lexer:
             ('STRING',   r'"[^"]*"'),           # String literal
             ('MODIFIER', r'\.(gpu|cpu|single)'), # Modifiers .gpu, .cpu, .single
             ('ARROW',    r'=>'),                # Arrow operator
-            ('ASSIGN',   r'='),                 # Assignment operator
+            ('EQ',       r'=='),                # Equal
+            ('NEQ',      r'!='),                # Not equal
+            ('LE',       r'<='),                # Less or equal
+            ('GE',       r'>='),                # Greater or equal
+            ('ASSIGN',   r'='),                 # Assignment operator (CHECK ORDER: EQ before ASSIGN)
+            ('LT',       r'<'),                 # Less than
+            ('GT',       r'>'),                 # Greater than
             ('PLUS',     r'\+'),                # Add
             ('MINUS',    r'-'),                 # Subtract
             ('MUL',      r'\*'),                # Multiply
