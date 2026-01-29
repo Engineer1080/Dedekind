@@ -54,7 +54,7 @@ python src/server.py
 ```
 *The server will start on `http://localhost:5000`.*
 
-### 3. Setup Fourier Studio (Frontend)
+### 3. Setup Fourier Studio (Native App)
 Open a new terminal window for the frontend.
 
 ```bash
@@ -63,10 +63,10 @@ cd src/ui
 # Install Node dependencies
 npm install
 
-# Start the Development Server
-npm run dev
+# Run the Application (Electron + Vite)
+npm run electron:dev
 ```
-*The IDE will open at `http://localhost:5173`.*
+*This will launch the native Fourier Studio window.*
 
 ## 💻 Usage
 
