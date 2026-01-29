@@ -1,6 +1,6 @@
 # Fourier Programming Language
 
-![Version](https://img.shields.io/badge/Version-0.9.1-blue) ![Fourier Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-0.9.2-blue) ![Fourier Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Fourier** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -10,7 +10,7 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 
 - **Ricci Calculus**: Native index notation (`A^ij * B_jk`) for Einstein summation.
 - **Sparse Tensors**: Efficient `.sparse()` support for FEM/CFD simulations.
-- **Fundamental Constants**: Native access to `c`, `G`, `h`, `k_B`, and `k_e` as **Quantity** with SI units (e.g. `c` in m/s).
+- **Fundamental Constants**: Mathematical `pi`, `e`; physical CODATA constants: `c`, `G`, `h`, `hbar`, `k_B`, `k_e`, `e_charge`, `epsilon_0`, `mu_0`, `m_e`, `m_p`, `N_A`, `R_gas`, `alpha`, `sigma_SB`, `F_faraday` — all as **Quantity** with SI units.
 - **Physical Units**: Literals with units (`10[m]`, `5[m/s]`, `1.0[kg]`); add/sub require same unit; multiply/divide combine units; `^` for powers (`r^2`); display simplified to J, N where applicable.
 - **4D Rotational Math**: Native Quaternion support (`i`, `j`, `k` suffixes) and `.rotate()` method; unary minus supported (`-1.0 + 0i`).
 - **Differentiable ODE Solvers**: `ode_solve(fun, y0, t)` (RK4/Euler); gradients via `grad()` for physics-informed ML; `linspace(start, stop, steps)` for time grids.
@@ -18,7 +18,10 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **Probabilistic Programming**: First-class distributions `Normal(mu, sigma)`, `Uniform(low, high)`, `Bernoulli(p)`, `Exponential(rate)`, `Gamma(concentration, rate)`, `Beta(alpha, beta)`, `Poisson(rate)`; `sample(dist)`, `log_prob(dist, value)`; Bayesian inference via `metropolis(log_prior, log_likelihood, data, init, steps)`.
 - **Numerical Integration**: `integrate(f, a, b, n)` — trapezoidal quadrature; differentiable when `f` accepts a tensor; `sin(x)`, `cos(x)` for expressions.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
-- **Modern IDE**: "Fourier Studio" – v0.9.1 with resizable terminal and file explorer.
+- **Modern IDE**: "Fourier Studio" – v0.9.2 with resizable terminal and file explorer.
+
+### What's New in v0.9.2
+- **Version 0.9.2**: Mathematische Konstanten `pi`, `e`; erweiterte physikalische Konstanten (CODATA): `hbar`, `e_charge`, `epsilon_0`, `mu_0`, `m_e`, `m_p`, `N_A`, `R_gas`, `alpha`, `sigma_SB`, `F_faraday`. Beispiel: `constants_extended.fourier`; `integrate(f, 0, pi)` nutzt native `pi`.
 
 ### What's New in v0.9.1
 - **Version 0.9.1**: Run-Examples-Skript `run_examples.py` — alle `.fourier`-Beispiele automatisch kompilieren und ausführen (Optionen: `-q`, `-v`, `--compile`, `--filter`). Dokumentation ergänzt; Linter-Hinweise in `ml_runtime.py` behoben.
@@ -156,6 +159,7 @@ npm run electron:dev
 Example programs are in `examples/fourier/`, including:
 - `hello.fourier` – basic I/O and tensors  
 - `universal_constants.fourier` – physical constants and units (E = mc², gravitation, Coulomb)  
+- `constants_extended.fourier` – mathematical `pi`, `e`; CODATA constants (`hbar`, `e_charge`, `epsilon_0`, `mu_0`, `m_e`, `m_p`, `N_A`, `R_gas`, `alpha`, `sigma_SB`, `F_faraday`)  
 - `signal_physics.fourier` – complex numbers (Quaternions) and FFT  
 - `differentiable_ode.fourier` – differentiable ODE solver with `ode_solve` and `grad`  
 - `pde_heat.fourier` – differentiable PDE solver (1D/2D heat equation) with `pde_heat_1d` / `pde_heat_2d`  
@@ -247,7 +251,7 @@ Fourier aims to become the "Standard Language for Nature's Laws." To achieve thi
 
 ## 📚 Documentation
 
-- **Language Specification**: `Documentation/Fourier_Language_Specification.md` (v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9; Stand v0.9.1). PDF can be generated with `pandoc` (see `Documentation/README.md`).
+- **Language Specification**: `Documentation/Fourier_Language_Specification.md` (v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9; Stand v0.9.2). PDF can be generated with `pandoc` (see `Documentation/README.md`).
 - **Research & Architecture**: `Documentation/Fourier_Research_and_Architecture.md` (includes §10 Sprachfeatures v0.6).
 - **Symbolic Simplification**: `Documentation/Symbolic_Simplification_Roadmap.md` — Implementierungs-Roadmap (Phasen, Optionen, Integration).
 - **Features Roadmap**: `Documentation/Features_Implementation_Roadmap.md` — naturwissenschaftliche Features (Phase 1 abgeschlossen: Verteilungen, Integration).

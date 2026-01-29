@@ -17,12 +17,11 @@ fn main() {
     print("int_0^1 x dx (expect 0.5):")
     print(I_lin)
     
-    // int_0^pi sin(x) dx = 2 (approx pi = 3.14159)
+    // int_0^pi sin(x) dx = 2 (mit nativer Konstante pi)
     fn f_sin(x) {
         return sin(x)
     }
-    pi_approx = 3.14159265
-    I_sin = integrate(f_sin, 0, pi_approx)
+    I_sin = integrate(f_sin, 0, pi)
     print("int_0^pi sin(x) dx (expect 2):")
     print(I_sin)
     

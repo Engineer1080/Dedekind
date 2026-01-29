@@ -124,12 +124,27 @@ def _unit_simplify(u):
         return "N"
     return u
 
+# --- Mathematical Constants (dimensionless) ---
+pi  = Quantity(3.14159265358979323846, "")
+e   = Quantity(2.71828182845904523536, "")  # Euler's number
+
 # --- Fundamental Physical Constants (CODATA 2018/2022) as Quantity with SI units ---
-c   = Quantity(299792458.0, "m/s")
-G   = Quantity(6.67430e-11, "m^3/(kg*s^2)")
-h   = Quantity(6.62607015e-34, "J*s")
-k_B = Quantity(1.380649e-23, "J/K")
-k_e = Quantity(8.9875517923e9, "N*m^2/C^2")
+c       = Quantity(299792458.0, "m/s")
+G       = Quantity(6.67430e-11, "m^3/(kg*s^2)")
+h       = Quantity(6.62607015e-34, "J*s")
+hbar    = Quantity(1.054571817e-34, "J*s")   # h / (2*pi)
+k_B     = Quantity(1.380649e-23, "J/K")
+k_e     = Quantity(8.9875517923e9, "N*m^2/C^2")
+e_charge = Quantity(1.602176634e-19, "C")    # elementary charge
+epsilon_0 = Quantity(8.8541878128e-12, "F/m")  # vacuum permittivity
+mu_0    = Quantity(1.25663706212e-6, "N/A^2") # vacuum permeability
+m_e     = Quantity(9.1093837015e-31, "kg")   # electron mass
+m_p     = Quantity(1.67262192369e-27, "kg")  # proton mass
+N_A     = Quantity(6.02214076e23, "1/mol")   # Avogadro constant
+R_gas   = Quantity(8.314462618, "J/(K*mol)")  # universal gas constant R = N_A * k_B
+alpha   = Quantity(7.2973525693e-3, "")      # fine-structure constant (dimensionless)
+sigma_SB = Quantity(5.670374419e-8, "W/(m^2*K^4)")  # Stefan-Boltzmann
+F_faraday = Quantity(96485.33212, "C/mol")   # Faraday constant F = e_charge * N_A
 # ----------------------------------------------------------------------------------
 
 class Quaternion:
@@ -367,9 +382,12 @@ def _to_grad(data):
 def _to_tensor(data):
     """Internal helper to convert nested lists/NumPy to PyTorch tensors.
     Lists that contain non-tensor items (e.g. functions, nn.Modules) are returned unchanged
-    so that e.g. Sequential([Dense(...), ...]) receives the list of layers as-is."""
+    so that e.g. Sequential([Dense(...), ...]) receives the list of layers as-is.
+    Quantity is converted to tensor of its numeric value (for pi, e, scalars)."""
     if isinstance(data, torch.Tensor):
         return data
+    if isinstance(data, Quantity):
+        return torch.tensor(data.value, dtype=torch.float32)
     if isinstance(data, (list, tuple)):
         if not data:
             return torch.tensor([], dtype=torch.float32)

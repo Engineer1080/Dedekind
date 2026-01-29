@@ -2,7 +2,7 @@
 
 **Language Specification v0.2**  
 Mario Michael Heinrich · github.com/Engineer1080  
-Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples)
+Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA-Konstanten)
 
 ---
 
@@ -115,19 +115,37 @@ charge   = 1.602e-19[C]
 - **Syntax**: `number [ unit ]` where `unit` is an identifier or product/quotient/power (e.g. `m`, `m/s`, `kg*m/s^2`, `m^2`).
 - **Semantics**: Such expressions are represented at runtime as `Quantity(value, unit)`.
 
-### 15.2 Universal Constants as Quantity
+### 15.2 Mathematical and Universal Constants as Quantity
 
-The following constants are predefined as **Quantity** values with correct SI dimensions:
+**Mathematical constants** (dimensionless):
 
-| Constant | Meaning              | SI Unit           |
-|----------|----------------------|-------------------|
-| `c`      | Speed of light       | m/s               |
-| `G`      | Gravitational const. | m³/(kg·s²)        |
-| `h`      | Planck constant      | J·s               |
-| `k_B`    | Boltzmann constant   | J/K               |
-| `k_e`    | Coulomb constant     | N·m²/C²           |
+| Constant | Meaning           | Value (approx) |
+|----------|-------------------|----------------|
+| `pi`     | Kreiszahl π       | 3.14159…       |
+| `e`      | Eulersche Zahl    | 2.71828…       |
 
-Example: `E = m * c^2` with `m = 1.0[kg]` yields a result in J (Joule); the runtime simplifies the displayed unit to **J** where applicable.
+**Fundamental physical constants** (CODATA 2018/2022) with SI dimensions:
+
+| Constant     | Meaning                    | SI Unit        |
+|--------------|----------------------------|----------------|
+| `c`          | Speed of light              | m/s            |
+| `G`          | Gravitational constant     | m³/(kg·s²)     |
+| `h`          | Planck constant            | J·s            |
+| `hbar`       | Reduced Planck (h/2π)      | J·s            |
+| `k_B`        | Boltzmann constant         | J/K            |
+| `k_e`        | Coulomb constant           | N·m²/C²        |
+| `e_charge`   | Elementary charge          | C              |
+| `epsilon_0`  | Vacuum permittivity         | F/m            |
+| `mu_0`       | Vacuum permeability         | N/A²           |
+| `m_e`        | Electron mass               | kg             |
+| `m_p`        | Proton mass                 | kg             |
+| `N_A`        | Avogadro constant           | 1/mol          |
+| `R_gas`      | Universal gas constant      | J/(K·mol)      |
+| `alpha`      | Fine-structure constant     | (dimensionless)|
+| `sigma_SB`   | Stefan-Boltzmann constant   | W/(m²·K⁴)      |
+| `F_faraday`  | Faraday constant            | C/mol          |
+
+Example: `E = m * c^2` with `m = 1.0[kg]` yields a result in J (Joule); the runtime simplifies the displayed unit to **J** where applicable. Example with `pi`: `circumference = 2 * pi * r` with `r = 1.0[m]`.
 
 ### 15.3 Quantity Arithmetic
 
