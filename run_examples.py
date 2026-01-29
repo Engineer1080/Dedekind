@@ -62,7 +62,7 @@ def main():
             continue
 
         try:
-            python_code = compile_source(source)
+            python_code = compile_source(source, filepath=filepath)
         except Exception as e:
             results.append((filename, False, f"Kompilierung: {e}"))
             if args.verbose:

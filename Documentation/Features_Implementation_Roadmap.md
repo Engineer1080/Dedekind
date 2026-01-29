@@ -22,9 +22,9 @@ Diese Roadmap priorisiert und plant **sinnvolle Erweiterungen** der Fourier-Spra
 | **PDE-Solver (differenzierbar)** | Wärme-, Diffusionsgleichung; PINNs brauchen oft ∇²u, ∂u/∂t. | Hoch | ✅ **Implementiert** (v0.9: `pde_heat_1d`, `pde_heat_2d`) |
 | **Mehr Verteilungen** | Exponential, Gamma, Beta, Poisson für Statistik, Strahlung, Zählexperimente. | Gering | ✅ **Implementiert** (v0.9: `Exponential`, `Gamma`, `Beta`, `Poisson`) |
 | **Numerische Integration** | `integrate(f, a, b)` für Flächen, Erwartungswerte, Normalisierung. | Gering | ✅ **Implementiert** (v0.9: `integrate(f, a, b, n)`; `sin`, `cos`) |
-| **Bessere Fehlermeldungen** | Einheitenfehler, Dimensionskonflikte, „expected tensor, got Quantity“ mit Zeile/Kontext. | Mittel | Phase 2 |
+| **Bessere Fehlermeldungen** | Einheitenfehler, Dimensionskonflikte, „expected tensor, got Quantity“ mit Zeile/Kontext. | Mittel | ✅ **Implementiert** (v0.9.5: `CompileError` mit Zeile, Parser/Zeile im AST, Runtime-Quantity-Meldungen) |
 | **Uncertainty-Propagation** | Fehlerfortpflanzung: f(x ± Δx) → Ergebnis mit Unsicherheit; Standard in Messtechnik. | Mittel | ✅ **Implementiert** (v0.9.2: `uncertain(value, std)`, `UncertainQuantity`) |
-| **Einheiten zur Compile-Zeit** | `1[m] + 1[s]` → Fehler beim Kompilieren statt zur Laufzeit; weniger Unit-Bugs. | Mittel | Phase 3 |
+| **Einheiten zur Compile-Zeit** | `1[m] + 1[s]` → Fehler beim Kompilieren statt zur Laufzeit; weniger Unit-Bugs. | Mittel | ✅ **Implementiert** (v0.9.5: `units_checker.py`, `compile_source(..., check_units=True)`, CLI `--no-units-check`) |
 | **Fitting / Regression** | `fit(model, data)` mit Gradient Descent oder MCMC; typisch für Kurvenanpassung. | Mittel | ✅ **Implementiert** (v0.9.2: `fit(loss_fn, params_init, data, method="gd"|"mcmc")`) |
 | **NUTS / VI** | Robusteres Bayesian Inference (NUTS) oder schnelle Approximation (VI); Metropolis oft langsam. | Mittel | Phase 4 (HMC ✅) |
 | **LaTeX-Export von Formeln** | Aus Fourier-Ausdrücken LaTeX erzeugen (für Papers/Notizen). | Mittel | ✅ **Implementiert** (v0.9.4: `export_to_latex(source)`, CLI `--latex`) |
@@ -59,19 +59,18 @@ Diese Roadmap priorisiert und plant **sinnvolle Erweiterungen** der Fourier-Spra
 
 ---
 
-### Phase 2: Bessere Fehlermeldungen (geschätzt: 2–3 Wochen)
+### Phase 2: Bessere Fehlermeldungen ✅ (v0.9.5)
 
 **Ziel**: Einheitenfehler, Dimensionskonflikte und Typfehler mit Zeile und Kontext melden.
 
-**Schritte**:
+**Umgesetzt**:
 
-1. **Quelltext-Positionen**: Sicherstellen, dass AST-Knoten Zeilen-/Spalteninformation tragen (Parser/lexer bereits vorhanden?); bei Fehlern diese ausgeben.
-2. **Runtime-Fehler**: Bei `Quantity`-Arithmetik (z. B. Addition verschiedener Einheiten) Fehlermeldung mit erwarteter vs. tatsächlicher Einheit und, wenn möglich, Zeile des Aufrufs.
-3. **Typ-/Dimensions-Hinweise**: „expected tensor of shape (n,), got Quantity“ oder „expected same unit for +, got [m] vs [s]“.
-4. **Compiler-Fehler**: Bei unbekannten Funktionen, falscher Argumentanzahl oder falschem Typ klare Meldung inkl. Zeile.
-5. **Optional**: Kurzer Abschnitt in der Language Spec („Error Reporting“) und ggf. IDE-Anzeige (Fehler im Editor markieren).
+1. **Quelltext-Positionen**: AST-Knoten tragen optional `line` (Zeile); Parser setzt sie bei allen Konstrukten; Lexer liefert Zeile pro Token.
+2. **Compiler-Fehler**: `CompileError(message, line=..., filepath=...)` mit formatierter Ausgabe „Datei: Zeile N: Meldung“; Parser wirft bei erwartetem Token, ungültigem Zuweisungsziel, unerwartetem Token.
+3. **Runtime-Fehler**: `Quantity`/`UncertainQuantity` bei Einheiten-Mismatch (+/-) mit klarer Meldung: „Einheitenfehler bei Addition: [m] vs [s]. Für + und - müssen beide Größen die gleiche Einheit haben.“
+4. **Pipeline**: `compile_source(source, filepath=..., check_units=...)`; `run_examples` übergibt `filepath`; CLI fängt `CompileError` und gibt sie formatiert aus.
 
-**Erfolgskriterium**: Typische Fehler (Unit-Mismatch, falsche Argumente) liefern eine verständliche Meldung mit Zeilenangabe; keine Regression bei bestehenden Programmen.
+**Erfolgskriterium**: Erfüllt — typische Fehler liefern verständliche Meldung mit Zeilenangabe; alle Beispiele laufen.
 
 ---
 
@@ -85,14 +84,13 @@ Diese Roadmap priorisiert und plant **sinnvolle Erweiterungen** der Fourier-Spra
 2. **API**: z. B. `x_with_err = uncertain(10.0, 0.5)` oder Literal-Syntax; Ausgabe „value ± std“.
 3. **Integration**: Mit bestehenden Einheiten kombinierbar (value und std gleiche Einheit); in `ml_runtime.py` und Codegen (neue Funktion/Built-in).
 
-**3b) Einheiten zur Compile-Zeit**
+**3b) Einheiten zur Compile-Zeit** ✅ (v0.9.5)
 
-1. **Dimensionen im AST**: Einheiten als Typ/Dimension führen (z. B. `[m]`, `[s]`, `[m/s]`); bei Literalen und Variablen typisiert.
-2. **Check vor Codegen**: Für jede Operation (+, -, *, /, ^) prüfen, ob Dimensionen zusammenpassen; bei `1[m] + 1[s]` Compiler-Fehler mit Zeile.
-3. **Option**: Zunächst opt-in (z. B. `--units-check`), später Default.
-4. **Abhängigkeit**: Kann mit Symbolic Simplification Roadmap Phase 5 (Einheiten in Vereinfachung) abgestimmt werden.
+1. **Check vor Codegen**: `units_checker.py` — Visitor über AST; für `+`/`-` wird Einheit aus Literal, Quantity und bekannten Konstanten inferiert; bei Mismatch (z. B. `1[m] + 1[s]`) wird `CompileError` mit Zeile geworfen. Unäres Minus (`0 - x`) erlaubt.
+2. **API**: `compile_source(..., check_units=True)` (Default); CLI `--no-units-check` zum Abschalten.
+3. **Bekannte Konstanten**: `c`, `G`, `h`, `pi`, `e`, … mit Einheiten in `KNOWN_UNITS`; Identifier werden bei Bedarf aufgelöst.
 
-**Erfolgskriterium**: Uncertainty-Propagation liefert für einfache Ausdrücke korrekte Fehlerbalken; Compile-Time-Units lehnen inkonsistente Einheiten-Arithmetik mit klarer Fehlermeldung ab.
+**Erfolgskriterium**: Erfüllt — `1[m] + 1[s]` führt zu Compiler-Fehler mit Zeile; alle Beispiele (inkl. `universal_constants.fourier`) laufen.
 
 ---
 
@@ -140,9 +138,9 @@ Diese Roadmap priorisiert und plant **sinnvolle Erweiterungen** der Fourier-Spra
 | Phase | Inhalt | Geschätzter Aufwand | Meilenstein |
 |-------|--------|---------------------|-------------|
 | 1 | Mehr Verteilungen, Numerische Integration | ✅ v0.9 | Neue Stdlib-Funktionen lauffähig |
-| 2 | Bessere Fehlermeldungen | 2–3 Wochen | Fehler mit Zeile/Kontext |
-| 3 | Uncertainty-Propagation, Einheiten Compile-Zeit | 3–5 Wochen | Messtechnik & Unit-Safety |
-| 4 | Fitting, NUTS/VI, LaTeX-Export | 4–6 Wochen | Regression, Bayesian, Papers |
+| 2 | Bessere Fehlermeldungen | ✅ v0.9.5 | Fehler mit Zeile/Kontext |
+| 3 | Uncertainty-Propagation, Einheiten Compile-Zeit | ✅ v0.9.2 / v0.9.5 | Messtechnik & Unit-Safety |
+| 4 | Fitting, NUTS/VI, LaTeX-Export | ✅ v0.9.2–v0.9.4 | Regression, Bayesian, Papers |
 | 5 | Symbolische Ableitungen | 4–8 Wochen | diff(expr, x) als Formel |
 
 ---
@@ -163,7 +161,7 @@ Diese Roadmap priorisiert und plant **sinnvolle Erweiterungen** der Fourier-Spra
 - **Bestehende Roadmap**: [Symbolic_Simplification_Roadmap.md](Symbolic_Simplification_Roadmap.md) — Einheiten in Vereinfachung (Phase 5 dort) mit Phase 3 hier abstimmen.
 - **Language Specification**: §15 Standard Library; §12 Implementation Roadmap; „Beyond v1.0“.
 - **Codebasis**: `src/compiler/ml_runtime.py` (Stdlib), `src/compiler/codegen.py` (Built-ins), `src/compiler/compiler.py` (Pipeline), `src/compiler/parser.py` (AST, Zeileninfo).
-- **Nächster konkreter Schritt**: Phase 2 — Bessere Fehlermeldungen (Zeile/Kontext, Einheiten-/Typfehler) im Compiler und in der Runtime.
+- **Nächster konkreter Schritt**: Phase 5 — Symbolische Ableitungen (`diff(expr, x)` als Formel); optional Phase 2/3 verfeinern (z. B. Spalte, IDE-Anzeige).
 
 ---
 

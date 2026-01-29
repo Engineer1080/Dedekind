@@ -1,9 +1,29 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Optional, Union, Any
+
+
+class CompileError(Exception):
+    """Compiler-Fehler mit Zeile und optionalem Kontext."""
+    def __init__(self, message: str, line: Optional[int] = None, filepath: Optional[str] = None):
+        self.message = message
+        self.line = line
+        self.filepath = filepath
+        super().__init__(self._format())
+
+    def _format(self) -> str:
+        parts = []
+        if self.filepath:
+            parts.append(self.filepath)
+        if self.line is not None:
+            parts.append(f"Zeile {self.line}")
+        parts.append(self.message)
+        return ": ".join(str(p) for p in parts)
+
 
 @dataclass
 class Node:
-    pass
+    """Basis für alle AST-Knoten; line für Fehlermeldungen."""
+    line: Optional[int] = field(default=None, kw_only=True)
 
 @dataclass
 class Program(Node):

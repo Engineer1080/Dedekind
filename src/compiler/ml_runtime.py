@@ -14,11 +14,18 @@ class Quantity:
 
     def __add__(self, other):
         if isinstance(other, (int, float)):
-            if self.unit: raise ValueError(f"Kann Zahl nicht zu Größe mit Einheit [{self.unit}] addieren.")
+            if self.unit:
+                raise ValueError(
+                    f"Einheitenfehler: Kann reine Zahl nicht zu Größe mit Einheit [{self.unit}] addieren. "
+                    "Für Addition brauchen beide Seiten die gleiche Einheit (oder dimensionslos)."
+                )
             return Quantity(self.value + other, "")
         if isinstance(other, Quantity):
             if not self._same_unit(other):
-                raise ValueError(f"Einheiten passen nicht: [{self.unit}] vs [{other.unit}]")
+                raise ValueError(
+                    f"Einheitenfehler bei Addition: [{self.unit}] vs [{other.unit}]. "
+                    "Für + und - müssen beide Größen die gleiche Einheit haben."
+                )
             return Quantity(self.value + other.value, self.unit)
         return NotImplemented
 
@@ -27,11 +34,18 @@ class Quantity:
 
     def __sub__(self, other):
         if isinstance(other, (int, float)):
-            if self.unit: raise ValueError(f"Kann Zahl nicht von Größe mit Einheit [{self.unit}] subtrahieren.")
+            if self.unit:
+                raise ValueError(
+                    f"Einheitenfehler: Kann reine Zahl nicht von Größe mit Einheit [{self.unit}] subtrahieren. "
+                    "Für Subtraktion brauchen beide Seiten die gleiche Einheit (oder dimensionslos)."
+                )
             return Quantity(self.value - other, "")
         if isinstance(other, Quantity):
             if not self._same_unit(other):
-                raise ValueError(f"Einheiten passen nicht: [{self.unit}] vs [{other.unit}]")
+                raise ValueError(
+                    f"Einheitenfehler bei Subtraktion: [{self.unit}] vs [{other.unit}]. "
+                    "Für + und - müssen beide Größen die gleiche Einheit haben."
+                )
             return Quantity(self.value - other.value, self.unit)
         return NotImplemented
 

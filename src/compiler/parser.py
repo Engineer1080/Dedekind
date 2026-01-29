@@ -7,13 +7,27 @@ class Parser:
         self.tokens = tokens
         self.pos = 0
 
+    def _line(self) -> int:
+        """Aktuelle Zeile (für Fehlermeldungen)."""
+        if self.pos < len(self.tokens):
+            return self.tokens[self.pos].line
+        return 1
+
     def consume(self, type: str = None):
         if self.pos < len(self.tokens):
             token = self.tokens[self.pos]
             if type is None or token.type == type:
                 self.pos += 1
                 return token
-        raise Exception(f"Expected token type {type}, but found {self.tokens[self.pos] if self.pos < len(self.tokens) else 'EOF'}")
+            raise CompileError(
+                f"Erwartet {type}, gefunden '{token.value}' ({token.type}).",
+                line=token.line,
+            )
+        tok = self.tokens[-1] if self.tokens else None
+        raise CompileError(
+            f"Erwartet {type}, Dateiende erreicht.",
+            line=tok.line if tok else 1,
+        )
 
     def peek(self, offset=0):
         if self.pos + offset < len(self.tokens):
@@ -67,9 +81,12 @@ class Parser:
         if token.type == 'FN':
             return self.parse_function_def()
         elif token.type == 'RETURN':
+            start_line = token.line
             self.consume('RETURN')
             expr = self.parse_expression()
-            return ReturnStmt(expr)
+            stmt = ReturnStmt(expr)
+            stmt.line = start_line
+            return stmt
         elif token.type == 'IF':
             return self.parse_if_stmt()
         elif token.type == 'WHILE':
@@ -80,6 +97,7 @@ class Parser:
             return self.parse_expression()
 
     def parse_if_stmt(self):
+        start_line = self.peek().line
         self.consume('IF')
         condition = self.parse_expression()
         self.consume('LBRACE')
@@ -87,7 +105,6 @@ class Parser:
         while self.peek().type != 'RBRACE':
             then_branch.append(self.parse_statement())
         self.consume('RBRACE')
-        
         else_branch = None
         if self.peek() and self.peek().type == 'ELSE':
             self.consume('ELSE')
@@ -96,10 +113,12 @@ class Parser:
             while self.peek().type != 'RBRACE':
                 else_branch.append(self.parse_statement())
             self.consume('RBRACE')
-            
-        return IfStmt(condition, then_branch, else_branch)
+        node = IfStmt(condition, then_branch, else_branch)
+        node.line = start_line
+        return node
 
     def parse_while_stmt(self):
+        start_line = self.peek().line
         self.consume('WHILE')
         condition = self.parse_expression()
         self.consume('LBRACE')
@@ -107,25 +126,30 @@ class Parser:
         while self.peek().type != 'RBRACE':
             body.append(self.parse_statement())
         self.consume('RBRACE')
-        return WhileStmt(condition, body)
+        node = WhileStmt(condition, body)
+        node.line = start_line
+        return node
         
     def parse_for_stmt(self):
+        start_line = self.peek().line
         self.consume('FOR')
         var_name = self.consume('ID').value
-        if self.peek().type == 'ID' and self.peek().value == 'in': 
-             self.consume() # consume 'in' (lexer sees it as ID)
-        elif self.tokens[self.pos].value == 'in': # Fallback if 'in' keyword handling varies
+        if self.peek().type == 'ID' and self.peek().value == 'in':
              self.consume()
-
+        elif self.tokens[self.pos].value == 'in':
+             self.consume()
         collection = self.parse_expression()
         self.consume('LBRACE')
         body = []
         while self.peek().type != 'RBRACE':
             body.append(self.parse_statement())
         self.consume('RBRACE')
-        return ForStmt(var_name, collection, body)
+        node = ForStmt(var_name, collection, body)
+        node.line = start_line
+        return node
 
     def parse_function_def(self):
+        start_line = self.peek().line
         self.consume('FN')
         name = self.consume('ID').value
         self.consume('LPAREN')
@@ -141,27 +165,32 @@ class Parser:
         while self.peek().type != 'RBRACE':
             body.append(self.parse_statement())
         self.consume('RBRACE')
-        return FunctionDef(name, args, body)
+        node = FunctionDef(name, args, body)
+        node.line = start_line
+        return node
 
     def parse_assignment(self):
-        # The target can be an IndexedVariable, a plain ID, or a Subscript
+        start_line = self.peek().line
         target_node = self.parse_atom()
-        
         self.consume('ASSIGN')
         value = self.parse_expression()
-
         if isinstance(target_node, Subscript):
-            return ItemAssignment(target_node, value)
-        
+            node = ItemAssignment(target_node, value)
+            node.line = start_line
+            return node
         target_name = ""
         if isinstance(target_node, IndexedVariable):
             target_name = f"{target_node.name}_{target_node.indices}"
         elif isinstance(target_node, Identifier):
             target_name = target_node.name
         else:
-            raise Exception(f"Invalid assignment target: {target_node}")
-            
-        return Assignment(target_name, value)
+            raise CompileError(
+                f"Ungültiges Zuweisungsziel: {type(target_node).__name__}. Erwartet: Bezeichner oder Index.",
+                line=start_line,
+            )
+        node = Assignment(target_name, value)
+        node.line = start_line
+        return node
 
     def parse_expression(self):
         # Lowest precedence: Comparisons
@@ -169,53 +198,43 @@ class Parser:
         
     def parse_comparison(self):
         left = self.parse_term_expr()
-        
         while self.peek() and self.peek().type in ['EQ', 'NEQ', 'LT', 'GT', 'LE', 'GE']:
-            op = self.consume().value
+            op_tok = self.consume()
             right = self.parse_term_expr()
-            left = BinaryOp(left, op, right)
-            
+            left = BinaryOp(left, op_tok.value, right)
+            left.line = op_tok.line
         return left
 
     def parse_term_expr(self):
-        # Addition/Subtraction
         left = self.parse_factor_expr()
-        
         while self.peek() and self.peek().type in ['PLUS', 'MINUS']:
-            op = self.consume().value
+            op_tok = self.consume()
             right = self.parse_factor_expr()
-            left = BinaryOp(left, op, right)
-            
+            left = BinaryOp(left, op_tok.value, right)
+            left.line = op_tok.line
         return left
 
     def parse_factor_expr(self):
-        # Multiplication/Division
         left = self.parse_power_expr()
-        
         while self.peek() and self.peek().type in ['MUL', 'DIV']:
-            op = self.consume().value
+            op_tok = self.consume()
             right = self.parse_power_expr()
-            left = BinaryOp(left, op, right)
-            
+            left = BinaryOp(left, op_tok.value, right)
+            left.line = op_tok.line
         return left
 
     def parse_power_expr(self):
-        # Exponentiation (higher precedence than MUL)
         left = self.parse_atom()
-        
         while self.peek() and self.peek().type == 'CARET':
-            # Check if this is a Ricci index (followed by ID) or a Power (followed by anything else)
-            # Actually, to be safe, if parse_atom didn't consume it as an IndexedVariable,
-            # we should treat it as a power here if possible.
-            op = self.consume().value
+            op_tok = self.consume()
             right = self.parse_atom()
-            left = BinaryOp(left, op, right)
-            
+            left = BinaryOp(left, op_tok.value, right)
+            left.line = op_tok.line
         return left
 
     def parse_atom(self):
         token = self.peek()
-        
+        line_at = token.line if token else 1
         node = None
         if token.type == 'NUMBER':
             num_tok = self.consume()
@@ -241,20 +260,22 @@ class Parser:
                 node = Quantity(value, unit_str)
             else:
                 node = Literal(value)
+            node.line = line_at
         elif token.type == 'QUATERNION':
             self.consume()
-            # Convert "5.0j" or "3k" to QuaternionLiteral
             suffix = token.value[-1]
             val = float(token.value[:-1])
             node = QuaternionLiteral(val, suffix)
+            node.line = line_at
         elif token.type == 'COMPLEX':
             self.consume()
-            # In Fourier, 'i' is the first quaternion component
             val = float(token.value[:-1])
             node = QuaternionLiteral(val, 'i')
+            node.line = line_at
         elif token.type == 'STRING':
             self.consume()
             node = Literal(token.value.strip('"'))
+            node.line = line_at
         elif token.type == 'LBRACKET':
             self.consume('LBRACKET')
             elements = []
@@ -265,16 +286,18 @@ class Parser:
                     elements.append(self.parse_expression())
             self.consume('RBRACKET')
             node = VectorLiteral(elements)
+            node.line = line_at
         elif token.type == 'LPAREN':
             self.consume('LPAREN')
             node = self.parse_expression()
             self.consume('RPAREN')
+            if hasattr(node, 'line') and node.line is None:
+                node.line = line_at
         elif token.type == 'ID':
             name_token = self.consume()
             value = name_token.value
             node = Identifier(value)
-            
-            # Ricci: A^ij / A_ij (entweder getrennte Tokens oder ein ID "A_ij")
+            node.line = line_at
             if self.peek() and self.peek().type in ['CARET', 'UNDERSCORE']:
                 if self.peek(1) and self.peek(1).type == 'ID':
                     indices = ""
@@ -283,29 +306,35 @@ class Parser:
                         idx_token = self.consume('ID')
                         indices += idx_token.value
                     node = IndexedVariable(value, indices)
+                    node.line = line_at
             elif '_' in value and self._looks_like_ricci_suffix(value):
-                # Ein Token "A_ij" -> IndexedVariable
                 name, _, indices = value.rpartition('_')
                 if name and indices:
                     node = IndexedVariable(name, indices)
+                    node.line = line_at
         elif token.type == 'GRAD':
-            name_token = self.consume('GRAD')
+            self.consume('GRAD')
             node = Identifier('grad')
+            node.line = line_at
         elif token.type == 'EINSUM':
-            name_token = self.consume('EINSUM')
+            self.consume('EINSUM')
             node = Identifier('einsum')
+            node.line = line_at
         elif token.type == 'MINUS':
             self.consume('MINUS')
             operand = self.parse_atom()
-            # We can simplify this by returning a BinaryOp(0, '-', operand) 
-            # or better, just wrap it in a special way. For Python gen, -operand works.
-            # But since our BinaryOp expects left and right, let's just make it a literal with negative value if it's a number, 
-            # or a custom representation.
             if isinstance(operand, Literal) and isinstance(operand.value, (int, float)):
-                return Literal(-operand.value)
-            return BinaryOp(Literal(0), '-', operand)
+                node = Literal(-operand.value)
+                node.line = line_at
+                return node
+            node = BinaryOp(Literal(0), '-', operand)
+            node.line = line_at
+            return node
         else:
-            raise Exception(f"Unexpected token in expression: {token}")
+            raise CompileError(
+                f"Unerwartetes Token im Ausdruck: {token.type} '{getattr(token, 'value', '')}'.",
+                line=line_at,
+            )
 
         # Handle Method Chaining, Modifiers & Subscripts
         while self.peek() and self.peek().type in ['LPAREN', 'DOT', 'MODIFIER', 'LBRACKET']:
@@ -342,7 +371,10 @@ class Parser:
                 index = self.parse_expression()
                 self.consume('RBRACKET')
                 node = Subscript(node, index)
-                    
+                if getattr(node, 'line', None) is None:
+                    node.line = line_at
+        if getattr(node, 'line', None) is None:
+            node.line = line_at
         return node
 
     def parse_call_args(self):

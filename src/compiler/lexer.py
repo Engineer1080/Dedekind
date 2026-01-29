@@ -1,6 +1,11 @@
 import re
 from typing import List, Tuple
 
+try:
+    from .ast_nodes import CompileError
+except ImportError:
+    CompileError = RuntimeError  # Fallback wenn ast_nodes nicht importierbar
+
 class Token:
     def __init__(self, type: str, value: str, line: int):
         self.type = type
@@ -74,7 +79,10 @@ class Lexer:
             elif kind == 'SKIP' or kind == 'COMMENT':
                 pass
             elif kind == 'MISMATCH':
-                raise RuntimeError(f'{value!r} unexpected on line {line}')
+                raise CompileError(
+                    f"Unerwartetes Zeichen {value!r}. Erlaubt sind Bezeichner, Zahlen, Operatoren, Klammern.",
+                    line=line,
+                )
             else:
                 keywords = {'fn', 'return', 'if', 'else', 'while', 'for', 'in', 'grad', 'einsum'}
                 if kind == 'ID' and value in keywords:
