@@ -420,13 +420,17 @@ class GenericSH(BaseSH):
 #==============================================================================
 # Python syntax highlighter
 #==============================================================================
-def make_python_patterns(additional_keywords=None, additional_builtins=None):
+def make_python_patterns(additional_keywords=None, additional_builtins=None,
+                         additional_number_patterns=None):
     "Strongly inspired from idlelib.ColorDelegator.make_pat"
     additional_keywords = (
         [] if additional_keywords is None else additional_keywords
     )
     additional_builtins = (
         [] if additional_builtins is None else additional_builtins
+    )
+    additional_number_patterns = (
+        [] if additional_number_patterns is None else additional_number_patterns
     )
     kwlist = keyword.kwlist + additional_keywords
     builtinlist = [str(name) for name in dir(builtins)
@@ -474,7 +478,7 @@ def make_python_patterns(additional_keywords=None, additional_builtins=None):
         "([eE][+-]?[0-9](?:_?[0-9])*)?[jJ]?\b",
         r"\b[0-9](?:_?[0-9])*([eE][+-]?[0-9](?:_?[0-9])*)?[jJ]?\b",
         r"\b[0-9](?:_?[0-9])*[jJ]\b"
-    ]
+    ] + additional_number_patterns
     number = any("number", number_regex)
 
     string = any("string", [sq3string, dq3string, sqstring, dqstring])
@@ -492,6 +496,28 @@ def make_python_patterns(additional_keywords=None, additional_builtins=None):
 def make_ipython_patterns(additional_keywords=[], additional_builtins=[]):
     return (make_python_patterns(additional_keywords, additional_builtins)
             + r"|^\s*%%?(?P<magic>[^\s]*)")
+
+
+def make_dedekind_patterns():
+    """Patterns for Dedekind (.ddk): fn/grad/einsum, // comments, quaternion/complex literals, units, Ricci indices."""
+    # Lexer keywords (src/compiler/lexer.py): fn, return, if, else, while, for, in, grad, einsum
+    dedekind_kw = ['fn', 'grad', 'einsum']
+    # Lexer QUATERNION/COMPLEX: 5.0i, 5.0j, 3k (Dedekind uses i,j,k suffixes)
+    dedekind_number = [r"\b\d+(?:\.\d+)?[ijk]\b"]
+    base = make_python_patterns(
+        additional_keywords=dedekind_kw,
+        additional_number_patterns=dedekind_number,
+    )
+    # Add // line comments (Dedekind lexer: COMMENT = //.*; highlighter also supports #)
+    comment_dedekind = any("comment", [r"#[^\n]*", r"//[^\n]*"])
+    comment_python = any("comment", [r"#[^\n]*"])
+    base = base.replace(comment_python, comment_dedekind, 1)
+    # Einheiten: [m], [s], [kg], [m/s] etc. (Buchstabe am Anfang, damit x[0] nicht trifft)
+    unit_pat = any("unit", [r"\[\s*[a-zA-Z][a-zA-Z0-9/^*°·\-]*\s*\]"])
+    # Ricci-Indizes: ^ij (Hochstellung), _jk (Tiefstellung nach Identifier-Anfangsbuchstabe)
+    ricci_sup_pat = any("ricci_sup", [r"\^[a-zA-Z][a-zA-Z0-9]*"])
+    ricci_sub_pat = any("ricci_sub", [r"(?<=(?<![a-zA-Z0-9])[a-zA-Z])_[a-zA-Z][a-zA-Z0-9]*"])
+    return base + "|" + unit_pat + "|" + ricci_sup_pat + "|" + ricci_sub_pat
 
 
 def get_code_cell_name(text):
@@ -717,6 +743,110 @@ class IPythonSH(PythonSH):
     """IPython Syntax Highlighter"""
     add_kw = ['async', 'await']
     PROG = re.compile(make_ipython_patterns(additional_keywords=add_kw), re.S)
+
+
+# =============================================================================
+# Dedekind syntax highlighter (.ddk)
+# =============================================================================
+class DedekindSH(PythonSH):
+    """Dedekind (.ddk) Syntax Highlighter — fn, return, if/else/for/while, # and // comments."""
+    PROG = re.compile(make_dedekind_patterns(), re.S)
+    DEF_TYPES = {"def": OutlineExplorerData.FUNCTION,
+                 "class": OutlineExplorerData.CLASS,
+                 "fn": OutlineExplorerData.FUNCTION}
+
+    def __init__(self, parent, font=None, color_scheme='Spyder'):
+        PythonSH.__init__(self, parent, font, color_scheme)
+        self.cell_separators = ()  # no cell markers for .ddk
+        # Zusätzliche Formate für Dedekind: Einheiten und Ricci-Indizes
+        base_fmt = self.formats["normal"]
+        fmt_unit = QTextCharFormat(base_fmt)
+        fmt_unit.setForeground(QColor("#7ec699"))  # Grün für Einheiten [m], [s], …
+        self.formats["unit"] = fmt_unit
+        fmt_ricci = QTextCharFormat(base_fmt)
+        fmt_ricci.setForeground(QColor("#78c6b0"))  # Teal für Ricci ^ij, _jk
+        self.formats["ricci_sup"] = fmt_ricci
+        self.formats["ricci_sub"] = fmt_ricci
+
+    def highlight_match(self, text, match, key, value, offset,
+                        state, import_stmt, oedata):
+        """Highlight a single match; treat 'fn' like 'def' for outline/definition."""
+        start, end = get_span(match, key)
+        start = max([0, start + offset])
+        end = max([0, end + offset])
+        length = end - start
+
+        if key == "uf_sq3string":
+            self.setFormat(start, length, self.formats["string"])
+            state = self.INSIDE_SQ3STRING
+        elif key == "uf_dq3string":
+            self.setFormat(start, length, self.formats["string"])
+            state = self.INSIDE_DQ3STRING
+        elif key == "uf_sqstring":
+            self.setFormat(start, length, self.formats["string"])
+            state = self.INSIDE_SQSTRING
+        elif key == "uf_dqstring":
+            self.setFormat(start, length, self.formats["string"])
+            state = self.INSIDE_DQSTRING
+        elif key in ["ufe_sqstring", "ufe_dqstring"]:
+            self.setFormat(start, length, self.formats["string"])
+            state = self.INSIDE_NON_MULTILINE_STRING
+        elif key in ["match_kw", "case_kw"]:
+            self.setFormat(start, length, self.formats["keyword"])
+        else:
+            self.setFormat(start, length, self.formats[key])
+            if key == "comment":
+                if text.lstrip().startswith(self.cell_separators or ()):
+                    oedata = OutlineExplorerData(self.currentBlock())
+                    oedata.text = str(text).strip()
+                    oedata.fold_level = start
+                    oedata.def_type = OutlineExplorerData.CELL
+                    oedata.def_name = get_code_cell_name(text)
+                    self._cell_list.append(oedata)
+                elif self.OECOMMENT.match(text.lstrip()):
+                    oedata = OutlineExplorerData(self.currentBlock())
+                    oedata.text = str(text).strip()
+                    oedata.fold_level = start
+                    oedata.def_type = OutlineExplorerData.COMMENT
+                    oedata.def_name = text.strip()
+            elif key == "keyword":
+                if value in ("def", "class", "fn"):
+                    match1 = self.IDPROG.match(text, end)
+                    if match1:
+                        start1, end1 = get_span(match1, 1)
+                        self.setFormat(start1, end1 - start1,
+                                      self.formats["definition"])
+                        oedata = OutlineExplorerData(self.currentBlock())
+                        oedata.text = str(text)
+                        oedata.fold_level = (qstring_length(text)
+                                             - qstring_length(text.lstrip()))
+                        oedata.def_type = self.DEF_TYPES.get(
+                            str(value), OutlineExplorerData.FUNCTION)
+                        oedata.def_name = text[start1:end1]
+                        oedata.color = self.formats["definition"]
+                elif value in ("elif", "else", "except", "finally",
+                               "for", "if", "try", "while",
+                               "with"):
+                    if text.lstrip().startswith(value):
+                        oedata = OutlineExplorerData(self.currentBlock())
+                        oedata.text = str(text).strip()
+                        oedata.fold_level = start
+                        oedata.def_type = OutlineExplorerData.STATEMENT
+                        oedata.def_name = text.strip()
+                elif value == "import":
+                    import_stmt = text.strip()
+                    if '#' in text:
+                        endpos = qstring_length(text[:text.index('#')])
+                    else:
+                        endpos = qstring_length(text)
+                    while True:
+                        match1 = self.ASPROG.match(text, end, endpos)
+                        if not match1:
+                            break
+                        start, end = get_span(match1, 1)
+                        self.setFormat(start, length, self.formats["keyword"])
+
+        return state, import_stmt, oedata
 
 
 #==============================================================================

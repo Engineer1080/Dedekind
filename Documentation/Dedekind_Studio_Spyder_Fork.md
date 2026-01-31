@@ -50,7 +50,7 @@ Spyder unterstützt bereits „Connect to an existing kernel“ und das Starten 
 
 ### Phase 3: .ddk-Dateien und Run
 
-- **Editor:** Syntax-Highlighting für `.ddk` (z. B. über Spyder-Editor-Erweiterung oder bestehende Mechanik für „unbekannte“ Dateitypen mit TextMate-Grammatik).
+- **Editor:** Syntax-Highlighting für `.ddk` ✅ — DedekindSH in `spyder/utils/syntaxhighlighters.py`: Keywords `fn`, `return`, `if`/`else`/`for`/`while`/`in`, Kommentare `#` und `//`, Strings, Zahlen; Outline-Explorer erkennt `fn name()` als Funktion.
 - **Run:** Menüpunkt „Run“ / F5 für geöffnete `.ddk`-Datei: Dedekind-Compiler aufrufen (`compile_source` + `exec` oder CLI), Ausgabe in Konsole oder in einer dedizierten Dedekind-Konsole.
 - **Fehler:** Compiler-Fehler (inkl. Zeilennummer) in Problems-Liste oder im Editor anzeigen.
 

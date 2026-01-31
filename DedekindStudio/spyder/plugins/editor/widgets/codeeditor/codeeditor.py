@@ -130,7 +130,7 @@ class CodeEditor(LSPMixin, TextEditBaseWidget, MultiCursorMixin):
     LANGUAGES = {
         'Python': (sh.PythonSH, '#'),
         'IPython': (sh.IPythonSH, '#'),
-        'Dedekind': (sh.PythonSH, '#'),  # Python-like syntax
+        'Dedekind': (sh.DedekindSH, '#'),  # .ddk: fn, return, if/for/while, # and // comments
         'Cython': (sh.CythonSH, '#'),
         'Fortran77': (sh.Fortran77SH, 'c'),
         'Fortran': (sh.FortranSH, '!'),
