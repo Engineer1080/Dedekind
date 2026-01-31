@@ -975,17 +975,8 @@ class MainWindow(QMainWindow, SpyderMainWindowMixin, SpyderShortcutsMixin):
                     plugin.create_window()
 
     def set_window_title(self):
-        """Set window title."""
-        if DEV is not None:
-            title = u"Dedekind Studio %s (Python %s.%s)" % (__version__,
-                                                            sys.version_info[0],
-                                                            sys.version_info[1])
-        elif is_conda_based_app():
-            title = u"Dedekind Studio %s" % __version__
-        else:
-            title = u"Dedekind Studio %s (Python %s.%s)" % (__version__,
-                                                            sys.version_info[0],
-                                                            sys.version_info[1])
+        """Set window title (ohne Python-Version in Dedekind Studio)."""
+        title = u"Dedekind Studio %s" % __version__
 
         if get_debug_level():
             title += u" [DEBUG MODE %d]" % get_debug_level()

@@ -12,6 +12,7 @@
   </defs>
   <rect width="505" height="415" fill="url(#bg)"/>
   <text x="252" y="200" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="url(#accent)" text-anchor="middle">Dedekind Studio</text>
-  <text x="252" y="240" font-family="Arial, sans-serif" font-size="14" fill="#5a7a65" text-anchor="middle">Scientific Python Development Environment</text>
-  <rect x="152" y="260" width="200" height="2" fill="url(#accent)" opacity="0.6"/>
+  <text x="252" y="232" font-family="Arial, sans-serif" font-size="14" fill="#5a7a65" text-anchor="middle">Scientific Dedekind Development Environment</text>
+  <text x="252" y="250" font-family="Arial, sans-serif" font-size="12" fill="#5a7a65" text-anchor="middle">by Mario Michael Heinrich</text>
+  <rect x="152" y="268" width="200" height="2" fill="url(#accent)" opacity="0.6"/>
 </svg>
