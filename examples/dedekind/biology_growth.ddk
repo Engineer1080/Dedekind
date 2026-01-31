@@ -31,6 +31,6 @@ fn main() {
     print("Analytisch N(10):")
     print(N_analytical)
 
-    print("\nLogistisches Wachstum aktiv.")
+    print("Logistisches Wachstum aktiv.")
 }
 main()

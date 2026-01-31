@@ -30,6 +30,6 @@ fn main() {
     print("Analytisch c(10s) (Wert):")
     print(c_analytical)
 
-    print("\nKinetik 1. Ordnung mit Einheiten [M], [1/s] aktiv.")
+    print("Kinetik 1. Ordnung mit Einheiten [M], [1/s] aktiv.")
 }
 main()

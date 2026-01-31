@@ -15,6 +15,6 @@ fn main() {
     print("1D Heat: Loesung Shape (Zeit, Raum):")
     print(sol_1d.shape)
     
-    print("\nPDE-Solver (differenzierbar) aktiv.")
+    print("PDE-Solver (differenzierbar) aktiv.")
 }
 main()

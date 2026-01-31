@@ -15,6 +15,6 @@ fn main() {
     print("Geschwindigkeitskonstante k (1/s):")
     print(k)
 
-    print("\nArrhenius aktiv.")
+    print("Arrhenius aktiv.")
 }
 main()

@@ -24,6 +24,6 @@ fn main() {
     mean_params = samples.mean(0)
     print("Mittel der Posterior-Samples (erwarte ca. a=2, b=1):")
     print(mean_params)
-    print("\nHMC fitting aktiv.")
+    print("HMC fitting aktiv.")
 }
 main()

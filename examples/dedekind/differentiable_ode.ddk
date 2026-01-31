@@ -29,6 +29,6 @@ fn main() {
     print("d y(10) / d y0 (sollte ca. exp(-1) = 0.368):")
     print(dydy0)
     
-    print("\nDifferenzierbare ODE-Löser aktiv.")
+    print("Differenzierbare ODE-Löser aktiv.")
 }
 main()

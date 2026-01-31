@@ -28,6 +28,6 @@ fn main() {
     print("EC50:")
     print(EC50_fit)
 
-    print("\nDosis-Wirkung (EC50-Fitting) aktiv.")
+    print("Dosis-Wirkung (EC50-Fitting) aktiv.")
 }
 main()

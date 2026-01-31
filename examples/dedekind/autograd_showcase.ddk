@@ -21,7 +21,7 @@ fn main() {
     print(dx)
     
     // 4. Komplexeres Beispiel: Optimierungsschritt
-    print("\n--- Optimierung eines quadratischen Fehlers ---")
+    print("--- Optimierung eines quadratischen Fehlers ---")
     
     target = 100.0
     weight = [2.0].with_grad()
@@ -42,6 +42,6 @@ fn main() {
     print("Gewicht nach einem Optimierungsschritt:")
     print(weight)
     
-    print("\nErfolgreich ausgeführt! Dedekind versteht jetzt Analysis. 🦅📈")
+    print("Erfolgreich ausgeführt! Dedekind versteht jetzt Analysis. 🦅📈")
 }
 main()

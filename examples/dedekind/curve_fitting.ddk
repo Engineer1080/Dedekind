@@ -29,6 +29,6 @@ fn main() {
     print("b (Achsenabschnitt):")
     print(b_fit)
     
-    print("\nCurve fitting aktiv.")
+    print("Curve fitting aktiv.")
 }
 main()

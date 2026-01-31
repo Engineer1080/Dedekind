@@ -34,6 +34,6 @@ fn main() {
     print("10 samples from Poisson(3):")
     print(x_poisson_10)
     
-    print("\nExtended distributions aktiv.")
+    print("Extended distributions aktiv.")
 }
 main()
