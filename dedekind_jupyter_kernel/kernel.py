@@ -29,23 +29,25 @@ except ImportError:
 
 class DedekindKernel(Kernel):
     implementation = "Dedekind"
-    implementation_version = "1.0.4"
+    implementation_version = "1.0.5"
     language = "dedekind"
-    language_version = "1.0.4"
+    language_version = "1.0.5"
     language_info = {
         "name": "dedekind",
         "mimetype": "text/x-dedekind",
         "file_extension": ".ddk",
     }
-    banner = "Dedekind Kernel – compile and run Dedekind code (Dedekind Language v1.0.4)"
+    banner = "Dedekind Kernel – compile and run Dedekind code (Dedekind Language v1.0.5)"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._globals = {}
         self._execution_count = 0
+        # comm_open auf Shell-Channel abfangen (ipykernel hat es nicht in msg_types)
+        self.shell_handlers['comm_open'] = self._comm_open_noop
 
-    def do_comm_open(self, stream, ident, msg):
-        """No-op so frontend comm_open messages do not trigger 'Unknown message type'."""
+    def _comm_open_noop(self, stream, ident, msg):
+        """No-op damit comm_open vom Frontend keine 'Unknown message type'-Warnung auslöst."""
         pass
 
     def do_execute(self, code, silent, store_history=True, user_expressions=None, allow_stdin=False):
@@ -80,6 +82,20 @@ class DedekindKernel(Kernel):
             return reply
         try:
             python_code = compile_source(code, filepath=None, check_units=True)
+            # Injizieren: plot() kann Abbildungen an die Plots-Pane senden
+            import base64
+            _kernel_self = self
+            def _dedekind_display_image(data_bytes, mime_type='image/png'):
+                _kernel_self.send_response(
+                    _kernel_self.iopub_socket,
+                    'display_data',
+                    {
+                        'data': {mime_type: base64.b64encode(data_bytes).decode('ascii')},
+                        'metadata': {},
+                        'transient': {},
+                    },
+                )
+            self._globals['_dedekind_display_image'] = _dedekind_display_image
             exec(python_code, self._globals)
         except CompileError as e:
             sys.stdout, sys.stderr = old_stdout, old_stderr

@@ -758,7 +758,15 @@ class DedekindSH(PythonSH):
     def __init__(self, parent, font=None, color_scheme='Spyder'):
         PythonSH.__init__(self, parent, font, color_scheme)
         self.cell_separators = ()  # no cell markers for .ddk
-        # Zusätzliche Formate für Dedekind: Einheiten und Ricci-Indizes
+        self._setup_dedekind_formats()
+
+    def setup_formats(self, font=None):
+        """Formate (neu) aufbauen; Dedekind-spezifische Formate danach setzen."""
+        super(DedekindSH, self).setup_formats(font)
+        self._setup_dedekind_formats()
+
+    def _setup_dedekind_formats(self):
+        """Einheiten- und Ricci-Formate setzen (nach jedem setup_formats)."""
         base_fmt = self.formats["normal"]
         fmt_unit = QTextCharFormat(base_fmt)
         fmt_unit.setForeground(QColor("#7ec699"))  # Grün für Einheiten [m], [s], …
