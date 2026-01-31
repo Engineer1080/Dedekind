@@ -1,0 +1,18 @@
+fn main() {
+    // Ein einfaches neuronales Netz für Klassifizierung
+    model = Sequential([
+        Dense(128, activation="relu"),
+        Dense(64, activation="relu"),
+        Dense(10, activation="softmax")
+    ])
+
+    // Beispiel-Eingabe (Batch von 1 mit 784 Features)
+    input = [random_vector(784)].gpu()
+    
+    print("Starte Inferenz...")
+    prediction = model.forward(input)
+    
+    print("Vorhersage (Softmax):")
+    print(prediction)
+}
+main()

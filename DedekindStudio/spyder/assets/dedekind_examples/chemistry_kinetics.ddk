@@ -1,0 +1,35 @@
+fn main() {
+    print("--- Dedekind: Chemische Kinetik (Reaktion 1. Ordnung) ---")
+
+    // dc/dt = -k*c  =>  c(t) = c0 * exp(-k*t)
+    // Einheiten: c in [M], t in [s], k in [1/s]
+    c0_val = 0.1
+    k_val = 0.05
+    c0 = 0.1[M]
+    k = 0.05[1/s]
+    print("Anfangskonzentration c0:")
+    print(c0)
+    print("Geschwindigkeitskonstante k:")
+    print(k)
+
+    fn rhs(t, y) {
+        return -k_val * y
+    }
+
+    t = linspace(0, 20, 101)
+    y0 = [c0_val]
+    traj = ode_solve(rhs, y0, t)
+
+    print("Konzentration c(t) an t=0s, t=10s, t=20s (in M):")
+    print(traj[0])
+    print(traj[50])
+    print(traj[100])
+
+    // Analytisch: c(10) = c0 * exp(-k*10)
+    c_analytical = c0_val * exp(-k_val * 10.0)
+    print("Analytisch c(10s) (Wert):")
+    print(c_analytical)
+
+    print("\nKinetik 1. Ordnung mit Einheiten [M], [1/s] aktiv.")
+}
+main()

@@ -1,0 +1,16 @@
+fn process(x) {
+    return x * 2
+}
+
+fn main() {
+    data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    
+    print("Verarbeite Daten sequentiell:")
+    for i in data {
+        val = process(i)
+        print(val)
+    }
+    
+    print("Verarbeitung abgeschlossen.")
+}
+main()

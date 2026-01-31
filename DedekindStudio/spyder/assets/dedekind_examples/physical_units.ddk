@@ -1,0 +1,29 @@
+fn main() {
+    // Physikalische Einheiten: Zahl[Einheit]
+    print("--- Physikalische Einheiten ---")
+
+    dist = 10[m]
+    time = 2[s]
+    print("Strecke:")
+    print(dist)
+    print("Zeit:")
+    print(time)
+
+    // Geschwindigkeit = Weg / Zeit
+    speed = dist / time
+    print("Geschwindigkeit (Weg/Zeit):")
+    print(speed)
+
+    // Addition nur bei gleicher Einheit
+    total_dist = 10[m] + 20[m]
+    print("Strecke 10[m] + 20[m]:")
+    print(total_dist)
+
+    // Multiplikation: Einheiten werden mitgeführt
+    area = 3[m] * 4[m]
+    print("Fläche 3[m] * 4[m]:")
+    print(area)
+
+    print("--- Ende ---")
+}
+main()

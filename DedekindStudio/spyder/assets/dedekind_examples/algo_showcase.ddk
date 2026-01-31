@@ -1,0 +1,41 @@
+fn main() {
+    print("--- Dedekind Algorithm Showcase ---")
+
+    // 1. Matrix Operations
+    A = [[1.0, 2.0], [3.0, 4.0]]
+    print("Matrix A:")
+    print(A)
+    
+    print("Transpose of A:")
+    print(transpose(A))
+    
+    print("Inverse of A:")
+    print(inverse(A))
+
+    // 2. Sorting
+    list = [5, 2, 9, 1, 5, 6]
+    print("Original List:")
+    print(list)
+    print("Sorted List:")
+    print(sort(list))
+
+    // 3. Signal Processing (FFT)
+    signal = [1.0, 0.0, 1.0, 0.0]
+    print("Signal:")
+    print(signal)
+    print("FFT of Signal:")
+    print(fft(signal))
+
+    // 4. ML Activation Functions
+    logits = [0.1, 1.2, 3.5, -0.5]
+    print("Logits:")
+    print(logits)
+    print("Softmax of Logits:")
+    print(softmax(logits))
+    print("ReLU of Logits:")
+    print(relu(logits))
+
+    print("--- Showcase Completed ---")
+}
+
+main()

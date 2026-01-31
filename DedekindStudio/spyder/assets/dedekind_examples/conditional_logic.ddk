@@ -1,0 +1,22 @@
+fn check_value(x) {
+    if x > 50 {
+        print("Wert ist groß")
+    } else {
+        if x == 0 {
+            print("Wert ist Null")
+        } else {
+            print("Wert ist klein")
+        }
+    }
+}
+
+fn main() {
+    values = [0, 10, 100]
+    
+    for v in values {
+        print("Testen von:")
+        print(v)
+        check_value(v)
+    }
+}
+main()

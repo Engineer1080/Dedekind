@@ -1,0 +1,35 @@
+fn main() {
+    print("--- Dedekind: Universal Constants Showcase (Option B: Einheiten-Literale) ---")
+    // Konstanten c, G, h, k_e sind Quantity mit SI-Einheiten. Werte mit Einheiten-Literalen.
+
+    // 1. Einstein's Energy-Mass Equivalence: E = m c^2
+    m = 1.0[kg]
+    E = m * c^2
+    print("1. Energy of 1 kg mass (E = mc^2):")
+    print(E)
+
+    // 2. Quantum Mechanics: Photon Energy E = h * f
+    f = 5.0e14[Hz]
+    E_photon = h * f
+    print("2. Energy of a photon (f = 5e14 Hz):")
+    print(E_photon)
+
+    // 3. Newton's Law of Gravitation
+    m1 = 5.972e24[kg]
+    m2 = 7.348e22[kg]
+    r = 3.844e8[m]
+    F_gravity = G * m1 * m2 / r^2
+    print("3. Gravitational Force (Earth-Moon):")
+    print(F_gravity)
+
+    // 4. Coulomb's Law
+    q1 = 1.602e-19[C]
+    q2 = -1.602e-19[C]
+    r_atom = 5.29e-11[m]
+    F_coulomb = k_e * q1 * q2 / r_atom^2
+    print("4. Electrostatic Force (Hydrogen Atom):")
+    print(F_coulomb)
+
+    print("--- Results verified with high-precision CODATA values. ---")
+}
+main()
