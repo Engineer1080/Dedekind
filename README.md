@@ -27,7 +27,7 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **Netzwerk**: `http_get(url)`, `http_post(url, data)` (data String oder Dict/List als JSON); Antworttext UTF-8.
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
-- **Modern IDE**: "Fourier Studio" – v0.9.8 with resizable terminal and file explorer.
+- **Modern IDE**: "Fourier Studio" – v0.9.8 with resizable terminal and file explorer. **Fourier Studio** wird als Spyder-Fork umgesetzt und bietet **nativ Python und Fourier**; siehe [Documentation/Fourier_Studio_Spyder_Fork.md](Documentation/Fourier_Studio_Spyder_Fork.md). Ein **Fourier Jupyter Kernel** (`fourier_jupyter_kernel/`) ermöglicht Fourier in Jupyter/Spyder-Konsolen.
 
 ### What's New in v0.9.8
 - **Convenience (Chemie/Biologie)**: `michaelis_menten(S, Vmax, Km)`, `logistic(t, r, K, N0)`, `logistic_growth_dt(N, r, K)`, `arrhenius(T, A, Ea)`, `linear_regression(x, y)` — einzeilig aufrufbar; Beispiele `dose_response.fourier`, `biology_growth.fourier`, `chemistry_arrhenius.fourier`, `linear_regression.fourier`.

@@ -5,3 +5,6 @@ flask>=2.0
 flask-cors>=3.0
 torch>=2.0
 matplotlib>=3.5
+
+# Fourier Jupyter Kernel (für Spyder / Jupyter / Fourier Studio)
+ipykernel>=6.0

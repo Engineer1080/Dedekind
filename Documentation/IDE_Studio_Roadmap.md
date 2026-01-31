@@ -54,6 +54,113 @@ Wenn Fourier Studio **nicht bei Null** starten soll, sind folgende **Fork-Kandid
 
 **Fazit:** Für eine **moderne Codebasis** sind **Theia** und **JupyterLab** am besten geeignet (TypeScript, aktuelle Toolchains, Extension-Ökosystem). **Spyder** ist solide, aber Desktop-only. **RStudio** lohnt sich eher als **konzeptionelles Vorbild** (Layout, Wissenschafts-Features), nicht als Code-Fork wegen des veralteten Stacks.
 
+### 2.3 Rechtliches: Theia forken und kommerziell nutzen
+
+**Kurz: Ja – ein Fork von Eclipse Theia und der Aufbau einer eigenen kommerziellen IDE sind rechtlich zulässig.**
+
+Eclipse Theia steht unter **EPL v2** (Eclipse Public License 2.0), teils mit **GPL v2** als Secondary License. Die EPL v2 erlaubt ausdrücklich:
+
+- **Kommerzielle Nutzung** – Nutzen, Ändern, Verteilen und **verkaufen** von Theia und darauf basierenden Produkten.
+- **Derivative Works** – Ein Fork bzw. ein darauf aufbauendes Produkt (z. B. „Fourier Studio“) ist ein zulässiges Derivative Work.
+
+**Auflagen (weak copyleft):**
+
+- **Theia-Code und eure Änderungen daran** müssen unter EPL v2 stehen und beim **Vertrieb** des Produkts **Quellcode** der (geänderten) Theia-Teile bereitgestellt werden.
+- **Euer eigener, neuer Code** (z. B. Fourier-spezifische Panels, Postgres-Anbindung, Branding), der nur per Schnittstelle (Extension, Link) mit Theia verbunden ist, kann **proprietär** bleiben – die EPL verlangt keine Weitergabe des gesamten Produkts unter EPL.
+- Lizenzhinweise und Angabe der Änderungen sind erforderlich.
+
+**Praktisch:** Ihr könnt Theia forken, als Basis für „Fourier Studio“ nutzen und die IDE kommerziell vertreiben. Den Theia-Anteil (inkl. eurer Patches) müsst ihr unter EPL quelloffen machen; eure eigenen Module/Extensions könnt ihr proprietär lizenzieren. Für verbindliche Auslegung empfiehlt sich eine kurze rechtliche Prüfung (z. B. Lizenz-Compliance).
+
+**Repo-Struktur:** Ja – dafür braucht ihr in der Regel **mehrere Repos** (oder zumindest eine klare Trennung):
+
+| Repo | Inhalt | Lizenz | Sichtbarkeit |
+|------|--------|--------|----------------|
+| **Theia-Fork (EPL)** | Theia-Code + eure Änderungen daran (Branding, kleine Anpassungen). | EPL v2 | **Öffentlich** – Quellcode beim Vertrieb bereitstellen (z. B. GitHub/GitLab public). |
+| **Fourier Studio (proprietär)** | Eure eigenen Module: Fourier-Integration, Einheiten-Panels, Postgres, KI, LaTeX-Export, Installer, etc. | Proprietär | **Privat** (oder nur Binär-Release ohne Source). |
+
+Build/Pipeline baut dann aus beiden Quellen das auslieferbare Produkt (z. B. Electron-App). Alternative: ein **Monorepo** mit getrennten Verzeichnissen und Lizenzen – dann müsst ihr beim Vertrieb trotzdem den **Quellcode der EPL-Teile** bereitstellen (z. B. als Export oder öffentliches Subtree-Repo). Zwei Repos (ein öffentlicher Theia-Fork, ein privates Studio-Add-on) sind einfacher für Lizenz-Compliance und saubere Grenze zwischen EPL und proprietär.
+
+### 2.4 Permissive Lizenzen: Fork ohne Quellcode-Veröffentlichung (wenig Verwaltungsaufwand)
+
+Wenn ihr **keinen Code veröffentlichen** und **wenig Verwaltungsaufwand** wollt, sind IDEs/Editoren mit **permissiver Lizenz** (MIT, BSD, Apache 2.0) geeignet. Dort gilt: Fork erlaubt, kommerziell nutzen erlaubt, **keine Pflicht**, eure Änderungen oder euer Produkt quelloffen zu machen – nur Lizenzhinweise beibehalten.
+
+| Kandidat | Lizenz | Quellcode-Veröffentlichung nötig? | Repos | Aufwand |
+|----------|--------|----------------------------------|-------|---------|
+| **JupyterLab** | **BSD 3-Clause** | **Nein** | Ein Repo reicht (Fork + eure Änderungen privat möglich) | Gering – Lizenz- und Copyright-Hinweise in Distribution beilegen. |
+| **Spyder** | **MIT** | **Nein** | Ein Repo reicht | Gering – gleiche Auflage wie BSD. |
+| **Monaco Editor** / **CodeMirror 6** | **MIT** | **Nein** | Kein „IDE-Fork“, nur Editor einbetten – eure App ist 100 % euer Code + MIT-Bibliothek(en). | Minimal – nur Attributions in App/Lizenzdatei. |
+| **VS Code (Quellcode)** | **MIT** | **Nein** (für den Quellcode) | Theoretisch ein Repo; praktisch sehr großes Repo, Microsoft-Branding/Telemetrie in Binärversion. Für „saubere“ Distribution: [VSCodium](https://github.com/VSCodium/vscodium)-Fork nutzen (ebenfalls permissiv). | Hoch – Repo-Größe und Wartung; Lizenz-Compliance selbst bei MIT einfach. |
+| **Eclipse Theia** | **EPL v2** | **Ja** – (geänderte) Theia-Teile beim Vertrieb quelloffen | Zwei Repos empfohlen (siehe 2.3) | Höher – getrennte Repos, Source-Release der EPL-Teile. |
+
+**Empfehlung für wenig Verwaltungsaufwand:**
+
+- **Voll-IDE-Fork ohne Veröffentlichungspflicht:** **JupyterLab** (BSD) oder **Spyder** (MIT). Ein Repo, Fork + eure Erweiterungen; nichts müsst ihr quelloffen machen, nur Lizenztexte beilegen.
+- **Noch weniger Aufwand:** **Kein IDE-Fork**, sondern **Monaco** oder **CodeMirror 6** (MIT) als Editor einbetten und den Rest (Panels, Run, Plots, Postgres, KI) selbst bauen. Dann habt ihr keine Fork-Pflege und keine Veröffentlichungspflicht – nur eine kleine MIT-Attribution für den Editor.
+
+**RStudio** ist unter **AGPL** – würde bei Nutzung als Netzwerkdienst sogar strengere Offenlegungspflichten auslösen; für „kein Code veröffentlichen“ ungeeignet.
+
+### 2.5 Theia-Fork: „Massiv geändert“ – trotzdem quelloffen?
+
+**Ja.** Unter EPL v2 kommt es nicht darauf an, *wie viel* ihr ändert, sondern ob der Code *von dem EPL-Programm abgeleitet* ist. Ein Fork von Eclipse Theia ist ein „Derivative Work“; auch **massive Änderungen** an diesem Fork ändern daran nichts – der Code bleibt abgeleitet von Theia.
+
+- **Konsequenz:** Alle (geänderten) Theia-Anteile müsst ihr beim **Vertrieb** des Produkts unter EPL **quelloffen** bereitstellen. Ob ihr 10 % oder 90 % davon umgeschrieben habt, ist für die Lizenz unerheblich.
+- **Proprietär bleiben können** nur Teile, die *keine* Ableitung von Theia sind – z. B. eigenständige Extensions/Module, die nur per API/Schnittstelle mit Theia kommunizieren und keinen Theia-Code enthalten. Sobald Theia-Code (oder davon abgeleiteter Code) in eurem Repo liegt, unterliegt dieser Teil der EPL.
+
+Wer **keine** Quellcode-Veröffentlichung will, sollte eine **permissive** Basis wählen (z. B. JupyterLab/Spyder/Monaco wie in 2.4) statt Theia.
+
+### 2.6 Performanz: Unterscheiden sich moderne IDEs? („Kompilieren sie alle gleich schnell?“)
+
+**Kompilieren:** Wenn ihr in der IDE auf „Ausführen“ oder „Kompilieren“ klickt, startet die IDE in der Regel nur den **Compiler** (z. B. Fourier-Compiler, gcc, rustc). Die **Kompiliergeschwindigkeit** hängt vom **Compiler** ab, nicht von der IDE. Alle IDEs, die denselben Compiler aufrufen, sind in dieser Hinsicht gleich „schnell“ – die IDE kompiliert nicht selbst.
+
+**IDE-Performanz (Start, Tippen, Speicher):** Hier **unterscheiden** sich IDEs sehr wohl:
+
+| Aspekt | Unterschied |
+|--------|-------------|
+| **Startzeit** | Electron-IDEs (VS Code, Theia, Cursor) starten oft langsamer als native Apps (z. B. Qt); durch Bundling und Code-Splitting lässt sich viel verbessern. |
+| **Speicher** | Electron bringt Chromium + Node mit → höherer RAM-Bedarf; native oder schlanke Web-Editoren (z. B. CodeMirror-only) sind oft sparsamer. |
+| **Editor-Reaktionszeit** | Abhängig von Editor-Engine (Monaco vs. CodeMirror), Größe des Dokuments, Syntax-Highlighting; große Bundles können erstes Laden verzögern. |
+| **Sprach-Analyse (LSP)** | Auto-Completion, „Go to Definition“ etc. laufen im **Language Server** – die Geschwindigkeit hängt vom **LSP** ab (z. B. rust-analyzer vs. alter RLS), nicht primär von der IDE. |
+
+**Fazit:** Beim **Kompilieren/Ausführen** eures Codes gibt es keinen IDE-Unterschied – der Compiler entscheidet. Beim **Gefühl** (Start, Flüssigkeit, Speicherverbrauch) schon – Electron vs. native, Editor-Größe und LSP-Qualität spielen eine Rolle.
+
+**Nativer Editor – bestes Gefühl, auch auf älteren PCs:** Ja. Ein **nativer** Editor (z. B. Qt, GTK, oder plattformspezifisch Windows/macOS/Linux) bringt in der Regel:
+
+- **Schnelleren Start** – kein Chromium/Node-Boot, direkte System-APIs.
+- **Weniger RAM** – keine eingebettete Browser-Engine (Electron bringt oft 100–200+ MB Grundlast).
+- **Flüssigeres Gefühl** – direkte Eingabe- und Rendering-Pipeline, kein JavaScript-Bridge.
+- **Bessere Laufleistung auf älteren PCs** – geringere Mindestanforderungen (CPU, RAM), weniger Hintergrundlast.
+
+Trade-off: **Entwicklungsaufwand** – native UIs pro Plattform oder mit Qt/GTK cross-platform bedeuten mehr Implementierungs- und Wartungsarbeit als eine Electron/Web-basierte IDE. Für „maximales Gefühl und breite Hardware-Unterstützung“ ist native die beste Wahl; für „schnell bauen, eine Codebasis für alle Plattformen“ bleibt Web/Electron oft pragmatischer.
+
+### 2.7 Windows-First: Welche IDE oder welcher Editor als Fork?
+
+Wenn ihr **zuerst auf Windows** starten wollt, kommen folgende Kandidaten in Frage:
+
+| Kandidat | Lizenz | Art | Windows | Quellcode offenlegen? | Anmerkung |
+|----------|--------|-----|---------|------------------------|-----------|
+| **Lite XL** | **MIT** | Leichter nativer Editor (C + Lua) | Ja, Erstklassig | **Nein** | Sehr klein (<5 MB Bundle), Lua-Erweiterungen, nativer Look. Ideal für **native Basis + wenig Aufwand + keine Veröffentlichungspflicht**. |
+| **Spyder** | **MIT** | Wissenschafts-IDE (Python, Qt) | Ja (Qt) | **Nein** | Läuft auf Windows mit Qt; Plots, Variablen-Explorer, Plugin-Architektur. Gute Passform für „Fourier Studio“-Konzept, kein nativer Win32-Code. |
+| **VSCodium** / **VS Code** | **MIT** | Electron-IDE | Ja | **Nein** | Kein nativer Editor; großer Repo. Wenn ihr „VS-Code-Feeling“ auf Windows wollt und Electron akzeptiert. |
+| **Eclipse Theia** | **EPL v2** | Electron-IDE (TypeScript) | Ja | **Ja** (Theia-Anteile) | Wie zuvor: zwei Repos, Source-Release der Theia-Teile. |
+| **Notepad++** | **GPL v3** | Nativer Editor (C++, Scintilla) | Ja, Windows-nativ | **Ja** (Copyleft) | Klassischer Windows-Editor; Fork würde unter GPL quelloffen bleiben. |
+| **Scintilla** (nur Komponente) | **BSD-artig** | Nur Editor-Kern, keine IDE | Einbettbar in Windows-App | **Nein** | Kein voller IDE-Fork – Scintilla als Editor einbetten (z. B. C++/Qt oder Win32), Rest selbst bauen. Sehr leicht, native. |
+| **Zed** | **GPL/AGPL** | Native Editor (Rust, GPUI) | Community (zed-win) | **Ja** (Copyleft) | Windows nicht Hauptziel der Zed-Entwicklung; GPUI ist Apache 2.0, Editor-Code GPL. |
+
+**Empfehlung Windows-First:**
+
+- **Native + wenig Verwaltung + kein Code veröffentlichen:** **Lite XL** (MIT) forken – kleiner Codebase, C/Lua, Windows-Support, Erweiterungen in Lua; IDE-Logik (Run, Plots, Postgres, KI) ergänzen.
+- **Wissenschafts-IDE-Feeling + Windows:** **Spyder** (MIT) forken – Qt läuft gut auf Windows, Plots/Environment schon da, Fourier als Backend/Kernel anbinden.
+- **Nur Editor-Kern, Rest selbst:** **Scintilla** (BSD) in eine eigene Windows-App (z. B. C++/Qt oder Win32) einbetten – kein IDE-Fork, maximale Kontrolle, native, keine Veröffentlichungspflicht.
+
+### 2.8 Fourier Studio: Spyder-Fork mit nativ Python und Fourier (Entscheidung)
+
+**Fourier Studio** wird als **Spyder-Fork** umgesetzt und bietet **nativ Python und Fourier** in einer IDE:
+
+- **Python** – wie in Spyder (IPython Console, Variable Explorer, Plots, Editor).
+- **Fourier** – Fourier-Konsole über den **Fourier Jupyter Kernel** (siehe `fourier_jupyter_kernel/` in diesem Repo); optional .fourier-Editor mit Run und Syntax-Highlighting.
+
+Konkrete Phasen, technische Schritte und Abhängigkeiten sind in **[Fourier_Studio_Spyder_Fork.md](Fourier_Studio_Spyder_Fork.md)** beschrieben. Der Fourier-Kernel ist implementiert; nächster Schritt ist die Nutzung in Spyder („Connect to existing kernel“ oder Kernel-Auswahl bei neuer Konsole), danach der eigentliche Fork mit Branding „Fourier Studio“.
+
 ---
 
 ## 3. Zwei Säulen im Überblick

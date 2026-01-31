@@ -1,0 +1,11 @@
+{
+  "argv": [
+    "python",
+    "-m",
+    "fourier_jupyter_kernel",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": "Fourier",
+  "language": "fourier"
+}
