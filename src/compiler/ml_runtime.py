@@ -1337,7 +1337,30 @@ def _plot_ndarray(x, y=None, title=None, xlabel=None, ylabel=None):
     buf = io.BytesIO()
     fig.savefig(buf, format='png', dpi=100, bbox_inches='tight')
     plt.close(fig)
-    _dedekind_plots.append(base64.b64encode(buf.getvalue()).decode('ascii'))
+    png_bytes = buf.getvalue()
+    _dedekind_plots.append(base64.b64encode(png_bytes).decode('ascii'))
+    # In Dedekind Studio: Bild an Plots-Pane senden (Kernel oder IPython)
+    try:
+        import sys
+        # Dedekind-Kernel injiziert _dedekind_display_image ins Exec-Namespace
+        for i in range(1, 8):
+            try:
+                f = sys._getframe(i)
+            except ValueError:
+                break
+            g = f.f_globals
+            if '_dedekind_display_image' in g:
+                g['_dedekind_display_image'](png_bytes, 'image/png')
+                break
+        else:
+            # IPython/Jupyter-Kernel (z. B. wenn Dedekind in IPython läuft)
+            from IPython import get_ipython  # type: ignore[import-untyped]
+            ip = get_ipython()
+            if ip is not None:
+                from IPython.display import display, Image  # type: ignore[import-untyped]
+                display(Image(data=png_bytes))
+    except Exception:
+        pass
 
 def plot(x=None, y=None, title=None, xlabel=None, ylabel=None):
     """
