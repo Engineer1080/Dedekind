@@ -12,6 +12,7 @@ This folder contains the **source** and **generated** documentation for the Four
 | **Features_Implementation_Roadmap.md** | Implementierungs-Roadmap für naturwissenschaftliche Features (Verteilungen, Integration, Einheiten Compile-Zeit, NUTS/VI, Fitting, LaTeX, symbolische Ableitungen) |
 | **Chemistry_Biology_Roadmap.md** | Roadmap für Chemie und Biologie (Einheiten mol/L/M, Beispiele Kinetik/Dosis-Wirkung/Wachstum, Convenience-Funktionen, Doku „Fourier für Chemie & Biologie“) |
 | **Commercialization_Options.md** | Potenzielle Kommerzialisierungsoptionen (Beratung, Support, Lizenzen, SaaS, Förderung, Phasierung, Risiken) |
+| **IDE_Studio_Roadmap.md** | Fourier in bestehenden IDEs (VS Code, Jupyter) + Fourier Studio als kommerzielle Wissenschaftler-IDE (Einheiten, Plots, Postgres, LaTeX, lokale KI) |
 | **Maturity_Assessment.md** | Ausgereiftheit von Fourier für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v0.9.8; Stärken, Lücken, Roadmap) |
 | **Fourier_Language_Specification_v0.1.pdf** | Legacy PDF (v0.1); for current spec use the Markdown or generate v0.2 PDF below |
 | **Fourier_Research_Papers_and_Architecture.pdf** | Legacy PDF; for current content use the Markdown or generate PDF below |
