@@ -1,0 +1,15 @@
+Metadata-Version: 2.4
+Name: jellyfish
+Version: 1.2.1
+Classifier: Programming Language :: Rust
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Programming Language :: Python :: Implementation :: PyPy
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+License-File: LICENSE
+Requires-Python: >=3.9
+Project-URL: homepage, https://jellyfish.jpt.sh/
+Project-URL: documentation, https://jellyfish.jpt.sh/
+Project-URL: repository, https://codeberg.org/jpt/jellyfish/

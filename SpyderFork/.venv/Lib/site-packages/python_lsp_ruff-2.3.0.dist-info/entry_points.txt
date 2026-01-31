@@ -1,0 +1,2 @@
+[pylsp]
+ruff = pylsp_ruff.plugin

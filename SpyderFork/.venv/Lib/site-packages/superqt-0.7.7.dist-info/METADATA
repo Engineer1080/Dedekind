@@ -1,0 +1,115 @@
+Metadata-Version: 2.4
+Name: superqt
+Version: 0.7.7
+Summary: Missing widgets and components for PyQt/PySide
+Project-URL: Documentation, https://pyapp-kit.github.io/superqt/
+Project-URL: Source, https://github.com/pyapp-kit/superqt
+Project-URL: Tracker, https://github.com/pyapp-kit/superqt/issues
+Project-URL: Changelog, https://github.com/pyapp-kit/superqt/blob/main/CHANGELOG.md
+Author: superqt community
+License: BSD 3-Clause License
+License-File: LICENSE
+Keywords: components,gui,pyqt,pyside,qt,range slider,widgets
+Classifier: Development Status :: 4 - Beta
+Classifier: Environment :: X11 Applications :: Qt
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Desktop Environment
+Classifier: Topic :: Software Development :: User Interfaces
+Classifier: Topic :: Software Development :: Widget Sets
+Requires-Python: >=3.9
+Requires-Dist: pygments>=2.4.0
+Requires-Dist: qtpy>=2.4.0
+Requires-Dist: typing-extensions>=4.12.0; python_version >= '3.13'
+Requires-Dist: typing-extensions>=4.5.0
+Provides-Extra: cmap
+Requires-Dist: cmap>=0.2; extra == 'cmap'
+Provides-Extra: font-fa5
+Requires-Dist: fonticon-fontawesome5>=5.15.4; extra == 'font-fa5'
+Provides-Extra: font-fa6
+Requires-Dist: fonticon-fontawesome6>=6.4.0; extra == 'font-fa6'
+Provides-Extra: font-mi6
+Requires-Dist: fonticon-materialdesignicons6>=6.9.96; extra == 'font-mi6'
+Provides-Extra: font-mi7
+Requires-Dist: fonticon-materialdesignicons7>=7.2.96; extra == 'font-mi7'
+Provides-Extra: iconify
+Requires-Dist: pyconify>=0.1.4; extra == 'iconify'
+Provides-Extra: pyqt5
+Requires-Dist: pyqt5-qt5==5.15.2; (sys_platform == 'win32') and extra == 'pyqt5'
+Requires-Dist: pyqt5-qt5>=5.15.16; (sys_platform != 'win32') and extra == 'pyqt5'
+Requires-Dist: pyqt5>=5.15.10; extra == 'pyqt5'
+Provides-Extra: pyqt6
+Requires-Dist: pyqt6!=6.6,>=6.4.0; extra == 'pyqt6'
+Requires-Dist: pyqt6!=6.6,>=6.7.0; (python_version >= '3.12') and extra == 'pyqt6'
+Provides-Extra: pyside2
+Requires-Dist: numpy<2,>=1.19; (python_version < '3.11') and extra == 'pyside2'
+Requires-Dist: numpy<2,>=1.26; (python_version >= '3.11' and python_version < '3.13') and extra == 'pyside2'
+Requires-Dist: pyside2>=5.15; extra == 'pyside2'
+Provides-Extra: pyside6
+Requires-Dist: pyside6!=6.5.0,!=6.5.1,!=6.6.2,>=6.4.0; extra == 'pyside6'
+Requires-Dist: pyside6>=6.7.0; (python_version >= '3.12') and extra == 'pyside6'
+Provides-Extra: quantity
+Requires-Dist: pint>=0.21; extra == 'quantity'
+Description-Content-Type: text/markdown
+
+# ![tiny](https://user-images.githubusercontent.com/1609449/120636353-8c3f3800-c43b-11eb-8732-a14dec578897.png)  superqt!
+
+[![License](https://img.shields.io/pypi/l/superqt.svg?color=green)](https://github.com/pyapp-kit/superqt/raw/master/LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/superqt.svg?color=green)](https://pypi.org/project/superqt)
+[![Python
+Version](https://img.shields.io/pypi/pyversions/superqt.svg?color=green)](https://python.org)
+[![Test](https://github.com/pyapp-kit/superqt/actions/workflows/test_and_deploy.yml/badge.svg)](https://github.com/pyapp-kit/superqt/actions/workflows/test_and_deploy.yml)
+[![codecov](https://codecov.io/gh/pyapp-kit/superqt/branch/main/graph/badge.svg?token=dcsjgl1sOi)](https://codecov.io/gh/pyapp-kit/superqt)
+
+###  "missing" widgets and components for PyQt/PySide
+
+This repository aims to provide high-quality community-contributed Qt widgets and components for PyQt & PySide
+that are not provided in the native QtWidgets module.
+
+Components are tested on:
+
+- macOS, Windows, & Linux
+- Python 3.9 and above
+- PyQt5 (5.11 and above) & PyQt6
+- PySide2 (5.11 and above) & PySide6
+
+## Documentation
+
+Documentation is available at https://pyapp-kit.github.io/superqt/
+
+## Widgets
+
+superqt provides a variety of widgets that are not included in the native QtWidgets module, including multihandle (range) sliders, comboboxes, and more.
+
+See the [widgets documentation](https://pyapp-kit.github.io/superqt/widgets) for a full list of widgets.
+
+- [Range Slider](https://pyapp-kit.github.io/superqt/widgets/qrangeslider/) (multi-handle slider)
+
+<img src="https://raw.githubusercontent.com/pyapp-kit/superqt/main/docs/images/demo_darwin10.png" alt="range sliders" width=680>
+
+<img src="https://raw.githubusercontent.com/pyapp-kit/superqt/main/docs/images/labeled_qslider.png" alt="range sliders" width=680>
+
+<img src="https://raw.githubusercontent.com/pyapp-kit/superqt/main/docs/images/labeled_range.png" alt="range sliders" width=680>
+
+## Utilities
+
+superqt includes a number of utilities for working with Qt, including:
+
+- tools and decorators for working with threads in qt.
+- `superqt.fonticon` for generating icons from font files (such as [Material Design Icons](https://materialdesignicons.com/) and [Font Awesome](https://fontawesome.com/))
+
+See the [utilities documentation](https://pyapp-kit.github.io/superqt/utilities/) for a full list of utilities.
+
+## Contributing
+
+We welcome contributions!
+
+Please see the [Contributing Guide](CONTRIBUTING.md)

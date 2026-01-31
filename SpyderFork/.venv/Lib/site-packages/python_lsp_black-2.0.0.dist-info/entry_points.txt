@@ -1,0 +1,2 @@
+[pylsp]
+black = pylsp_black.plugin
