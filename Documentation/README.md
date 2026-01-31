@@ -6,7 +6,7 @@ This folder contains the **source** and **generated** documentation for the Dede
 
 | File | Description |
 |------|-------------|
-| **Dedekind_Language_Specification.md** | Language Specification (Markdown source, v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9/v0.9.6; Chemie/Biologie v0.9.7; I/O/JSON v0.9.8; Stand v1.0.3) |
+| **Dedekind_Language_Specification.md** | Language Specification (Markdown source, v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9/v0.9.6; Chemie/Biologie v0.9.7; I/O/JSON v0.9.8; Stand v1.0.4) |
 | **Dedekind_Research_and_Architecture.md** | Research foundation & architecture (Markdown source; §10 Sprachfeatures v0.6) |
 | **Symbolic_Simplification_Roadmap.md** | Implementierungs-Roadmap für Symbolic Simplification (Phasen, Optionen, Integration) |
 | **Features_Implementation_Roadmap.md** | Implementierungs-Roadmap für naturwissenschaftliche Features (Verteilungen, Integration, Einheiten Compile-Zeit, NUTS/VI, Fitting, LaTeX, symbolische Ableitungen) |
@@ -40,13 +40,25 @@ pandoc Dedekind_Research_and_Architecture.md -o Dedekind_Research_and_Architectu
 - **Typora / other editors**: Open the `.md` file and export to PDF from the application.
 
 
+## What changed in v1.0.4 (documented here)
+
+- **Version 1.0.4**: Dedekind Studio: Syntax-Highlighting für Einheiten (z. B. `10[m]`, `[kg]`) und Ricci-Indizes (`A^ij`, `B_jk`) mit eigenen Farben.
+
 ## What changed in v1.0.3 (documented here)
 
 - **Version 1.0.3**: Compiler: ML-Runtime-Einbindung bei Runtime-Built-ins (alle 36 Beispiele laufen). Dedekind Studio: PyTorch-Backend beim Start, Spyder-Update-Check deaktiviert (Fork).
 
 ## What changed in v1.0.2 (documented here)
 
-- **Version 1.0.2**: Patch release (Dedekind Studio 1.0.2). v1.0.1: Patch. v1.0.0: Release (Dedekind Studio; Umbenennung Fourier → Dedekind war v0.9.9).
+- **Version 1.0.2**: Patch release (Dedekind Studio 1.0.2). Umbenennung Fourier → Dedekind (Sprache, IDE, Kernel, Dateiendung `.ddk`).
+
+## What changed in v1.0.1 (documented here)
+
+- **Version 1.0.1**: Patch release. Bugfixes und kleine Verbesserungen (Dedekind Studio / Kernel); keine neuen Features.
+
+## What changed in v1.0.0 (documented here)
+
+- **Version 1.0.0**: Erste stabile Release-Version 1.0. Dedekind Studio (Spyder-Fork) und Dedekind Jupyter Kernel; Sprache und Tooling als 1.0. Die Umbenennung Fourier → Dedekind war bereits v0.9.9.
 
 ## What changed in v0.9.8 (documented here)
 
