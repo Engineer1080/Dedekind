@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-1.0.9-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-1.0.10-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -20,7 +20,7 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **Math Functions**: `sin`, `cos`, `tan`, `exp`, `log`, `log10`, `sqrt`, `abs`; `asin`, `acos`, `atan`, `atan2(y,x)`; `sinh`, `cosh`, `tanh` — element-wise, differentiable; Tensor or scalar. **Reductions**: `min(x)`, `max(x)`, `argmin(x)`, `argmax(x)` (optional `dim`). **Rounding**: `round(x)`, `floor(x)`, `ceil(x)`. **Linear algebra**: `norm(x)`, `det(A)`, `trace(A)`.
 - **Uncertainty Propagation**: `uncertain(value, std)` bzw. `UncertainQuantity` — Gauß'sche Fehlerfortpflanzung für +, -, *, /, ^; optional mit Einheit.
 - **Fitting / Regression**: `fit(loss_fn, params_init, data, method="gd"|"mcmc"|"hmc", lr=0.01, steps=500)` — minimiert `loss_fn(params, data)` via Gradient Descent, Metropolis-Hastings oder **HMC** (Hamiltonian Monte Carlo).
-- **LaTeX-Export**: `export_to_latex(source)` bzw. CLI `--latex` — Formeln aus Dedekind-Code als LaTeX (für Papers/Notizen).
+- **LaTeX-Export**: `export_to_latex(source)` bzw. CLI `--latex` — Formeln aus Dedekind-Code als LaTeX (für Papers/Notizen). **Wissenschaftliche Konsole**: `print_latex(s)` rendert LaTeX in der Dedekind-Studio-/Jupyter-Konsole (z. B. Formeln, griechische Buchstaben).
 - **Bessere Fehlermeldungen**: Compiler-Fehler mit Zeile (`CompileError`); Parser setzt `line` im AST; Runtime-Quantity-Meldungen mit Kontext.
 - **Einheiten zur Compile-Zeit**: `1[m] + 1[s]` → Compiler-Fehler mit Zeile; `compile_source(..., check_units=True)` (Default), CLI `--no-units-check`.
 - **Datei-I/O**: `read_file(path)` (Text UTF-8), `write_file(path, content)`, `file_exists(path)`.
@@ -28,6 +28,11 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
+
+### What's New in v1.0.10
+- **Wissenschaftliche Konsole**: `print_latex(s)` rendert LaTeX in der Dedekind-Studio-/Jupyter-Konsole (QtConsole).
+- **Dedekind Studio Branding**: Neues Taskleisten- und Fenster-Icon (`dedekind_app_icon.svg`, „D“ in Dedekind-Grün); utils, mainwindow, restart und Editor-Fenster nutzen es.
+- **Beispiel**: `chemistry_units_radiation.ddk` Ausgabe auf ASCII umgestellt (Radioaktivitaet, Aktivitaet) für konsistente Darstellung.
 
 ### What's New in v1.0.9
 - **Einheiten**: Chemische Einheiten **bar**, **atm**, **g** und Radioaktivität **Bq** (Becquerel), **Sv** (Sievert); Beispiel `chemistry_units_radiation.ddk`; Language Spec und Chemistry_Biology_Roadmap ergänzt.
@@ -323,7 +328,7 @@ Dedekind aims to become the "Standard Language for Nature's Laws." To achieve th
 
 ## 📚 Documentation
 
-- **Language Specification**: `Documentation/Dedekind_Language_Specification.md` (v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9/v0.9.6; Chemie/Biologie v0.9.7; I/O/JSON v0.9.8; Stand v1.0.9). PDF can be generated with `pandoc` (see `Documentation/README.md`).
+- **Language Specification**: `Documentation/Dedekind_Language_Specification.md` (v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9/v0.9.6; Chemie/Biologie v0.9.7; I/O/JSON v0.9.8; Stand v1.0.10). PDF can be generated with `pandoc` (see `Documentation/README.md`).
 - **Research & Architecture**: `Documentation/Dedekind_Research_and_Architecture.md` (includes §10 Sprachfeatures v0.6).
 - **Symbolic Simplification**: `Documentation/Symbolic_Simplification_Roadmap.md` — Implementierungs-Roadmap (Phasen, Optionen, Integration).
 - **Features Roadmap**: `Documentation/Features_Implementation_Roadmap.md` — naturwissenschaftliche Features (Phase 1 abgeschlossen: Verteilungen, Integration).

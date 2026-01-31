@@ -29,15 +29,15 @@ except ImportError:
 
 class DedekindKernel(Kernel):
     implementation = "Dedekind"
-    implementation_version = "1.0.9"
+    implementation_version = "1.0.10"
     language = "dedekind"
-    language_version = "1.0.9"
+    language_version = "1.0.10"
     language_info = {
         "name": "dedekind",
         "mimetype": "text/x-dedekind",
         "file_extension": ".ddk",
     }
-    banner = "Dedekind Kernel – compile and run Dedekind code (Dedekind Language v1.0.9)"
+    banner = "Dedekind Kernel – compile and run Dedekind code (Dedekind Language v1.0.10)"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -95,7 +95,25 @@ class DedekindKernel(Kernel):
                         'transient': {},
                     },
                 )
+            def _dedekind_display_latex(latex_str):
+                """Send LaTeX to console for rendering (scientific output)."""
+                s = str(latex_str).strip()
+                if not s:
+                    return
+                # QtConsole expects math mode: wrap in $...$ if not already
+                if not (s.startswith('$') or s.startswith('\\') or s.startswith('[')):
+                    s = '$' + s + '$'
+                _kernel_self.send_response(
+                    _kernel_self.iopub_socket,
+                    'display_data',
+                    {
+                        'data': {'text/latex': s},
+                        'metadata': {},
+                        'transient': {},
+                    },
+                )
             self._globals['_dedekind_display_image'] = _dedekind_display_image
+            self._globals['_dedekind_display_latex'] = _dedekind_display_latex
             exec(python_code, self._globals)
         except CompileError as e:
             sys.stdout, sys.stderr = old_stdout, old_stderr

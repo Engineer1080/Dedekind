@@ -76,7 +76,7 @@ Compiler and runtime manage GPU/TPU utilization; `.gpu()` / `.cpu()` for explici
 
 ## 10. Standard Library
 
-Modules for ML, linalg, signal (FFT), visualization (`plot()`), and runtime types (`Quantity`, `Quaternion`, `Dense`, `Sequential`).
+Modules for ML, linalg, signal (FFT), visualization (`plot()`), scientific console (`print_latex(s)` for LaTeX-rendered output in Dedekind Studio/Jupyter), and runtime types (`Quantity`, `Quaternion`, `Dense`, `Sequential`).
 
 ## 11. Use Cases
 

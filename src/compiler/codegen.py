@@ -25,7 +25,7 @@ _RUNTIME_BUILTIN_NAMES = frozenset({
     'michaelis_menten', 'logistic', 'logistic_growth_dt', 'arrhenius', 'linear_regression',
     'atomic_mass', 'atomic_number',
     'read_file', 'write_file', 'file_exists', 'http_get', 'http_post',
-    'json_parse', 'json_stringify', 'sort', 'quicksort', 'plot',
+    'json_parse', 'json_stringify', 'sort', 'quicksort', 'plot', 'print_latex',
     # Constants (from ml_runtime)
     'pi', 'e', 'c', 'G', 'h', 'k_B', 'k_e', 'hbar', 'e_charge', 'epsilon_0', 'mu_0',
     'm_e', 'm_p', 'N_A', 'R_gas', 'alpha', 'sigma_SB', 'F_faraday',
