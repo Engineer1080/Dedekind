@@ -6,6 +6,10 @@
 
 """
 Profiler Plugin.
+
+.. deprecated:: Dedekind Studio
+   In Dedekind Studio ist dieses Plugin ausgeblendet (nur für Python).
+   Die Pane erscheint nicht im Layout und nicht unter View > Panes.
 """
 
 # Standard library imports
@@ -42,6 +46,7 @@ from spyder.plugins.editor.api.run import CellRun, SelectionRun
 class Profiler(SpyderDockablePlugin, ShellConnectPluginMixin, RunExecutor):
     """
     Profiler (after python's profile and pstats).
+    Deprecated in Dedekind Studio (Python-only, hidden from UI).
     """
 
     NAME = 'profiler'

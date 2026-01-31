@@ -459,12 +459,14 @@ class IPythonConsoleWidget(PluginMainWidget, CachedKernelMixin):  # noqa: PLR090
         )
 
         # --- Main and options menu actions
+        # Dedekind Studio: Eine Konsole = Dedekind
         self.create_client_action = self.create_action(
             IPythonConsoleWidgetActions.CreateNewClient,
-            text=_("New console (default settings)"),
+            text=_("New console"),
             icon=self.create_icon('ipython_console'),
             triggered=self.create_new_client,
-            register_shortcut=True
+            register_shortcut=True,
+            tip=_("Start a new Dedekind console"),
         )
         self.create_dedekind_client_action = self.create_action(
             IPythonConsoleWidgetActions.CreateDedekindClient,
@@ -784,12 +786,9 @@ class IPythonConsoleWidget(PluginMainWidget, CachedKernelMixin):  # noqa: PLR090
         tabs_context_menu = self.create_menu(
             IPythonConsoleWidgetMenus.TabsContextMenu)
 
+        # Dedekind Studio: Nur "New console" (Dedekind) und ggf. Connect to kernel
         for item in [
                 self.create_client_action,
-                self.create_dedekind_client_action,
-                self.create_python_client_action,
-                self.console_environment_menu,
-                self.special_console_menu,
                 self.connect_to_kernel_action]:
             self.add_item_to_menu(
                 item,
@@ -1279,6 +1278,13 @@ class IPythonConsoleWidget(PluginMainWidget, CachedKernelMixin):  # noqa: PLR090
 
     def _update_environment_menu(self):
         """Update submenu with entries for available interpreters."""
+        # Dedekind Studio: Kein Python-Umgebungs-Menü
+        try:
+            from spyder import __title__
+            if __title__ == 'Dedekind Studio':
+                return
+        except Exception:
+            pass
         # Clear menu and submenus before rebuilding them
         self.console_environment_menu.clear_actions()
         self.conda_envs_menu.clear_actions()
@@ -1988,10 +1994,11 @@ class IPythonConsoleWidget(PluginMainWidget, CachedKernelMixin):  # noqa: PLR090
         Uses asynchronous get_user_environment_variables for Python kernel
         and connects to kernel upon future completion.
         """
+        # Dedekind Studio: Nur Dedekind-Konsole
         if kernel_type is None:
-            kernel_type = self.get_conf('default_console_kernel', 'dedekind')
+            kernel_type = 'dedekind'
         if kernel_type not in ('python', 'dedekind'):
-            kernel_type = 'python'
+            kernel_type = 'dedekind'
 
         self.master_clients += 1
         client_id = dict(int_id=str(self.master_clients),

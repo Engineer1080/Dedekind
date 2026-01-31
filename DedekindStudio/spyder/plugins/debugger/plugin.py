@@ -4,7 +4,12 @@
 # Licensed under the terms of the MIT License
 # (see spyder/__init__.py for details)
 
-"""Debugger Plugin."""
+"""Debugger Plugin.
+
+.. deprecated:: Dedekind Studio
+   In Dedekind Studio ist dieses Plugin ausgeblendet (nur für Python).
+   Die Pane erscheint nicht im Layout und nicht unter View > Panes.
+"""
 
 # Standard library imports
 import os.path as osp
@@ -37,7 +42,7 @@ from spyder.plugins.editor.api.run import CellRun, SelectionRun
 
 
 class Debugger(SpyderDockablePlugin, ShellConnectPluginMixin, RunExecutor):
-    """Debugger plugin."""
+    """Debugger plugin. Deprecated in Dedekind Studio (Python-only, hidden from UI)."""
 
     NAME = 'debugger'
     REQUIRES = [Plugins.IPythonConsole, Plugins.Preferences, Plugins.Run]

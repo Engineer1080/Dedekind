@@ -950,7 +950,18 @@ class Layout(SpyderPluginV2, SpyderShortcutsMixin):
             None,
         ]
 
+        # Dedekind Studio: Pylint, Profiler, Debugger aus View > Panes ausblenden (deprecated, nur Python)
+        _hide_in_dedekind = set()
+        try:
+            from spyder import __title__
+            if __title__ == 'Dedekind Studio':
+                _hide_in_dedekind = {'debugger', 'profiler', 'pylint'}
+        except Exception:
+            pass
+
         for plugin in self.get_dockable_plugins():
+            if getattr(plugin, 'CONF_SECTION', None) in _hide_in_dedekind:
+                continue
             action = plugin.toggle_view_action
             if action:
                 # Plugins that fail their compatibility checks don't have a
@@ -1044,8 +1055,19 @@ class Layout(SpyderPluginV2, SpyderShortcutsMixin):
         for plugin in self.get_dockable_plugins():
             plugin.change_visibility(False)
 
+        # Dedekind Studio: deprecated Panes (Pylint, Profiler, Debugger) nicht wieder einblenden
+        _skip_restore = set()
+        try:
+            from spyder import __title__
+            if __title__ == 'Dedekind Studio':
+                _skip_restore = {'debugger', 'profiler', 'pylint'}
+        except Exception:
+            pass
+
         # Restore visible plugins
         for plugin in visible_plugins:
+            if plugin in _skip_restore:
+                continue
             plugin_class = self.get_plugin(plugin, error=False)
             if (
                 plugin_class

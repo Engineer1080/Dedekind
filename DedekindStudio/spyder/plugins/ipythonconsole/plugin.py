@@ -506,13 +506,9 @@ class IPythonConsole(SpyderDockablePlugin, RunExecutor):
                 lambda: widget.tabwidget.menu.hide()
             )
 
-        # Main menu actions for the IPython Console
+        # Dedekind Studio: Nur "New console" (Dedekind) und Connect to kernel
         new_consoles_actions = [
             widget.create_client_action,
-            widget.create_dedekind_client_action,
-            widget.create_python_client_action,
-            widget.console_environment_menu,
-            widget.special_console_menu,
             widget.connect_to_kernel_action
         ]
 

@@ -46,6 +46,15 @@ def find_internal_plugins():
         plugin_class = getattr(mod, class_name, None)
         internal_plugins[name] = plugin_class
 
+    # Dedekind Studio: Pylint, Profiler, Debugger nicht laden (deprecated, nur Python)
+    try:
+        from spyder import __title__
+        if __title__ == 'Dedekind Studio':
+            for skip in ('pylint', 'profiler', 'debugger'):
+                internal_plugins.pop(skip, None)
+    except Exception:
+        pass
+
     # FIXME: This shouldn't be necessary but it's just to be sure
     # plugins are sorted in alphabetical order. We need to remove it
     # in a later version.

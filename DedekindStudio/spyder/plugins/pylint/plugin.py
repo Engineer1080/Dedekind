@@ -6,6 +6,10 @@
 
 """
 Pylint Code Analysis Plugin.
+
+.. deprecated:: Dedekind Studio
+   In Dedekind Studio ist dieses Plugin ausgeblendet (nur für Python).
+   Die Pane erscheint nicht im Layout und nicht unter View > Panes.
 """
 
 # Standard library imports
@@ -34,6 +38,7 @@ class PylintActions:
 
 
 class Pylint(SpyderDockablePlugin, RunExecutor):
+    """Pylint Code Analysis. Deprecated in Dedekind Studio (Python-only, hidden from UI)."""
 
     NAME = "pylint"
     WIDGET_CLASS = PylintWidget

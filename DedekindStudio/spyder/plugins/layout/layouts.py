@@ -13,6 +13,17 @@ from spyder.api.plugins import Plugins
 from spyder.api.translations import _
 from spyder.plugins.layout.api import BaseGridLayoutType
 
+# Dedekind Studio: Python-only Panes (Debugger, Profiler) aus Layout entfernen
+def _exclude_deprecated_python_panes(plugins_list):
+    """In Dedekind Studio: Debugger und Profiler aus der Liste entfernen (deprecated, nur Python)."""
+    try:
+        from spyder import __title__
+        if __title__ != 'Dedekind Studio':
+            return plugins_list
+        return [p for p in plugins_list if p not in (Plugins.Debugger, Plugins.Profiler)]
+    except Exception:
+        return plugins_list
+
 
 class DefaultLayouts:
     SpyderLayout = "Spyder Default Layout"
@@ -42,7 +53,7 @@ class SpyderLayout(BaseGridLayoutType):
             row_span=2,
         )
         self.add_area(
-            [
+            _exclude_deprecated_python_panes([
                 Plugins.Help,
                 Plugins.VariableExplorer,
                 Plugins.Debugger,
@@ -51,7 +62,7 @@ class SpyderLayout(BaseGridLayoutType):
                 Plugins.Explorer,
                 Plugins.Find,
                 Plugins.OnlineHelp,
-            ],
+            ]),
             row=0,
             column=2,
             default=True,
@@ -84,7 +95,7 @@ class HorizontalSplitLayout(BaseGridLayoutType):
             column=0,
         )
         self.add_area(
-            [
+            _exclude_deprecated_python_panes([
                 Plugins.IPythonConsole,
                 Plugins.Explorer,
                 Plugins.Help,
@@ -93,7 +104,7 @@ class HorizontalSplitLayout(BaseGridLayoutType):
                 Plugins.Profiler,
                 Plugins.Plots,
                 Plugins.History,
-            ],
+            ]),
             row=0,
             column=1,
             default=True,
@@ -118,7 +129,7 @@ class VerticalSplitLayout(BaseGridLayoutType):
             column=0,
         )
         self.add_area(
-            [
+            _exclude_deprecated_python_panes([
                 Plugins.IPythonConsole,
                 Plugins.Explorer,
                 Plugins.Help,
@@ -127,7 +138,7 @@ class VerticalSplitLayout(BaseGridLayoutType):
                 Plugins.Profiler,
                 Plugins.Plots,
                 Plugins.History,
-            ],
+            ]),
             row=1,
             column=0,
             default=True,
@@ -158,7 +169,7 @@ class RLayout(BaseGridLayoutType):
             hidden_plugin_ids=[Plugins.Console]
         )
         self.add_area(
-            [
+            _exclude_deprecated_python_panes([
                 Plugins.VariableExplorer,
                 Plugins.Debugger,
                 Plugins.Profiler,
@@ -166,7 +177,7 @@ class RLayout(BaseGridLayoutType):
                 Plugins.History,
                 Plugins.OutlineExplorer,
                 Plugins.Find,
-            ],
+            ]),
             row=0,
             column=1,
             default=True,
@@ -213,13 +224,13 @@ class MatlabLayout(BaseGridLayoutType):
             hidden_plugin_ids=[Plugins.Console]
         )
         self.add_area(
-            [
+            _exclude_deprecated_python_panes([
                 Plugins.VariableExplorer,
                 Plugins.Debugger,
                 Plugins.Profiler,
                 Plugins.Plots,
                 Plugins.Find,
-            ],
+            ]),
             row=0,
             column=2,
             default=True,
