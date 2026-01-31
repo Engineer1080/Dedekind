@@ -1,0 +1,27 @@
+// Gravitationspotential V(r) = -G*M/r (Energie pro Masse [J/kg])
+// Dedekind-Features: G und M mit Einheiten in Kommentar; Plot mit Achsen in SI-Einheiten.
+// Für Vektor-Plot nutzen wir numerische Werte (G*M in SI), Achsenbeschriftung macht Einheiten klar.
+
+fn main() {
+    print("--- Dedekind: Gravitationspotential V(r) ---")
+
+    // Abstand r von 10^7 m bis 4·10^8 m (Erdumlaufbahn-Größenordnung)
+    r = linspace(1.0e7, 4.0e8, 100)
+
+    // V(r) = -G*M/r; G = 6.674e-11 m³/(kg·s²), M_Erde ≈ 5.972e24 kg
+    // Ergebnis V in J/kg (spezifische Energie)
+    G_times_M = 6.674e-11 * 5.972e24
+    V = -G_times_M / r
+
+    plot(r, V, title="Gravitationspotential V(r) = -G·M/r", xlabel="r [m]", ylabel="V [J/kg]")
+
+    // Einzelwert mit nativen Einheiten (Dedekind: G und [m], [kg] als Literale)
+    M_earth = 5.972e24[kg]
+    r_single = 3.844e8[m]
+    a_gravity = G * M_earth / (r_single * r_single)
+    print("Gravitationsbeschleunigung a = G·M/r² bei r = 384400 km:")
+    print(a_gravity)
+
+    print("Plot: V(r) mit Achsen in SI. Dedekind nutzt G und Einheiten-Literale.")
+}
+main()

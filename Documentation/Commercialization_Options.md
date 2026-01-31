@@ -9,7 +9,7 @@ Draft: January 2026
 
 Dieses Dokument skizziert **mögliche Wege, mit Dedekind als Erfinder bzw. Maintainer Einnahmen zu erzielen**, ohne das Open-Source-Projekt zu beschädigen. Dedekind ist eine domänenspezifische Sprache für ML, Grafik und Naturwissenschaften (Physik, Chemie, Biologie) mit Einheiten, differenzierbarer Numerik, Fitting und Unsicherheitsfortpflanzung.
 
-**Ausgangslage**: Dedekind ist aktuell ein **Prototyp (v1.0.5)**; Ökosystem und Bekanntheit sind gering. Kommerzialisierung sollte die Community und Sichtbarkeit stärken, nicht nur kurzfristig Geld erzeugen.
+**Ausgangslage**: Dedekind ist aktuell ein **Prototyp (v1.0.6)**; Ökosystem und Bekanntheit sind gering. Kommerzialisierung sollte die Community und Sichtbarkeit stärken, nicht nur kurzfristig Geld erzeugen.
 
 **Zielgruppen für Monetarisierung**: Forschungsinstitute, Unis, Pharma/CROs, Ingenieurbüros, Laborsoftware-Anbieter, Datenwissenschaftler in Chemie/Bio/Physik.
 
@@ -117,7 +117,7 @@ Damit sind **Beratung, Schulungen und Enterprise-Support** am plausibelsten; rei
 
 ## 6. Risiken und Einschränkungen
 
-- **Prototyp-Status**: Dedekind (v1.0.5) ist noch nicht produktionsreif; Support und SLA setzen Stabilität voraus.
+- **Prototyp-Status**: Dedekind (v1.0.6) ist noch nicht produktionsreif; Support und SLA setzen Stabilität voraus.
 - **Ökosystem**: Kleine Community; Kunden brauchen oft Integration mit Python/R — Interop oder klare Migrationspfade sind wichtig.
 - **Ressourcen**: Kommerzialisierung kostet Zeit (Vertrieb, Support, Recht); als Einzelperson oder kleines Team priorisieren.
 - **Open Source**: Kommerzielle Optionen (Dual License, SaaS) sollten die Community nicht ausgrenzen; Kern-Features weiterhin frei nutzbar halten.

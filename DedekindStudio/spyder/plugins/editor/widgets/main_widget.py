@@ -1682,28 +1682,26 @@ class EditorMainWidget(PluginMainWidget):
 
     def __load_welcome_dedekind_file(self):
         """
-        Load Dedekind Studio welcome file and example files when no session
-        to restore. Opens welcome_dedekind.ddk first, then all .ddk files
-        from examples/dedekind as tabs.
+        Load Dedekind Studio scientific plot examples when no session
+        to restore. Opens only scientific_*.ddk files as tabs (first with focus).
         """
-        welcome_path = osp.join(
-            get_module_source_path('spyder'), 'assets',
-            'welcome_dedekind.ddk')
-        if not osp.isfile(welcome_path):
+        examples_dir = get_dedekind_examples_dir()
+        if not examples_dir:
             self.__load_temp_file()
             return
-        self.load(welcome_path, set_focus=True)
-        examples_dir = get_dedekind_examples_dir()
-        if examples_dir:
-            try:
-                ddk_files = sorted(
-                    f for f in os.listdir(examples_dir)
-                    if f.endswith('.ddk'))
-                for name in ddk_files:
-                    path = osp.join(examples_dir, name)
-                    self.load(path, set_focus=False)
-            except Exception:
-                logger.exception("Could not load Dedekind examples at startup")
+        try:
+            ddk_files = sorted(
+                f for f in os.listdir(examples_dir)
+                if f.endswith('.ddk') and f.startswith('scientific_'))
+            if not ddk_files:
+                self.__load_temp_file()
+                return
+            for i, name in enumerate(ddk_files):
+                path = osp.join(examples_dir, name)
+                self.load(path, set_focus=(i == 0))
+        except Exception:
+            logger.exception("Could not load Dedekind scientific examples at startup")
+            self.__load_temp_file()
 
     @Slot()
     def __set_workdir(self):
@@ -2968,6 +2966,10 @@ class EditorMainWidget(PluginMainWidget):
             filenames = self._plugin._get_project_filenames()
         else:
             filenames = self.get_conf('filenames', default=[])
+
+        # Dedekind Studio: Nur existierende Dateien wiederherstellen (z. B. nach Entfernen von welcome_dedekind.ddk/hello.ddk)
+        if filenames:
+            filenames = [f for f in filenames if osp.isfile(f)]
 
         if close_previous_files:
             self.close_all_files()

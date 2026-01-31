@@ -1,0 +1,28 @@
+// Arrhenius-Plot: ln(k) vs. 1/T für eine Reaktion
+// Dedekind-Features: arrhenius(T,A,Ea) nutzt R_gas [J/(K·mol)] intern, Einheiten konsistent.
+// In Python müsste man R selbst setzen und Einheiten prüfen.
+
+fn main() {
+    print("--- Dedekind: Arrhenius-Plot (k(T) mit R_gas) ---")
+
+    // Temperaturbereich in K (als Vektor für Plot)
+    T = linspace(280, 400, 60)
+
+    // Arrhenius: k = A * exp(-Ea/(R*T)); A [1/s], Ea [J/mol], T [K]
+    A = 1.0e12
+    Ea = 50000.0
+    k = arrhenius(T, A, Ea)
+
+    // Arrhenius-Plot: ln(k) vs. 1/T (sollte Gerade ergeben)
+    inv_T = 1.0 / T
+    ln_k = log(k)
+
+    plot(inv_T, ln_k, title="Arrhenius: ln(k) vs. 1/T", xlabel="1/T [1/K]", ylabel="ln(k)")
+
+    // Einzelwert: k bei T = 300 K (R_gas [J/(K·mol)] wird in arrhenius() verwendet)
+    k_300 = arrhenius(300.0, A, Ea)
+    print("k bei T = 300 K:")
+    print(k_300)
+    print("Arrhenius-Plot erzeugt. R_gas wird intern mit korrekter Einheit verwendet.")
+}
+main()

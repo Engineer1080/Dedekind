@@ -362,7 +362,7 @@ def get_module_source_path(modname, basename=None):
 def get_dedekind_examples_dir():
     """
     Return the path to Dedekind Studio's bundled examples (spyder/assets/dedekind_examples).
-    The Studio always contains these examples; no repo layout dependency.
+    Die Beispiele müssen in Assets hinterlegt sein.
     """
     try:
         examples_dir = osp.join(

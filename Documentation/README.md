@@ -6,7 +6,7 @@ This folder contains the **source** and **generated** documentation for the Dede
 
 | File | Description |
 |------|-------------|
-| **Dedekind_Language_Specification.md** | Language Specification (Markdown source, v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9/v0.9.6; Chemie/Biologie v0.9.7; I/O/JSON v0.9.8; Stand v1.0.5) |
+| **Dedekind_Language_Specification.md** | Language Specification (Markdown source, v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9/v0.9.6; Chemie/Biologie v0.9.7; I/O/JSON v0.9.8; Stand v1.0.6) |
 | **Dedekind_Research_and_Architecture.md** | Research foundation & architecture (Markdown source; §10 Sprachfeatures v0.6) |
 | **Symbolic_Simplification_Roadmap.md** | Implementierungs-Roadmap für Symbolic Simplification (Phasen, Optionen, Integration) |
 | **Features_Implementation_Roadmap.md** | Implementierungs-Roadmap für naturwissenschaftliche Features (Verteilungen, Integration, Einheiten Compile-Zeit, NUTS/VI, Fitting, LaTeX, symbolische Ableitungen) |
@@ -39,6 +39,10 @@ pandoc Dedekind_Research_and_Architecture.md -o Dedekind_Research_and_Architectu
 - **Online**: Paste the Markdown into a service that converts Markdown to PDF (e.g. markdown-to-pdf converters).
 - **Typora / other editors**: Open the `.md` file and export to PDF from the application.
 
+
+## What changed in v1.0.6 (documented here)
+
+- **Version 1.0.6**: Wissenschaftliche Plot-Beispiele (`scientific_*.ddk`): Wellen-Superposition, gedämpfter Oszillator, Arrhenius-Plot, Gravitationspotential, Ricci-Plot, FFT-Spektrum – mit Dedekind-Features (pi, sin/cos/exp, Einheiten, Ricci-Notation, fft, arrhenius, plot). Dedekind Studio lädt beim Start diese Beispiele als Tabs; Hello-World-Dateien (welcome_dedekind.ddk, hello.ddk in den Assets) entfernt. Pylint, Profiler und Debugger (Python-spezifisch) als deprecated markiert und in Dedekind Studio nicht mehr geladen – sie erscheinen nicht in Layouts, View > Panes oder bei Layout-Wiederherstellung.
 
 ## What changed in v1.0.5 (documented here)
 

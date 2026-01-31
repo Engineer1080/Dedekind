@@ -29,9 +29,9 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from packaging.version import parse
+from packaging.version import parse  # type: ignore[reportMissingImports]
 
-version_info = (1, 0, 5)
+version_info = (1, 0, 6)
 
 __version__ = str(parse('.'.join(map(str, version_info))))
 __installer_version__ = __version__
@@ -60,9 +60,9 @@ def get_versions(reporev=True):
     import sys
     import platform
 
-    import qtpy
-    import qtpy.QtCore
-    from spyder_kernels.utils.pythonenv import is_conda_env
+    import qtpy  # type: ignore[reportMissingImports]
+    import qtpy.QtCore  # type: ignore[reportMissingImports]
+    from spyder_kernels.utils.pythonenv import is_conda_env  # type: ignore[reportMissingImports]
 
     from spyder.config.base import is_conda_based_app
 

@@ -1,0 +1,25 @@
+// Gedämpfter harmonischer Oszillator: x(t) = A·exp(-ζ·ω·t)·cos(ω·t)
+// Dedekind-Features: exp(), cos(), linspace(), plot() – alles ohne externe Bibliotheken.
+// In Python bräuchte man numpy für exp/cos auf Arrays.
+
+fn main() {
+    print("--- Dedekind: Gedämpfter Oszillator ---")
+
+    // Dämpfung ζ (dimensionslos), Kreisfrequenz ω = 1 [1/s]
+    zeta = 0.1
+    omega = 1.0
+    t = linspace(0, 20, 300)
+
+    // Auslenkung: exponentielle Hüllkurve × Kosinus
+    envelope = exp(-zeta * omega * t)
+    oscillation = cos(omega * t)
+    x = envelope * oscillation
+
+    plot(t, x, title="Gedämpfter Oszillator: x(t) = exp(-ζωt)·cos(ωt)", xlabel="t [s]", ylabel="x(t)")
+
+    // Hüllkurve ±exp(-ζωt) als Referenz (zweiter Plot)
+    plot(t, envelope, title="Hüllkurve exp(-ζωt)", xlabel="t [s]", ylabel="Amplitude")
+
+    print("Oszillator- und Hüllkurven-Plot. Dedekind: exp/cos auf Tensoren nativ.")
+}
+main()

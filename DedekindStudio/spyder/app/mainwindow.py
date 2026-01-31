@@ -926,7 +926,7 @@ class MainWindow(QMainWindow, SpyderMainWindowMixin, SpyderShortcutsMixin):
     def _open_welcome_dedekind_if_empty(self):
         """
         If only the temp file is open (no previous session), open the
-        Dedekind Studio welcome Hello World file.
+        first Dedekind Studio scientific plot example.
         """
         try:
             editor = self.get_plugin(Plugins.Editor, error=False)
@@ -951,13 +951,18 @@ class MainWindow(QMainWindow, SpyderMainWindowMixin, SpyderShortcutsMixin):
         if current != temp_path and not (str(current).endswith('temp.py')):
             return
         try:
-            welcome_path = osp.join(
-                get_module_source_path('spyder'), 'assets',
-                'welcome_dedekind.ddk')
-            if osp.isfile(welcome_path):
-                editor.load(welcome_path, set_focus=True)
+            from spyder.config.base import get_dedekind_examples_dir
+            examples_dir = get_dedekind_examples_dir()
+            if examples_dir:
+                ddk_files = sorted(
+                    f for f in os.listdir(examples_dir)
+                    if f.endswith('.ddk') and f.startswith('scientific_'))
+                if ddk_files:
+                    first_path = osp.join(examples_dir, ddk_files[0])
+                    if osp.isfile(first_path):
+                        editor.load(first_path, set_focus=True)
         except Exception:
-            logger.exception("Could not open welcome_dedekind.ddk")
+            logger.exception("Could not open Dedekind scientific example")
 
     def restore_undocked_plugins(self):
         """Restore plugins that were undocked in the previous session."""
