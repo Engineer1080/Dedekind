@@ -956,13 +956,13 @@ class MainWindow(QMainWindow, SpyderMainWindowMixin, SpyderShortcutsMixin):
             if examples_dir:
                 ddk_files = sorted(
                     f for f in os.listdir(examples_dir)
-                    if f.endswith('.ddk') and f.startswith('scientific_'))
+                    if f.endswith('.ddk'))
                 if ddk_files:
                     first_path = osp.join(examples_dir, ddk_files[0])
                     if osp.isfile(first_path):
                         editor.load(first_path, set_focus=True)
         except Exception:
-            logger.exception("Could not open Dedekind scientific example")
+            logger.exception("Could not open Dedekind example")
 
     def restore_undocked_plugins(self):
         """Restore plugins that were undocked in the previous session."""

@@ -1682,8 +1682,8 @@ class EditorMainWidget(PluginMainWidget):
 
     def __load_welcome_dedekind_file(self):
         """
-        Load Dedekind Studio scientific plot examples when no session
-        to restore. Opens only scientific_*.ddk files as tabs (first with focus).
+        Load all Dedekind Studio examples when no session to restore.
+        Opens every .ddk file from assets/dedekind_examples as a tab (first with focus).
         """
         examples_dir = get_dedekind_examples_dir()
         if not examples_dir:
@@ -1692,7 +1692,7 @@ class EditorMainWidget(PluginMainWidget):
         try:
             ddk_files = sorted(
                 f for f in os.listdir(examples_dir)
-                if f.endswith('.ddk') and f.startswith('scientific_'))
+                if f.endswith('.ddk'))
             if not ddk_files:
                 self.__load_temp_file()
                 return
@@ -1700,7 +1700,7 @@ class EditorMainWidget(PluginMainWidget):
                 path = osp.join(examples_dir, name)
                 self.load(path, set_focus=(i == 0))
         except Exception:
-            logger.exception("Could not load Dedekind scientific examples at startup")
+            logger.exception("Could not load Dedekind examples at startup")
             self.__load_temp_file()
 
     @Slot()
