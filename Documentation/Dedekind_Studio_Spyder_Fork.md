@@ -1,4 +1,4 @@
-# Dedekind Studio: Spyder-Fork mit nativem Python und Dedekind
+# Dedekind Studio: Spyder-Fork mit Fokus auf Dedekind
 
 **Dedekind Language**  
 Draft: January 2026
@@ -7,12 +7,12 @@ Draft: January 2026
 
 ## 1. Ziel
 
-**Dedekind Studio** entsteht als Fork von **Spyder** und bietet:
+**Dedekind Studio** ist ein Fork von **Spyder** mit Fokus auf **Dedekind**:
 
-- **Nativ Python** – wie Spyder heute (IPython Console, Variable Explorer, Plots, Editor).
-- **Nativ Dedekind** – Dedekind als gleichberechtigte Sprache: Dedekind-Konsole (Jupyter-Kernel), Ausführen von `.ddk`-Dateien, Syntax-Highlighting für Dedekind.
+- **Nativ Dedekind** – Dedekind-Konsole (Jupyter-Kernel), Ausführen von `.ddk`-Dateien, Syntax-Highlighting, Plots in der Plots-Pane.
+- **Entschlackt** – Kein Python-Kernel in der Oberfläche: Menü „Consoles“ bietet nur „New console“ (Dedekind) und „Connect to existing kernel“. Keine Auswahl „Python vs. Dedekind“, kein Untermenü „New console in environment“ (Conda/Pyenv), keine „New special console“ (Pylab/SymPy/Cython). So bleibt die IDE schlank und auf Dedekind ausgerichtet.
 
-Eine Codebasis, eine IDE: Wissenschaftler können in derselben Umgebung Python und Dedekind nutzen (z. B. Daten in Python laden, in Dedekind modellieren/fitten).
+Die zugrundeliegende Spyder-Codebasis behält die Möglichkeit, bei Bedarf wieder Python-Konsolen anzubieten (z. B. durch Zurücknahme der Menü-Anpassungen).
 
 ---
 
