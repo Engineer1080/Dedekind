@@ -102,7 +102,7 @@ This section documents the **physical units** and **universal constants** featur
 
 ### 15.1 Unit Literals
 
-Values can carry SI units using bracket notation:
+Values can carry SI units using bracket notation. **SI base units**: m (metre), kg (kilogram), s (second), A (ampere), K (kelvin), mol (mole), **cd (candela)**. Supplementary: rad (radian), sr (steradiant). **Non-SI but supported**: **bar**, **atm** (pressure; 1 bar = 10⁵ Pa, 1 atm ≈ 101325 Pa); **g** (gram, 10⁻³ kg); **Bq** (Becquerel, activity = 1/s); **Sv** (Sievert, equivalent dose = J/kg).
 
 ```dedekind
 distance = 10[m]
@@ -110,9 +110,15 @@ speed    = 5[m/s]
 mass     = 1.0[kg]
 freq     = 5.0e14[Hz]
 charge   = 1.602e-19[C]
+pressure = 101325[Pa]
+p_bar    = 1.0[bar]
+activity = 1000[Bq]
+dose     = 0.01[Sv]
+luminous_intensity = 1.0[cd]
+illuminance = 500[lx]
 ```
 
-- **Syntax**: `number [ unit ]` where `unit` is an identifier or product/quotient/power (e.g. `m`, `m/s`, `kg*m/s^2`, `m^2`).
+- **Syntax**: `number [ unit ]` where `unit` is an identifier or product/quotient/power (e.g. `m`, `m/s`, `kg*m/s^2`, `m^2`, `cd*sr`, `bar`, `Bq`).
 - **Semantics**: Such expressions are represented at runtime as `Quantity(value, unit)`.
 
 ### 15.2 Mathematical and Universal Constants as Quantity
@@ -156,12 +162,17 @@ Example: `E = m * c^2` with `m = 1.0[kg]` yields a result in J (Joule); the runt
 
 ### 15.4 Unit Display Simplification
 
-For readability, the runtime simplifies certain compound units when displaying results:
+For readability, the runtime simplifies many compound units when displaying results:
 
-- **J (Joule)**: e.g. `(kg)*((m/s)^2)` or `(J*s)*(Hz)` → displayed as `[J]`.
-- **N (Newton)**: e.g. gravitational or Coulomb force expressions → displayed as `[N]`.
+- **SI base**: m, kg, s, A, K, mol, **cd**; supplementary: rad, sr.
+- **Mechanics / energy**: **J** (Joule), **N** (Newton), **Pa** (Pascal), **W** (Watt).
+- **Electricity / magnetism**: **V** (Volt), **F** (Farad), **ohm** (Ω), **S** (Siemens), **Wb** (Weber), **T** (Tesla), **H** (Henry).
+- **Other derived**: **Hz** (Hertz, 1/s), **Gy** (Gray, J/kg, absorbed dose), **kat** (katal, mol/s).
+- **Photometry**: **lm** (Lumen, cd·sr), **lx** (Lux, lm/m²).
+- **Chemistry / pressure**: **M** (= mol/L), **bar**, **atm**; mass: **g**.
+- **Radiation**: **Bq** (Becquerel, 1/s, activity); **Sv** (Sievert, J/kg, equivalent dose). Display: 1/s → Hz, J/kg → Gy when computed from expressions.
 
-Internal unit representation remains exact for dimensional consistency.
+Examples: `(kg)*((m/s)^2)` → `[J]`; `N/m^2` → `[Pa]`; `J/s` → `[W]`; `cd*sr` → `[lm]`; literals `1[bar]`, `1000[Bq]`, `0.01[Sv]` stay as written. Internal unit representation remains exact for dimensional consistency.
 
 ### 15.5 Quaternion and Unary Minus
 

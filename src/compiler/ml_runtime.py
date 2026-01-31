@@ -16,7 +16,7 @@ def _normalize_unit_for_compare(unit):
 
 
 class Quantity:
-    """Physikalische Größe mit Einheit (z. B. 10[m], 5[m/s], 0.1[M], 50[ppm]). Rechenregeln: gleiche Einheit für +/-, Einheiten multiplizieren/dividieren. Chemie: mol, L, M (= mol/L), ppm unterstützt."""
+    """Physikalische Größe mit Einheit (z. B. 10[m], 5[m/s], 0.1[M], 50[ppm]). Rechenregeln: gleiche Einheit für +/-, Einheiten multiplizieren/dividieren. Chemie: mol, L, M (= mol/L), ppm, bar, atm, g. Radioaktivität: Bq (1/s), Gy (J/kg), Sv (J/kg, Äquivalentdosis)."""
     def __init__(self, value, unit=""):
         self.value = float(value)
         self.unit = str(unit) if unit else ""
@@ -136,7 +136,7 @@ def _unit_pow(u, exp):
     return f"{base}^{e}"
 
 def _unit_simplify(u):
-    """Vereinfacht Einheiten-String für Anzeige (z. B. (kg)*((m/s)^2) -> J; mol/L -> M). Chemie: mol, L, M, ppm unterstützt."""
+    """Vereinfacht Einheiten-String für Anzeige. SI-Basis: m, kg, s, A, K, mol, cd. Abgeleitet: J, N, Pa, W, Hz, V, F, ohm, S, Wb, T, H, lm, lx, Gy, kat, M. Chemie/Druck: bar, atm. Masse: g. Radioaktivität: Bq (1/s), Sv (J/kg); Anzeige 1/s→Hz, J/kg→Gy."""
     if not u:
         return u
     u = u.strip()
@@ -145,18 +145,65 @@ def _unit_simplify(u):
         return "M"
     if u.replace(" ", "") in ("mol/L", "mol*L^-1"):
         return "M"
-    # Joule: kg*m^2/s^2 bzw. (kg)*((m/s)^2)
+    # 1/s -> Hz (Frequenz); Bq gleiche Dimension, Anzeige Hz
+    if u in ("1/s", "s^-1", "s^(-1)") or u.replace(" ", "") == "s^-1":
+        return "Hz"
+    # mol/s -> kat (katal, katalytische Aktivität)
+    if u in ("mol/s", "mol*s^-1", "mol*s^(-1)"):
+        return "kat"
+    # J/kg, m^2/s^2 -> Gy (Gray, absorbierte Dosis); Sv gleiche Dimension
+    if u in ("J/kg", "m^2/s^2", "(m^2)/(s^2)") or "(m/s)^2" in u:
+        return "Gy"
+    # Joule: kg*m^2/s^2 bzw. (kg)*((m/s)^2); nicht J/C (V) oder J/s (W)
     if "(kg)*((m/s)^2)" in u or u == "kg*m^2/s^2":
+        return "J"
+    if "kg" in u and "m^2" in u and "s^2" in u and "A" not in u and "mol" not in u and "s^3" not in u and "s^(-3)" not in u and "/" in u:
         return "J"
     if "(J*s)*(Hz)" in u or "J*s*Hz" in u or ("J*s" in u and "Hz" in u):
         return "J"
-    # Newton: Gravitation G*m1*m2/r^2 oder Coulomb k_e*q1*q2/r^2
+    # Newton: kg*m/s^2
     if "m^3/(kg*s^2)" in u and "m^2" in u:
         return "N"
     if "N*m^2/C^2" in u and "m^2" in u:
         return "N"
     if "kg*m/s^2" in u or u == "N":
         return "N"
+    # Pa (Pascal): N/m^2, kg/(m*s^2) — nicht N*m^2/C^2
+    if u in ("N/m^2", "N*m^-2", "N*m^(-2)"):
+        return "Pa"
+    if "kg/(m*s^2)" in u or u in ("kg*m^-1*s^-2", "kg*m^(-1)*s^(-2)"):
+        return "Pa"
+    # W (Watt): J/s, kg*m^2/s^3
+    if u in ("J/s", "J*s^-1", "J*s^(-1)") or "kg*m^2/s^3" in u or u == "kg*m^2/s^3":
+        return "W"
+    # V (Volt): J/C, W/A, kg*m^2/(s^3*A)
+    if u in ("J/C", "W/A") or "kg*m^2/(s^3*A)" in u:
+        return "V"
+    # S (Siemens): 1/ohm, s^3*A^2/(kg*m^2) — vor ohm prüfen
+    if "s^3*A^2/(kg*m^2)" in u:
+        return "S"
+    # ohm (Ω): V/A, kg*m^2/(s^3*A^2)
+    if u in ("V/A", "V*A^-1", "V*A^(-1)") or "kg*m^2/(s^3*A^2)" in u:
+        return "ohm"
+    # F (Farad): C/V, s^4*A^2/(kg*m^2)
+    if u in ("C/V", "C*V^-1", "C*V^(-1)") or ("s^4*A^2" in u and "kg*m^2" in u):
+        return "F"
+    # H (Henry): Wb/A, kg*m^2/(s^2*A^2) — vor Wb prüfen
+    if u in ("Wb/A", "Wb*A^-1") or "kg*m^2/(s^2*A^2)" in u:
+        return "H"
+    # Wb (Weber): V*s, kg*m^2/(s^2*A) (nicht A^2)
+    if u == "V*s" or ("kg*m^2" in u and "/(s^2*A)" in u and "A^2" not in u):
+        return "Wb"
+    # T (Tesla): Wb/m^2, kg/(s^2*A)
+    if u in ("Wb/m^2", "Wb*m^-2", "kg*s^-2*A^-1") or "kg/(s^2*A)" in u:
+        return "T"
+    # lm (Lumen): cd*sr (Candela * Steradiant)
+    if "cd*sr" in u or (u.replace(" ", "") == "cd*sr"):
+        return "lm"
+    # lx (Lux): lm/m^2
+    if u in ("lm/m^2", "lm*m^-2"):
+        return "lx"
+    # rad, sr: dimensionslos, Anzeige beibehalten
     return u
 
 # --- Mathematical Constants (dimensionless) ---

@@ -43,7 +43,7 @@ Damit sind viele chemische und biologische Rechnungen (Kinetik, Fitting, Fehlerf
 | **Convenience-Funktionen** | `michaelis_menten(S, Vmax, Km)`, `logistic(t, r, K, N0)`, `logistic_growth_dt(N, r, K)`, `arrhenius(T, A, Ea)`. | Gering | 2 ✅ |
 | **Linear-Regression-Wrapper** | `linear_regression(x, y)` → [Steigung, Achsenabschnitt] (intern `fit`). | Gering | 2 ✅ |
 | **Chemische Elemente** | `atomic_mass("C")` (g/mol), `atomic_number("C")`; IUPAC-nah, ca. 50 Elemente; Molare Masse z. B. 2*atomic_mass("H")+atomic_mass("O"). | Gering | 2 ✅ |
-| **Weitere Einheiten** | bar, atm, pH-Hinweis (pH = -log10([H+]); % w/v optional. | Gering | 3 |
+| **Weitere Einheiten** | bar, atm, g; Radioaktivität Bq, Sv, Gy. pH-Hinweis (pH = -log10([H+]); % w/v optional. | Gering | 3 ✅ (bar, atm, g, Bq, Sv) |
 | **Tutorial / Blog** | „Kinetik in Dedekind“, „EC50-Fitting mit Dedekind“ (optional). | Mittel | 4 |
 
 ---
