@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-1.0.5-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-1.0.6-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -28,6 +28,11 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
+
+### What's New in v1.0.6
+- **Wissenschaftliche Plot-Beispiele**: Sechs neue Beispiele (`scientific_wave_superposition.ddk`, `scientific_damped_oscillator.ddk`, `scientific_arrhenius_plot.ddk`, `scientific_gravitational_potential.ddk`, `scientific_ricci_plot.ddk`, `scientific_fft_spectrum.ddk`) mit Plots für Wissenschaftler – nutzen Dedekind-Features wie `pi`, `sin`/`cos`/`exp`, Einheiten, Ricci-Notation, `fft()`, `arrhenius()`, `plot()`.
+- **Dedekind Studio Start**: Beim Start (ohne gespeicherte Sitzung) werden die **wissenschaftlichen Plot-Beispiele** als Tabs geladen; die bisherigen Hello-World-Dateien (`welcome_dedekind.ddk`, `hello.ddk` in den Assets) wurden entfernt.
+- **Dedekind Studio Fokus**: Pylint, Profiler und Debugger (Python-spezifisch) sind als **deprecated** gekennzeichnet und werden in Dedekind Studio **nicht mehr geladen** – sie erscheinen weder in den Layouts noch unter View > Panes; Layout-Wiederherstellung blendet sie nicht ein.
 
 ### What's New in v1.0.5
 - **Dedekind Studio**: `plot()` zeigt Abbildungen in der **Plots-Pane** (oben rechts); Kernel sendet display_data. Warnung „Unknown message type: comm_open“ behoben; Hinweis „Figures are displayed…“ in Dedekind Studio unterdrückt.
@@ -302,7 +307,7 @@ Dedekind aims to become the "Standard Language for Nature's Laws." To achieve th
 
 ## 📚 Documentation
 
-- **Language Specification**: `Documentation/Dedekind_Language_Specification.md` (v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9/v0.9.6; Chemie/Biologie v0.9.7; I/O/JSON v0.9.8; Stand v1.0.5). PDF can be generated with `pandoc` (see `Documentation/README.md`).
+- **Language Specification**: `Documentation/Dedekind_Language_Specification.md` (v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9/v0.9.6; Chemie/Biologie v0.9.7; I/O/JSON v0.9.8; Stand v1.0.6). PDF can be generated with `pandoc` (see `Documentation/README.md`).
 - **Research & Architecture**: `Documentation/Dedekind_Research_and_Architecture.md` (includes §10 Sprachfeatures v0.6).
 - **Symbolic Simplification**: `Documentation/Symbolic_Simplification_Roadmap.md` — Implementierungs-Roadmap (Phasen, Optionen, Integration).
 - **Features Roadmap**: `Documentation/Features_Implementation_Roadmap.md` — naturwissenschaftliche Features (Phase 1 abgeschlossen: Verteilungen, Integration).

@@ -1329,6 +1329,12 @@ def _plot_ndarray(x, y=None, title=None, xlabel=None, ylabel=None):
     elif not isinstance(x, (list, tuple)): x = list(x)
     if hasattr(y, 'cpu'): y = y.detach().cpu().numpy()
     elif not isinstance(y, (list, tuple)): y = list(y)
+    # Komplexe Werte -> reell (z. B. FFT-Betrag), um UserWarning zu vermeiden
+    import numpy as np
+    if getattr(x, 'dtype', None) is not None and np.issubdtype(x.dtype, np.complexfloating):
+        x = np.real(x)
+    if getattr(y, 'dtype', None) is not None and np.issubdtype(y.dtype, np.complexfloating):
+        y = np.real(y)
     fig, ax = plt.subplots()
     ax.plot(x, y)
     if title: ax.set_title(title)
