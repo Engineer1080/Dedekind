@@ -15,6 +15,7 @@ installers/Windows/assets/
 build/
 dist/
 bin/
+.venv/
 *.egg-info/
 Thumbs.db
 desktop.ini
