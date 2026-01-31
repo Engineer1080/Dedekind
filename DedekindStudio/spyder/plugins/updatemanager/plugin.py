@@ -96,14 +96,15 @@ class UpdateManager(SpyderPluginV2):
 
     def on_mainwindow_visible(self):
         """Actions after the mainwindow in visible."""
+        from spyder import __title__
         container = self.get_container()
 
         # Initialize status.
         # Note that NO_STATUS also hides the statusbar widget.
         container.update_manager_status.set_no_status()
 
-        # Check for updates on startup
-        if self.get_conf('check_updates_on_startup'):
+        # Check for updates on startup (nur bei upstream Spyder; Dedekind Studio ist Fork)
+        if __title__ != 'Dedekind Studio' and self.get_conf('check_updates_on_startup'):
             container.start_check_update(startup=True)
 
     # ---- Private API

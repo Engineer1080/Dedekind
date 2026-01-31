@@ -28,7 +28,7 @@ from qtpy.QtWidgets import (
 from spyder_kernels.utils.pythonenv import is_conda_env
 
 # Local imports
-from spyder import __version__
+from spyder import __version__, __title__
 from spyder.api.config.mixins import SpyderConfigurationAccessor
 from spyder.api.fonts import SpyderFontsMixin, SpyderFontType
 from spyder.api.translations import _
@@ -212,6 +212,9 @@ class UpdateManagerWidget(QWidget, SpyderConfigurationAccessor):
         If startup is True, then checking for updates is delayed 1 min;
         actions are disabled during this time as well.
         """
+        # Dedekind Studio ist ein Fork – keine Spyder-Update-Prüfung (würde upstream vergleichen)
+        if __title__ == 'Dedekind Studio':
+            return
         if SKIP_CHECK_UPDATE:
             logger.debug(
                 "Skip check for updates: system or managed environment."

@@ -96,7 +96,10 @@ class UpdateManagerContainer(PluginMainContainer):
 
     @Slot()
     def start_check_update(self, startup=False):
-        """Check for spyder updates."""
+        """Check for spyder updates. Bei Dedekind Studio (Fork) deaktiviert."""
+        from spyder import __title__
+        if __title__ == 'Dedekind Studio':
+            return
         self.update_manager.start_check_update(startup=startup)
 
     @Slot()
