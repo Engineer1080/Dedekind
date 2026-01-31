@@ -289,8 +289,8 @@ def create_application():
     # Our QApplication
     app = qapplication()
 
-    # ---- Set icon
-    app_icon = QIcon(get_image_path("spyder"))
+    # ---- Set icon (Dedekind Studio branding)
+    app_icon = QIcon(get_image_path("dedekind_app_icon"))
     app.setWindowIcon(app_icon)
 
     # ---- Set font

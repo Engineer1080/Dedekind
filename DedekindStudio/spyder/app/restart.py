@@ -182,7 +182,7 @@ def main():
     app.set_font()
     restarter = Restarter()
 
-    APP_ICON = QIcon(get_image_path("spyder"))
+    APP_ICON = QIcon(get_image_path("dedekind_app_icon"))
     app.setWindowIcon(APP_ICON)
     restarter.set_splash_message(_('Closing Spyder'))
 

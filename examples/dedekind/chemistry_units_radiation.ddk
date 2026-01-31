@@ -2,7 +2,7 @@
 // Dedekind: bar, atm, Bq, Sv als First-Class-Literale; Gy/Sv gleiche Dimension J/kg.
 
 fn main() {
-    print("--- Chemische Einheiten und Radioaktivität ---")
+    print("--- Chemische Einheiten und Radioaktivitaet ---")
 
     // Druck: bar (1 bar = 10^5 Pa), atm (1 atm ~ 101325 Pa)
     p_bar = 1.0[bar]
@@ -20,10 +20,10 @@ fn main() {
 
     // Radioaktivität: Bq (Becquerel) = 1/s, Aktivität
     activity = 1000[Bq]
-    print("Aktivität 1000[Bq]:")
+    print("Aktivitaet 1000[Bq]:")
     print(activity)
 
-    // Strahlendosis: Gy (Gray) = J/kg absorbierte Dosis; Sv (Sievert) = J/kg Äquivalentdosis
+    // Strahlendosis: Gy (Gray) = J/kg absorbierte Dosis; Sv (Sievert) = J/kg Aequivalentdosis
     absorbed = 0.01[Gy]
     equivalent = 0.01[Sv]
     print("Dosis 0.01[Gy], 0.01[Sv]:")

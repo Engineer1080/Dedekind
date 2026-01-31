@@ -1415,6 +1415,29 @@ def _plot_ndarray(x, y=None, title=None, xlabel=None, ylabel=None):
     except Exception:
         pass
 
+def print_latex(s):
+    """
+    Gibt LaTeX-String in der Konsole als gerenderte Formel aus (Dedekind Studio / Jupyter).
+    Bsp.: print_latex(r"\\frac{1}{2}") oder print_latex("E = m c^2").
+    Wenn kein Kernel vorhanden, Fallback: print(s).
+    """
+    s = str(s)
+    try:
+        import sys
+        for i in range(1, 8):
+            try:
+                f = sys._getframe(i)
+            except ValueError:
+                break
+            g = f.f_globals
+            if '_dedekind_display_latex' in g:
+                g['_dedekind_display_latex'](s)
+                return
+        print(s)
+    except Exception:
+        print(s)
+
+
 def plot(x=None, y=None, title=None, xlabel=None, ylabel=None):
     """
     Zeichnet Daten und zeigt sie in Dedekind Studio an.

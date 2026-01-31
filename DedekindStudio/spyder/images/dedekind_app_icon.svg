@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a2e24"/>
+      <stop offset="100%" style="stop-color:#0f1f18"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#20C997"/>
+      <stop offset="100%" style="stop-color:#44DEB0"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="48" fill="url(#bg)"/>
+  <text x="128" y="168" font-family="Arial, sans-serif" font-size="140" font-weight="bold" fill="url(#accent)" text-anchor="middle">D</text>
+</svg>

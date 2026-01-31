@@ -4889,7 +4889,7 @@ class TestWidget(QSplitter):
                                  tab_mode=False, font=QFont("Courier New", 10),
                                  show_blanks=True, color_scheme='Zenburn')
         self.addWidget(self.editor)
-        self.setWindowIcon(ima.icon('spyder'))
+        self.setWindowIcon(ima.get_icon('dedekind_app_icon', resample=True))
 
     def load(self, filename):
         self.editor.set_text_from_file(filename)
