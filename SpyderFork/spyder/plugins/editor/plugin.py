@@ -7,6 +7,8 @@
 """Editor Plugin"""
 
 import logging
+import os
+import os.path as osp
 import sys
 
 from qtpy.QtCore import Signal
@@ -26,6 +28,8 @@ from spyder.plugins.editor.api.run import (
 )
 from spyder.plugins.editor.confpage import EditorConfigPage
 from spyder.plugins.editor.widgets.main_widget import EditorMainWidget
+from spyder.api.widgets.menus import SpyderMenu
+from spyder.config.base import get_dedekind_examples_dir
 from spyder.plugins.mainmenu.api import (
     ApplicationMenus,
     EditMenuSections,
@@ -35,6 +39,7 @@ from spyder.plugins.mainmenu.api import (
 )
 from spyder.plugins.toolbar.api import ApplicationToolbars
 from spyder.plugins.run.api import RunContext
+from spyder.utils.qthelpers import create_action
 
 
 logger = logging.getLogger(__name__)
@@ -365,6 +370,39 @@ class Editor(SpyderDockablePlugin):
                 before_section=FileMenuSections.Close
             )
 
+        # Dedekind Studio: examples from examples/dedekind in the repo
+        examples_dir = get_dedekind_examples_dir()
+        if examples_dir:
+            self._dedekind_examples_menu = SpyderMenu(
+                None, title=_("Dedekind examples")
+            )
+            try:
+                ddk_files = [
+                    f for f in os.listdir(examples_dir)
+                    if f.endswith('.ddk')
+                ]
+                for name in sorted(ddk_files):
+                    path = osp.join(examples_dir, name)
+                    display_name = name[:-4].replace('_', ' ').title()
+                    action = create_action(
+                        self,
+                        f"open_example_{name}",
+                        display_name,
+                        triggered=lambda checked=False, p=path: self.get_widget().load(p)
+                    )
+                    self._dedekind_examples_menu.add_action(action)
+                mainmenu.add_item_to_application_menu(
+                    self._dedekind_examples_menu,
+                    menu_id=ApplicationMenus.File,
+                    section=FileMenuSections.Open,
+                    before_section=FileMenuSections.Save,
+                )
+            except Exception:
+                logger.exception("Failed to add Dedekind examples menu")
+                self._dedekind_examples_menu = None
+        else:
+            self._dedekind_examples_menu = None
+
         # Navigation
         if sys.platform == 'darwin':
             tab_navigation_actions = [
@@ -477,6 +515,14 @@ class Editor(SpyderDockablePlugin):
                 print_action,
                 menu_id=ApplicationMenus.File
             )
+
+        # Dedekind Studio: remove examples submenu
+        if getattr(self, '_dedekind_examples_menu', None) is not None:
+            mainmenu.remove_item_from_application_menu(
+                self._dedekind_examples_menu,
+                menu_id=ApplicationMenus.File
+            )
+            self._dedekind_examples_menu = None
 
         # Navigation
         if sys.platform == 'darwin':

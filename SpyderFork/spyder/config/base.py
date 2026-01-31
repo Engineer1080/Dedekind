@@ -359,6 +359,23 @@ def get_module_source_path(modname, basename=None):
     return srcpath
 
 
+def get_dedekind_examples_dir():
+    """
+    Return the path to examples/dedekind in the Dedekind repo, or None.
+    Used by Dedekind Studio to offer built-in examples in the File menu.
+    """
+    try:
+        spyder_path = get_module_path('spyder')
+        spyderfork = osp.dirname(spyder_path)
+        repo_root = osp.dirname(spyderfork)
+        examples_dir = osp.join(repo_root, 'examples', 'dedekind')
+        if osp.isdir(examples_dir):
+            return osp.normpath(osp.abspath(examples_dir))
+    except Exception:
+        pass
+    return None
+
+
 def is_py2exe_or_cx_Freeze():
     """Return True if this is a py2exe/cx_Freeze distribution of Spyder"""
     return osp.isfile(osp.join(get_module_path('spyder'), osp.pardir))
