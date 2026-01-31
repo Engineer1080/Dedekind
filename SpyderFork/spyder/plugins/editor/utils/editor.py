@@ -787,6 +787,9 @@ def get_file_language(filename, text=None):
     ext = osp.splitext(filename)[1]
     if ext.startswith('.'):
         ext = ext[1:]  # file extension with leading dot
+    # Dedekind language (Dedekind Studio)
+    if ext == 'ddk':
+        return 'dedekind'
     language = ext
     if not ext:
         if text is None:

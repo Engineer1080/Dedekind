@@ -46,6 +46,8 @@ class IPythonConsolePyConfiguration(TypedDict):
 class IPythonConsoleWidgetActions:
     # Clients creation
     CreateNewClient = 'new tab'
+    CreateDedekindClient = 'new dedekind console'
+    CreatePythonClient = 'new python console'
     CreateCythonClient = 'create cython client'
     CreateSymPyClient = 'create cympy client'
     CreatePyLabClient = 'create pylab client'

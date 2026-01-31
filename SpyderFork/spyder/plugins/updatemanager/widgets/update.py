@@ -742,7 +742,7 @@ class ProgressDialog(UpdateMessageBox):
 
     def __init__(self, parent, text, cancel_btn=True):
         super().__init__(icon=QMessageBox.NoIcon, text=text, parent=parent)
-        self.setWindowTitle(_("Spyder update"))
+        self.setWindowTitle(_("Dedekind Studio update"))
 
         self._progress_bar = QProgressBar(self)
         self._progress_bar.setMinimumWidth(250)
@@ -771,7 +771,7 @@ def error_messagebox(parent, error_msg, checkbox=False):
     # standard one otherwise.
     box_class = UpdateMessageCheckBox if checkbox else UpdateMessageBox
     box = box_class(icon=QMessageBox.Warning, text=error_msg, parent=parent)
-    box.setWindowTitle(_("Spyder update error"))
+    box.setWindowTitle(_("Dedekind Studio update error"))
     box.show()
     return box
 
@@ -788,7 +788,7 @@ def info_messagebox(parent, message, version=None, checkbox=False):
     box_class = UpdateMessageCheckBox if checkbox else UpdateMessageBox
     message = HEADER.format(version) + message if version else message
     box = box_class(icon=QMessageBox.Information, text=message, parent=parent)
-    box.setWindowTitle(_("New Spyder version"))
+    box.setWindowTitle(_("New Dedekind Studio version"))
     box.show()
     return box
 

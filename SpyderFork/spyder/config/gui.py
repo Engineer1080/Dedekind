@@ -126,7 +126,7 @@ def is_dark_font_color(color_scheme):
 def is_dark_interface():
     ui_theme = CONF.get('appearance', 'ui_theme')
     color_scheme = CONF.get('appearance', 'selected')
-    if ui_theme == 'dark':
+    if ui_theme in ('dark', 'dedekind'):
         return True
     elif ui_theme == 'automatic':
         if not is_dark_font_color(color_scheme):
@@ -135,6 +135,14 @@ def is_dark_interface():
             return False
     else:
         return False
+
+
+def is_dedekind_theme():
+    """Return True if the Dedekind (green) UI theme is selected."""
+    try:
+        return CONF.get('appearance', 'ui_theme') == 'dedekind'
+    except Exception:
+        return True  # Default for Dedekind Studio
 
 
 for _name in sh.COLOR_SCHEME_NAMES:

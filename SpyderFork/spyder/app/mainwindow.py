@@ -79,8 +79,9 @@ from spyder.api.shortcuts import SpyderShortcutsMixin
 from spyder.api.translations import _
 from spyder.api.widgets.mixins import SpyderMainWindowMixin
 from spyder.config.base import (DEV, get_conf_path, get_debug_level,
-                                get_home_dir, is_conda_based_app,
-                                running_under_pytest, STDERR)
+                                get_home_dir, get_module_source_path,
+                                is_conda_based_app, running_under_pytest,
+                                STDERR)
 from spyder.config.gui import is_dark_font_color
 from spyder.config.main import OPEN_FILES_PORT
 from spyder.config.manager import CONF
@@ -669,7 +670,7 @@ class MainWindow(QMainWindow, SpyderMainWindowMixin, SpyderShortcutsMixin):
         ui_theme = self.get_conf('ui_theme', section='appearance')
         color_scheme = self.get_conf('selected', section='appearance')
 
-        if ui_theme == 'dark':
+        if ui_theme in ('dark', 'dedekind'):
             css_path = DARK_CSS_PATH
         elif ui_theme == 'light':
             css_path = CSS_PATH
@@ -684,7 +685,7 @@ class MainWindow(QMainWindow, SpyderMainWindowMixin, SpyderShortcutsMixin):
         # Status bar
         status = self.statusBar()
         status.setObjectName("StatusBar")
-        status.showMessage(_("Welcome to Spyder!"), 5000)
+        status.showMessage(_("Welcome to Dedekind Studio!"), 5000)
 
         # Load and register internal and external plugins
         external_plugins = find_external_plugins()
@@ -918,7 +919,45 @@ class MainWindow(QMainWindow, SpyderMainWindowMixin, SpyderShortcutsMixin):
 
         if editor and reopen_last_session:
             logger.info("Restoring opened files from the previous session")
+            editor.sig_open_files_finished.connect(
+                self._open_welcome_dedekind_if_empty)
             editor.setup_open_files(close_previous_files=False)
+
+    def _open_welcome_dedekind_if_empty(self):
+        """
+        If only the temp file is open (no previous session), open the
+        Dedekind Studio welcome Hello World file.
+        """
+        try:
+            editor = self.get_plugin(Plugins.Editor, error=False)
+            if not editor:
+                return
+            editor.sig_open_files_finished.disconnect(
+                self._open_welcome_dedekind_if_empty)
+        except (TypeError, RuntimeError):
+            return
+        try:
+            widget = editor.get_widget()
+            if not getattr(widget, 'editorstacks', None) or len(
+                    widget.editorstacks) < 1:
+                return
+            filenames = widget.get_filenames()
+        except (IndexError, AttributeError, RuntimeError):
+            return
+        temp_path = get_conf_path('temp.py')
+        if len(filenames) != 1:
+            return
+        current = filenames[0]
+        if current != temp_path and not (str(current).endswith('temp.py')):
+            return
+        try:
+            welcome_path = osp.join(
+                get_module_source_path('spyder'), 'assets',
+                'welcome_dedekind.ddk')
+            if osp.isfile(welcome_path):
+                editor.load(welcome_path, set_focus=True)
+        except Exception:
+            logger.exception("Could not open welcome_dedekind.ddk")
 
     def restore_undocked_plugins(self):
         """Restore plugins that were undocked in the previous session."""
@@ -933,14 +972,15 @@ class MainWindow(QMainWindow, SpyderMainWindowMixin, SpyderShortcutsMixin):
     def set_window_title(self):
         """Set window title."""
         if DEV is not None:
-            title = u"Spyder %s (Python %s.%s)" % (__version__,
-                                                   sys.version_info[0],
-                                                   sys.version_info[1])
+            title = u"Dedekind Studio %s (Python %s.%s)" % (__version__,
+                                                            sys.version_info[0],
+                                                            sys.version_info[1])
         elif is_conda_based_app():
-            title = "Spyder"
+            title = u"Dedekind Studio %s" % __version__
         else:
-            title = u"Spyder (Python %s.%s)" % (sys.version_info[0],
-                                                sys.version_info[1])
+            title = u"Dedekind Studio %s (Python %s.%s)" % (__version__,
+                                                            sys.version_info[0],
+                                                            sys.version_info[1])
 
         if get_debug_level():
             title += u" [DEBUG MODE %d]" % get_debug_level()

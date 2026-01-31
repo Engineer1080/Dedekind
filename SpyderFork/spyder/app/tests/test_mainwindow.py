@@ -613,7 +613,7 @@ def test_window_title(main_window, tmpdir, qtbot):
     # and has the expected strings
     main_window.set_window_title()
     title = main_window.base_title
-    assert u'Spyder' in title
+    assert u'Dedekind Studio' in title
     assert u'Python' in title
     assert u'اختبار' in title
     assert u'測試' in title

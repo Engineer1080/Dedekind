@@ -832,7 +832,7 @@ def test_msgcheckbox():
     from spyder.utils.qthelpers import qapplication
     app = qapplication()  # noqa
     box = MessageCheckBox()
-    box.setWindowTitle(_("Spyder updates"))
+    box.setWindowTitle(_("Dedekind Studio updates"))
     box.setText("Testing checkbox")
     box.set_checkbox_text("Check for updates on startup?")
     box.setStandardButtons(QMessageBox.Ok)

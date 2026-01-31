@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-0.9.9-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-1.0.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -27,9 +27,9 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **Netzwerk**: `http_get(url)`, `http_post(url, data)` (data String oder Dict/List als JSON); Antworttext UTF-8.
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
-- **Modern IDE**: "Dedekind Studio" – v0.9.9 with resizable terminal and file explorer. **Dedekind Studio** wird als Spyder-Fork umgesetzt und bietet **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
+- **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`SpyderFork/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
 
-### What's New in v0.9.9
+### What's New in v1.0.0
 - **Umbenennung**: Fourier → Dedekind (Sprache, IDE, Kernel, Dateiendung `.ddk`).
 
 ### What's New in v0.9.8
@@ -136,23 +136,21 @@ main()
 
 ## 🏗️ Architecture
 
-The project consists of two main components:
+The project consists of two main parts:
 
-1.  **Dedekind Compiler Backend (`src/compiler`)**
+1.  **Dedekind Compiler (`src/compiler`)**
     *   Implemented in Python (Prototype Phase).
     *   Transpiles Dedekind source code (`.ddk`) into optimized high-performance Python/NumPy code (future target: MLIR/LLVM).
-    *   Exposes a REST API (`src/server.py`) for the IDE.
+    *   Used by the CLI, the Dedekind Jupyter Kernel, and Dedekind Studio.
 
-2.  **Dedekind Studio (`src/ui`)**
-    *   A modern, dark-themed Integrated Development Environment.
-    *   Built with **React**, **Vite**, and **Vanilla CSS**.
-    *   Features a code editor, real-time console output, and syntax highlighting.
+2.  **Dedekind Studio (Spyder-Fork in `SpyderFork/`)**
+    *   Full IDE with **native Python** and **native Dedekind**: Editor, Konsolen (IPython + Dedekind-Kernel), Variable Explorer, Plots.
+    *   Siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md).
 
 ## 🛠️ Installation & Setup
 
 ### Prerequisites
 *   **Python 3.10+**
-*   **Node.js 18+** & `npm`
 
 ### 1. Clone the Repository
 ```bash
@@ -160,53 +158,28 @@ git clone https://github.com/Engineer1080/DedekindLanguage.git
 cd DedekindLanguage
 ```
 
-### 2. Setup Compiler Backend
-The backend requires Python, Flask, and PyTorch (for tensor/ML runtime).
-
+### 2. Compiler & Runtime
 ```bash
-# Install dependencies (ein Befehl)
 pip install -r requirements.txt
-
-# Run the Backend Server
-python src/server.py
 ```
-*The server will start on `http://localhost:5000`.*
+**Abhängigkeiten:** `torch` (PyTorch für Tensoren, FFT, ML), `matplotlib` (für `plot()`-Visualisierung), `ipykernel` (für Dedekind Jupyter Kernel).
 
-**Abhängigkeiten im Überblick:** `flask`, `flask-cors` (API), `torch` (PyTorch für Tensoren, FFT, ML), `matplotlib` (für `plot()`-Visualisierung).
-
-### 3. Setup Dedekind Studio (Native App)
-Open a new terminal window for the frontend.
+### 3. Dedekind Studio starten (Spyder-Fork)
+Aus dem Projektroot:
 
 ```bash
-cd src/ui
-
-# Install Node dependencies
-npm install
-
-# Run the Application (Electron + Vite)
-npm run electron:dev
+start_dedekind_studio.bat
 ```
-*This will launch the native Dedekind Studio window.*
+(Unter Windows; unter Linux/macOS: `cd SpyderFork && python bootstrap.py`.)
+
+Beim ersten Start werden ggf. Spyder-Abhängigkeiten (PyQt5, qtpy, …) aus `SpyderFork/requirements-dedekind-studio.txt` installiert.
 
 ## 💻 Usage
 
-1.  Open **Dedekind Studio** in your browser.
-2.  Write your Dedekind code in the editor.
-    ```dedekind
-    fn main() {
-        print("Hello, Dedekind!")
-        
-        // Automatic matrix operations
-        data = [1.0, 2.0, 3.0, 4.0]
-        result = data * 2.0
-        
-        print("Result:")
-        print(result)
-    }
-    main()
-    ```
-3.  Click the **▶ Run Code** button.
-4.  View the compilation result and program output in the terminal panel.
+1.  **Dedekind Studio** starten (siehe oben). Im Editor `.ddk`-Dateien öffnen, in der Konsole „Dedekind“ als Kernel wählen oder Python nutzen.
+2.  Code ausführen: `.ddk`-Datei mit Run/F5 ausführen oder Dedekind-Code in der Dedekind-Konsole eingeben.
+3.  **CLI** (ohne IDE): `python -m src.compiler.compiler examples/dedekind/hello.ddk`
+4.  **Jupyter/Spyder** (ohne Fork): Dedekind-Kernel installieren (`jupyter kernelspec install dedekind_jupyter_kernel/kernelspec`), dann Kernel „Dedekind“ wählen.
 
 ### Examples
 Example programs are in `examples/dedekind/`, including:
@@ -240,7 +213,7 @@ From the `src/` directory: `python -m compiler.compiler ../examples/dedekind/hel
 ### Phase 1: Foundation ✅
 *   [x] Language Specification & Design
 *   [x] Proof-of-Concept Compiler (Python Backend)
-*   [x] Dedekind Studio IDE (React Frontend)
+*   [x] Dedekind Studio (Spyder-Fork)
 
 ### Phase 2: Core Development ✅
 *   [x] Build-in Core Algorithms (FFT, Conv, Linalg)
@@ -313,7 +286,7 @@ Dedekind aims to become the "Standard Language for Nature's Laws." To achieve th
 
 ## 📚 Documentation
 
-- **Language Specification**: `Documentation/Dedekind_Language_Specification.md` (v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9/v0.9.6; Chemie/Biologie v0.9.7; I/O/JSON v0.9.8; Stand v0.9.9). PDF can be generated with `pandoc` (see `Documentation/README.md`).
+- **Language Specification**: `Documentation/Dedekind_Language_Specification.md` (v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9/v0.9.6; Chemie/Biologie v0.9.7; I/O/JSON v0.9.8; Stand v1.0.0). PDF can be generated with `pandoc` (see `Documentation/README.md`).
 - **Research & Architecture**: `Documentation/Dedekind_Research_and_Architecture.md` (includes §10 Sprachfeatures v0.6).
 - **Symbolic Simplification**: `Documentation/Symbolic_Simplification_Roadmap.md` — Implementierungs-Roadmap (Phasen, Optionen, Integration).
 - **Features Roadmap**: `Documentation/Features_Implementation_Roadmap.md` — naturwissenschaftliche Features (Phase 1 abgeschlossen: Verteilungen, Integration).

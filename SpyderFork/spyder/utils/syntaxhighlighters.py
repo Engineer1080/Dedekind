@@ -101,6 +101,7 @@ CUSTOM_EXTENSION_LEXER = {
     '.ipynb': 'json',
     '.nt': 'bat',
     '.m': 'matlab',
+    '.ddk': 'python',  # Dedekind language (Python-like syntax)
     ('.properties', '.session', '.inf', '.reg', '.url',
      '.cfg', '.cnf', '.aut', '.iss'): 'ini'
 }

@@ -315,6 +315,16 @@ class IPythonConsole(SpyderDockablePlugin, RunExecutor):
             ]
         }
 
+        self.dedekind_editor_run_configuration = {
+            'origin': self.NAME,
+            'extension': 'ddk',
+            'contexts': [
+                {'name': 'File'},
+                {'name': 'Cell'},
+                {'name': 'Selection'},
+            ]
+        }
+
         self.executor_configuration = [
             {
                 'input_extension': 'py',
@@ -393,6 +403,30 @@ class IPythonConsole(SpyderDockablePlugin, RunExecutor):
                 'context': {'name': 'File'},
                 'output_formats': [],
                 'configuration_widget': IPythonConfigOptions,
+                'requires_cwd': True,
+                'priority': 0
+            },
+            {
+                'input_extension': 'ddk',
+                'context': {'name': 'File'},
+                'output_formats': [],
+                'configuration_widget': IPythonConfigOptions,
+                'requires_cwd': True,
+                'priority': 0
+            },
+            {
+                'input_extension': 'ddk',
+                'context': {'name': 'Cell'},
+                'output_formats': [],
+                'configuration_widget': None,
+                'requires_cwd': True,
+                'priority': 0
+            },
+            {
+                'input_extension': 'ddk',
+                'context': {'name': 'Selection'},
+                'output_formats': [],
+                'configuration_widget': None,
                 'requires_cwd': True,
                 'priority': 0
             },
@@ -475,6 +509,8 @@ class IPythonConsole(SpyderDockablePlugin, RunExecutor):
         # Main menu actions for the IPython Console
         new_consoles_actions = [
             widget.create_client_action,
+            widget.create_dedekind_client_action,
+            widget.create_python_client_action,
             widget.console_environment_menu,
             widget.special_console_menu,
             widget.connect_to_kernel_action
@@ -526,7 +562,8 @@ class IPythonConsole(SpyderDockablePlugin, RunExecutor):
             self.python_editor_run_configuration,
             self.ipython_editor_run_configuration,
             self.cython_editor_run_configuration,
-            self.pyw_editor_run_configuration
+            self.pyw_editor_run_configuration,
+            self.dedekind_editor_run_configuration
         ]:
             editor.add_supported_run_configuration(run_config)
 
@@ -623,7 +660,8 @@ class IPythonConsole(SpyderDockablePlugin, RunExecutor):
             self.python_editor_run_configuration,
             self.ipython_editor_run_configuration,
             self.cython_editor_run_configuration,
-            self.pyw_editor_run_configuration
+            self.pyw_editor_run_configuration,
+            self.dedekind_editor_run_configuration
         ]:
             editor.remove_supported_run_configuration(run_config)
 

@@ -119,6 +119,13 @@ if installed_dev_repo:
     result = subprocess.run([sys.executable, *sys.argv])
     sys.exit(result.returncode)
 
+# Ensure external-deps (spyder_kernels, qtconsole, etc.) are importable when
+# running from source, even if pip's editable install is missing or broken.
+for _name in ['spyder-kernels', 'qtconsole', 'python-lsp-server']:
+    _dep = DEVPATH / 'external-deps' / _name
+    if _dep.exists() and str(_dep) not in sys.path:
+        sys.path.insert(0, str(_dep))
+
 # Local imports
 # Must follow install_repo in case Spyder was not originally installed.
 from spyder import get_versions

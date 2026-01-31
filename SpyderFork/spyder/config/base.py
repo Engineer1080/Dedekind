@@ -154,15 +154,11 @@ def debug_print(*message):
 #==============================================================================
 def get_conf_subfolder():
     """Return the configuration subfolder for different ooperating systems."""
-    # Spyder settings dir
-    # NOTE: During the 2.x.x series this dir was named .spyder2, but
-    # since 3.0+ we've reverted back to use .spyder to simplify major
-    # updates in version (required when we change APIs by Linux
-    # packagers)
+    # Dedekind Studio settings dir (fork of Spyder)
     if sys.platform.startswith('linux'):
-        SUBFOLDER = 'spyder'
+        SUBFOLDER = 'dedekind-studio'
     else:
-        SUBFOLDER = '.spyder'
+        SUBFOLDER = '.dedekind-studio'
 
     # We can't have PY2 and PY3 settings in the same dir because:
     # 1. This leads to ugly crashes and freezes (e.g. by trying to
@@ -221,7 +217,7 @@ def get_clean_conf_dir():
     """
     conf_dir = osp.join(
         tempfile.gettempdir(),
-        'spyder-clean-conf-dirs',
+        'dedekind-studio-clean-conf-dirs',
         CLEAN_DIR_ID,
     )
     return conf_dir
@@ -232,13 +228,13 @@ def get_custom_conf_dir():
     Use a custom configuration directory, passed through our command
     line options or by setting the env var below.
     """
-    custom_dir = os.environ.get('SPYDER_CONFDIR')
+    custom_dir = os.environ.get('DEDEKIND_STUDIO_CONFDIR') or os.environ.get('SPYDER_CONFDIR')
     if custom_dir:
         custom_dir = osp.abspath(custom_dir)
 
         # Set env var to not lose its value in future calls when the cwd
-        # is changed by Spyder.
-        os.environ['SPYDER_CONFDIR'] = custom_dir
+        # is changed by Dedekind Studio.
+        os.environ['DEDEKIND_STUDIO_CONFDIR'] = custom_dir
         return custom_dir
 
 
@@ -285,22 +281,22 @@ def get_conf_paths():
 
     if os.name == 'nt':
         SEARCH_PATH = (
-            'C:/ProgramData/spyder',
+            'C:/ProgramData/dedekind-studio',
         )
     else:
         SEARCH_PATH = (
-            '/etc/spyder',
-            '/usr/local/etc/spyder',
+            '/etc/dedekind-studio',
+            '/usr/local/etc/dedekind-studio',
         )
 
     if CONDA_PREFIX is not None:
         CONDA_PREFIX = CONDA_PREFIX.replace('\\', '/')
         SEARCH_PATH += (
-            '{}/etc/spyder'.format(CONDA_PREFIX),
+            '{}/etc/dedekind-studio'.format(CONDA_PREFIX),
         )
 
     SEARCH_PATH += (
-        '{}/etc/spyder'.format(sys.prefix),
+        '{}/etc/dedekind-studio'.format(sys.prefix),
     )
 
     if running_under_pytest():

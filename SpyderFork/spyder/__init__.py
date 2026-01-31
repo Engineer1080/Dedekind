@@ -31,19 +31,19 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 from packaging.version import parse
 
-version_info = (6, 2, 0, "a1", "dev0")
+version_info = (1, 0, 0)
 
 __version__ = str(parse('.'.join(map(str, version_info))))
 __installer_version__ = __version__
-__title__ = 'Spyder'
-__author__ = 'Spyder Project Contributors and others'
+__title__ = 'Dedekind Studio'
+__author__ = 'Mario Michael Heinrich'
 __license__ = __doc__
-__project_url__ = 'https://github.com/spyder-ide/spyder'
+__project_url__ = 'https://github.com/Engineer1080/Dedekind'
 __forum_url__   = 'https://groups.google.com/group/spyderlib'
-__trouble_url__ = 'https://tinyurl.com/spyder-first-steps'
-__trouble_url_short__ = 'https://tinyurl.com/SpyderHelp'
-__website_url__ = 'https://www.spyder-ide.org/'
-__docs_url__ = 'https://docs.spyder-ide.org/'
+__trouble_url__ = 'https://github.com/Engineer1080/Dedekind'
+__trouble_url_short__ = 'https://github.com/Engineer1080/Dedekind'
+__website_url__ = 'https://github.com/Engineer1080/Dedekind'
+__docs_url__ = 'https://github.com/Engineer1080/Dedekind'
 
 # Dear (Debian, RPM, ...) package makers, please feel free to customize the
 # following path to module's data (images) and translations:
@@ -113,7 +113,7 @@ def get_versions_text(reporev=True):
     revision = versions['revision'] or ''
 
     return f"""\
-* Spyder version: {versions['spyder']} {revision} ({versions['installer']})
+* Dedekind Studio version: {versions['spyder']} {revision} ({versions['installer']})
 * Python version: {versions['python']} {versions['bitness']}-bit
 * Qt version: {versions['qt']}
 * {versions['qt_api']} version: {versions['qt_api_ver']}

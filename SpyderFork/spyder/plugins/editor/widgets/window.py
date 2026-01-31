@@ -374,7 +374,7 @@ class EditorMainWindow(QMainWindow, SpyderWidgetMixin):
         if editor is not None:
             editor.setFocus()
 
-        self.setWindowTitle("Spyder - %s" % main_widget.windowTitle())
+        self.setWindowTitle("Dedekind Studio - %s" % main_widget.windowTitle())
         self.setWindowIcon(main_widget.windowIcon())
 
         # ---- Add toolbars

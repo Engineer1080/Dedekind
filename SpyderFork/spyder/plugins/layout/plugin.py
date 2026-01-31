@@ -14,7 +14,7 @@ import logging
 import os
 
 # Third party imports
-from qtpy.QtCore import Qt, QByteArray, QSize, QPoint, Slot
+from qtpy.QtCore import Qt, QByteArray, QSize, QPoint, Slot, QTimer
 from qtpy.QtGui import QIcon, QKeySequence
 from qtpy.QtWidgets import QApplication
 
@@ -238,6 +238,10 @@ class Layout(SpyderPluginV2, SpyderShortcutsMixin):
         # other plugins so that the user doesn't experience sudden jumps in the
         # interface.
         self.restore_visible_plugins()
+
+        # Dedekind Studio: raise IPython/Dedekind console so it is visible by
+        # default instead of History (history.py) in the same tab group.
+        QTimer.singleShot(100, self._raise_ipyconsole_dock)
 
         # Update panes and toolbars lock status
         self.toggle_lock(self._interface_locked)
@@ -1050,6 +1054,12 @@ class Layout(SpyderPluginV2, SpyderShortcutsMixin):
                 and plugin_class.dockwidget.isVisible()
             ):
                 plugin_class.change_visibility(True, force_focus=False)
+
+    def _raise_ipyconsole_dock(self):
+        """Raise the IPython/Dedekind console dock so it is visible by default (Dedekind Studio)."""
+        ipy = self.get_plugin(Plugins.IPythonConsole, error=False)
+        if ipy is not None and ipy.dockwidget is not None:
+            ipy.dockwidget.raise_()
 
     def save_visible_plugins(self):
         """Save visible plugins."""

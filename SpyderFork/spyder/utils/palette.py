@@ -14,9 +14,102 @@ from qdarkstyle.dark.palette import DarkPalette
 from qdarkstyle.light.palette import LightPalette
 
 # Local imports
-from spyder.config.gui import is_dark_interface
+from spyder.config.gui import is_dark_interface, is_dedekind_theme
 from spyder.utils.color_system import (Green, Red, Orange, GroupDark,
                                        GroupLight, Logos)
+
+# =============================================================================
+# ---- Dedekind Studio palettes (green accent theme)
+# =============================================================================
+class DedekindPaletteDark(DarkPalette):
+    """Dark palette for Dedekind Studio with green accents and green-tinted UI."""
+
+    # ---- QDarkStyle base overrides (green instead of blue) ----
+    COLOR_ACCENT_1 = Green.B50
+    COLOR_ACCENT_2 = Green.B60
+    COLOR_ACCENT_3 = Green.B70
+    COLOR_ACCENT_4 = Green.B80
+    COLOR_ACCENT_5 = Green.B90
+
+    # Green-tinted dark backgrounds (replacing blue-grays)
+    COLOR_BACKGROUND_1 = '#162018'
+    COLOR_BACKGROUND_2 = '#1e2d24'
+    COLOR_BACKGROUND_3 = '#243328'
+    COLOR_BACKGROUND_4 = '#2a3d30'
+    COLOR_BACKGROUND_5 = '#354a3d'
+    COLOR_BACKGROUND_6 = '#3d5648'
+
+    # Muted green for disabled elements
+    COLOR_DISABLED = '#5a7a65'
+
+    # Colors for information and feedback in dialogs
+    COLOR_SUCCESS_1 = Green.B40
+    COLOR_SUCCESS_2 = Green.B70
+    COLOR_SUCCESS_3 = Green.B90
+
+    COLOR_ERROR_1 = Red.B40
+    COLOR_ERROR_2 = Red.B70
+    COLOR_ERROR_3 = Red.B110
+
+    COLOR_WARN_1 = Orange.B40
+    COLOR_WARN_2 = Orange.B70
+    COLOR_WARN_3 = Orange.B90
+    COLOR_WARN_4 = Orange.B100
+
+    # Icon colors - green accent
+    ICON_1 = Gray.B140
+    ICON_2 = Green.B80
+    ICON_3 = Green.B90
+    ICON_4 = Red.B70
+    ICON_5 = Orange.B70
+    ICON_6 = Gray.B30
+    ICON_7 = GroupDark.B90
+
+    # Colors for icons and variable explorer in dark mode
+    GROUP_1 = GroupDark.B10
+    GROUP_2 = GroupDark.B20
+    GROUP_3 = GroupDark.B30
+    GROUP_4 = GroupDark.B40
+    GROUP_5 = GroupDark.B50
+    GROUP_6 = GroupDark.B60
+    GROUP_7 = GroupDark.B70
+    GROUP_8 = GroupDark.B80
+    GROUP_9 = GroupDark.B90
+    GROUP_10 = GroupDark.B100
+    GROUP_11 = GroupDark.B110
+    GROUP_12 = GroupDark.B120
+
+    # Colors for highlight in editor - green
+    COLOR_HIGHLIGHT_1 = Green.B10
+    COLOR_HIGHLIGHT_2 = Green.B20
+    COLOR_HIGHLIGHT_3 = Green.B30
+    COLOR_HIGHLIGHT_4 = Green.B50
+
+    # Colors for occurrences from find widget
+    COLOR_OCCURRENCE_1 = Gray.B10
+    COLOR_OCCURRENCE_2 = Gray.B20
+    COLOR_OCCURRENCE_3 = Gray.B30
+    COLOR_OCCURRENCE_4 = Gray.B50
+    COLOR_OCCURRENCE_5 = Gray.B80
+
+    # Colors for Spyder and Python logos
+    PYTHON_LOGO_UP = Logos.B10
+    PYTHON_LOGO_DOWN = Logos.B20
+    SPYDER_LOGO_BACKGROUND = Logos.B30
+    SPYDER_LOGO_WEB = Logos.B40
+    SPYDER_LOGO_SNAKE = Logos.B40
+
+    # For special tabs
+    SPECIAL_TABS_SEPARATOR = Gray.B70
+    SPECIAL_TABS_SELECTED = Green.B60
+
+    # For the heart used to ask for donations
+    COLOR_HEART = Green.B80
+
+    # For editor tooltips
+    TIP_TITLE_COLOR = Green.B80
+    TIP_CHAR_HIGHLIGHT_COLOR = Orange.B90
+
 
 # =============================================================================
 # ---- Spyder palettes
@@ -168,7 +261,9 @@ class SpyderPaletteLight(LightPalette):
 # =============================================================================
 # ---- Exported classes
 # =============================================================================
-if is_dark_interface():
+if is_dedekind_theme():
+    SpyderPalette = DedekindPaletteDark
+elif is_dark_interface():
     SpyderPalette = SpyderPaletteDark
 else:
     SpyderPalette = SpyderPaletteLight

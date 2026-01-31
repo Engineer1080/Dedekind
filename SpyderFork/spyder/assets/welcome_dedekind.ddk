@@ -1,0 +1,8 @@
+fn main() {
+    print("Hello from Dedekind Studio!")
+    print("Edit this file and run it (F5) in a Dedekind console.")
+    x = 42
+    print("The answer is", x)
+}
+
+main()

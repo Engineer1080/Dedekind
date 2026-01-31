@@ -70,6 +70,7 @@ class AppearanceConfigPage(PluginConfigPage):
 
         # Interface Widgets
         ui_theme_choices = [
+            (_('Dedekind (Green)'), 'dedekind'),
             (_('Automatic'), 'automatic'),
             (_('Light'), 'light'),
             (_('Dark'), 'dark')
@@ -569,9 +570,9 @@ class AppearanceConfigPage(PluginConfigPage):
         if answer == QMessageBox.Yes:
             # Put the combobox in Spyder by default, when deleting a scheme
             names = self.get_option('names')
-            default_theme = 'spyder'
-            if self.is_dark_interface():
-                default_theme = 'spyder/dark'
+            default_theme = 'dedekind/dark'
+            if not self.is_dark_interface():
+                default_theme = 'spyder'
             self.schemes_combobox.setCurrentIndex(names.index(default_theme))
             self.set_option('selected', default_theme)
 
@@ -655,7 +656,7 @@ class AppearanceConfigPage(PluginConfigPage):
         """
         Check if it's necessary to notify plugins to update their color scheme.
         """
-        ui_theme_map = {0: 'automatic', 1: 'light', 2: 'dark'}
+        ui_theme_map = {0: 'dedekind', 1: 'automatic', 2: 'light', 3: 'dark'}
         ui_theme = ui_theme_map[self.current_ui_theme_index]
         mismatch = self.color_scheme_and_ui_theme_mismatch(
             self.current_scheme, ui_theme)

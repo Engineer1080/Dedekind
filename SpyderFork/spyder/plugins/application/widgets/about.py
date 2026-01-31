@@ -4,7 +4,7 @@
 # Licensed under the terms of the MIT License
 # (see spyder/__init__.py for details)
 
-"""Module serving the "About Spyder" function"""
+"""Module serving the "About Dedekind Studio" function"""
 
 # Standard library imports
 import sys
@@ -48,7 +48,7 @@ class AboutDialog(QDialog, SvgToScaledPixmap):
         self.setWindowFlags(
             self.windowFlags() & ~Qt.WindowContextHelpButtonHint
         )
-        self.setWindowTitle(_("About Spyder"))
+        self.setWindowTitle(_("About Dedekind Studio"))
         self.setWindowIcon(ima.icon("MessageBoxInformation"))
         versions = get_versions()
 
@@ -56,7 +56,7 @@ class AboutDialog(QDialog, SvgToScaledPixmap):
         revlink = ''
         if versions['revision']:
             rev = versions['revision']
-            revlink = ("<a href='https://github.com/spyder-ide/spyder/"
+            revlink = ("<a href='https://github.com/Engineer1080/Dedekind/"
                        "commit/%s'>%s</a>" % (rev, rev))
 
         # -- Style attributes
@@ -80,12 +80,12 @@ class AboutDialog(QDialog, SvgToScaledPixmap):
                         font-weight: normal;
                         '>
             <br>
-            <h1>Spyder IDE</h1>
+            <h1>Dedekind Studio</h1>
 
             <p>
             The Scientific Python Development Environment
             <br>
-            <a href="{website_url}">Spyder-IDE.org</a>
+            <a href="{website_url}">Dedekind Studio</a>
             </p>
 
             <p>

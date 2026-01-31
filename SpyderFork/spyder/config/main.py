@@ -31,8 +31,8 @@ from spyder.utils.introspection.module_completion import PREFERRED_MODULES
 EXCLUDE_PATTERNS = ['*.csv, *.dat, *.log, *.tmp, *.bak, *.orig']
 
 # Extensions that should be visible in Spyder's file/project explorers
-SHOW_EXT = ['.py', '.ipynb', '.dat', '.pdf', '.png', '.svg', '.md', '.yml',
-            '.yaml']
+SHOW_EXT = ['.py', '.ipynb', '.ddk', '.dat', '.pdf', '.png', '.svg', '.md',
+            '.yml', '.yaml']
 
 # Extensions supported by Spyder (Editor or Variable explorer)
 USEFUL_EXT = IMPORT_EXT + SHOW_EXT
@@ -157,6 +157,7 @@ DEFAULTS = [
               }),
             ('ipython_console',
              {
+              'default_console_kernel': 'dedekind',  # 'python' or 'dedekind'
               'show_banner': True,
               'completion_type': 0,
               'show_calltips': True,

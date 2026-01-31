@@ -46,15 +46,15 @@ APPEARANCE = {
     'monospace_app_font/size': 0,
     'monospace_app_font/italic': False,
     'monospace_app_font/bold': False,
-    # UI theme
-    'ui_theme': 'automatic',
+    # UI theme (dedekind = green accent theme)
+    'ui_theme': 'dedekind',
     # Syntax highlighting theme names
     'names': ['emacs', 'idle', 'monokai', 'pydev', 'scintilla',
-              'spyder', 'spyder/dark', 'zenburn', 'solarized/light',
+              'spyder', 'spyder/dark', 'dedekind/dark', 'zenburn', 'solarized/light',
               'solarized/dark', 'inkpot', 'minimal', 'nightlion',
               'notepad++', 'oblivion', 'obsidian', 'pastel', 'retta',
               'roboticket', 'sublime-monokai/extended', 'vibrant-ink'],
-    'selected': 'spyder/dark',
+    'selected': 'dedekind/dark',
     # ---- Emacs ----
     'emacs/name':        "Emacs",
     #      Name            Color     Bold  Italic
@@ -175,6 +175,26 @@ APPEARANCE = {
     'spyder/string':     ('#00aa00', False, False),
     'spyder/number':     ('#800000', False, False),
     'spyder/instance':   ('#924900', False, True),
+    # ---- Dedekind/Dark (green theme, default for Dedekind Studio) ----
+    'dedekind/dark/name':        "Dedekind (Green)",
+    #           Name             Color     Bold  Italic
+    'dedekind/dark/background':  "#162018",
+    'dedekind/dark/currentline': "#1e2d24",
+    'dedekind/dark/currentcell': "#243328",
+    'dedekind/dark/occurrence':  "#1A72BB",
+    'dedekind/dark/ctrlclick':   "#20C997",
+    'dedekind/dark/sideareas':   "#1a261f",
+    'dedekind/dark/matched_p':   "#0bbe0b",
+    'dedekind/dark/unmatched_p': "#ff4340",
+    'dedekind/dark/normal':     (DarkPalette.COLOR_TEXT_1, False, False),
+    'dedekind/dark/keyword':    ('#44DEB0', False, False),
+    'dedekind/dark/magic':      ('#44DEB0', False, False),
+    'dedekind/dark/builtin':    ('#88F2D3', False, False),
+    'dedekind/dark/definition': ('#20C997', True, False),
+    'dedekind/dark/comment':    ('#5a7a65', False, False),
+    'dedekind/dark/string':     ('#88F2D3', False, True),
+    'dedekind/dark/number':     ('#02BA85', False, False),
+    'dedekind/dark/instance':   ('#B0F5E1', False, True),
     # ---- Spyder/Dark ----
     'spyder/dark/name':        "Spyder Dark",
     #           Name             Color     Bold  Italic

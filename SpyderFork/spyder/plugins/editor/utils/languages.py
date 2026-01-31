@@ -11,6 +11,7 @@ Language utilities
 ALL_LANGUAGES = {
     'Python': ('py', 'pyw', 'python', 'pyt', 'pyi'),
     'IPython': ('ipy', 'ipython'),
+    'Dedekind': ('ddk', 'dedekind'),
     'Cython': ('pyx', 'pxi', 'pxd'),
     'Enaml': ('enaml',),
     'Fortran77': ('f', 'for', 'f77'),

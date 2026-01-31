@@ -50,6 +50,9 @@ from spyder.plugins.ipythonconsole.api import (
 )
 from spyder.plugins.ipythonconsole.utils.kernel_handler import KernelHandler
 from spyder.plugins.ipythonconsole.utils.kernelspec import SpyderKernelSpec
+from spyder.plugins.ipythonconsole.utils.dedekind_kernelspec import (
+    DedekindKernelSpec,
+)
 from spyder.plugins.ipythonconsole.utils.style import create_qss_style
 from spyder.plugins.ipythonconsole.widgets import (
     ClientWidget,
@@ -463,6 +466,20 @@ class IPythonConsoleWidget(PluginMainWidget, CachedKernelMixin):  # noqa: PLR090
             triggered=self.create_new_client,
             register_shortcut=True
         )
+        self.create_dedekind_client_action = self.create_action(
+            IPythonConsoleWidgetActions.CreateDedekindClient,
+            text=_("New Dedekind console"),
+            icon=self.create_icon('ipython_console'),
+            triggered=lambda: self.create_new_client(kernel_type='dedekind'),
+            tip=_("Start a new console with the Dedekind language kernel"),
+        )
+        self.create_python_client_action = self.create_action(
+            IPythonConsoleWidgetActions.CreatePythonClient,
+            text=_("New Python console"),
+            icon=self.create_icon('ipython_console'),
+            triggered=lambda: self.create_new_client(kernel_type='python'),
+            tip=_("Start a new console with the Python (Spyder) kernel"),
+        )
         self.restart_action = self.create_action(
             IPythonConsoleWidgetActions.Restart,
             text=_("Restart kernel"),
@@ -769,6 +786,8 @@ class IPythonConsoleWidget(PluginMainWidget, CachedKernelMixin):  # noqa: PLR090
 
         for item in [
                 self.create_client_action,
+                self.create_dedekind_client_action,
+                self.create_python_client_action,
                 self.console_environment_menu,
                 self.special_console_menu,
                 self.connect_to_kernel_action]:
@@ -1432,7 +1451,7 @@ class IPythonConsoleWidget(PluginMainWidget, CachedKernelMixin):  # noqa: PLR090
     def _connect_new_client_to_kernel(
         self, cache, path_to_custom_interpreter, client, future
     ):
-        """Connect kernel to client after environment variables are obtained"""
+        """Connect Python kernel to client after environment variables are obtained"""
         try:
             # Create new kernel
             kernel_spec = SpyderKernelSpec(
@@ -1445,6 +1464,17 @@ class IPythonConsoleWidget(PluginMainWidget, CachedKernelMixin):  # noqa: PLR090
             return
 
         # Connect kernel to client
+        client.connect_kernel(kernel_handler)
+
+    def _connect_dedekind_client_to_kernel(self, cache, client, future):
+        """Connect Dedekind kernel to client after environment variables are obtained"""
+        try:
+            kernel_spec = DedekindKernelSpec()
+            kernel_spec.env = future.result()
+            kernel_handler = self.get_cached_kernel(kernel_spec, cache=cache)
+        except Exception as e:
+            client.show_kernel_error(e)
+            return
         client.connect_kernel(kernel_handler)
 
     def _run_script(
@@ -1464,6 +1494,33 @@ class IPythonConsoleWidget(PluginMainWidget, CachedKernelMixin):  # noqa: PLR090
 
         def norm(text):
             return remove_backslashes(str(text))
+
+        # Dedekind (.ddk): send file content to Dedekind kernel (compile & run)
+        if filename.endswith('.ddk'):
+            try:
+                content, _ = encoding.read(filename)
+            except Exception as e:
+                client.shellwidget.append_html_message(
+                    _("Could not read file <b>{}</b>: {}").format(
+                        osp.basename(filename), str(e)),
+                    before_prompt=True
+                )
+                return
+            try:
+                if not getattr(
+                        client.shellwidget, '_executing', True):
+                    self.execute_code(
+                        content,
+                        current_client,
+                        clear_variables,
+                        shellwidget=client.shellwidget,
+                    )
+            except Exception as e:
+                client.shellwidget.append_html_message(
+                    _("Dedekind run error: {}").format(str(e)),
+                    before_prompt=True
+                )
+            return
 
         # The kernel must be connected before the following condition is
         # tested. This is why self._run_script must wait for sig_prompt_ready
@@ -1921,30 +1978,40 @@ class IPythonConsoleWidget(PluginMainWidget, CachedKernelMixin):  # noqa: PLR090
         given_name=None,
         cache=True,
         initial_cwd=None,
-        path_to_custom_interpreter=None
+        path_to_custom_interpreter=None,
+        kernel_type=None,
     ):
         """
         Create a new client.
 
-        Uses asynchronous get_user_environment_variables and connects to kernel
-        upon future completion.
+        kernel_type: None (use default), 'python', or 'dedekind'.
+        Uses asynchronous get_user_environment_variables for Python kernel
+        and connects to kernel upon future completion.
         """
+        if kernel_type is None:
+            kernel_type = self.get_conf('default_console_kernel', 'dedekind')
+        if kernel_type not in ('python', 'dedekind'):
+            kernel_type = 'python'
+
         self.master_clients += 1
         client_id = dict(int_id=str(self.master_clients),
                          str_id='A')
 
-        # Find what kind of kernel we want
-        if self.get_conf('pylab/autoload'):
-            special = "pylab"
-        elif self.get_conf('symbolic_math'):
-            special = "sympy"
+        # Find what kind of kernel we want (only for Python)
+        if kernel_type == 'python':
+            if self.get_conf('pylab/autoload'):
+                special = "pylab"
+            elif self.get_conf('symbolic_math'):
+                special = "sympy"
+        else:
+            special = None
 
         client = ClientWidget(
             self,
             id_=client_id,
             config_options=self.config_options(),
             additional_options=self.additional_options(special),
-            given_name=given_name,
+            given_name=given_name or (None if kernel_type == 'python' else 'Dedekind'),
             give_focus=give_focus,
             handlers=self.registered_spyder_kernel_handlers,
             initial_cwd=initial_cwd,
@@ -1952,19 +2019,31 @@ class IPythonConsoleWidget(PluginMainWidget, CachedKernelMixin):  # noqa: PLR090
             special_kernel=special
         )
 
-        future = get_user_environment_variables()
-        future.connect(
-            AsyncDispatcher.QtSlot(
-                functools.partial(
-                    self._connect_new_client_to_kernel,
-                    cache,
-                    path_to_custom_interpreter,
-                    client,
+        if kernel_type == 'dedekind':
+            future = get_user_environment_variables()
+            future.connect(
+                AsyncDispatcher.QtSlot(
+                    functools.partial(
+                        self._connect_dedekind_client_to_kernel,
+                        cache,
+                        client,
+                    )
                 )
             )
-        )
+        else:
+            future = get_user_environment_variables()
+            future.connect(
+                AsyncDispatcher.QtSlot(
+                    functools.partial(
+                        self._connect_new_client_to_kernel,
+                        cache,
+                        path_to_custom_interpreter,
+                        client,
+                    )
+                )
+            )
 
-        # Add client to widget
+        # Add client to widget (for both Python and Dedekind)
         self.add_tab(
             client, name=client.get_name(), filename=filename,
             give_focus=give_focus)
@@ -2093,14 +2172,24 @@ class IPythonConsoleWidget(PluginMainWidget, CachedKernelMixin):  # noqa: PLR090
         """Create a client with its cwd pointing to path."""
         self.create_new_client(initial_cwd=path)
 
-    def create_client_for_file(self, filename, is_cython=False):
+    def get_dedekind_client(self):
+        """Return the first Dedekind console client, or None."""
+        for cl in self.clients:
+            if getattr(cl, 'given_name', None) == 'Dedekind':
+                return cl
+        return None
+
+    def create_client_for_file(self, filename, is_cython=False, is_dedekind=False):
         """Create a client to execute code related to a file."""
         special = None
+        kernel_type = None
         if is_cython:
             special = "cython"
+        if is_dedekind:
+            kernel_type = 'dedekind'
         # Create client
         client = self.create_new_client(
-            filename=filename, special=special
+            filename=filename, special=special, kernel_type=kernel_type
         )
 
         # Don't increase the count of master clients
@@ -2611,12 +2700,31 @@ class IPythonConsoleWidget(PluginMainWidget, CachedKernelMixin):  # noqa: PLR090
         """Run script in current or dedicated client."""
         # Run Cython files in a dedicated console
         is_cython = osp.splitext(filename)[1] == '.pyx'
+        is_dedekind = osp.splitext(filename)[1] == '.ddk'
         if is_cython:
             current_client = False
+        if is_dedekind:
+            current_client = False  # Use Dedekind console
 
         # Select client to execute code on it
-        if current_client:
+        if current_client and not is_dedekind:
             client = self.get_current_client()
+        elif is_dedekind:
+            try:
+                client = self.get_dedekind_client()
+                if client is None:
+                    client = self.create_client_for_file(
+                        filename, is_dedekind=True
+                    )
+            except Exception as e:
+                QMessageBox.warning(
+                    self,
+                    _('Dedekind console'),
+                    _("Could not start or find Dedekind console: {}").format(
+                        str(e)),
+                    QMessageBox.Ok
+                )
+                return
         else:
             client = self.get_client_for_file(filename)
             if client is None:
@@ -2666,7 +2774,9 @@ class IPythonConsoleWidget(PluginMainWidget, CachedKernelMixin):  # noqa: PLR090
                 current_client
             )
 
-        if client.shellwidget.spyder_kernel_ready:
+        # Dedekind kernel does not set spyder_kernel_ready; run immediately
+        # so the user does not have to press Enter in the console first.
+        if client.shellwidget.spyder_kernel_ready or is_dedekind:
             _run()
         else:
             client.shellwidget.sig_prompt_ready.connect(_run)
@@ -2747,6 +2857,19 @@ class IPythonConsoleWidget(PluginMainWidget, CachedKernelMixin):  # noqa: PLR090
 
             if clear_variables:
                 sw.reset_namespace(warning=False)
+
+            # Dedekind Studio: if kernel is not running, code is not executed
+            # (it may only appear in the console). Show a clear message.
+            if getattr(sw, 'kernel_client', None) is None or not getattr(
+                    sw, 'is_running', lambda: False)():
+                sw.append_html_message(
+                    _("<br><b>Kernel nicht bereit.</b> Der Code wird erst "
+                      "ausgeführt, wenn der Kernel läuft. "
+                      "„Selektion ausführen“ (F9) sendet den markierten Code "
+                      "an die Konsole und lässt ihn vom Kernel ausführen – "
+                      "ohne laufenden Kernel erscheint der Code nur.<br>")
+                )
+                return
 
             # Needed to handle an error when kernel_client is none.
             # See spyder-ide/spyder#6308.

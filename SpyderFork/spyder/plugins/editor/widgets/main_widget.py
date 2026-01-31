@@ -34,7 +34,7 @@ from qtpy.QtWidgets import (QAction, QActionGroup, QApplication, QDialog,
 from spyder.api.config.decorators import on_conf_change
 from spyder.api.translations import _
 from spyder.api.widgets.main_widget import PluginMainWidget
-from spyder.config.base import get_conf_path
+from spyder.config.base import get_conf_path, get_module_source_path
 from spyder.plugins.editor.api.panel import Panel
 from spyder.utils import encoding, programs, sourcecode
 from spyder.utils.qthelpers import create_action, qbytearray_to_str
@@ -1679,6 +1679,19 @@ class EditorMainWidget(PluginMainWidget):
 
         self.load(self.TEMPFILE_PATH)
 
+    def __load_welcome_dedekind_file(self):
+        """
+        Load Dedekind Studio welcome (Hello World) file when no session to
+        restore. Prefer this over temp.py so only the .ddk file is shown.
+        """
+        welcome_path = osp.join(
+            get_module_source_path('spyder'), 'assets',
+            'welcome_dedekind.ddk')
+        if osp.isfile(welcome_path):
+            self.load(welcome_path, set_focus=True)
+        else:
+            self.__load_temp_file()
+
     @Slot()
     def __set_workdir(self):
         """Set current script directory as working directory"""
@@ -3016,7 +3029,7 @@ class EditorMainWidget(PluginMainWidget):
                 if editorstack:
                     editorstack.tabs.refresh_style()
         else:
-            self.__load_temp_file()
+            self.__load_welcome_dedekind_file()
         self.set_create_new_file_if_empty(True)
         self.sig_open_files_finished.emit()
 

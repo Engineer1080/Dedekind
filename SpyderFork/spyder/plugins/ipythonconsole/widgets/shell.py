@@ -10,6 +10,7 @@ Shell Widget for the IPython Console
 
 # Standard library imports
 from collections.abc import Callable
+import html
 import logging
 import os
 import os.path as osp
@@ -1478,6 +1479,17 @@ overrided by the Sympy module (e.g. plot)
                 )
             else:
                 self.ipyclient.show_kernel_connection_error()
+
+        # Show kernel stderr/stdout if available (helps debug why kernel died)
+        if died and self.kernel_handler is not None:
+            init_err = getattr(self.kernel_handler, '_init_stderr', None)
+            init_out = getattr(self.kernel_handler, '_init_stdout', None)
+            if init_err and init_err.strip():
+                err_esc = html.escape(init_err.strip()).replace('\n', '<br>')
+                msg += "<br><br>" + _("Kernel stderr:") + "<br><pre>" + err_esc + "</pre>"
+            if init_out and init_out.strip():
+                out_esc = html.escape(init_out.strip()).replace('\n', '<br>')
+                msg += "<br><br>" + _("Kernel stdout:") + "<br><pre>" + out_esc + "</pre>"
 
         self._append_html(f"<br>{msg}<br>", before_prompt=False)
         self.insert_horizontal_ruler()

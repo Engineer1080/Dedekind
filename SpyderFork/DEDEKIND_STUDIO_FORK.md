@@ -9,7 +9,7 @@ Dieser Ordner enthält einen **Fork von [Spyder](https://github.com/spyder-ide/s
 
 ## Nächste Schritte (Dedekind Studio)
 
-1. **Branding:** Name, Icons und Fenstertitel auf „Dedekind Studio“ umstellen.
+1. **Branding:** ✓ Erledigt – Name „Dedekind Studio“, Fenstertitel, Splash, grünes Standard-Theme.
 2. **Dedekind-Kernel:** Sicherstellen, dass der Dedekind Jupyter Kernel (`dedekind_jupyter_kernel/` im Hauptrepo) beim Start einer neuen Konsole wählbar ist.
 3. **Optional:** Standard-Kernel für neue Konsolen auf „Dedekind“ setzbar machen; `.ddk`-Editor mit Run und Syntax-Highlighting.
 

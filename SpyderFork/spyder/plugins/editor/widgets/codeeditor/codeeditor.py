@@ -130,6 +130,7 @@ class CodeEditor(LSPMixin, TextEditBaseWidget, MultiCursorMixin):
     LANGUAGES = {
         'Python': (sh.PythonSH, '#'),
         'IPython': (sh.IPythonSH, '#'),
+        'Dedekind': (sh.PythonSH, '#'),  # Python-like syntax
         'Cython': (sh.CythonSH, '#'),
         'Fortran77': (sh.Fortran77SH, 'c'),
         'Fortran': (sh.FortranSH, '!'),
@@ -148,7 +149,7 @@ class CodeEditor(LSPMixin, TextEditBaseWidget, MultiCursorMixin):
     }
 
     TAB_ALWAYS_INDENTS = (
-        'py', 'pyw', 'python', 'ipy', 'c', 'cpp', 'cl', 'h', 'pyt', 'pyi'
+        'py', 'pyw', 'python', 'ipy', 'ddk', 'c', 'cpp', 'cl', 'h', 'pyt', 'pyi'
     )
 
     # Timeout to update decorations (through a QTimer) when a position

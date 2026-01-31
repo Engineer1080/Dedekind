@@ -36,6 +36,19 @@ class IPythonConsoleConfigPage(PluginConfigPage):
     def setup_page(self):
         newcb = self.create_checkbox
 
+        # Default kernel (Dedekind Studio)
+        default_kernel_group = QGroupBox(_("Default console kernel"))
+        default_kernel_combo = self.create_combobox(
+            _("When using \"New console (default settings)\":"),
+            [(_("Dedekind"), 'dedekind'), (_("Python (Spyder)"), 'python')],
+            'default_console_kernel',
+            tip=_("Choose which kernel to start when creating a new console with default settings."),
+        )
+        default_kernel_layout = QVBoxLayout()
+        default_kernel_layout.addWidget(default_kernel_combo.label)
+        default_kernel_layout.addWidget(default_kernel_combo.combobox)
+        default_kernel_group.setLayout(default_kernel_layout)
+
         # Display group
         display_group = QGroupBox(_("Display"))
         banner_box = newcb(
@@ -455,7 +468,7 @@ class IPythonConsoleConfigPage(PluginConfigPage):
         # --- Tabs organization ---
         self.create_tab(
             _("Interface"),
-            [display_group, confirmations_group, comp_group, output_group]
+            [default_kernel_group, display_group, confirmations_group, comp_group, output_group]
         )
 
         self.create_tab(

@@ -632,7 +632,7 @@ class SpyderUserConfig(UserConfig):
                 # >= 51.0.0
                 fpath,
                 # < 51.0.0
-                os.path.join(get_conf_path(), 'spyder.ini'),
+                os.path.join(get_conf_path(), 'dedekind-studio.ini'),
             ]
 
         for fpath in previous_paths:

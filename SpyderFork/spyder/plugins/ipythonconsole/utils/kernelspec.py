@@ -96,6 +96,7 @@ class SpyderKernelSpec(KernelSpec, SpyderConfigurationAccessor):
     """Kernel spec for Spyder kernels"""
 
     CONF_SECTION = 'ipython_console'
+    is_spyder_kernel = True
 
     def __init__(self, path_to_custom_interpreter=None, **kwargs):
         super().__init__(**kwargs)
@@ -339,6 +340,16 @@ class SpyderKernelSpec(KernelSpec, SpyderConfigurationAccessor):
 
         # Do not pass PYTHONPATH to kernels directly, spyder-ide/spyder#13519
         env_vars.pop('PYTHONPATH', None)
+
+        # Dedekind Studio: when running from SpyderFork (source), the kernel
+        # subprocess may not find spyder_kernels (editable install can be broken).
+        # Add external-deps/spyder-kernels to PYTHONPATH so the kernel starts.
+        _khere = osp.dirname(osp.realpath(__file__))
+        for _ in range(4):
+            _khere = osp.dirname(_khere)
+        _spyder_kernels_src = osp.join(_khere, 'external-deps', 'spyder-kernels')
+        if osp.isdir(_spyder_kernels_src):
+            env_vars['PYTHONPATH'] = _spyder_kernels_src
 
         # Remove this variable because it prevents starting kernels for
         # external interpreters when present.

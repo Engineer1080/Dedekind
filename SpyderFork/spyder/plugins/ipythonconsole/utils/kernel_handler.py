@@ -430,11 +430,14 @@ class KernelHandler(QObject):
         # See spyder-ide/spyder#3444.
         kernel_client.hb_channel.time_to_dead = 25.0
 
+        known_spyder_kernel = getattr(
+            kernel_spec, 'is_spyder_kernel', True
+        )
         return cls(
             connection_file=connection_file,
             kernel_manager=kernel_manager,
             kernel_client=kernel_client,
-            known_spyder_kernel=True,
+            known_spyder_kernel=known_spyder_kernel,
         )
 
     @classmethod

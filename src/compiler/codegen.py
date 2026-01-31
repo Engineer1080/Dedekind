@@ -1,5 +1,104 @@
 from .ast_nodes import *
 
+# Names that require torch / ML runtime when used as function or member
+_TORCH_FUNC_NAMES = frozenset({
+    'gpu', 'cpu', 'fast', 'with_grad', 'sparse', 'grad', 'einsum', 'matmul',
+    'randn', 'relu', 'softmax', 'conv2d', 'max_pool2d', 'fft', 'ifft',
+    'linspace', 'stack', 'to_tensor', 'to_gpu', 'to_cpu',
+})
+_TORCH_MEMBER_NAMES = frozenset({'gpu', 'cpu', 'single'})
+
+
+def _program_uses_torch(node: Node) -> bool:
+    """Return True if the AST uses tensor/ML features that require torch."""
+    if node is None:
+        return False
+    if type(node).__name__ == 'VectorLiteral':
+        return True
+    if type(node).__name__ == 'QuaternionLiteral':
+        return True
+    if type(node).__name__ == 'Quantity':
+        return True
+    if type(node).__name__ == 'IndexedVariable':
+        return True
+    if type(node).__name__ == 'Call':
+        if getattr(node, 'modifiers', None):
+            return True
+        name = None
+        if isinstance(getattr(node, 'func_name', None), Identifier):
+            name = node.func_name.name
+        elif type(getattr(node, 'func_name', None)).__name__ == 'MemberAccess':
+            name = node.func_name.member
+        if name and name in _TORCH_FUNC_NAMES:
+            return True
+    if type(node).__name__ == 'MemberAccess':
+        if getattr(node, 'member', None) in _TORCH_MEMBER_NAMES:
+            return True
+    # Recurse
+    for child in _ast_children(node):
+        if _program_uses_torch(child):
+            return True
+    return False
+
+
+def _ast_children(node: Node):
+    """Yield direct AST children of node for traversal."""
+    if node is None:
+        return
+    if type(node).__name__ == 'Program':
+        for s in getattr(node, 'statements', []):
+            yield s
+        return
+    if type(node).__name__ in ('FunctionDef', 'IfStmt', 'WhileStmt', 'ForStmt'):
+        for attr in ('body', 'then_branch', 'else_branch', 'condition', 'collection'):
+            val = getattr(node, attr, None)
+            if val is None:
+                continue
+            if isinstance(val, list):
+                for item in val:
+                    yield item
+            else:
+                yield val
+        if type(node).__name__ == 'FunctionDef':
+            pass  # args are names, not nodes
+        return
+    if type(node).__name__ == 'Call':
+        yield getattr(node, 'func_name', None)
+        for a in getattr(node, 'args', []):
+            yield a
+        for _, v in getattr(node, 'kwargs', []):
+            yield v
+        return
+    if type(node).__name__ == 'Assignment':
+        yield getattr(node, 'value', None)
+        return
+    if type(node).__name__ == 'ReturnStmt':
+        yield getattr(node, 'value', None)
+        return
+    if type(node).__name__ == 'BinaryOp':
+        yield getattr(node, 'left', None)
+        yield getattr(node, 'right', None)
+        return
+    if type(node).__name__ == 'MemberAccess':
+        yield getattr(node, 'obj', None)
+        return
+    if type(node).__name__ == 'Subscript':
+        yield getattr(node, 'value', None)
+        yield getattr(node, 'index', None)
+        return
+    if type(node).__name__ == 'ItemAssignment':
+        yield getattr(node, 'target', None)
+        yield getattr(node, 'value', None)
+        return
+    if type(node).__name__ == 'VectorLiteral':
+        for e in getattr(node, 'elements', []):
+            yield e
+        return
+    if type(node).__name__ == 'Lambda':
+        yield getattr(node, 'body', None)
+        return
+
+
 class CodeGenerator:
     def __init__(self):
         self.code = []
@@ -7,12 +106,18 @@ class CodeGenerator:
 
     def generate(self, node: Node) -> str:
         self.code = []
-        self.code.append("import torch")
-        self.code.append("import torch.nn as nn")
         self.code.append("import sys")
         self.code.append("import builtins")
         self.code.append("")
-        
+
+        if not _program_uses_torch(node):
+            self.visit(node)
+            return "\n".join(self.code)
+
+        self.code.append("import torch")
+        self.code.append("import torch.nn as nn")
+        self.code.append("")
+
         self.add_line("def _to_tensor(data):")
         self.add_line("    if isinstance(data, torch.Tensor): return data")
         self.add_line("    if isinstance(data, (list, tuple)):")

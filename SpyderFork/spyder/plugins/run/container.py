@@ -302,6 +302,17 @@ class RunContainer(PluginMainContainer):
             self.delete_executor_configuration_parameters
         )
 
+        # When running without dialog, ensure selected_metadata matches the
+        # focused file (current run configuration) so F5/Play runs the whole
+        # file, not a stale selection.
+        if not display_dialog:
+            current_uuid = self.metadata_model.get_current_run_configuration()
+            if (current_uuid is not None
+                    and current_uuid in self.metadata_model.run_configurations):
+                idx = self.metadata_model.inverted_index.get(current_uuid)
+                if idx is not None:
+                    self.metadata_model.update_index(idx)
+
         # If the file is going to be executed (not configured) and the executor
         # is not provided, check if it has a default one.
         if not display_dialog and selected_executor is None:

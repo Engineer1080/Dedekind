@@ -314,7 +314,7 @@ def create_application():
 
     # Required for correct icon on GNOME/Wayland:
     if hasattr(app, 'setDesktopFileName'):
-        app.setDesktopFileName('spyder')
+        app.setDesktopFileName('dedekind-studio')
 
     # ---- Monkey patching sys.exit
     def fake_sys_exit(arg=[]):

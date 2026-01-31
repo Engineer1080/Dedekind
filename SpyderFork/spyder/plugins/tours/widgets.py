@@ -1072,7 +1072,7 @@ class OpenTourDialog(QDialog, SvgToScaledPixmap):
         else:
             flags = self.windowFlags() & ~Qt.WindowContextHelpButtonHint
         self.setWindowFlags(flags)
-        self.setWindowTitle(_("Spyder tour"))
+        self.setWindowTitle(_("Dedekind Studio tour"))
         self.tour_function = tour_function
 
         # Image
