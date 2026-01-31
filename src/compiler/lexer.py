@@ -30,6 +30,7 @@ class Lexer:
             ('QUATERNION', r'\d+(\.\d+)?[jk]\b'),   # Quaternion component (j or k)
             ('COMPLEX',  r'\d+(\.\d+)?i\b'),      # Complex number 5.0i
             ('NUMBER',   r'\d+(\.\d+)?([eE][+-]?\d+)?'), # scientific notation 지원
+            ('RAWSTRING', r'r"[^"]*"'),          # Raw string (r"...") – Backslashes bleiben erhalten
             ('STRING',   r'"[^"]*"'),           # String literal
             ('MODIFIER', r'\.(gpu|cpu|single)'), # Modifiers .gpu, .cpu, .single
             ('ARROW',    r'=>'),                # Arrow operator
@@ -87,7 +88,12 @@ class Lexer:
                 keywords = {'fn', 'return', 'if', 'else', 'while', 'for', 'in', 'grad', 'einsum'}
                 if kind == 'ID' and value in keywords:
                     kind = value.upper()
-                tokens.append(Token(kind, value, line))
+                # RAWSTRING: Token-Wert = Inhalt ohne r" und "
+                if kind == 'RAWSTRING':
+                    inner = value[2:-1]  # r"..." -> ...
+                    tokens.append(Token(kind, inner, line))
+                else:
+                    tokens.append(Token(kind, value, line))
                 
             pos = mo.end()
             mo = get_token(self.source, pos)

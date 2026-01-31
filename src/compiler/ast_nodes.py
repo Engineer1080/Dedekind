@@ -64,6 +64,7 @@ class Identifier(Node):
 @dataclass
 class Literal(Node):
     value: Any
+    raw: bool = False  # True = Raw-String (r"...") in Dedekind
 
 @dataclass
 class Quantity(Node):

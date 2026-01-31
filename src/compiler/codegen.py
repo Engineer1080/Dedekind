@@ -307,7 +307,10 @@ class CodeGenerator:
         return f"({left} {op} {right})"
 
     def visit_Literal(self, node: Literal):
-        if isinstance(node.value, str): return f'"{node.value}"'
+        if isinstance(node.value, str):
+            if getattr(node, 'raw', False):
+                return 'r"' + node.value.replace('"', '\\"') + '"'
+            return '"' + node.value.replace('\\', '\\\\').replace('"', '\\"') + '"'
         return str(node.value)
 
     def visit_Quantity(self, node):

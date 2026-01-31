@@ -274,6 +274,10 @@ class Parser:
             val = float(token.value[:-1])
             node = QuaternionLiteral(val, 'i')
             node.line = line_at
+        elif token.type == 'RAWSTRING':
+            self.consume()
+            node = Literal(token.value, raw=True)
+            node.line = line_at
         elif token.type == 'STRING':
             self.consume()
             node = Literal(token.value.strip('"'))
