@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 venv/
 .env
+SpyderFork/spyder_venv/
 
 # Node.js
 node_modules/
