@@ -1,4 +1,6 @@
 fn main() {
+    print("--- Dedekind: MNIST-Klassifikator ---")
+    print_latex(r"y = \mathrm{softmax}(W_n (\cdots \mathrm{relu}(W_1 x)))")
     // Ein einfaches neuronales Netz für Klassifizierung
     model = Sequential([
         Dense(128, activation="relu"),

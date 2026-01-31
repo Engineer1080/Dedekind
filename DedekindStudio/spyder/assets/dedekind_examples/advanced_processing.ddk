@@ -1,6 +1,6 @@
 fn main() {
     print("--- Dedekind: Advanced Signal & Image Processing ---")
-
+    print_latex(r"(f * g)(t) = \int f(\tau) g(t - \tau) \, d\tau \quad \mathrm{FFT}")
     // 1. Convolution (Faltung) Demonstration
     // Erstelle ein einfaches "Bild" (4x4 Matrix)
     image = [

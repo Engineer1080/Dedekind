@@ -3,6 +3,7 @@
 
 fn main() {
     print("--- Dedekind: Ricci-Tensor anwenden und Ergebnis plotten ---")
+    print_latex(r"w^i = A^{ij} v^j \quad D = A^{ij} B_{ij}")
 
     // Symmetrische 2×2-Matrix (z. B. Kovarianz oder Trägheit)
     A = [[1.0, 0.3], [0.3, 0.8]]

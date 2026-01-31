@@ -4,6 +4,7 @@
 
 fn main() {
     print("--- Dedekind: Gedämpfter Oszillator ---")
+    print_latex(r"x(t) = A e^{-\zeta \omega t} \cos(\omega t)")
 
     // Dämpfung ζ (dimensionslos), Kreisfrequenz ω = 1 [1/s]
     zeta = 0.1

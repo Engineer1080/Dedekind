@@ -1,5 +1,6 @@
 fn main() {
     print("--- Dedekind: Chemische Elemente (Atommassen) ---")
+    print_latex(r"M(\mathrm{H_2O}) = 2 M(\mathrm{H}) + M(\mathrm{O})")
 
     // Molare Masse H2O: 2*M(H) + M(O)
     M_H2O = 2 * atomic_mass("H") + atomic_mass("O")
@@ -19,6 +20,6 @@ fn main() {
     print("Ordnungszahl Na:")
     print(Z_Na)
 
-    print("\nChemische Elemente (atomic_mass, atomic_number) aktiv.")
+    print("Chemische Elemente (atomic_mass, atomic_number) aktiv.")
 }
 main()

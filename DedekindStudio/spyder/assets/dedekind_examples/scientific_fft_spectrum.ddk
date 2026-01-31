@@ -4,6 +4,7 @@
 
 fn main() {
     print("--- Dedekind: FFT-Spektrum (Signal -> Frequenzbereich) ---")
+    print_latex(r"F(\omega) = \int f(t) e^{-i \omega t} \, dt \quad |F(\omega)|")
 
     // Zeitachse: 256 Punkte, 0 bis 2*pi (eine Periode der Grundfrequenz)
     n = 256

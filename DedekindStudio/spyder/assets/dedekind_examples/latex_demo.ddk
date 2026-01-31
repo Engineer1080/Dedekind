@@ -1,12 +1,10 @@
-// LaTeX-Export Demo: Formeln aus diesem File mit --latex exportieren
-// Beispiel: python -m src.compiler.compiler examples/dedekind/latex_demo.ddk --latex
+// print_latex(): Formeln in der Konsole als Unicode (α, Δ, ∫, ½ etc.)
+// Keine Bilder in Plots – nur Konsole. CLI-LaTeX: python -m src.compiler.compiler <file.ddk> --latex
 
-a = 2
-b = 3
-t = 0.0
-m = 1.0
-c = 1.0
-x = a * sin(t) + b * cos(t)
-E = m * c^2
-ratio = (a + b) / (a - b)
-print("LaTeX-Demo: Formeln siehe Export.")
+print("--- print_latex() Demo: wissenschaftliche Zeichen in der Konsole ---")
+print_latex(r"\int_0^1 x^2 \, dx = \frac{1}{3}")
+print_latex(r"\alpha + \beta = \gamma")
+print_latex(r"\Delta x = x_1 - x_0")
+print_latex(r"E = \hbar \omega")
+print_latex(r"F = G \frac{m_1 m_2}{r^2}")
+print("--- Ende Demo ---")

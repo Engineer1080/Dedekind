@@ -16,7 +16,7 @@ fn main() {
     sum = z1 + z2
     prod = z1 * z2
     
-    print("\nAddition (z1 + z2):")
+    print("Addition (z1 + z2):")
     print(sum)
     print("Multiplikation (z1 * z2):")
     print(prod)
@@ -25,19 +25,19 @@ fn main() {
     // Wir erzeugen ein Signal aus komplexen Zahlen
     signal = [1.0 + 0i, 0.0 + 1.0i, -1.0 + 0i, 0.0 - 1.0i]
     
-    print("\nSignal (Zeitbereich):")
+    print("Signal (Zeitbereich):")
     print(signal)
     
     // Berechne die FFT
     spectrum = fft(signal)
     
-    print("\nSpektrum (Frequenzbereich nach FFT):")
+    print("Spektrum (Frequenzbereich nach FFT):")
     print(spectrum)
     
     // 4. Eulersche Formel Test (vereinfacht)
     // e^(i*pi) = -1
     // Da wir noch kein 'exp' Keyword haben, nutzen wir die Literale
-    print("\nRotationstest:")
+    print("Rotationstest:")
     rotation = 0.0 + 1.0i // Imaginäre Einheit i
     vector = [1.0, 0.0]   // Ein Vektor (der später komplex interpretiert werden kann)
     

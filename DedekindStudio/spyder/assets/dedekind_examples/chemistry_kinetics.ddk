@@ -1,5 +1,6 @@
 fn main() {
     print("--- Dedekind: Chemische Kinetik (Reaktion 1. Ordnung) ---")
+    print_latex(r"\frac{dc}{dt} = -k c \quad \Rightarrow \quad c(t) = c_0 e^{-k t}")
 
     // dc/dt = -k*c  =>  c(t) = c0 * exp(-k*t)
     // Einheiten: c in [M], t in [s], k in [1/s]
@@ -30,6 +31,6 @@ fn main() {
     print("Analytisch c(10s) (Wert):")
     print(c_analytical)
 
-    print("\nKinetik 1. Ordnung mit Einheiten [M], [1/s] aktiv.")
+    print("Kinetik 1. Ordnung mit Einheiten [M], [1/s] aktiv.")
 }
 main()

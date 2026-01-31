@@ -1,4 +1,6 @@
 fn main() {
+    print("--- Dedekind: Plot-Demo ---")
+    print_latex(r"y = f(x)")
     // Einfache Visualisierung: plot(y) zeichnet y über Index
     data = [1.0, 2.0, 1.5, 3.0, 2.5, 4.0]
     plot(data, title="Beispieldaten")

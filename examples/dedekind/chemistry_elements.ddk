@@ -19,6 +19,6 @@ fn main() {
     print("Ordnungszahl Na:")
     print(Z_Na)
 
-    print("\nChemische Elemente (atomic_mass, atomic_number) aktiv.")
+    print("Chemische Elemente (atomic_mass, atomic_number) aktiv.")
 }
 main()

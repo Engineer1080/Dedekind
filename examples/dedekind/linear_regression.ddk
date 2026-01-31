@@ -15,6 +15,6 @@ fn main() {
     print("Achsenabschnitt (intercept):")
     print(intercept)
 
-    print("\nLinear regression aktiv.")
+    print("Linear regression aktiv.")
 }
 main()

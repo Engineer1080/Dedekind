@@ -1,5 +1,6 @@
 fn main() {
     print("--- Dedekind: Uncertainty Propagation (value ± std) ---")
+    print_latex(r"x \pm \sigma_x \quad \sigma_{x+y}^2 = \sigma_x^2 + \sigma_y^2")
     
     // Messwerte mit Unsicherheit: Gauß'sche Fehlerfortpflanzung
     x = uncertain(10.0, 0.5)
@@ -33,6 +34,6 @@ fn main() {
     print("L1 = 1 ± 0.01 [m], L2 = 2 ± 0.02 [m], L1+L2:")
     print(L_sum)
     
-    print("\nUncertainty propagation aktiv.")
+    print("Uncertainty propagation aktiv.")
 }
 main()

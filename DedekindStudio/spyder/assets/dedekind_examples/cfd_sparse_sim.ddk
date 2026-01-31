@@ -1,5 +1,6 @@
 fn main() {
     print("--- Dedekind: Sparse CFD Simulation (Heat Diffusion) ---")
+    print_latex(r"\frac{\partial T}{\partial t} = \alpha \nabla^2 T \quad \texttt{.sparse()}")
     
     // Grid Setup: 100x100 points
     N = 100

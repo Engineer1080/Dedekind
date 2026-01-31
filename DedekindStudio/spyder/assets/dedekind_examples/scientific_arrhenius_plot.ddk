@@ -4,6 +4,7 @@
 
 fn main() {
     print("--- Dedekind: Arrhenius-Plot (k(T) mit R_gas) ---")
+    print_latex(r"k(T) = A \exp\left(-\frac{E_a}{R T}\right)")
 
     // Temperaturbereich in K (als Vektor für Plot)
     T = linspace(280, 400, 60)

@@ -1,5 +1,6 @@
 fn main() {
     print("--- Dedekind: Probabilistic Programming ---")
+    print_latex(r"p(\theta \mid D) \propto p(D \mid \theta) \, p(\theta)")
     
     // 1. Verteilungen und Sampling
     d = Normal(0, 1)
@@ -52,6 +53,6 @@ fn main() {
     print(posterior_samples[499])
     print("(Mean of posterior should be near 2.5)")
     
-    print("\nProbabilistic Programming aktiv.")
+    print("Probabilistic Programming aktiv.")
 }
 main()

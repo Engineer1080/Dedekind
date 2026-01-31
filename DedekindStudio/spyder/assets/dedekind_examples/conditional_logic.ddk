@@ -11,8 +11,9 @@ fn check_value(x) {
 }
 
 fn main() {
+    print("--- Dedekind: Bedingungen (if / else) ---")
+    print_latex(r"x > 50 \Rightarrow \ldots \quad x = 0 \Rightarrow \ldots")
     values = [0, 10, 100]
-    
     for v in values {
         print("Testen von:")
         print(v)

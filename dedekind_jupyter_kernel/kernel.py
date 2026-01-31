@@ -2,6 +2,7 @@
 Dedekind Jupyter Kernel: executes Dedekind source in a persistent context.
 Requires the Dedekind compiler (src.compiler) on PYTHONPATH or repo root.
 """
+import re
 import sys
 import io
 import os
@@ -26,18 +27,71 @@ try:
 except ImportError:
     CompileError = Exception  # fallback if run outside repo
 
+# LaTeX → Unicode für native Darstellung in der Konsole (UTF-8; Font mit mathematischen Zeichen)
+_LATEX_TO_UNICODE = [
+    # Griechisch (lange zuerst)
+    (r"\Alpha", "Α"), (r"\Beta", "Β"), (r"\Gamma", "Γ"), (r"\Delta", "Δ"), (r"\Epsilon", "Ε"),
+    (r"\Zeta", "Ζ"), (r"\Eta", "Η"), (r"\Theta", "Θ"), (r"\Iota", "Ι"), (r"\Kappa", "Κ"),
+    (r"\Lambda", "Λ"), (r"\Mu", "Μ"), (r"\Nu", "Ν"), (r"\Xi", "Ξ"), (r"\Omicron", "Ο"),
+    (r"\Pi", "Π"), (r"\Rho", "Ρ"), (r"\Sigma", "Σ"), (r"\Tau", "Τ"), (r"\Upsilon", "Υ"),
+    (r"\Phi", "Φ"), (r"\Chi", "Χ"), (r"\Psi", "Ψ"), (r"\Omega", "Ω"),
+    (r"\alpha", "α"), (r"\beta", "β"), (r"\gamma", "γ"), (r"\delta", "δ"), (r"\epsilon", "ε"),
+    (r"\zeta", "ζ"), (r"\eta", "η"), (r"\theta", "θ"), (r"\iota", "ι"), (r"\kappa", "κ"),
+    (r"\lambda", "λ"), (r"\mu", "μ"), (r"\nu", "ν"), (r"\xi", "ξ"), (r"\omicron", "ο"),
+    (r"\pi", "π"), (r"\rho", "ρ"), (r"\sigma", "σ"), (r"\tau", "τ"), (r"\upsilon", "υ"),
+    (r"\phi", "φ"), (r"\chi", "χ"), (r"\psi", "ψ"), (r"\omega", "ω"), (r"\hbar", "ℏ"),
+    # Operatoren und Symbole
+    (r"\int", "∫"), (r"\sum", "∑"), (r"\prod", "∏"), (r"\sqrt", "√"), (r"\infty", "∞"),
+    (r"\partial", "∂"), (r"\nabla", "∇"), (r"\cdot", "·"), (r"\times", "×"), (r"\div", "÷"),
+    (r"\pm", "±"), (r"\mp", "∓"), (r"\leq", "≤"), (r"\geq", "≥"), (r"\neq", "≠"),
+    (r"\approx", "≈"), (r"\equiv", "≡"), (r"\in", "∈"), (r"\forall", "∀"), (r"\exists", "∃"),
+    (r"\rightarrow", "→"), (r"\leftarrow", "←"), (r"\Rightarrow", "⇒"), (r"\Leftarrow", "⇐"),
+    (r"\left(", "("), (r"\right)", ")"), (r"\quad", " "), (r"\,", " "), (r"\;", " "),
+]
+# Hoch-/Tiefstellen (Ziffern)
+_SUP = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
+_SUB = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
+
+
+def _latex_to_unicode(s):
+    """Konvertiert einfaches LaTeX in Unicode-Text für die Konsole (UTF-8)."""
+    t = s.strip()
+    if t.startswith("$") and t.endswith("$"):
+        t = t[1:-1].strip()
+    for latex, unicode_char in _LATEX_TO_UNICODE:
+        t = t.replace(latex, unicode_char)
+    # \mathrm{...} und \texttt{...} -> Inhalt als Text (z. B. .sparse(), grad, Code)
+    t = re.sub(r"\\mathrm\s*\{([^{}]*)\}", r"\1", t)
+    t = re.sub(r"\\texttt\s*\{([^{}]*)\}", r"\1", t)
+    # \frac{1}{2} -> ½ bzw. a/b; häufige Brüche als Unicode
+    frac_map = {(1, 2): "½", (1, 3): "⅓", (2, 3): "⅔", (1, 4): "¼", (3, 4): "¾", (1, 5): "⅕"}
+    def frac_repl(m):
+        a, b = m.group(1).strip(), m.group(2).strip()
+        try:
+            na, nb = int(a), int(b)
+            return frac_map.get((na, nb), f"{a}/{b}")
+        except ValueError:
+            return f"{a}/{b}"
+    t = re.sub(r"\\frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}", frac_repl, t)
+    # Einfache Hochstellen: ^1 -> ¹ (nur einzelne Ziffer)
+    t = re.sub(r"\^(\d)", lambda m: m.group(1).translate(_SUP), t)
+    t = re.sub(r"_(\d)", lambda m: m.group(1).translate(_SUB), t)
+    # Leerzeichen nach ∂ entfernen: ∂ T -> ∂T (saubere Bruchdarstellung)
+    t = re.sub(r"∂\s+", "∂", t)
+    return t.strip()
+
 
 class DedekindKernel(Kernel):
     implementation = "Dedekind"
-    implementation_version = "1.0.10"
+    implementation_version = "1.1.0"
     language = "dedekind"
-    language_version = "1.0.10"
+    language_version = "1.1.0"
     language_info = {
         "name": "dedekind",
         "mimetype": "text/x-dedekind",
         "file_extension": ".ddk",
     }
-    banner = "Dedekind Kernel – compile and run Dedekind code (Dedekind Language v1.0.10)"
+    banner = "Dedekind Kernel – compile and run Dedekind code (Dedekind Language v1.1.0)"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -96,22 +150,13 @@ class DedekindKernel(Kernel):
                     },
                 )
             def _dedekind_display_latex(latex_str):
-                """Send LaTeX to console for rendering (scientific output)."""
+                """Formel nur in der Konsole als Unicode (α, Δ, ∫ etc.) – keine Bilder in Plots.
+                Schreibt in stdout_capture, damit die Reihenfolge mit print() stimmt."""
                 s = str(latex_str).strip()
                 if not s:
                     return
-                # QtConsole expects math mode: wrap in $...$ if not already
-                if not (s.startswith('$') or s.startswith('\\') or s.startswith('[')):
-                    s = '$' + s + '$'
-                _kernel_self.send_response(
-                    _kernel_self.iopub_socket,
-                    'display_data',
-                    {
-                        'data': {'text/latex': s},
-                        'metadata': {},
-                        'transient': {},
-                    },
-                )
+                console_text = _latex_to_unicode(s)
+                stdout_capture.write((console_text if console_text else s) + '\n')
             self._globals['_dedekind_display_image'] = _dedekind_display_image
             self._globals['_dedekind_display_latex'] = _dedekind_display_latex
             exec(python_code, self._globals)

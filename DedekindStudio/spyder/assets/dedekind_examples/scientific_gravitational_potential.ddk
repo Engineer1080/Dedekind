@@ -4,6 +4,7 @@
 
 fn main() {
     print("--- Dedekind: Gravitationspotential V(r) ---")
+    print_latex(r"V(r) = -\frac{G M}{r} \quad a = \frac{G M}{r^2}")
 
     // Abstand r von 10^7 m bis 4·10^8 m (Erdumlaufbahn-Größenordnung)
     r = linspace(1.0e7, 4.0e8, 100)

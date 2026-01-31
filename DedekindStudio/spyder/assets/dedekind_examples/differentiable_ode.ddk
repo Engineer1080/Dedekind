@@ -1,5 +1,6 @@
 fn main() {
     print("--- Dedekind: Differentiable ODE Solver ---")
+    print_latex(r"\frac{dy}{dt} = -0.1 \cdot y \quad \Rightarrow \quad y(t) = y_0 e^{-0.1 t}")
     
     // dy/dt = -0.1 * y  (exponential decay); solution y(t) = y0 * exp(-0.1*t)
     fn rhs(t, y) {
@@ -29,6 +30,6 @@ fn main() {
     print("d y(10) / d y0 (sollte ca. exp(-1) = 0.368):")
     print(dydy0)
     
-    print("\nDifferenzierbare ODE-Löser aktiv.")
+    print("Differenzierbare ODE-Löser aktiv.")
 }
 main()

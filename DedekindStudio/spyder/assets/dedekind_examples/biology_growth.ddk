@@ -1,5 +1,6 @@
 fn main() {
     print("--- Dedekind: Logistisches Wachstum (Biologie) ---")
+    print_latex(r"\frac{dN}{dt} = r N \left(1 - \frac{N}{K}\right)")
 
     // dN/dt = r * N * (1 - N/K);  N(0) = N0
     // r = Wachstumsrate, K = Kapazität
@@ -31,6 +32,6 @@ fn main() {
     print("Analytisch N(10):")
     print(N_analytical)
 
-    print("\nLogistisches Wachstum aktiv.")
+    print("Logistisches Wachstum aktiv.")
 }
 main()

@@ -1,5 +1,6 @@
 fn main() {
     print("--- Dedekind: Extended Distributions (Exponential, Gamma, Beta, Poisson) ---")
+    print_latex(r"\mathrm{Exponential}(\lambda) \quad \mathrm{Gamma}(\alpha, \beta) \quad \mathrm{Poisson}(\lambda)")
     
     // Exponential(rate): Wartezeiten, Zerfall
     exp_dist = Exponential(1.0)
@@ -34,6 +35,6 @@ fn main() {
     print("10 samples from Poisson(3):")
     print(x_poisson_10)
     
-    print("\nExtended distributions aktiv.")
+    print("Extended distributions aktiv.")
 }
 main()

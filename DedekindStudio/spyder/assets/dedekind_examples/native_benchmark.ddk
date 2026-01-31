@@ -1,6 +1,6 @@
 fn main() {
     print("--- Dedekind: Native Performance Benchmark ---")
-
+    print_latex(r"\mathrm{Sequential} \rightarrow \mathrm{.fast()} \quad \mathrm{torch.compile}")
     // Definiere ein großes Modell für den Benchmark
     model = Sequential([
         Dense(1024, activation="relu"),

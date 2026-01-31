@@ -1,5 +1,6 @@
 fn main() {
     print("--- Dedekind: Universal Constants Showcase (Option B: Einheiten-Literale) ---")
+    print_latex(r"E = m c^2 \quad F = G \frac{m_1 m_2}{r^2} \quad E = h f \quad F = k_e \frac{q_1 q_2}{r^2}")
     // Konstanten c, G, h, k_e sind Quantity mit SI-Einheiten. Werte mit Einheiten-Literalen.
 
     // 1. Einstein's Energy-Mass Equivalence: E = m c^2

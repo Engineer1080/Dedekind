@@ -3,6 +3,7 @@
 
 fn main() {
     print("--- Chemische Einheiten und Radioaktivitaet ---")
+    print_latex(r"1\,\mathrm{bar} = 10^5\,\mathrm{Pa} \quad \mathrm{Bq} = 1/s")
 
     // Druck: bar (1 bar = 10^5 Pa), atm (1 atm ~ 101325 Pa)
     p_bar = 1.0[bar]

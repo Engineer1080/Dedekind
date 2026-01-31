@@ -1,5 +1,6 @@
 fn main() {
     print("--- Dedekind: Curve Fitting (fit) ---")
+    print_latex(r"y = a x + b \quad \min \sum_i (y_i - (a x_i + b))^2")
     
     // Lineare Regression: y = a*x + b; wir fitten a und b an Daten (x, y)
     // Kuenstliche Daten: y = 2*x + 1 mit etwas Rauschen
@@ -29,6 +30,6 @@ fn main() {
     print("b (Achsenabschnitt):")
     print(b_fit)
     
-    print("\nCurve fitting aktiv.")
+    print("Curve fitting aktiv.")
 }
 main()

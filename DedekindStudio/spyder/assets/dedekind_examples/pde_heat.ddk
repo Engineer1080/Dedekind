@@ -1,5 +1,6 @@
 fn main() {
     print("--- Dedekind: Differentiable PDE (Heat Equation) ---")
+    print_latex(r"\frac{\partial u}{\partial t} = k \frac{\partial^2 u}{\partial x^2}")
     
     // 1D: u_t = k * u_xx; Anfangsbedingung: Spike in der Mitte, Rand 0
     x = linspace(0, 1, 11)
@@ -15,6 +16,6 @@ fn main() {
     print("1D Heat: Loesung Shape (Zeit, Raum):")
     print(sol_1d.shape)
     
-    print("\nPDE-Solver (differenzierbar) aktiv.")
+    print("PDE-Solver (differenzierbar) aktiv.")
 }
 main()

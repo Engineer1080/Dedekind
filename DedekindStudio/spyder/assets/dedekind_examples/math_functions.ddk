@@ -1,5 +1,6 @@
 fn main() {
     print("--- Dedekind: Grundlegende Math-Funktionen ---")
+    print_latex(r"\sin, \cos, \tan \quad e^x, \ln x \quad \sqrt{x}, |x| \quad \arcsin, \arctan")
 
     // Trigonometrie
     print("sin(0):")
@@ -71,6 +72,6 @@ fn main() {
     print(det(M))
     print(trace(M))
 
-    print("\nMath-Funktionen aktiv.")
+    print("Math-Funktionen aktiv.")
 }
 main()

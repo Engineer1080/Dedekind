@@ -1,5 +1,6 @@
 fn main() {
     print("--- Dedekind: Extended Constants (pi, e, CODATA) ---")
+    print_latex(r"E = \hbar \omega \quad p V = n R T \quad P = \sigma T^4")
     
     // Mathematische Konstanten
     print("pi (Kreiszahl):")
@@ -37,6 +38,6 @@ fn main() {
     print("p*V = R*n*T (1 mol, 273.15 K):")
     print(pV)
     
-    print("\nExtended constants aktiv.")
+    print("Extended constants aktiv.")
 }
 main()

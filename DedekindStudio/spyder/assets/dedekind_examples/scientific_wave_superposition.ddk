@@ -4,6 +4,7 @@
 
 fn main() {
     print("--- Dedekind: Wellen-Superposition (mit Plot) ---")
+    print_latex(r"f(x) = \sin(x) + \frac{1}{2} \sin(2x)")
 
     // Ort x von 0 bis 4*pi (zwei Wellenlängen), 200 Punkte
     x = linspace(0, 4 * pi, 200)

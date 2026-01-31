@@ -71,6 +71,6 @@ fn main() {
     print(det(M))
     print(trace(M))
 
-    print("\nMath-Funktionen aktiv.")
+    print("Math-Funktionen aktiv.")
 }
 main()

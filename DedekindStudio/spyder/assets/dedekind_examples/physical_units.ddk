@@ -1,6 +1,7 @@
 fn main() {
     // Physikalische Einheiten: Zahl[Einheit]
     print("--- Physikalische Einheiten ---")
+    print_latex(r"v = \frac{s}{t} \quad A = a \cdot b")
 
     dist = 10[m]
     time = 2[s]

@@ -1,5 +1,6 @@
 fn main() {
     print("--- Dedekind: Dosis-Wirkung (Hill / Michaelis-Menten) ---")
+    print_latex(r"v = V_{\max} \frac{S}{K_M + S} \quad \mathrm{EC}_{50}")
 
     // Hill: v = Vmax * S^n / (K^n + S^n); Fitting an künstliche Daten
     // Hier: Wirkung = Vmax * dose / (EC50 + dose)  (n=1 wie Michaelis-Menten)
@@ -28,6 +29,6 @@ fn main() {
     print("EC50:")
     print(EC50_fit)
 
-    print("\nDosis-Wirkung (EC50-Fitting) aktiv.")
+    print("Dosis-Wirkung (EC50-Fitting) aktiv.")
 }
 main()

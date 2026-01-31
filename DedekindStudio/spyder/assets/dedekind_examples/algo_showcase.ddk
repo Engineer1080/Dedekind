@@ -1,6 +1,6 @@
 fn main() {
     print("--- Dedekind Algorithm Showcase ---")
-
+    print_latex(r"A^T, \; A^{-1} \quad \mathrm{sort} \quad \mathrm{FFT}(f)")
     // 1. Matrix Operations
     A = [[1.0, 2.0], [3.0, 4.0]]
     print("Matrix A:")

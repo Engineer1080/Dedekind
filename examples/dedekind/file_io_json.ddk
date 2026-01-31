@@ -38,6 +38,6 @@ fn main() {
     print("JSON-Objekt name:")
     print(obj["name"])
 
-    print("\nDatei-I/O und JSON aktiv.")
+    print("Datei-I/O und JSON aktiv.")
 }
 main()

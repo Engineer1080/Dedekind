@@ -1,5 +1,6 @@
 fn main() {
     print("--- Dedekind: Relativity Physics (Ricci Calculus) ---")
+    print_latex(r"C^{ik} = A^{ij} B_{jk} \quad D = A^{ij} B_{ij}")
 
     // Define Tensors
     A = [[1.0, 2.0], [3.0, 4.0]]

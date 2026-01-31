@@ -1,4 +1,6 @@
 fn main() {
+    print("--- Dedekind: Vektor-Arithmetik ---")
+    print_latex(r"v_1 + v_2 \quad \lambda \cdot v")
     // Mathematische Vektoren
     v1 = [10.5, 20.0, 30.2]
     v2 = [1.0, 2.0, 3.0]

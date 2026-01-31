@@ -33,6 +33,6 @@ fn main() {
     print("L1 = 1 ± 0.01 [m], L2 = 2 ± 0.02 [m], L1+L2:")
     print(L_sum)
     
-    print("\nUncertainty propagation aktiv.")
+    print("Uncertainty propagation aktiv.")
 }
 main()

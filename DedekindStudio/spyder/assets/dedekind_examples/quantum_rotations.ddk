@@ -1,5 +1,6 @@
 fn main() {
     print("--- Dedekind: Quantum & Robotics (Quaternions) ---")
+    print_latex(r"q = w + x i + y j + z k \quad v' = q \otimes v \otimes q^*")
 
     // 1. Define a rotation quaternion
     // Rotate 90 degrees (pi/2) around the Z axis
