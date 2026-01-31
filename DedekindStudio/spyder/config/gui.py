@@ -140,6 +140,9 @@ def is_dark_interface():
 def is_dedekind_theme():
     """Return True if the Dedekind (green) UI theme is selected."""
     try:
+        from spyder import __title__
+        if __title__ == 'Dedekind Studio':
+            return True  # Immer gruenes Theme in Dedekind Studio
         return CONF.get('appearance', 'ui_theme') == 'dedekind'
     except Exception:
         return True  # Default for Dedekind Studio

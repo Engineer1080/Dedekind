@@ -219,6 +219,7 @@ class EmptyMessageWidget(QFrame, SvgToScaledPixmap, SpyderFontsMixin):
             border_color = SpyderPalette.COLOR_BACKGROUND_4
 
         self.css.QFrame.setValues(
+            backgroundColor=SpyderPalette.COLOR_BACKGROUND_1,
             border=f'1px solid {border_color}',
             margin='0px',
             padding='0px',
