@@ -8,9 +8,32 @@ _TORCH_FUNC_NAMES = frozenset({
 })
 _TORCH_MEMBER_NAMES = frozenset({'gpu', 'cpu', 'single'})
 
+# All built-ins provided by ml_runtime (functions, classes, constants).
+# If the program uses any of these, we must inject the ML runtime.
+_RUNTIME_BUILTIN_NAMES = frozenset({
+    'Quantity', 'Quaternion', 'Dense', 'Sequential', 'compile_model',
+    'random_vector', 'random_matrix', 'transpose', 'inverse', 'dot_product',
+    'relu', 'softmax', 'convolution', 'pooling', 'fft', 'ifft', 'linspace',
+    'ode_solve', 'pde_heat_1d', 'pde_heat_2d',
+    'Normal', 'Uniform', 'Bernoulli', 'Exponential', 'Gamma', 'Beta', 'Poisson',
+    'sample', 'log_prob', 'metropolis', 'hmc',
+    'sin', 'cos', 'tan', 'exp', 'log', 'log10', 'sqrt', 'abs',
+    'asin', 'acos', 'atan', 'atan2', 'sinh', 'cosh', 'tanh',
+    'min', 'max', 'argmin', 'argmax', 'round', 'floor', 'ceil',
+    'norm', 'det', 'trace', 'integrate',
+    'UncertainQuantity', 'uncertain', 'fit',
+    'michaelis_menten', 'logistic', 'logistic_growth_dt', 'arrhenius', 'linear_regression',
+    'atomic_mass', 'atomic_number',
+    'read_file', 'write_file', 'file_exists', 'http_get', 'http_post',
+    'json_parse', 'json_stringify', 'sort', 'quicksort', 'plot',
+    # Constants (from ml_runtime)
+    'pi', 'e', 'c', 'G', 'h', 'k_B', 'k_e', 'hbar', 'e_charge', 'epsilon_0', 'mu_0',
+    'm_e', 'm_p', 'N_A', 'R_gas', 'alpha', 'sigma_SB', 'F_faraday',
+})
+
 
 def _program_uses_torch(node: Node) -> bool:
-    """Return True if the AST uses tensor/ML features that require torch."""
+    """Return True if the AST uses tensor/ML features or any runtime built-in."""
     if node is None:
         return False
     if type(node).__name__ == 'VectorLiteral':
@@ -21,6 +44,9 @@ def _program_uses_torch(node: Node) -> bool:
         return True
     if type(node).__name__ == 'IndexedVariable':
         return True
+    if type(node).__name__ == 'Identifier':
+        if getattr(node, 'name', None) in _RUNTIME_BUILTIN_NAMES:
+            return True
     if type(node).__name__ == 'Call':
         if getattr(node, 'modifiers', None):
             return True
@@ -29,7 +55,7 @@ def _program_uses_torch(node: Node) -> bool:
             name = node.func_name.name
         elif type(getattr(node, 'func_name', None)).__name__ == 'MemberAccess':
             name = node.func_name.member
-        if name and name in _TORCH_FUNC_NAMES:
+        if name and (name in _TORCH_FUNC_NAMES or name in _RUNTIME_BUILTIN_NAMES):
             return True
     if type(node).__name__ == 'MemberAccess':
         if getattr(node, 'member', None) in _TORCH_MEMBER_NAMES:
