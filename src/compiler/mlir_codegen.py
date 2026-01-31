@@ -3,8 +3,8 @@ from typing import List
 
 class MLIRCodeGenerator:
     """
-    Prototype MLIR Generator for Fourier.
-    Emits a structured IR (Fourier Dialect) that can be lowered to LLVM/MLIR.
+    Prototype MLIR Generator for Dedekind.
+    Emits a structured IR (Dedekind Dialect) that can be lowered to LLVM/MLIR.
     """
     def __init__(self):
         self.output = []
@@ -13,7 +13,7 @@ class MLIRCodeGenerator:
 
     def generate(self, node: Node) -> str:
         self.output = []
-        self.emit("// Fourier MLIR Dialect Prototype v0.2")
+        self.emit("// Dedekind MLIR Dialect Prototype v0.2")
         self.emit("module {")
         self.indent += 1
         self.visit(node)
@@ -53,7 +53,7 @@ class MLIRCodeGenerator:
     def visit_Assignment(self, node: Assignment):
         val_name = self.visit_expression(node.value)
         self.emit(f"// assignment to {node.target}")
-        self.emit(f"fourier.store {val_name}, @{node.target}")
+        self.emit(f"dedekind.store {val_name}, @{node.target}")
 
     def visit_Call(self, node: Call):
         func_name = node.func_name.name if isinstance(node.func_name, Identifier) else "closure"
@@ -64,7 +64,7 @@ class MLIRCodeGenerator:
         if func_name == "matmul":
             self.emit(f"{res} = linalg.matmul {args[0]}, {args[1]}")
         elif func_name == "relu":
-            self.emit(f"{res} = fourier.relu {args[0]}")
+            self.emit(f"{res} = dedekind.relu {args[0]}")
         else:
             args_str = ", ".join(args)
             self.emit(f"{res} = call @{func_name}({args_str})")
@@ -78,12 +78,12 @@ class MLIRCodeGenerator:
     def visit_VectorLiteral(self, node: VectorLiteral):
         res = self.next_temp()
         elements = ", ".join([str(e.value) for e in node.elements if isinstance(e, Literal)])
-        self.emit(f"{res} = fourier.constant_tensor [{elements}] : tensor<{len(node.elements)}xf32>")
+        self.emit(f"{res} = dedekind.constant_tensor [{elements}] : tensor<{len(node.elements)}xf32>")
         return res
 
     def visit_Identifier(self, node: Identifier):
         res = self.next_temp()
-        self.emit(f"{res} = fourier.load @{node.name}")
+        self.emit(f"{res} = dedekind.load @{node.name}")
         return res
 
     def visit_BinaryOp(self, node: BinaryOp):

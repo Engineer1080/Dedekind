@@ -1,0 +1,34 @@
+fn main() {
+    print("--- Dedekind: Curve Fitting (fit) ---")
+    
+    // Lineare Regression: y = a*x + b; wir fitten a und b an Daten (x, y)
+    // Kuenstliche Daten: y = 2*x + 1 mit etwas Rauschen
+    x_data = [1.0, 2.0, 3.0, 4.0, 5.0]
+    y_data = [2.8, 5.1, 7.2, 9.0, 11.3]
+    
+    fn loss(params, data) {
+        x = data[0]
+        y = data[1]
+        a = params[0]
+        b = params[1]
+        y_pred = a * x + b
+        diff = y_pred - y
+        return (diff * diff).sum()
+    }
+    
+    data = [x_data, y_data]
+    params_init = [0.0, 0.0]
+    params_opt = fit(loss, params_init, data, method="gd", lr=0.01, steps=500)
+    
+    print("Gefittete Parameter (erwarte ca. a=2, b=1):")
+    print(params_opt)
+    a_fit = params_opt[0]
+    b_fit = params_opt[1]
+    print("a (Steigung):")
+    print(a_fit)
+    print("b (Achsenabschnitt):")
+    print(b_fit)
+    
+    print("\nCurve fitting aktiv.")
+}
+main()

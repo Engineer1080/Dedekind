@@ -27,7 +27,7 @@ def compile_source(source_code: str, filepath: Optional[str] = None, check_units
 
 def export_to_latex(source_code: str) -> str:
     """
-    Fourier-Quelltext parsen und alle Formeln/Ausdrücke als LaTeX zurückgeben.
+    Dedekind-Quelltext parsen und alle Formeln/Ausdrücke als LaTeX zurückgeben.
     Nützlich für Papers und Notizen (z. B. Gleichungen aus Zuweisungen und Returns).
     """
     lexer = Lexer(source_code)

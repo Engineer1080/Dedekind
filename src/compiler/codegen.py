@@ -41,7 +41,7 @@ class CodeGenerator:
         self.add_line("    return data.to('cpu')")
         self.add_line("")
         
-        self.code.append("# Fourier ML Runtime")
+        self.code.append("# Dedekind ML Runtime")
         ml_runtime_path = __file__.replace('codegen.py', 'ml_runtime.py')
         try:
             with open(ml_runtime_path, 'r') as f:

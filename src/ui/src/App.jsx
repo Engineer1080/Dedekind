@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import Prism from 'prismjs'
-import './fourier-syntax'
+import './dedekind-syntax'
 import './index.css'
 
 // Using Node.js modules via Electron integration
@@ -12,7 +12,7 @@ function App() {
   const [files, setFiles] = useState([]);
   const [openTabs, setOpenTabs] = useState([]);
   const [activeTabId, setActiveTabId] = useState(null);
-  const [output, setOutput] = useState('Fourier Studio v0.2 Ready...')
+  const [output, setOutput] = useState('Dedekind Studio v0.2 Ready...')
   const [isRunning, setIsRunning] = useState(false)
   const [fileContents, setFileContents] = useState({});
   const editorRef = useRef(null);
@@ -322,7 +322,7 @@ function App() {
   return (
     <div className="ide-container">
       <div className="sidebar" style={{ width: sidebarWidth }}>
-        <div className="sidebar-header">FOURIER</div>
+        <div className="sidebar-header">DEDEKIND</div>
         <div className="explorer-section">
           <div className="explorer-title">Project Explorer</div>
           {projectRoot && getFolderItems(projectRoot).map(file => (
@@ -390,7 +390,7 @@ function App() {
               <div className="editor-wrapper" ref={editorWrapperRef} onWheel={handleEditorWheel}>
                 <div className="editor-content-area">
                   <pre className="code-highlight">
-                    <code ref={highlightRef} className="language-fourier">
+                    <code ref={highlightRef} className="language-dedekind">
                       {activeContent}
                     </code>
                   </pre>

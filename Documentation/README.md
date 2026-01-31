@@ -1,21 +1,21 @@
-# Fourier Documentation
+# Dedekind Documentation
 
-This folder contains the **source** and **generated** documentation for the Fourier language.
+This folder contains the **source** and **generated** documentation for the Dedekind language.
 
 ## Contents
 
 | File | Description |
 |------|-------------|
-| **Fourier_Language_Specification.md** | Language Specification (Markdown source, v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9/v0.9.6; Chemie/Biologie v0.9.7; I/O/JSON v0.9.8; Stand v0.9.8) |
-| **Fourier_Research_and_Architecture.md** | Research foundation & architecture (Markdown source; §10 Sprachfeatures v0.6) |
+| **Dedekind_Language_Specification.md** | Language Specification (Markdown source, v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9/v0.9.6; Chemie/Biologie v0.9.7; I/O/JSON v0.9.8; Stand v0.9.9) |
+| **Dedekind_Research_and_Architecture.md** | Research foundation & architecture (Markdown source; §10 Sprachfeatures v0.6) |
 | **Symbolic_Simplification_Roadmap.md** | Implementierungs-Roadmap für Symbolic Simplification (Phasen, Optionen, Integration) |
 | **Features_Implementation_Roadmap.md** | Implementierungs-Roadmap für naturwissenschaftliche Features (Verteilungen, Integration, Einheiten Compile-Zeit, NUTS/VI, Fitting, LaTeX, symbolische Ableitungen) |
-| **Chemistry_Biology_Roadmap.md** | Roadmap für Chemie und Biologie (Einheiten mol/L/M, Beispiele Kinetik/Dosis-Wirkung/Wachstum, Convenience-Funktionen, Doku „Fourier für Chemie & Biologie“) |
+| **Chemistry_Biology_Roadmap.md** | Roadmap für Chemie und Biologie (Einheiten mol/L/M, Beispiele Kinetik/Dosis-Wirkung/Wachstum, Convenience-Funktionen, Doku „Dedekind für Chemie & Biologie“) |
 | **Commercialization_Options.md** | Potenzielle Kommerzialisierungsoptionen (Beratung, Support, Lizenzen, SaaS, Förderung, Phasierung, Risiken) |
-| **IDE_Studio_Roadmap.md** | Fourier in bestehenden IDEs (VS Code, Jupyter) + Fourier Studio als kommerzielle Wissenschaftler-IDE (Einheiten, Plots, Postgres, LaTeX, lokale KI) |
-| **Maturity_Assessment.md** | Ausgereiftheit von Fourier für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v0.9.8; Stärken, Lücken, Roadmap) |
-| **Fourier_Language_Specification_v0.1.pdf** | Legacy PDF (v0.1); for current spec use the Markdown or generate v0.2 PDF below |
-| **Fourier_Research_Papers_and_Architecture.pdf** | Legacy PDF; for current content use the Markdown or generate PDF below |
+| **IDE_Studio_Roadmap.md** | Dedekind in bestehenden IDEs (VS Code, Jupyter) + Dedekind Studio als kommerzielle Wissenschaftler-IDE (Einheiten, Plots, Postgres, LaTeX, lokale KI) |
+| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v0.9.8; Stärken, Lücken, Roadmap) |
+| **Dedekind_Language_Specification_v0.1.pdf** | Legacy PDF (v0.1); for current spec use the Markdown or generate v0.2 PDF below |
+| **Dedekind_Research_Papers_and_Architecture.pdf** | Legacy PDF; for current content use the Markdown or generate PDF below |
 
 ## Generating PDFs from Markdown
 
@@ -27,10 +27,10 @@ Install [pandoc](https://pandoc.org/) and a LaTeX engine (e.g. MiKTeX, TeX Live)
 
 ```bash
 # Language Specification
-pandoc Fourier_Language_Specification.md -o Fourier_Language_Specification_v0.2.pdf --toc
+pandoc Dedekind_Language_Specification.md -o Dedekind_Language_Specification_v0.2.pdf --toc
 
 # Research & Architecture
-pandoc Fourier_Research_and_Architecture.md -o Fourier_Research_and_Architecture.pdf --toc
+pandoc Dedekind_Research_and_Architecture.md -o Dedekind_Research_and_Architecture.pdf --toc
 ```
 
 ### Option 2: Other tools
@@ -40,17 +40,21 @@ pandoc Fourier_Research_and_Architecture.md -o Fourier_Research_and_Architecture
 - **Typora / other editors**: Open the `.md` file and export to PDF from the application.
 
 
+## What changed in v0.9.9 (documented here)
+
+- **Version 0.9.9**: Version bump (Umbenennung Fourier → Dedekind).
+
 ## What changed in v0.9.8 (documented here)
 
-- **Version 0.9.8**: Convenience-Funktionen (Michaelis-Menten, logistisches Wachstum, Arrhenius, lineare Regression); chemische Elemente (`atomic_mass`, `atomic_number`, ca. 50 Elemente); **Datei-I/O** (`read_file`, `write_file`, `file_exists`), **Netzwerk** (`http_get`, `http_post`), **JSON** (`json_parse`, `json_stringify`; Zugriff `obj["key"]`). Beispiele: `file_io_json.fourier`, `chemistry_elements.fourier`, `linear_regression.fourier`, `chemistry_arrhenius.fourier`. Maturity_Assessment und Chemistry_Biology_Roadmap ergänzt.
+- **Version 0.9.8**: Convenience-Funktionen (Michaelis-Menten, logistisches Wachstum, Arrhenius, lineare Regression); chemische Elemente (`atomic_mass`, `atomic_number`, ca. 50 Elemente); **Datei-I/O** (`read_file`, `write_file`, `file_exists`), **Netzwerk** (`http_get`, `http_post`), **JSON** (`json_parse`, `json_stringify`; Zugriff `obj["key"]`). Beispiele: `file_io_json.ddk`, `chemistry_elements.ddk`, `linear_regression.ddk`, `chemistry_arrhenius.ddk`. Maturity_Assessment und Chemistry_Biology_Roadmap ergänzt.
 
 ## What changed in v0.9.7 (documented here)
 
-- **Version 0.9.7**: Fourier für Chemie & Biologie — chemische Einheiten mol, L, M (= mol/L), ppm in Runtime und Compile-Check; M und mol/L gelten als gleiche Einheit. Einheiten-Literal `[1/s]` im Parser. Beispiele: `chemistry_kinetics.fourier`, `dose_response.fourier`, `biology_growth.fourier`. Abschnitt im README; Roadmap: **Chemistry_Biology_Roadmap.md**.
+- **Version 0.9.7**: Dedekind für Chemie & Biologie — chemische Einheiten mol, L, M (= mol/L), ppm in Runtime und Compile-Check; M und mol/L gelten als gleiche Einheit. Einheiten-Literal `[1/s]` im Parser. Beispiele: `chemistry_kinetics.ddk`, `dose_response.ddk`, `biology_growth.ddk`. Abschnitt im README; Roadmap: **Chemistry_Biology_Roadmap.md**.
 
 ## What changed in v0.9.6 (documented here)
 
-- **Version 0.9.6**: Grundlegende Math-Funktionen — `tan`, `exp`, `log`, `log10`, `sqrt`, `abs`; Arkusfunktionen `asin`, `acos`, `atan`, `atan2(y,x)`; Hyperbelfunktionen `sinh`, `cosh`, `tanh`. Siehe **Fourier_Language_Specification.md** §15.10 und `examples/fourier/math_functions.fourier`.
+- **Version 0.9.6**: Grundlegende Math-Funktionen — `tan`, `exp`, `log`, `log10`, `sqrt`, `abs`; Arkusfunktionen `asin`, `acos`, `atan`, `atan2(y,x)`; Hyperbelfunktionen `sinh`, `cosh`, `tanh`. Siehe **Dedekind_Language_Specification.md** §15.10 und `examples/dedekind/math_functions.ddk`.
 
 ## What changed in v0.9.5 (documented here)
 
@@ -58,37 +62,37 @@ pandoc Fourier_Research_and_Architecture.md -o Fourier_Research_and_Architecture
 
 ## What changed in v0.9.4 (documented here)
 
-- **Version 0.9.4**: HMC (Hamiltonian Monte Carlo) — `hmc(...)` und `fit(..., method="hmc")`; LaTeX-Export — `export_to_latex(source)` bzw. CLI `--latex`. Siehe **Fourier_Language_Specification.md** und `examples/fourier/hmc_fitting.fourier`, `examples/fourier/latex_demo.fourier`.
+- **Version 0.9.4**: HMC (Hamiltonian Monte Carlo) — `hmc(...)` und `fit(..., method="hmc")`; LaTeX-Export — `export_to_latex(source)` bzw. CLI `--latex`. Siehe **Dedekind_Language_Specification.md** und `examples/dedekind/hmc_fitting.ddk`, `examples/dedekind/latex_demo.ddk`.
 
 ## What changed in v0.9.3 (documented here)
 
-- **Version 0.9.3**: Uncertainty Propagation (`uncertain`, `UncertainQuantity`) und Fitting (`fit`). Siehe **Fourier_Language_Specification.md** §15.11 und `examples/fourier/uncertainty_propagation.fourier`, `examples/fourier/curve_fitting.fourier`.
+- **Version 0.9.3**: Uncertainty Propagation (`uncertain`, `UncertainQuantity`) und Fitting (`fit`). Siehe **Dedekind_Language_Specification.md** §15.11 und `examples/dedekind/uncertainty_propagation.ddk`, `examples/dedekind/curve_fitting.ddk`.
 
 ## What changed in v0.9.2 (documented here)
 
-- **Extended Constants**: Mathematical `pi`, `e`; physical CODATA constants: `hbar`, `e_charge`, `epsilon_0`, `mu_0`, `m_e`, `m_p`, `N_A`, `R_gas`, `alpha`, `sigma_SB`, `F_faraday`. See **Fourier_Language_Specification.md** §15.2 and `examples/fourier/constants_extended.fourier`.
+- **Extended Constants**: Mathematical `pi`, `e`; physical CODATA constants: `hbar`, `e_charge`, `epsilon_0`, `mu_0`, `m_e`, `m_p`, `N_A`, `R_gas`, `alpha`, `sigma_SB`, `F_faraday`. See **Dedekind_Language_Specification.md** §15.2 and `examples/dedekind/constants_extended.ddk`.
 
 ## What changed in v0.9.1 (documented here)
 
-- **Run-Examples-Skript**: `run_examples.py` im Projektroot kompiliert und führt alle `.fourier`-Dateien in `examples/fourier` aus; Optionen `-q`, `-v`, `--compile`, `--filter`. Siehe Haupt-README unter „Alle Beispiele auf einmal testen“.
+- **Run-Examples-Skript**: `run_examples.py` im Projektroot kompiliert und führt alle `.ddk`-Dateien in `examples/dedekind` aus; Optionen `-q`, `-v`, `--compile`, `--filter`. Siehe Haupt-README unter „Alle Beispiele auf einmal testen“.
 
 ## What changed in v0.9 (documented here)
 
-- **Extended Distributions**: `Exponential`, `Gamma`, `Beta`, `Poisson`; `sample(dist)`, `log_prob(dist, value)`. See **Fourier_Language_Specification.md** §15.8 and `examples/fourier/distributions_extended.fourier`.
-- **Numerical Integration**: `integrate(f, a, b, n)`; `sin(x)`, `cos(x)`. See **Fourier_Language_Specification.md** §15.10 and `examples/fourier/integration.fourier`.
+- **Extended Distributions**: `Exponential`, `Gamma`, `Beta`, `Poisson`; `sample(dist)`, `log_prob(dist, value)`. See **Dedekind_Language_Specification.md** §15.8 and `examples/dedekind/distributions_extended.ddk`.
+- **Numerical Integration**: `integrate(f, a, b, n)`; `sin(x)`, `cos(x)`. See **Dedekind_Language_Specification.md** §15.10 and `examples/dedekind/integration.ddk`.
 
 ## What changed in v0.8 (documented here)
 
-- **Probabilistic Programming**: First-class distributions `Normal(mu, sigma)`, `Uniform(low, high)`, `Bernoulli(p)`; `sample(dist)` / `sample(dist, n)`; `log_prob(dist, value)`; Metropolis-Hastings `metropolis(log_prior, log_likelihood, data, init, steps)` for Bayesian inference. See **Fourier_Language_Specification.md** §15.8 and `examples/fourier/probabilistic.fourier`.
-- **Differentiable PDE Solvers**: `pde_heat_1d(u0, x, t, k)` and `pde_heat_2d(u0, x, y, t, k)` for the heat equation; finite differences + `ode_solve`; Dirichlet BC; gradients through `u0` and `k`. See **Fourier_Language_Specification.md** §15.9 and `examples/fourier/pde_heat.fourier`.
+- **Probabilistic Programming**: First-class distributions `Normal(mu, sigma)`, `Uniform(low, high)`, `Bernoulli(p)`; `sample(dist)` / `sample(dist, n)`; `log_prob(dist, value)`; Metropolis-Hastings `metropolis(log_prior, log_likelihood, data, init, steps)` for Bayesian inference. See **Dedekind_Language_Specification.md** §15.8 and `examples/dedekind/probabilistic.ddk`.
+- **Differentiable PDE Solvers**: `pde_heat_1d(u0, x, t, k)` and `pde_heat_2d(u0, x, y, t, k)` for the heat equation; finite differences + `ode_solve`; Dirichlet BC; gradients through `u0` and `k`. See **Dedekind_Language_Specification.md** §15.9 and `examples/dedekind/pde_heat.ddk`.
 
 ## What changed in v0.7 (documented here)
 
-- **Differentiable ODE Solvers**: `ode_solve(fun, y0, t)` (RK4/Euler); gradients through `grad()` for physics-informed ML; `linspace(start, stop, steps)` for time grids. See **Fourier_Language_Specification.md** §15.7 and `examples/fourier/differentiable_ode.fourier`.
+- **Differentiable ODE Solvers**: `ode_solve(fun, y0, t)` (RK4/Euler); gradients through `grad()` for physics-informed ML; `linspace(start, stop, steps)` for time grids. See **Dedekind_Language_Specification.md** §15.7 and `examples/dedekind/differentiable_ode.ddk`.
 
 ## What changed in v0.6 (documented here)
 
 - **Physical Units**: Literals with units (`1.0[kg]`, `5.0e14[Hz]`), constants `c`, `G`, `h`, `k_B`, `k_e` as Quantity with SI units, arithmetic and `^` for powers, display simplification (J, N).
 - **Quantity & Quaternion**: Full arithmetic including `__pow__` and `__neg__`; unary minus in codegen for expressions like `-1.0[C]` and `-1.0 + 0i`.
 
-See **Fourier_Language_Specification.md** §15 and **Fourier_Research_and_Architecture.md** §10 for full details.
+See **Dedekind_Language_Specification.md** §15 and **Dedekind_Research_and_Architecture.md** §10 for full details.

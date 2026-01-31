@@ -251,7 +251,7 @@ class Quaternion:
     def __repr__(self):
         return f"({self.w} + {self.x}i + {self.y}j + {self.z}k)"
 
-class FourierDense(nn.Module):
+class DedekindDense(nn.Module):
     def __init__(self, in_features, out_features, activation=None):
         super().__init__()
         self.linear = nn.Linear(in_features, out_features)
@@ -277,7 +277,7 @@ class FourierDense(nn.Module):
             x = self.activation(x)
         return x
 
-class FourierSequential(nn.Module):
+class DedekindSequential(nn.Module):
     def __init__(self, layers_data):
         super().__init__()
         self.raw_layers = layers_data
@@ -363,13 +363,13 @@ class FourierSequential(nn.Module):
 
 def Dense(out_features, activation=None, in_features=None):
     if in_features is None:
-        return lambda in_feat: FourierDense(in_feat, out_features, activation)
-    return FourierDense(in_features, out_features, activation)
+        return lambda in_feat: DedekindDense(in_feat, out_features, activation)
+    return DedekindDense(in_features, out_features, activation)
 
 def Sequential(layers):
-    return FourierSequential(layers)
+    return DedekindSequential(layers)
 
-class FourierCompiledModel:
+class DedekindCompiledModel:
     """
     Robust wrapper for torch.compile. Builds the model on first forward (if lazy),
     then compiles so Inductor sees a static graph. Falls back to interpreted mode on failure.
@@ -382,7 +382,7 @@ class FourierCompiledModel:
     def __call__(self, *args, **kwargs):
         # First call: ensure lazy Sequential is built, then compile once
         if self._compiled is None and not self.failed:
-            if isinstance(self.original_model, FourierSequential) and not self.original_model.initialized:
+            if isinstance(self.original_model, DedekindSequential) and not self.original_model.initialized:
                 self.original_model(*args, **kwargs)  # trigger _build
             try:
                 self._compiled = torch.compile(
@@ -397,7 +397,7 @@ class FourierCompiledModel:
             try:
                 return self._compiled(*args, **kwargs)
             except Exception as e:
-                print(f"Fourier: Compilation failed ({type(e).__name__}); using interpreted mode. Result is correct.")
+                print(f"Dedekind: Compilation failed ({type(e).__name__}); using interpreted mode. Result is correct.")
                 self.failed = True
         return self.original_model(*args, **kwargs)
 
@@ -460,11 +460,11 @@ def _to_sparse(data):
 
 def compile_model(model):
     """
-    Fourier Native Compilation Hook.
+    Dedekind Native Compilation Hook.
     Returns a robust wrapper that manages the transition to native code.
     """
     if hasattr(torch, 'compile'):
-        return FourierCompiledModel(model)
+        return DedekindCompiledModel(model)
     return model
 
 def random_vector(size):
@@ -1305,12 +1305,12 @@ def quicksort(data):
     return sort(data)
 
 # --- Standard Library: Visualization ---
-# Plots werden in _fourier_plots gesammelt und vom Server an die IDE zurückgegeben.
+# Plots werden in _dedekind_plots gesammelt und vom Server an die IDE zurückgegeben.
 
-_fourier_plots = []
+_dedekind_plots = []
 
 def _plot_ndarray(x, y=None, title=None, xlabel=None, ylabel=None):
-    """Intern: Erzeugt einen Plot und hängt ihn als Base64-PNG an _fourier_plots."""
+    """Intern: Erzeugt einen Plot und hängt ihn als Base64-PNG an _dedekind_plots."""
     try:
         import base64
         import io
@@ -1337,11 +1337,11 @@ def _plot_ndarray(x, y=None, title=None, xlabel=None, ylabel=None):
     buf = io.BytesIO()
     fig.savefig(buf, format='png', dpi=100, bbox_inches='tight')
     plt.close(fig)
-    _fourier_plots.append(base64.b64encode(buf.getvalue()).decode('ascii'))
+    _dedekind_plots.append(base64.b64encode(buf.getvalue()).decode('ascii'))
 
 def plot(x=None, y=None, title=None, xlabel=None, ylabel=None):
     """
-    Zeichnet Daten und zeigt sie in Fourier Studio an.
+    Zeichnet Daten und zeigt sie in Dedekind Studio an.
     plot(y)           – y über Index
     plot(x, y)        – y über x
     plot(y, title="…") – mit Titel

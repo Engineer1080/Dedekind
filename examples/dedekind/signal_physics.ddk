@@ -1,0 +1,46 @@
+fn main() {
+    print("--- Dedekind: Signal Physics (Complex Numbers) Showcase ---")
+    
+    // 1. Definition einer komplexen Schwingung (Phasor)
+    // z = real + imag * i
+    // In Dedekind schreiben wir einfach: 1.0 + 2.0i
+    z1 = 1.0 + 2.0i
+    z2 = 3.0 - 1.5i
+    
+    print("Komplexe Zahl z1:")
+    print(z1)
+    print("Komplexe Zahl z2:")
+    print(z2)
+    
+    // 2. Grundrechenarten
+    sum = z1 + z2
+    prod = z1 * z2
+    
+    print("\nAddition (z1 + z2):")
+    print(sum)
+    print("Multiplikation (z1 * z2):")
+    print(prod)
+    
+    // 3. Signalverarbeitung: Fourier-Transformation (FFT)
+    // Wir erzeugen ein Signal aus komplexen Zahlen
+    signal = [1.0 + 0i, 0.0 + 1.0i, -1.0 + 0i, 0.0 - 1.0i]
+    
+    print("\nSignal (Zeitbereich):")
+    print(signal)
+    
+    // Berechne die FFT
+    spectrum = fft(signal)
+    
+    print("\nSpektrum (Frequenzbereich nach FFT):")
+    print(spectrum)
+    
+    // 4. Eulersche Formel Test (vereinfacht)
+    // e^(i*pi) = -1
+    // Da wir noch kein 'exp' Keyword haben, nutzen wir die Literale
+    print("\nRotationstest:")
+    rotation = 0.0 + 1.0i // Imaginäre Einheit i
+    vector = [1.0, 0.0]   // Ein Vektor (der später komplex interpretiert werden kann)
+    
+    print("Dedekind beherrscht jetzt die Mathematik der Wellen! 🦅🌀")
+}
+main()

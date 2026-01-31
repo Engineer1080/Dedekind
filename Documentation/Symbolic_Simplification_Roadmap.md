@@ -1,6 +1,6 @@
 # Symbolic Simplification — Implementierungs-Roadmap
 
-**Fourier Language**  
+**Dedekind Language**  
 Draft: January 2026
 
 ---
@@ -14,7 +14,7 @@ Draft: January 2026
 - **Performance**: Weniger Operationen, bessere Chancen für Fused Ops und Compiler-Optimierungen; bei Ricci-Ausdrücken und langen Ableitungsketten spürbar.
 - **Physik/Units**: Konstanten zusammenfassen, Einheiten in Formeln vereinfachen (optional, wenn Units im AST repräsentiert sind).
 
-Diese Roadmap skizziert Phasen, technische Optionen und Integration in den Fourier-Compiler.
+Diese Roadmap skizziert Phasen, technische Optionen und Integration in den Dedekind-Compiler.
 
 ---
 
@@ -38,12 +38,12 @@ Diese Roadmap skizziert Phasen, technische Optionen und Integration in den Fouri
 ### Option A: SymPy integrieren
 
 - **Vorteil**: Mächtige Vereinfachung, Differenziation, LaTeX-Export möglich.
-- **Nachteil**: Externe Abhängigkeit, Fourier-AST → SymPy → zurück: Übersetzung AST ↔ SymPy-Expr nötig; Overhead für kleine Ausdrücke.
+- **Nachteil**: Externe Abhängigkeit, Dedekind-AST → SymPy → zurück: Übersetzung AST ↔ SymPy-Expr nötig; Overhead für kleine Ausdrücke.
 - **Einsatz**: Optionales Modul oder CLI „simplify-only“; oder nur in einer späteren Phase für schwere Fälle.
 
 ### Option B: Eigenes Simplifier-Modul (AST-zu-AST)
 
-- **Vorteil**: Keine neue Abhängigkeit, volle Kontrolle, an Fourier-AST (BinaryOp, Literal, Identifier, etc.) angepasst.
+- **Vorteil**: Keine neue Abhängigkeit, volle Kontrolle, an Dedekind-AST (BinaryOp, Literal, Identifier, etc.) angepasst.
 - **Nachteil**: Nur die Regeln, die man explizit implementiert; kein „vollständiges“ CAS.
 - **Einsatz**: Empfohlen für **Phase 1–2**; klar definierte Rewrite-Regeln auf dem bestehenden AST.
 
@@ -66,12 +66,12 @@ Diese Roadmap skizziert Phasen, technische Optionen und Integration in den Fouri
 2. **Visitor über AST**: Ein Pass, der alle Ausdrücke (z. B. `BinaryOp`, `Literal`) traversiert und nach festen Regeln ersetzt:
    - `Literal(0) + x` → `x` (und analog `x + 0`)
    - `Literal(1) * x` → `x`, `x * 1` → `x`
-   - `Literal(0) * x` → `Literal(0)` (Vorsicht: wenn `x` Side-Effects hätte, in Fourier aktuell nicht)
+   - `Literal(0) * x` → `Literal(0)` (Vorsicht: wenn `x` Side-Effects hätte, in Dedekind aktuell nicht)
    - `x - Literal(0)` → `x`
    - `BinaryOp(Literal(a), '+', Literal(b))` → `Literal(a+b)`; analog für `-`, `*`, `/` (Division nur wenn b≠0).
 3. **Integration**: In `compiler.py` nach `parser.parse()` und vor `codegen.generate(ast)` aufrufen:  
    `ast = simplify.simplify_program(ast)` (oder pro Statement/Expression).
-4. **Tests**: Unit-Tests mit kleinen Fourier-Snippets; erwarteter generierter Code ohne `x+0`, `1*y`, etc.
+4. **Tests**: Unit-Tests mit kleinen Dedekind-Snippets; erwarteter generierter Code ohne `x+0`, `1*y`, etc.
 5. **Dokumentation**: Kurz in Language Spec und README („Optional: Symbolic Simplification Pass“).
 
 **Erfolgskriterium**: Einfache Ausdrücke wie `a + 0`, `b * 1`, `2 * 3` erscheinen im generierten Code vereinfacht, ohne Regression bei bestehenden Beispielen.
@@ -87,10 +87,10 @@ Diese Roadmap skizziert Phasen, technische Optionen und Integration in den Fouri
 1. **Weitere Regeln** in `simplify.py`:
    - `x^0` → `1` (für numerische Literale/konstante Exponenten),
    - `x^1` → `x`,
-   - `0^x` → `0` (für x > 0; bei Fourier reell, optional nur für Literal-Exponenten).
+   - `0^x` → `0` (für x > 0; bei Dedekind reell, optional nur für Literal-Exponenten).
 2. **Subausdrücke**: Simplification rekursiv auf alle Teilausdrücke (bereits in Phase 1 durch Visitor; hier mehr Fälle).
 3. **Ricci/Einsum**: Falls vorhanden, Identifikation von „trivialen“ Kontraktionen (z. B. Tensor mal Skalar 1) und Weitergabe an Codegen; optional.
-4. **Tests**: Erweiterte Tests; Regression-Suite (alle bestehenden Fourier-Beispiele laufen unverändert).
+4. **Tests**: Erweiterte Tests; Regression-Suite (alle bestehenden Dedekind-Beispiele laufen unverändert).
 
 **Erfolgskriterium**: Ausdrücke mit Potenzen und Konstanten werden lesbarer und kürzer generiert; keine Fehlvereinfachungen.
 
@@ -103,7 +103,7 @@ Diese Roadmap skizziert Phasen, technische Optionen und Integration in den Fouri
 **Schritte**:
 
 1. **Compiler-Flag/Option**: z. B. `--simplify` / `--no-simplify` (Default: `--simplify` ab Phase 1, oder zunächst opt-in).
-2. **IDE/Server**: Option in Fourier Studio (z. B. „Symbolic Simplification: Ein/Aus“); Übergabe an Backend.
+2. **IDE/Server**: Option in Dedekind Studio (z. B. „Symbolic Simplification: Ein/Aus“); Übergabe an Backend.
 3. **Debug-Output**: Optional „vorher/nachher“ AST oder generierter Ausdruck bei aktiviertem Verbose-Modus.
 4. **Dokumentation**: Language Spec um einen kurzen Abschnitt „Symbolic Simplification“ ergänzen (Ziel, Option, Beispiele).
 
@@ -118,8 +118,8 @@ Diese Roadmap skizziert Phasen, technische Optionen und Integration in den Fouri
 **Schritte**:
 
 1. **Abhängigkeit**: `sympy` als **optionale** Abhängigkeit (z. B. `extras` oder separates `requirements-simplify.txt`).
-2. **AST → SymPy**: Übersetzer von Fourier-AST (nur unterstützte Teile: Literale, Identifier, +, -, *, /, ^) nach `sympy.Expr`.
-3. **SymPy → AST**: Rückübersetzung von `sympy.Expr` in Fourier-AST (eingeschränkt auf erlaubte Konstrukte).
+2. **AST → SymPy**: Übersetzer von Dedekind-AST (nur unterstützte Teile: Literale, Identifier, +, -, *, /, ^) nach `sympy.Expr`.
+3. **SymPy → AST**: Rückübersetzung von `sympy.Expr` in Dedekind-AST (eingeschränkt auf erlaubte Konstrukte).
 4. **Nutzung**: Entweder als zweiter Pass nach dem eigenen Simplifier (nur wenn SymPy verfügbar) oder über eine explizite Funktion/Built-in `simplify(expr)` im Sprachkonzept (später).
 5. **Fallback**: Wenn SymPy nicht installiert oder Übersetzung fehlschlägt: Original-AST unverändert lassen.
 
@@ -181,7 +181,7 @@ Quelltext → Lexer → Parser → AST → [ Simplify-Pass ] → AST' → Codege
 
 ## 7. Erfolgsmetriken (über alle Phasen)
 
-- **Korrektheit**: Alle bestehenden Fourier-Beispiele (hello, universal_constants, differentiable_ode, probabilistic, …) liefern mit aktivierter Simplification dasselbe Ergebnis wie ohne (oder dokumentierte, gewollte Vereinfachung).
+- **Korrektheit**: Alle bestehenden Dedekind-Beispiele (hello, universal_constants, differentiable_ode, probabilistic, …) liefern mit aktivierter Simplification dasselbe Ergebnis wie ohne (oder dokumentierte, gewollte Vereinfachung).
 - **Lesbarkeit**: Generierter Code für typische wissenschaftliche Ausdrücke enthält weniger redundante Terme (subjektiv oder per Metrik „Anzahl Binär-Ops“).
 - **Performance**: Laufzeit der generierten Programme nicht schlechter; idealerweise bei ausdrucksstarken Programmen leicht besser durch weniger Operationen.
 

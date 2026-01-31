@@ -1,0 +1,11 @@
+fn main() {
+    print("Hello from Dedekind!")
+    x = 10
+    y = 20
+    print(x + y)
+    
+    vec = [1, 2, 3]
+    print(vec)
+}
+
+main()

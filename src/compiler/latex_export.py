@@ -1,6 +1,6 @@
 """
-LaTeX-Export von Fourier-Ausdrücken (AST → LaTeX).
-Für Papers und Notizen: Formeln aus Fourier-Code als LaTeX erzeugen.
+LaTeX-Export von Dedekind-Ausdrücken (AST → LaTeX).
+Für Papers und Notizen: Formeln aus Dedekind-Code als LaTeX erzeugen.
 """
 from .ast_nodes import (
     Node, Program, BinaryOp, Call, Identifier, Literal, Quantity,

@@ -19,7 +19,7 @@ def build_endpoint():
     data = request.json
     source = data.get('source', '')
     # Save source to a temp file for AOT processing
-    temp_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "build_target.fourier")
+    temp_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "build_target.ddk")
     with open(temp_path, 'w', encoding='utf-8') as f:
         f.write(source)
     
@@ -65,12 +65,12 @@ def run_endpoint():
             sys.stdout = old_stdout
 
         output = buffer.getvalue()
-        plots = exec_globals.get('_fourier_plots', [])
+        plots = exec_globals.get('_dedekind_plots', [])
         return jsonify({'status': 'success', 'output': output, 'code': python_code, 'plots': plots})
         
     except Exception as e:
         return jsonify({'status': 'error', 'error': str(e), 'traceback': traceback.format_exc()})
 
 if __name__ == '__main__':
-    print("Fourier Backend running on http://localhost:5000")
+    print("Dedekind Backend running on http://localhost:5000")
     app.run(port=5000)

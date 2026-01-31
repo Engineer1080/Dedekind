@@ -1,13 +1,13 @@
-# Fourier — Ausgereiftheit für Mathematik, Physik, Informatik, Biologie und Chemie
+# Dedekind — Ausgereiftheit für Mathematik, Physik, Informatik, Biologie und Chemie
 
-**Fourier Language**  
+**Dedekind Language**  
 Draft: January 2026 · Stand: v0.9.8 (Prototyp)
 
 ---
 
 ## Übersicht
 
-Fourier ist aktuell ein **Prototyp (v0.9.8)**. Die folgende Einschätzung bezieht sich auf den **aktuellen Implementierungsstand** und nennt Lücken sowie Roadmap-Punkte.
+Dedekind ist aktuell ein **Prototyp (v0.9.9)**. Die folgende Einschätzung bezieht sich auf den **aktuellen Implementierungsstand** und nennt Lücken sowie Roadmap-Punkte.
 
 | Domäne       | Ausgereiftheit (kurz) | Nutzbar für …                          | Wichtige Lücken / Roadmap          |
 |-------------|------------------------|----------------------------------------|------------------------------------|
@@ -30,12 +30,12 @@ Fourier ist aktuell ein **Prototyp (v0.9.8)**. Die folgende Einschätzung bezieh
 - **Numerische Integration**: `integrate(f, a, b, n)` (Trapezregel); differenzierbar, wenn `f` Tensor akzeptiert.
 - **Statistik & Stochastik**: Verteilungen `Normal`, `Uniform`, `Bernoulli`, `Exponential`, `Gamma`, `Beta`, `Poisson`; `sample`, `log_prob`; MCMC (`metropolis`, `hmc`); Fitting `fit(..., method="gd"|"mcmc"|"hmc")`.
 - **Tensor-Notation**: Ricci-ähnliche Indexnotation (`A^ij * B_jk`) für Einstein-Summen.
-- **LaTeX-Export**: `export_to_latex(source)` — Formeln aus Fourier-Code als LaTeX.
+- **LaTeX-Export**: `export_to_latex(source)` — Formeln aus Dedekind-Code als LaTeX.
 
 ### Lücken / Roadmap
 
 - **Symbolische Mathematik**: Kein `diff(expr, x)` als Formel; nur numerisches `grad()`. Geplant in Features-Roadmap Phase 5 (Symbolic Simplification).
-- **Weitere LA**: Kein eingebautes Eigenwert/Eigenvektor, SVD, QR; über Tensoren/Backend möglich, aber keine Fourier-API.
+- **Weitere LA**: Kein eingebautes Eigenwert/Eigenvektor, SVD, QR; über Tensoren/Backend möglich, aber keine Dedekind-API.
 - **Differentialgeometrie**: Ricci-Notation vorhanden; keine kovariante Ableitung oder Riemann-Tensor als Bibliothek.
 - **Zahlentheorie / Diskrete Mathematik**: Keine speziellen Primitiven.
 
@@ -54,7 +54,7 @@ Fourier ist aktuell ein **Prototyp (v0.9.8)**. Die folgende Einschätzung bezieh
 - **Differenzierbare PDE**: `pde_heat_1d(u0, x, t, k)`, `pde_heat_2d(u0, x, y, t, k)` für Wärmeleitung; Finite Differenzen + `ode_solve`; Gradients durch `u0`, `k`.
 - **Quaternionen**: Native Unterstützung (`i`, `j`, `k`), `.rotate()`; für Rotationen und Signalverarbeitung.
 - **Uncertainty**: `uncertain(value, std)`, `UncertainQuantity` — Gauß’sche Fehlerfortpflanzung; optional mit Einheit.
-- **Beispiele**: `universal_constants.fourier`, `physical_units.fourier`, `differentiable_ode.fourier`, `pde_heat.fourier`, `relativity_physics.fourier`, `signal_physics.fourier`, `quantum_rotations.fourier`.
+- **Beispiele**: `universal_constants.ddk`, `physical_units.ddk`, `differentiable_ode.ddk`, `pde_heat.ddk`, `relativity_physics.ddk`, `signal_physics.ddk`, `quantum_rotations.ddk`.
 
 ### Lücken / Roadmap
 
@@ -74,14 +74,14 @@ Fourier ist aktuell ein **Prototyp (v0.9.8)**. Die folgende Einschätzung bezieh
 - **ML-Runtime**: `Sequential`, `Dense`, `compile_model`, Forward-Pass; `.gpu()`, `.cpu()`; Autograd (`grad()`), `.with_grad()`.
 - **Tensoren**: PyTorch-Backend; Matrizen, Vektoren, FFT, Faltung, Pooling; Sparse (`.sparse()`), Item-Assignment.
 - **Algorithmen**: `sort`, `quicksort`; `fit` (GD, MCMC, HMC); MCMC (`metropolis`, `hmc`).
-- **Beispiele**: `hello.fourier`, `basic_loops.fourier`, `conditional_logic.fourier`, `algo_showcase.fourier`, `autograd_showcase.fourier`, `mnist_classifier.fourier`, `matrix_gpu.fourier`, `cfd_sparse_sim.fourier`.
+- **Beispiele**: `hello.ddk`, `basic_loops.ddk`, `conditional_logic.ddk`, `algo_showcase.ddk`, `autograd_showcase.ddk`, `mnist_classifier.ddk`, `matrix_gpu.ddk`, `cfd_sparse_sim.ddk`.
 
 ### Lücken / Roadmap
 
 - **Typsystem**: Kein statisches Typing; nur Laufzeit- und Einheiten-Check.
 - **Module/Imports**: Kein `import`; alles in einer Datei oder über Compiler-Pipeline.
-- **Standardbibliothek**: **Datei-I/O** (`read_file`, `write_file`, `file_exists`), **Netzwerk** (`http_get`, `http_post`), **JSON** (`json_parse`, `json_stringify`); Zugriff auf geparste Objekte z. B. `obj["key"]`. Beispiel: `file_io_json.fourier`.
-- **Tooling**: Fourier Studio (IDE) vorhanden; Debugger, Profiler, Test-Runner nicht als Teil der Sprache.
+- **Standardbibliothek**: **Datei-I/O** (`read_file`, `write_file`, `file_exists`), **Netzwerk** (`http_get`, `http_post`), **JSON** (`json_parse`, `json_stringify`); Zugriff auf geparste Objekte z. B. `obj["key"]`. Beispiel: `file_io_json.ddk`.
+- **Tooling**: Dedekind Studio (IDE) vorhanden; Debugger, Profiler, Test-Runner nicht als Teil der Sprache.
 - **Performance**: AOT/MLIR/LLVM als Ziel; aktuell Transpilation zu Python/PyTorch; native Binaries experimentell.
 
 **Fazit Informatik**: Für **ML-Pipelines, numerische Algorithmen und Kontrollfluss** grundlegend nutzbar; für **große Softwareprojekte, Typen, Module und Tooling** noch nicht ausgereift. **Ausgereiftheit: grundlegend.**
@@ -95,14 +95,14 @@ Fourier ist aktuell ein **Prototyp (v0.9.8)**. Die folgende Einschätzung bezieh
 - **Dynamische Systeme**: `ode_solve` für beliebige ODEs (z. B. logistisches Wachstum \(dN/dt = r N (1 - N/K)\)).
 - **Fitting**: `fit(loss_fn, params_init, data, method="gd"|"mcmc"|"hmc")` — Parameter aus Daten (z. B. Wachstumsrate, Kapazität).
 - **Statistik & Unsicherheit**: Verteilungen, `uncertain(value, std)`, MCMC/HMC für Bayesian Inference.
-- **Beispiel**: `biology_growth.fourier` — logistisches Wachstum mit `ode_solve`.
+- **Beispiel**: `biology_growth.ddk` — logistisches Wachstum mit `ode_solve`.
 
 ### Lücken / Roadmap (Chemistry_Biology_Roadmap)
 
 - **Convenience-Funktionen**: `logistic_growth(N, r, K)` bzw. analytische Lösung `logistic(t, r, K, N0)` noch nicht als eingebaute API; mit `ode_solve` und eigener RHS umsetzbar.
 - **Weitere Modelle**: Keine vordefinierten Ökologie-/Populationsmodelle (z. B. Lotka-Volterra) als Standard-API.
 - **Einheiten**: Physikalische Einheiten (inkl. chemische) nutzbar; keine biologischen Konventionen (z. B. Zellzahl, Verdünnungsstufen) als eigene Einheiten.
-- **Dokumentation**: Abschnitt „Fourier für Chemie & Biologie“ im README; Roadmap mit Phase 2 (Convenience).
+- **Dokumentation**: Abschnitt „Dedekind für Chemie & Biologie“ im README; Roadmap mit Phase 2 (Convenience).
 
 **Fazit Biologie**: Für **Wachstumsmodelle, Fitting und Unsicherheit** grundlegend nutzbar; Convenience und domänenspezifische Modelle sind geplant. **Ausgereiftheit: grundlegend.**
 
@@ -117,14 +117,14 @@ Fourier ist aktuell ein **Prototyp (v0.9.8)**. Die folgende Einschätzung bezieh
 - **Kinetik**: Reaktion 1. Ordnung \(c(t) = c_0 e^{-kt}\) mit `ode_solve` oder analytisch mit `exp`; Einheiten [M], [1/s].
 - **Dosis-Wirkung / Michaelis-Menten**: \(v = V_{\max}[S]/(K_M + [S])\) über `fit` an Daten (EC50, \(K_M\), \(V_{\max}\)).
 - **Uncertainty**: `uncertain(value, std)` mit Einheit für Fehlerfortpflanzung.
-- **Beispiele**: `chemistry_kinetics.fourier`, `dose_response.fourier`; `universal_constants.fourier` (inkl. chemischer Konstanten).
+- **Beispiele**: `chemistry_kinetics.ddk`, `dose_response.ddk`; `universal_constants.ddk` (inkl. chemischer Konstanten).
 
 ### Lücken / Roadmap (Chemistry_Biology_Roadmap)
 
 - **Convenience-Funktionen**: `michaelis_menten(S, Vmax, Km)`, `arrhenius(T, A, Ea)` noch nicht als eingebaute API; Phase 2 geplant.
 - **Weitere Einheiten**: bar, atm, pH-Hinweis (pH = -log10([H+])), % w/v optional — Phase 3.
 - **Gleichgewichte**: Keine vordefinierten Gleichgewichts- oder Titrationsmodelle als Standard-API.
-- **Elemente**: `atomic_mass("C")` (g/mol), `atomic_number("C")`; ca. 50 Elemente (IUPAC-nah); Molare Masse z. B. 2*atomic_mass("H")+atomic_mass("O"). Beispiel: `chemistry_elements.fourier`.
+- **Elemente**: `atomic_mass("C")` (g/mol), `atomic_number("C")`; ca. 50 Elemente (IUPAC-nah); Molare Masse z. B. 2*atomic_mass("H")+atomic_mass("O"). Beispiel: `chemistry_elements.ddk`.
 - **Stöchiometrie**: Keine dedizierte Reaktionsgleichungs- oder Reaktionsnetzwerk-API (Gleichungen ausbalancieren o. Ä.).
 
 **Fazit Chemie**: Für **Kinetik 1. Ordnung, Konzentrationen, Einheiten, Dosis-Wirkung und Fitting** grundlegend nutzbar; Convenience und weitere Einheiten sind in der Roadmap. **Ausgereiftheit: grundlegend.**
@@ -141,4 +141,4 @@ Fourier ist aktuell ein **Prototyp (v0.9.8)**. Die folgende Einschätzung bezieh
 | **Biologie**  | Grundlegend| ODE, Fitting, Unsicherheit                  | `logistic_growth`, weitere Modelle        |
 | **Chemie**    | Grundlegend| Einheiten mol/L/M/ppm, Kinetik, Fitting      | `michaelis_menten`, `arrhenius`, bar/atm  |
 
-**Gesamtbewertung**: Fourier ist für **Mathematik und Physik** bereits **gut nutzbar** (numerische und einheitenbewusste Anwendungen). Für **Informatik** ist die Basis gelegt, aber Typen, Module und Tooling fehlen für „ausgereift“. Für **Biologie und Chemie** sind die **Grundbausteine** (Einheiten, ODE, Fitting, Unsicherheit) da; **Convenience-Funktionen und weitere Einheiten** würden die Ausgereiftheit in diesen Domänen deutlich erhöhen (Chemistry_Biology_Roadmap Phase 2/3).
+**Gesamtbewertung**: Dedekind ist für **Mathematik und Physik** bereits **gut nutzbar** (numerische und einheitenbewusste Anwendungen). Für **Informatik** ist die Basis gelegt, aber Typen, Module und Tooling fehlen für „ausgereift“. Für **Biologie und Chemie** sind die **Grundbausteine** (Einheiten, ODE, Fitting, Unsicherheit) da; **Convenience-Funktionen und weitere Einheiten** würden die Ausgereiftheit in diesen Domänen deutlich erhöhen (Chemistry_Biology_Roadmap Phase 2/3).

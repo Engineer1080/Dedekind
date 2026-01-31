@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Skript zum Kompilieren und Ausführen aller .fourier-Beispiele in examples/fourier.
-Findet automatisch alle *.fourier-Dateien; funktioniert auch bei neu hinzugefügten Dateien.
+Skript zum Kompilieren und Ausführen aller .ddk-Beispiele in examples/dedekind.
+Findet automatisch alle *.ddk-Dateien; funktioniert auch bei neu hinzugefügten Dateien.
 
 Verwendung (aus Projektroot):
   python run_examples.py           # Kompilieren + Ausführen, kurze Ausgabe
@@ -18,11 +18,11 @@ import argparse
 # Projektroot = Verzeichnis, in dem dieses Skript liegt
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = SCRIPT_DIR
-EXAMPLES_DIR = os.path.join(PROJECT_ROOT, "examples", "fourier")
+EXAMPLES_DIR = os.path.join(PROJECT_ROOT, "examples", "dedekind")
 SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 
 def main():
-    parser = argparse.ArgumentParser(description="Alle Fourier-Beispiele kompilieren und ausführen.")
+    parser = argparse.ArgumentParser(description="Alle Dedekind-Beispiele kompilieren und ausführen.")
     parser.add_argument("-v", "--verbose", action="store_true", help="Vollständige Ausgabe pro Beispiel")
     parser.add_argument("-q", "--quiet", action="store_true", help="Nur Zusammenfassung (ein Zeile pro Datei)")
     parser.add_argument("--compile", action="store_true", help="Nur kompilieren, nicht ausführen")
@@ -33,13 +33,13 @@ def main():
         print(f"Fehler: Beispiele-Ordner nicht gefunden: {EXAMPLES_DIR}")
         sys.exit(1)
 
-    # Alle .fourier-Dateien finden (sortiert für reproduzierbare Reihenfolge)
-    fourier_files = sorted(
+    # Alle .ddk-Dateien finden (sortiert für reproduzierbare Reihenfolge)
+    ddk_files = sorted(
         f for f in os.listdir(EXAMPLES_DIR)
-        if f.endswith(".fourier") and (not args.filter or args.filter in f)
+        if f.endswith(".ddk") and (not args.filter or args.filter in f)
     )
-    if not fourier_files:
-        print("Keine .fourier-Dateien gefunden.")
+    if not ddk_files:
+        print("Keine .ddk-Dateien gefunden.")
         sys.exit(0)
 
     # Compiler importieren (src muss im Pfad sein)
@@ -52,7 +52,7 @@ def main():
         sys.exit(1)
 
     results = []
-    for filename in fourier_files:
+    for filename in ddk_files:
         filepath = os.path.join(EXAMPLES_DIR, filename)
         try:
             with open(filepath, "r", encoding="utf-8") as f:
@@ -103,7 +103,7 @@ def main():
     # Ausgabe
     if not args.quiet:
         print("=" * 60)
-        print("Fourier-Beispiele: Kompilieren & Ausführen")
+        print("Dedekind-Beispiele: Kompilieren & Ausführen")
         print("=" * 60)
     passed = sum(1 for _, ok, _ in results if ok)
     failed = len(results) - passed

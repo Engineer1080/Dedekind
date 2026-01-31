@@ -1,6 +1,6 @@
-# Fourier — IDE-Integration und Fourier Studio (Wissenschaftler-IDE)
+# Dedekind — IDE-Integration und Dedekind Studio (Wissenschaftler-IDE)
 
-**Fourier Language**  
+**Dedekind Language**  
 Draft: January 2026
 
 ---
@@ -9,28 +9,28 @@ Draft: January 2026
 
 Zwei Säulen sollen parallel verfolgt werden:
 
-1. **Fourier nahtlos in bestehenden IDEs** — VS Code, Cursor, Jupyter — um **Beliebtheit und Reichweite** zu erhöhen. Nutzer können Fourier dort einsetzen, wo sie ohnehin arbeiten.
-2. **Fourier Studio als überlegene IDE für Wissenschaftler** — mit Einheitenchecks, Plots, nativer Postgres-Einbindung, LaTeX-Export und **agentischer KI auf Basis lokal ausgeführter Modelle** (Datenschutz, Kosten). Fourier Studio ist **kommerziell** und finanziert das Gesamtprojekt (Open-Source-Compiler, Sprache, Community).
+1. **Dedekind nahtlos in bestehenden IDEs** — VS Code, Cursor, Jupyter — um **Beliebtheit und Reichweite** zu erhöhen. Nutzer können Dedekind dort einsetzen, wo sie ohnehin arbeiten.
+2. **Dedekind Studio als überlegene IDE für Wissenschaftler** — mit Einheitenchecks, Plots, nativer Postgres-Einbindung, LaTeX-Export und **agentischer KI auf Basis lokal ausgeführter Modelle** (Datenschutz, Kosten). Dedekind Studio ist **kommerziell** und finanziert das Gesamtprojekt (Open-Source-Compiler, Sprache, Community).
 
-**Leitprinzip**: Der **Fourier-Compiler und die Sprache bleiben Open Source**; Fourier Studio ist das kostenpflichtige Produkt, das Wissenschaftlern die beste UX bietet und das Projekt trägt.
+**Leitprinzip**: Der **Dedekind-Compiler und die Sprache bleiben Open Source**; Dedekind Studio ist das kostenpflichtige Produkt, das Wissenschaftlern die beste UX bietet und das Projekt trägt.
 
 ---
 
 ## 2. Falls Fork: sinnvolle Kandidaten
 
-Wenn Fourier Studio **nicht bei Null** starten soll, sind folgende **Fork-Kandidaten** realistisch (nach Aufwand/Nutzen):
+Wenn Dedekind Studio **nicht bei Null** starten soll, sind folgende **Fork-Kandidaten** realistisch (nach Aufwand/Nutzen):
 
 | Kandidat | Beschreibung | Pro | Contra |
 |----------|--------------|-----|--------|
 | **Eclipse Theia** | VS-Code-kompatible IDE (TypeScript), explizit zum **Forken und Einbetten** gedacht. | Gleiche Extension-API wie VS Code; weniger Monolith; Cloud-/Desktop-Builds. | Trotzdem großes Repo; eigene Releases/Upstream-Merge. |
-| **JupyterLab** | Notebook-zentrierte IDE; ihr plant eh einen Fourier-Kernel. | Wissenschaftler kennen es; Plugins (Kernel, MIME). | Stärker Notebook- als Skript-orientiert; „Fourier Lab“ wäre eher ein angepasstes JupyterLab. |
-| **Spyder** | Schlanke wissenschaftliche IDE (Python, Qt). | Klein, domänennah (Plots, Variablen-Explorer). | Python-zentrisch; Fourier müsste als „Kernel“/Backend angebunden werden; UI in Python/Qt. |
+| **JupyterLab** | Notebook-zentrierte IDE; ihr plant eh einen Dedekind-Kernel. | Wissenschaftler kennen es; Plugins (Kernel, MIME). | Stärker Notebook- als Skript-orientiert; „Dedekind Lab“ wäre eher ein angepasstes JupyterLab. |
+| **Spyder** | Schlanke wissenschaftliche IDE (Python, Qt). | Klein, domänennah (Plots, Variablen-Explorer). | Python-zentrisch; Dedekind müsste als „Kernel“/Backend angebunden werden; UI in Python/Qt. |
 | **RStudio** | Open-Source-IDE für R (C++/Qt + Electron-ähnliche Teile). | Bewährtes Wissenschafts-IDE-Layout (Konsole, Plots, Environment). | Sehr R-spezifisch; Fork wäre eher **Inspiration** (Layout, Features) als wörtlicher Code-Fork. |
 
 **Empfehlung**:  
 - **Theia** eignet sich, wenn ihr eine „VS-Code-artige“ eigene IDE (Desktop/Web) wollt und den Merge-/Release-Aufwand eingeht.  
-- **JupyterLab** eignet sich, wenn „Fourier in Notebooks“ im Vordergrund steht und ihr das UI nur anpassen, nicht neu bauen wollt.  
-- **Kein voller Fork**: Statt eine komplette IDE zu forken, kann Fourier Studio einen **Editor-Kern** (z. B. **Monaco** oder **CodeMirror 6**) einbetten und den Rest (Panels, Run, Plots, Postgres, KI) selbst bauen. Dann startet ihr „bei Null“ nur bei der IDE-Logik, nicht beim Editor – das ist oft der beste Kompromiss.
+- **JupyterLab** eignet sich, wenn „Dedekind in Notebooks“ im Vordergrund steht und ihr das UI nur anpassen, nicht neu bauen wollt.  
+- **Kein voller Fork**: Statt eine komplette IDE zu forken, kann Dedekind Studio einen **Editor-Kern** (z. B. **Monaco** oder **CodeMirror 6**) einbetten und den Rest (Panels, Run, Plots, Postgres, KI) selbst bauen. Dann startet ihr „bei Null“ nur bei der IDE-Logik, nicht beim Editor – das ist oft der beste Kompromiss.
 
 ### 2.1 Ungefähre Codegröße (Zeilen Code)
 
@@ -61,22 +61,22 @@ Wenn Fourier Studio **nicht bei Null** starten soll, sind folgende **Fork-Kandid
 Eclipse Theia steht unter **EPL v2** (Eclipse Public License 2.0), teils mit **GPL v2** als Secondary License. Die EPL v2 erlaubt ausdrücklich:
 
 - **Kommerzielle Nutzung** – Nutzen, Ändern, Verteilen und **verkaufen** von Theia und darauf basierenden Produkten.
-- **Derivative Works** – Ein Fork bzw. ein darauf aufbauendes Produkt (z. B. „Fourier Studio“) ist ein zulässiges Derivative Work.
+- **Derivative Works** – Ein Fork bzw. ein darauf aufbauendes Produkt (z. B. „Dedekind Studio“) ist ein zulässiges Derivative Work.
 
 **Auflagen (weak copyleft):**
 
 - **Theia-Code und eure Änderungen daran** müssen unter EPL v2 stehen und beim **Vertrieb** des Produkts **Quellcode** der (geänderten) Theia-Teile bereitgestellt werden.
-- **Euer eigener, neuer Code** (z. B. Fourier-spezifische Panels, Postgres-Anbindung, Branding), der nur per Schnittstelle (Extension, Link) mit Theia verbunden ist, kann **proprietär** bleiben – die EPL verlangt keine Weitergabe des gesamten Produkts unter EPL.
+- **Euer eigener, neuer Code** (z. B. Dedekind-spezifische Panels, Postgres-Anbindung, Branding), der nur per Schnittstelle (Extension, Link) mit Theia verbunden ist, kann **proprietär** bleiben – die EPL verlangt keine Weitergabe des gesamten Produkts unter EPL.
 - Lizenzhinweise und Angabe der Änderungen sind erforderlich.
 
-**Praktisch:** Ihr könnt Theia forken, als Basis für „Fourier Studio“ nutzen und die IDE kommerziell vertreiben. Den Theia-Anteil (inkl. eurer Patches) müsst ihr unter EPL quelloffen machen; eure eigenen Module/Extensions könnt ihr proprietär lizenzieren. Für verbindliche Auslegung empfiehlt sich eine kurze rechtliche Prüfung (z. B. Lizenz-Compliance).
+**Praktisch:** Ihr könnt Theia forken, als Basis für „Dedekind Studio“ nutzen und die IDE kommerziell vertreiben. Den Theia-Anteil (inkl. eurer Patches) müsst ihr unter EPL quelloffen machen; eure eigenen Module/Extensions könnt ihr proprietär lizenzieren. Für verbindliche Auslegung empfiehlt sich eine kurze rechtliche Prüfung (z. B. Lizenz-Compliance).
 
 **Repo-Struktur:** Ja – dafür braucht ihr in der Regel **mehrere Repos** (oder zumindest eine klare Trennung):
 
 | Repo | Inhalt | Lizenz | Sichtbarkeit |
 |------|--------|--------|----------------|
 | **Theia-Fork (EPL)** | Theia-Code + eure Änderungen daran (Branding, kleine Anpassungen). | EPL v2 | **Öffentlich** – Quellcode beim Vertrieb bereitstellen (z. B. GitHub/GitLab public). |
-| **Fourier Studio (proprietär)** | Eure eigenen Module: Fourier-Integration, Einheiten-Panels, Postgres, KI, LaTeX-Export, Installer, etc. | Proprietär | **Privat** (oder nur Binär-Release ohne Source). |
+| **Dedekind Studio (proprietär)** | Eure eigenen Module: Dedekind-Integration, Einheiten-Panels, Postgres, KI, LaTeX-Export, Installer, etc. | Proprietär | **Privat** (oder nur Binär-Release ohne Source). |
 
 Build/Pipeline baut dann aus beiden Quellen das auslieferbare Produkt (z. B. Electron-App). Alternative: ein **Monorepo** mit getrennten Verzeichnissen und Lizenzen – dann müsst ihr beim Vertrieb trotzdem den **Quellcode der EPL-Teile** bereitstellen (z. B. als Export oder öffentliches Subtree-Repo). Zwei Repos (ein öffentlicher Theia-Fork, ein privates Studio-Add-on) sind einfacher für Lizenz-Compliance und saubere Grenze zwischen EPL und proprietär.
 
@@ -110,7 +110,7 @@ Wer **keine** Quellcode-Veröffentlichung will, sollte eine **permissive** Basis
 
 ### 2.6 Performanz: Unterscheiden sich moderne IDEs? („Kompilieren sie alle gleich schnell?“)
 
-**Kompilieren:** Wenn ihr in der IDE auf „Ausführen“ oder „Kompilieren“ klickt, startet die IDE in der Regel nur den **Compiler** (z. B. Fourier-Compiler, gcc, rustc). Die **Kompiliergeschwindigkeit** hängt vom **Compiler** ab, nicht von der IDE. Alle IDEs, die denselben Compiler aufrufen, sind in dieser Hinsicht gleich „schnell“ – die IDE kompiliert nicht selbst.
+**Kompilieren:** Wenn ihr in der IDE auf „Ausführen“ oder „Kompilieren“ klickt, startet die IDE in der Regel nur den **Compiler** (z. B. Dedekind-Compiler, gcc, rustc). Die **Kompiliergeschwindigkeit** hängt vom **Compiler** ab, nicht von der IDE. Alle IDEs, die denselben Compiler aufrufen, sind in dieser Hinsicht gleich „schnell“ – die IDE kompiliert nicht selbst.
 
 **IDE-Performanz (Start, Tippen, Speicher):** Hier **unterscheiden** sich IDEs sehr wohl:
 
@@ -139,7 +139,7 @@ Wenn ihr **zuerst auf Windows** starten wollt, kommen folgende Kandidaten in Fra
 | Kandidat | Lizenz | Art | Windows | Quellcode offenlegen? | Anmerkung |
 |----------|--------|-----|---------|------------------------|-----------|
 | **Lite XL** | **MIT** | Leichter nativer Editor (C + Lua) | Ja, Erstklassig | **Nein** | Sehr klein (<5 MB Bundle), Lua-Erweiterungen, nativer Look. Ideal für **native Basis + wenig Aufwand + keine Veröffentlichungspflicht**. |
-| **Spyder** | **MIT** | Wissenschafts-IDE (Python, Qt) | Ja (Qt) | **Nein** | Läuft auf Windows mit Qt; Plots, Variablen-Explorer, Plugin-Architektur. Gute Passform für „Fourier Studio“-Konzept, kein nativer Win32-Code. |
+| **Spyder** | **MIT** | Wissenschafts-IDE (Python, Qt) | Ja (Qt) | **Nein** | Läuft auf Windows mit Qt; Plots, Variablen-Explorer, Plugin-Architektur. Gute Passform für „Dedekind Studio“-Konzept, kein nativer Win32-Code. |
 | **VSCodium** / **VS Code** | **MIT** | Electron-IDE | Ja | **Nein** | Kein nativer Editor; großer Repo. Wenn ihr „VS-Code-Feeling“ auf Windows wollt und Electron akzeptiert. |
 | **Eclipse Theia** | **EPL v2** | Electron-IDE (TypeScript) | Ja | **Ja** (Theia-Anteile) | Wie zuvor: zwei Repos, Source-Release der Theia-Teile. |
 | **Notepad++** | **GPL v3** | Nativer Editor (C++, Scintilla) | Ja, Windows-nativ | **Ja** (Copyleft) | Klassischer Windows-Editor; Fork würde unter GPL quelloffen bleiben. |
@@ -149,17 +149,17 @@ Wenn ihr **zuerst auf Windows** starten wollt, kommen folgende Kandidaten in Fra
 **Empfehlung Windows-First:**
 
 - **Native + wenig Verwaltung + kein Code veröffentlichen:** **Lite XL** (MIT) forken – kleiner Codebase, C/Lua, Windows-Support, Erweiterungen in Lua; IDE-Logik (Run, Plots, Postgres, KI) ergänzen.
-- **Wissenschafts-IDE-Feeling + Windows:** **Spyder** (MIT) forken – Qt läuft gut auf Windows, Plots/Environment schon da, Fourier als Backend/Kernel anbinden.
+- **Wissenschafts-IDE-Feeling + Windows:** **Spyder** (MIT) forken – Qt läuft gut auf Windows, Plots/Environment schon da, Dedekind als Backend/Kernel anbinden.
 - **Nur Editor-Kern, Rest selbst:** **Scintilla** (BSD) in eine eigene Windows-App (z. B. C++/Qt oder Win32) einbetten – kein IDE-Fork, maximale Kontrolle, native, keine Veröffentlichungspflicht.
 
-### 2.8 Fourier Studio: Spyder-Fork mit nativ Python und Fourier (Entscheidung)
+### 2.8 Dedekind Studio: Spyder-Fork mit nativ Python und Dedekind (Entscheidung)
 
-**Fourier Studio** wird als **Spyder-Fork** umgesetzt und bietet **nativ Python und Fourier** in einer IDE:
+**Dedekind Studio** wird als **Spyder-Fork** umgesetzt und bietet **nativ Python und Dedekind** in einer IDE:
 
 - **Python** – wie in Spyder (IPython Console, Variable Explorer, Plots, Editor).
-- **Fourier** – Fourier-Konsole über den **Fourier Jupyter Kernel** (siehe `fourier_jupyter_kernel/` in diesem Repo); optional .fourier-Editor mit Run und Syntax-Highlighting.
+- **Dedekind** – Dedekind-Konsole über den **Dedekind Jupyter Kernel** (siehe `dedekind_jupyter_kernel/` in diesem Repo); optional .ddk-Editor mit Run und Syntax-Highlighting.
 
-Konkrete Phasen, technische Schritte und Abhängigkeiten sind in **[Fourier_Studio_Spyder_Fork.md](Fourier_Studio_Spyder_Fork.md)** beschrieben. Der Fourier-Kernel ist implementiert; nächster Schritt ist die Nutzung in Spyder („Connect to existing kernel“ oder Kernel-Auswahl bei neuer Konsole), danach der eigentliche Fork mit Branding „Fourier Studio“.
+Konkrete Phasen, technische Schritte und Abhängigkeiten sind in **[Dedekind_Studio_Spyder_Fork.md](Dedekind_Studio_Spyder_Fork.md)** beschrieben. Der Dedekind-Kernel ist implementiert; nächster Schritt ist die Nutzung in Spyder („Connect to existing kernel“ oder Kernel-Auswahl bei neuer Konsole), danach der eigentliche Fork mit Branding „Dedekind Studio“.
 
 ---
 
@@ -167,39 +167,39 @@ Konkrete Phasen, technische Schritte und Abhängigkeiten sind in **[Fourier_Stud
 
 | Säule | Ziel | Zielgruppe | Monetarisierung |
 |-------|------|------------|-----------------|
-| **Integration in bestehende IDEs** | Fourier überall nutzbar; mehr Nutzer, mehr Sichtbarkeit. | Alle, die VS Code/Cursor/Jupyter nutzen. | Indirekt: mehr Adoption → mehr Abos für Fourier Studio. |
-| **Fourier Studio** | Premium-IDE für Wissenschaftler: Einheiten, Plots, Postgres, LaTeX, lokale KI. | Forscher, Labore, Datenwissenschaftler (Datenschutz/Kosten-sensibel). | **Kommerziell**: Abo oder Lizenz; Finanzierung des Projekts. |
+| **Integration in bestehende IDEs** | Dedekind überall nutzbar; mehr Nutzer, mehr Sichtbarkeit. | Alle, die VS Code/Cursor/Jupyter nutzen. | Indirekt: mehr Adoption → mehr Abos für Dedekind Studio. |
+| **Dedekind Studio** | Premium-IDE für Wissenschaftler: Einheiten, Plots, Postgres, LaTeX, lokale KI. | Forscher, Labore, Datenwissenschaftler (Datenschutz/Kosten-sensibel). | **Kommerziell**: Abo oder Lizenz; Finanzierung des Projekts. |
 
 ---
 
-## 4. Phase 1: Fourier in bestehenden IDEs (Reichweite)
+## 4. Phase 1: Dedekind in bestehenden IDEs (Reichweite)
 
-**Ziel**: Fourier in VS Code, Cursor und Jupyter nahtlos nutzbar machen; keine eigene IDE nötig, um Fourier zu lernen oder einzusetzen.
+**Ziel**: Dedekind in VS Code, Cursor und Jupyter nahtlos nutzbar machen; keine eigene IDE nötig, um Dedekind zu lernen oder einzusetzen.
 
 ### 4.1 VS Code / Cursor Extension
 
 | Schritt | Inhalt | Aufwand (grober Richtwert) |
 |---------|--------|----------------------------|
-| **Sprach-Support** | Syntax-Highlighting für `.fourier`; ggf. TextMate-Grammatik aus bestehendem Lexer. | 1–2 Wochen |
-| **Run & Debug** | „Fourier ausführen“ über Compiler-Aufruf; Ausgabe in integrierter Konsole. Optional: Debug-Adapter (Breakpoints, Variablen). | 2–4 Wochen |
+| **Sprach-Support** | Syntax-Highlighting für `.ddk`; ggf. TextMate-Grammatik aus bestehendem Lexer. | 1–2 Wochen |
+| **Run & Debug** | „Dedekind ausführen“ über Compiler-Aufruf; Ausgabe in integrierter Konsole. Optional: Debug-Adapter (Breakpoints, Variablen). | 2–4 Wochen |
 | **Einheiten-Hinweise** | LSP-ähnlich oder Inlay-Hints: angezeigte Einheit von Ausdrücken (z. B. `1[m] + 2[m]` → `3[m]`). Nutzung des bestehenden `units_checker` / Compiler. | 2–3 Wochen |
 | **Fehlermeldungen** | Compiler-Fehler (inkl. Einheiten) in Problems-Liste und im Editor mit Zeile/Kontext. | 1 Woche |
 
-**Technik**: Extension mit TypeScript/JavaScript; Aufruf des Fourier-Compilers (CLI oder Python-API); optional Language Server Protocol (LSP) für erweiterte Features.
+**Technik**: Extension mit TypeScript/JavaScript; Aufruf des Dedekind-Compilers (CLI oder Python-API); optional Language Server Protocol (LSP) für erweiterte Features.
 
-**Erfolgskriterium**: Nutzer können in VS Code/Cursor eine `.fourier`-Datei öffnen, ausführen und Einheiten-/Compiler-Fehler direkt im Editor sehen.
+**Erfolgskriterium**: Nutzer können in VS Code/Cursor eine `.ddk`-Datei öffnen, ausführen und Einheiten-/Compiler-Fehler direkt im Editor sehen.
 
-### 4.2 Jupyter Kernel für Fourier
+### 4.2 Jupyter Kernel für Dedekind
 
 | Schritt | Inhalt | Aufwand |
 |---------|--------|---------|
-| **Kernel-Spec** | Jupyter-Kernel, der Fourier-Code an den Compiler übergibt und Ergebnis/Plots zurückgibt. | 1–2 Wochen |
+| **Kernel-Spec** | Jupyter-Kernel, der Dedekind-Code an den Compiler übergibt und Ergebnis/Plots zurückgibt. | 1–2 Wochen |
 | **Zellen-Ausführen** | Code-Zelle → Compiler → Ausführung → stdout/stderr/Plots in Notebook. | 1 Woche |
 | **Variablen/State** | Persistenter Laufzeit-Kontext über Zellen hinweg (wie bei Python-Kernel). | 1–2 Wochen |
 
-**Nutzen**: Wissenschaftler arbeiten oft in Notebooks; Fourier in Jupyter ermöglicht interaktives Experimentieren (Kinetik, Fitting, Plots) in bekannter Umgebung.
+**Nutzen**: Wissenschaftler arbeiten oft in Notebooks; Dedekind in Jupyter ermöglicht interaktives Experimentieren (Kinetik, Fitting, Plots) in bekannter Umgebung.
 
-**Erfolgskriterium**: Jupyter-Notebook mit Fourier-Kernel läuft; Zellen ausführbar, Plots anzeigbar.
+**Erfolgskriterium**: Jupyter-Notebook mit Dedekind-Kernel läuft; Zellen ausführbar, Plots anzeigbar.
 
 ### 4.3 Abhängigkeiten und Reihenfolge
 
@@ -209,33 +209,33 @@ Konkrete Phasen, technische Schritte und Abhängigkeiten sind in **[Fourier_Stud
 
 ---
 
-## 5. Phase 2: Fourier Studio — Überlegene Wissenschaftler-IDE
+## 5. Phase 2: Dedekind Studio — Überlegene Wissenschaftler-IDE
 
-**Ziel**: Fourier Studio wird die **Referenz-IDE für Fourier** mit Features, die in allgemeinen IDEs nicht oder nur mit Aufwand verfügbar sind. Orientierung an RStudio (domänenspezifisch, wissenschaftsnah), aber mit Fokus auf Einheiten, Datenbanken, LaTeX und **lokale KI**.
+**Ziel**: Dedekind Studio wird die **Referenz-IDE für Dedekind** mit Features, die in allgemeinen IDEs nicht oder nur mit Aufwand verfügbar sind. Orientierung an RStudio (domänenspezifisch, wissenschaftsnah), aber mit Fokus auf Einheiten, Datenbanken, LaTeX und **lokale KI**.
 
 ### 5.1 Feature-Übersicht (Zielbild)
 
 | Feature | Beschreibung | Priorität |
 |---------|--------------|-----------|
 | **Einheitenchecks im Editor** | Live oder on-save: Einheiten-Fehler (z. B. `1[m] + 1[s]`) markieren, Inlay-Hints für Einheiten von Ausdrücken. Nutzung `units_checker` + Compiler. | Hoch |
-| **Plots integriert** | Ausgabe von `plot()` und ggf. weiteren Visualisierungen in einem IDE-Panel (wie bereits in Fourier Studio); Export als Bild/PDF. | Hoch (teilweise vorhanden) |
-| **Native Postgres-Einbindung** | Verbindung zu PostgreSQL: Tabellen anzeigen, Abfragen in Fourier oder SQL ausführen, Ergebnisse als Tensoren/Listen nutzen. Für Labor-Daten, Messreihen, Metadaten. | Hoch |
+| **Plots integriert** | Ausgabe von `plot()` und ggf. weiteren Visualisierungen in einem IDE-Panel (wie bereits in Dedekind Studio); Export als Bild/PDF. | Hoch (teilweise vorhanden) |
+| **Native Postgres-Einbindung** | Verbindung zu PostgreSQL: Tabellen anzeigen, Abfragen in Dedekind oder SQL ausführen, Ergebnisse als Tensoren/Listen nutzen. Für Labor-Daten, Messreihen, Metadaten. | Hoch |
 | **LaTeX-Export** | Auswahl von Code/Formeln → Export als LaTeX (bestehendes `export_to_latex`); in IDE als „Kopieren als LaTeX“ oder Sidebar-Vorschau. | Mittel |
-| **Agentische KI (lokal)** | KI-Assistent ähnlich Cursor (Code vervollständigen, Erklären, Refaktorieren, „Fourier-Code aus Beschreibung erzeugen“), aber **auf starken lokal ausgeführten Modellen** (z. B. Ollama, LM Studio, ggml). Begründung: **Datenschutz** (kein Code in die Cloud), **Kosten** (keine API-Gebühren). | Hoch |
+| **Agentische KI (lokal)** | KI-Assistent ähnlich Cursor (Code vervollständigen, Erklären, Refaktorieren, „Dedekind-Code aus Beschreibung erzeugen“), aber **auf starken lokal ausgeführten Modellen** (z. B. Ollama, LM Studio, ggml). Begründung: **Datenschutz** (kein Code in die Cloud), **Kosten** (keine API-Gebühren). | Hoch |
 | **Workspace / Environment** | Variablen, Konstanten, Einheiten nach Ausführung anzeigen (ähnlich RStudio Environment). | Mittel |
-| **Quarto/Markdown** | Fourier-Code-Blöcke in Markdown/Quarto-Dokumenten ausführen (optional, später). | Niedrig |
+| **Quarto/Markdown** | Dedekind-Code-Blöcke in Markdown/Quarto-Dokumenten ausführen (optional, später). | Niedrig |
 
 ### 5.2 Agentische KI mit lokalen Modellen — Detail
 
 - **Anforderung**: Kein zwingender Upload von Code zu externen Diensten; Nutzer mit sensiblen Daten (Pharma, Klinik, Behörden) können KI nutzen.
 - **Technik**: Integration mit **Ollama**, **LM Studio** oder vergleichbaren lokalen LLM-Servern; IDE sendet nur an localhost. Modelle: z. B. Llama, Mistral, Qwen (Code-fähig).
-- **Funktionen**: Code-Vervollständigung, „Erkläre diesen Block“, „Schreibe Fourier-Code für …“, Refactoring, Einheiten-Erklärungen. Optional: Hybrid (lokal Standard, Cloud optional für Nutzer, die es wünschen).
-- **Abgrenzung zu Cursor**: Cursor setzt auf Cloud-Modelle; Fourier Studio positioniert sich mit **„KI ohne Daten zu verlassen“** und **kalkulierbaren Kosten** für Teams.
+- **Funktionen**: Code-Vervollständigung, „Erkläre diesen Block“, „Schreibe Dedekind-Code für …“, Refactoring, Einheiten-Erklärungen. Optional: Hybrid (lokal Standard, Cloud optional für Nutzer, die es wünschen).
+- **Abgrenzung zu Cursor**: Cursor setzt auf Cloud-Modelle; Dedekind Studio positioniert sich mit **„KI ohne Daten zu verlassen“** und **kalkulierbaren Kosten** für Teams.
 
 ### 5.3 Native Postgres-Einbindung — Detail
 
-- **Anwendung**: Labor-Daten, Messreihen, Stichproben-Metadaten in Postgres; Abfragen in der IDE, Ergebnis direkt in Fourier weiterverarbeiten (z. B. `fit`, `plot`).
-- **Umsetzung**: In Fourier Studio ein **Daten-Panel** oder **Query-Editor**: Verbindung (Host, Port, DB, User, Passwort) konfigurieren; SQL ausführen oder einfache Fourier-API (z. B. `db_query("SELECT ...")`) die Resultate als Listen/Tensoren bereitstellt. Optional: Fourier-Sprache um `sql`-Blöcke oder eine `postgres`-Bibliothek erweitern (Runtime).
+- **Anwendung**: Labor-Daten, Messreihen, Stichproben-Metadaten in Postgres; Abfragen in der IDE, Ergebnis direkt in Dedekind weiterverarbeiten (z. B. `fit`, `plot`).
+- **Umsetzung**: In Dedekind Studio ein **Daten-Panel** oder **Query-Editor**: Verbindung (Host, Port, DB, User, Passwort) konfigurieren; SQL ausführen oder einfache Dedekind-API (z. B. `db_query("SELECT ...")`) die Resultate als Listen/Tensoren bereitstellt. Optional: Dedekind-Sprache um `sql`-Blöcke oder eine `postgres`-Bibliothek erweitern (Runtime).
 - **Lizenz**: PostgreSQL ist Open Source; Treiber (z. B. psycopg2, node-postgres) verfügbar.
 
 ### 5.4 Implementierungs-Reihenfolge (Phase 2)
@@ -245,36 +245,36 @@ Konkrete Phasen, technische Schritte und Abhängigkeiten sind in **[Fourier_Stud
 | **2a** | Einheitenchecks im Editor (Fehler markieren, Hover); Plots-Panel robuster und exportierbar. | Bestehender Compiler, `units_checker` |
 | **2b** | LaTeX-Export aus IDE (Button/ Kontextmenü „Als LaTeX kopieren“). | `export_to_latex` |
 | **2c** | Lokale KI-Integration (Ollama/LM Studio): Chat-Panel, Code-Actions (Erklären, Vervollständigen). | Lokaler LLM-Server, API-Anbindung |
-| **2d** | Postgres: Verbindungsdialog, Query-Editor, Ergebnis-Tabelle; optional Fourier-Runtime-Funktion `db_query`. | Postgres-Client in Studio-Backend |
+| **2d** | Postgres: Verbindungsdialog, Query-Editor, Ergebnis-Tabelle; optional Dedekind-Runtime-Funktion `db_query`. | Postgres-Client in Studio-Backend |
 | **2e** | Workspace/Environment-Panel; optional Quarto/Markdown. | Laufzeit-Status vom Compiler/Runtime |
 
 ---
 
-## 6. Phase 3: Kommerzialisierung von Fourier Studio
+## 6. Phase 3: Kommerzialisierung von Dedekind Studio
 
-**Ziel**: Fourier Studio ist das **kostenpflichtige Produkt**; Erlöse finanzieren Entwicklung von Compiler, Sprache, Doku und Community.
+**Ziel**: Dedekind Studio ist das **kostenpflichtige Produkt**; Erlöse finanzieren Entwicklung von Compiler, Sprache, Doku und Community.
 
 ### 6.1 Lizenzmodell (Vorschlag)
 
 | Stufe | Zielgruppe | Inhalt | Einnahme |
 |-------|------------|--------|----------|
-| **Kostenlos / Community** | Einsteiger, Open-Source-Projekte | Fourier Studio mit eingeschränkten Features (z. B. keine Postgres, keine KI oder nur eingeschränkte lokale KI); oder zeitlich begrenzte Vollversion. | Sichtbarkeit, Adoption |
+| **Kostenlos / Community** | Einsteiger, Open-Source-Projekte | Dedekind Studio mit eingeschränkten Features (z. B. keine Postgres, keine KI oder nur eingeschränkte lokale KI); oder zeitlich begrenzte Vollversion. | Sichtbarkeit, Adoption |
 | **Pro / Team** | Einzelne Forscher, kleine Teams | Volle Features: Einheitenchecks, Plots, Postgres, LaTeX, lokale KI; Updates; optional Support. | Abo (monatlich/jährlich) |
 | **Enterprise** | Institute, Firmen, Behörden | Pro-Features + zentrales Lizenzmanagement, SSO, Compliance, priorisierter Support. | Jahreslizenz, Volumen |
 
-**Fourier-Sprache und -Compiler** bleiben **Open Source** (MIT o. ä.); Nutzer können weiterhin in VS Code/Cursor/Jupyter ohne Fourier Studio arbeiten. Fourier Studio ist der **Premium-Arbeitsplatz** für alle, die maximale UX und integrierte Wissenschafts-Features wollen.
+**Dedekind-Sprache und -Compiler** bleiben **Open Source** (MIT o. ä.); Nutzer können weiterhin in VS Code/Cursor/Jupyter ohne Dedekind Studio arbeiten. Dedekind Studio ist der **Premium-Arbeitsplatz** für alle, die maximale UX und integrierte Wissenschafts-Features wollen.
 
 ### 6.2 Finanzfluss
 
-- **Einnahmen**: Fourier Studio Abos/Lizenzen.
-- **Verwendung**: Entwicklung Fourier Studio (IDE, Postgres, KI-Integration); Entwicklung Fourier-Compiler/Runtime (Open Source); Doku, Beispiele, Community-Events; ggf. Stipendien für Beiträgende.
+- **Einnahmen**: Dedekind Studio Abos/Lizenzen.
+- **Verwendung**: Entwicklung Dedekind Studio (IDE, Postgres, KI-Integration); Entwicklung Dedekind-Compiler/Runtime (Open Source); Doku, Beispiele, Community-Events; ggf. Stipendien für Beiträgende.
 - **Transparenz**: Optional „Open Book“ oder jährlicher Bericht, welcher Anteil in Open Source fließt — stärkt Vertrauen und Community.
 
 ### 6.3 Rechtliches und Abgrenzung
 
 - **Datenschutz**: Lokale KI als Standard dokumentieren; keine Nutzerdaten/Code an Drittanbieter ohne explizite Einwilligung (bei optionaler Cloud-KI).
-- **Nutzungsbedingungen**: Klarstellen: Fourier Studio ist proprietäre Software; Fourier Language/Compiler sind Open Source und unabhängig nutzbar.
-- **Kompatibilität**: VS Code Extension und Jupyter Kernel bleiben **kostenlos**, damit die Sprache weit verbreitet bleibt; Fourier Studio wirbt mit Mehrwert (Postgres, KI, integrierte Wissenschafts-Features).
+- **Nutzungsbedingungen**: Klarstellen: Dedekind Studio ist proprietäre Software; Dedekind Language/Compiler sind Open Source und unabhängig nutzbar.
+- **Kompatibilität**: VS Code Extension und Jupyter Kernel bleiben **kostenlos**, damit die Sprache weit verbreitet bleibt; Dedekind Studio wirbt mit Mehrwert (Postgres, KI, integrierte Wissenschafts-Features).
 
 ---
 
@@ -294,14 +294,14 @@ Konkrete Phasen, technische Schritte und Abhängigkeiten sind in **[Fourier_Stud
 | Phase | Inhalt | Zeitrahmen (Orientierung) |
 |-------|--------|----------------------------|
 | **Phase 1** | VS Code Extension (Syntax, Run, Fehler); danach Jupyter Kernel. | 2–4 Monate |
-| **Phase 2a–2c** | Fourier Studio: Einheiten im Editor, Plots, LaTeX, lokale KI. | 3–6 Monate |
+| **Phase 2a–2c** | Dedekind Studio: Einheiten im Editor, Plots, LaTeX, lokale KI. | 3–6 Monate |
 | **Phase 2d–2e** | Postgres, Workspace-Panel; optional Quarto. | 2–4 Monate |
-| **Phase 3** | Lizenzmodell, Bezahlfluss, Pro/Enterprise-Tiers; Launch von Fourier Studio kommerziell. | Parallel zu Phase 2, Launch nach 2a–2c |
+| **Phase 3** | Lizenzmodell, Bezahlfluss, Pro/Enterprise-Tiers; Launch von Dedekind Studio kommerziell. | Parallel zu Phase 2, Launch nach 2a–2c |
 
 ---
 
 ## 9. Zusammenfassung
 
-- **Fourier in bestehenden IDEs** (VS Code, Cursor, Jupyter) erhöht Reichweite und Beliebtheit; **Fourier Studio** wird die **Premium-IDE für Wissenschaftler** mit Einheitenchecks, Plots, Postgres, LaTeX und **agentischer KI auf lokalen Modellen**.
-- **Fourier Studio ist kommerziell**; Erlöse finanzieren das Gesamtprojekt; **Sprache und Compiler bleiben Open Source**.
+- **Dedekind in bestehenden IDEs** (VS Code, Cursor, Jupyter) erhöht Reichweite und Beliebtheit; **Dedekind Studio** wird die **Premium-IDE für Wissenschaftler** mit Einheitenchecks, Plots, Postgres, LaTeX und **agentischer KI auf lokalen Modellen**.
+- **Dedekind Studio ist kommerziell**; Erlöse finanzieren das Gesamtprojekt; **Sprache und Compiler bleiben Open Source**.
 - Diese Roadmap ergänzt die [Commercialization_Options](Commercialization_Options.md) um die konkrete IDE- und Produktstrategie und sollte mit der [Features Implementation Roadmap](Features_Implementation_Roadmap.md) sowie der Chemie/Biologie-Roadmap abgestimmt bleiben (Compiler-Features, Einheiten, LaTeX).

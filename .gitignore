@@ -14,5 +14,5 @@ dist/
 .vscode/
 .idea/
 
-# Fourier
+# Dedekind
 *.log

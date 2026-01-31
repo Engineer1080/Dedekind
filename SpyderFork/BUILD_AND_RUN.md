@@ -1,4 +1,4 @@
-# Spyder (Fourier Studio) bauen und ausführen
+# Spyder (Dedekind Studio) bauen und ausführen
 
 Spyder ist eine **Python-Anwendung** – es gibt keine klassische „Kompilation“ wie bei C++. Ablauf: Umgebung einrichten, Abhängigkeiten installieren, Spyder im Entwicklungsmodus starten.
 
@@ -11,7 +11,7 @@ Spyder ist eine **Python-Anwendung** – es gibt keine klassische „Kompilation
 
 ## Option A: Mit Conda (empfohlen, besonders unter Windows)
 
-Aus dem **FourierLanguage**-Repo-Root (oder direkt in `SpyderFork/`):
+Aus dem **DedekindLanguage**-Repo-Root (oder direkt in `SpyderFork/`):
 
 ```bash
 # 1. Conda-Umgebung anlegen und aktivieren
@@ -68,4 +68,4 @@ python bootstrap.py
 | Spyder installieren | `pip install -e .` |
 | **Starten** | **`python bootstrap.py`** |
 
-Nach dem ersten `pip install -e .` reicht zum Starten jeweils `python bootstrap.py` (aus `SpyderFork/`). Für Fourier Studio: Nach euren Änderungen (Branding, Fourier-Kernel) ebenfalls `python bootstrap.py` aus diesem Ordner ausführen.
+Nach dem ersten `pip install -e .` reicht zum Starten jeweils `python bootstrap.py` (aus `SpyderFork/`). Für Dedekind Studio: Nach euren Änderungen (Branding, Dedekind-Kernel) ebenfalls `python bootstrap.py` aus diesem Ordner ausführen.

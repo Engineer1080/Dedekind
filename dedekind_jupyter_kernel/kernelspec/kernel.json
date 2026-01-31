@@ -1,0 +1,11 @@
+{
+  "argv": [
+    "python",
+    "-m",
+    "dedekind_jupyter_kernel",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": "Dedekind",
+  "language": "dedekind"
+}

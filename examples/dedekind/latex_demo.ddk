@@ -1,0 +1,12 @@
+// LaTeX-Export Demo: Formeln aus diesem File mit --latex exportieren
+// Beispiel: python -m src.compiler.compiler examples/dedekind/latex_demo.ddk --latex
+
+a = 2
+b = 3
+t = 0.0
+m = 1.0
+c = 1.0
+x = a * sin(t) + b * cos(t)
+E = m * c^2
+ratio = (a + b) / (a - b)
+print("LaTeX-Demo: Formeln siehe Export.")

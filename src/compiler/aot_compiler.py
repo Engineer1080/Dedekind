@@ -7,8 +7,8 @@ from .mlir_codegen import MLIRCodeGenerator
 
 class AOTCompiler:
     """
-    Fourier Ahead-of-Time (AOT) Compiler.
-    Orchestrates the transition from Fourier source to native binaries.
+    Dedekind Ahead-of-Time (AOT) Compiler.
+    Orchestrates the transition from Dedekind source to native binaries.
     """
     def __init__(self, source_path: str):
         self.source_path = source_path
@@ -20,7 +20,7 @@ class AOTCompiler:
         Runs the full AOT pipeline.
         Returns the path to the generated binary.
         """
-        print(f"Fourier AOT: Compiling {self.source_path}...")
+        print(f"Dedekind AOT: Compiling {self.source_path}...")
         
         # 1. Lexing & Parsing
         with open(self.source_path, 'r', encoding='utf-8') as f:
@@ -38,7 +38,7 @@ class AOTCompiler:
         mlir_path = os.path.join(self.output_dir, f"{self.base_name}.mlir")
         with open(mlir_path, 'w', encoding='utf-8') as f:
             f.write(mlir_ir)
-        print(f"Fourier AOT: MLIR generated at {mlir_path}")
+        print(f"Dedekind AOT: MLIR generated at {mlir_path}")
         
         # 3. Native Mock (Prototype v0.4)
         # In a full implementation, we would call mlir-opt and mlir-translate here.
@@ -54,19 +54,19 @@ class AOTCompiler:
         if success:
             return binary_path
         else:
-            print("Fourier AOT: Native compiler not found. Project is ready for AOT lowering.")
+            print("Dedekind AOT: Native compiler not found. Project is ready for AOT lowering.")
             return cpp_path # Return the C++ file for inspection if binary fails
 
     def _generate_cpp_stubs(self, mlir_ir: str, output_path: str):
-        """Generates a C++ representation of the Fourier program for native compilation."""
+        """Generates a C++ representation of the Dedekind program for native compilation."""
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write("#include <iostream>\n")
             f.write("#include <vector>\n\n")
-            f.write("// Fourier Native Runtime Stubs\n")
+            f.write("// Dedekind Native Runtime Stubs\n")
             f.write("int main() {\n")
-            f.write("    std::cout << \"--- Fourier Native AOT Runtime ---\" << std::endl;\n")
+            f.write("    std::cout << \"--- Dedekind Native AOT Runtime ---\" << std::endl;\n")
             f.write("    std::cout << \"Executing MLIR-lowered kernels...\" << std::endl;\n")
-            f.write("    // The AOT compiler links the Fourier Dialect to LLVM here.\n")
+            f.write("    // The AOT compiler links the Dedekind Dialect to LLVM here.\n")
             f.write(f"    std::cout << \"Compiled from: {self.source_path}\" << std::endl;\n")
             f.write("    return 0;\n")
             f.write("}\n")
@@ -84,7 +84,7 @@ class AOTCompiler:
             for cmd in compilers:
                 try:
                     subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    print(f"Fourier AOT: Static binary created via {cmd[0]}")
+                    print(f"Dedekind AOT: Static binary created via {cmd[0]}")
                     return True
                 except:
                     continue

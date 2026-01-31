@@ -1,0 +1,37 @@
+fn main() {
+    print("--- Dedekind: Sparse CFD Simulation (Heat Diffusion) ---")
+    
+    // Grid Setup: 100x100 points
+    N = 100
+    total_nodes = N * N
+    print("Simulating 2D grid with 10,000 nodes.")
+    
+    // 1. Initial Temperature Field (Delta distribution in the middle)
+    T = random_matrix(N, N) * 0.0
+    T[50][50] = 100.0 // Heat source in the center
+    
+    // In a real CFD/FEM code, we'd build a sparse Laplacian L.
+    // For this demonstration, we'll use a sparse identity matrix as a placeholder
+    // to show the .sparse() functionality.
+    
+    print("Creating large sparse operator...")
+    // Imagine this is a 10,000 x 10,000 matrix
+    identity_dense = random_matrix(10, 10) // Small dense sample for clarity
+    identity_sparse = identity_dense.sparse()
+    
+    print("Sparse Tensor status:")
+    print(identity_sparse)
+    
+    // Simulation Step (Placeholder for diffusion iteration)
+    // T_new = T + dt * L * T
+    dt = 0.1
+    print("Running diffusion iteration...")
+    
+    // Dedekind's goal is to make these large ops efficient.
+    // We'll perform a simple addition to show sparse compatibility.
+    result = identity_sparse + identity_sparse
+    print("Sparse + Sparse operation successful.")
+    
+    print("--- Simulation Framework Initialized ---")
+}
+main()

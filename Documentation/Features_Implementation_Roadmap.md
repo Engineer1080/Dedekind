@@ -1,13 +1,13 @@
 # Features für Naturwissenschaftler — Implementierungs-Roadmap
 
-**Fourier Language**  
+**Dedekind Language**  
 Draft: January 2026
 
 ---
 
 ## 1. Ziel und Nutzen
 
-Diese Roadmap priorisiert und plant **sinnvolle Erweiterungen** der Fourier-Sprache speziell für Nutzer aus Physik, Chemie, Messtechnik und verwandten Fächern. Ziele:
+Diese Roadmap priorisiert und plant **sinnvolle Erweiterungen** der Dedekind-Sprache speziell für Nutzer aus Physik, Chemie, Messtechnik und verwandten Fächern. Ziele:
 
 - **Priorisierung**: Klare Reihenfolge nach Aufwand, Nutzen und Abhängigkeiten.
 - **Planbarkeit**: Konkrete Phasen mit Schritten und Erfolgskriterien.
@@ -27,7 +27,7 @@ Diese Roadmap priorisiert und plant **sinnvolle Erweiterungen** der Fourier-Spra
 | **Einheiten zur Compile-Zeit** | `1[m] + 1[s]` → Fehler beim Kompilieren statt zur Laufzeit; weniger Unit-Bugs. | Mittel | ✅ **Implementiert** (v0.9.5: `units_checker.py`, `compile_source(..., check_units=True)`, CLI `--no-units-check`) |
 | **Fitting / Regression** | `fit(model, data)` mit Gradient Descent oder MCMC; typisch für Kurvenanpassung. | Mittel | ✅ **Implementiert** (v0.9.2: `fit(loss_fn, params_init, data, method="gd"|"mcmc")`) |
 | **NUTS / VI** | Robusteres Bayesian Inference (NUTS) oder schnelle Approximation (VI); Metropolis oft langsam. | Mittel | Phase 4 (HMC ✅) |
-| **LaTeX-Export von Formeln** | Aus Fourier-Ausdrücken LaTeX erzeugen (für Papers/Notizen). | Mittel | ✅ **Implementiert** (v0.9.4: `export_to_latex(source)`, CLI `--latex`) |
+| **LaTeX-Export von Formeln** | Aus Dedekind-Ausdrücken LaTeX erzeugen (für Papers/Notizen). | Mittel | ✅ **Implementiert** (v0.9.4: `export_to_latex(source)`, CLI `--latex`) |
 | **Symbolische Ableitungen** | `diff(expr, x)` liefert Formel statt numerisches `grad()`; für Paper, Stabilitätsanalyse. | Mittel–hoch | Phase 5 |
 
 ---
@@ -52,7 +52,7 @@ Diese Roadmap priorisiert und plant **sinnvolle Erweiterungen** der Fourier-Spra
 
 1. **Mehr Verteilungen** in `ml_runtime.py`: `Exponential(rate)`, `Gamma(concentration, rate)`, `Beta(alpha, beta)`, `Poisson(rate)`; API wie `Normal`/`Uniform`: `sample(dist)`, `sample(dist, n)`, `log_prob(dist, value)`.
 2. **Numerische Integration** in `ml_runtime.py`: `integrate(f, a, b, n=100)` mit Trapezregel; differenzierbar, wenn `f` Tensor akzeptiert. Zusätzlich `sin(x)`, `cos(x)` für Ausdrücke.
-3. **Beispiele**: `examples/fourier/distributions_extended.fourier`, `examples/fourier/integration.fourier`.
+3. **Beispiele**: `examples/dedekind/distributions_extended.ddk`, `examples/dedekind/integration.ddk`.
 4. **Dokumentation**: Language Spec §15.8 (erweiterte Verteilungen), §15.10 (Integration & Math); README „What’s New in v0.9“.
 
 **Erfolgskriterium**: Erfüllt — beide Beispiele laufen fehlerfrei.
@@ -90,7 +90,7 @@ Diese Roadmap priorisiert und plant **sinnvolle Erweiterungen** der Fourier-Spra
 2. **API**: `compile_source(..., check_units=True)` (Default); CLI `--no-units-check` zum Abschalten.
 3. **Bekannte Konstanten**: `c`, `G`, `h`, `pi`, `e`, … mit Einheiten in `KNOWN_UNITS`; Identifier werden bei Bedarf aufgelöst.
 
-**Erfolgskriterium**: Erfüllt — `1[m] + 1[s]` führt zu Compiler-Fehler mit Zeile; alle Beispiele (inkl. `universal_constants.fourier`) laufen.
+**Erfolgskriterium**: Erfüllt — `1[m] + 1[s]` führt zu Compiler-Fehler mit Zeile; alle Beispiele (inkl. `universal_constants.ddk`) laufen.
 
 ---
 
@@ -101,7 +101,7 @@ Diese Roadmap priorisiert und plant **sinnvolle Erweiterungen** der Fourier-Spra
 **4a) Fitting / Regression** ✅ (v0.9.2, erweitert v0.9.4)
 
 1. **API**: `fit(loss_fn, params_init, data, method="gd"|"mcmc"|"hmc", lr=0.01, steps=500)` — minimiert `loss_fn(params, data)` via Gradient Descent, Metropolis-Hastings oder **HMC** (Hamiltonian Monte Carlo).
-2. **Implementierung**: In `ml_runtime.py`; GD mit PyTorch backward; MCMC via `metropolis`; HMC mit Leapfrog-Integration und Gradienten. Beispiele: `curve_fitting.fourier`, `hmc_fitting.fourier`.
+2. **Implementierung**: In `ml_runtime.py`; GD mit PyTorch backward; MCMC via `metropolis`; HMC mit Leapfrog-Integration und Gradienten. Beispiele: `curve_fitting.ddk`, `hmc_fitting.ddk`.
 
 **4b) HMC** ✅ (v0.9.4), NUTS / VI optional
 
@@ -111,8 +111,8 @@ Diese Roadmap priorisiert und plant **sinnvolle Erweiterungen** der Fourier-Spra
 **4c) LaTeX-Export** ✅ (v0.9.4)
 
 1. **AST → LaTeX**: Visitor in `src/compiler/latex_export.py` — Literal, Identifier, BinaryOp (+, -, *, /, ^), Call (sin, cos, exp, log, sqrt, …), Quantity, Subscript, Lambda in LaTeX-Strings.
-2. **API**: `export_to_latex(source_code)` im Modul `compiler`; CLI: `python -m src.compiler.compiler <file.fourier> --latex`. Ausgabe: Gleichungen (Zuweisungen/Returns) als LaTeX.
-3. **Beispiel**: `examples/fourier/latex_demo.fourier`; Ausgabe z. B. `E = m \cdot {c}^{2}`.
+2. **API**: `export_to_latex(source_code)` im Modul `compiler`; CLI: `python -m src.compiler.compiler <file.ddk> --latex`. Ausgabe: Gleichungen (Zuweisungen/Returns) als LaTeX.
+3. **Beispiel**: `examples/dedekind/latex_demo.ddk`; Ausgabe z. B. `E = m \cdot {c}^{2}`.
 
 **Erfolgskriterium**: Erfüllt — `fit(..., method="hmc")` liefert Posterior-Samples; `export_to_latex(source)` erzeugt lesbaren LaTeX für typische Formeln.
 
@@ -124,9 +124,9 @@ Diese Roadmap priorisiert und plant **sinnvolle Erweiterungen** der Fourier-Spra
 
 **Schritte**:
 
-1. **Option A — SymPy**: Fourier-AST → SymPy-Expr → `sympy.diff(expr, x)` → zurück in Fourier-AST oder direkt LaTeX/Code. Erfordert AST ↔ SymPy-Übersetzer (ähnlich Symbolic Simplification Phase 4).
+1. **Option A — SymPy**: Dedekind-AST → SymPy-Expr → `sympy.diff(expr, x)` → zurück in Dedekind-AST oder direkt LaTeX/Code. Erfordert AST ↔ SymPy-Übersetzer (ähnlich Symbolic Simplification Phase 4).
 2. **Option B — Eigenbau**: Eigenes Modul `symbolic_diff.py`: Visitor über AST, Ableitungsregeln für +, -, *, /, ^, `exp`, `log`, `sin`, `cos` etc.; Ausgabe neuer AST. Keine externe Abhängigkeit, aber begrenzt auf implementierte Regeln.
-3. **API**: `diff(expr, var)` — `expr` kann Fourier-Ausdruck (als String oder AST); Rückgabe vereinfachter Ausdruck (oder String/LaTeX).
+3. **API**: `diff(expr, var)` — `expr` kann Dedekind-Ausdruck (als String oder AST); Rückgabe vereinfachter Ausdruck (oder String/LaTeX).
 4. **Integration**: Mit Symbolic Simplification abstimmen (vereinfachte Ableitungen); optional mit LaTeX-Export kombinieren.
 
 **Erfolgskriterium**: Für polynomielle und einfache transzendente Ausdrücke liefert `diff(expr, x)` die korrekte Ableitung als Ausdruck; Dokumentation und Beispiel.
@@ -159,7 +159,7 @@ Diese Roadmap priorisiert und plant **sinnvolle Erweiterungen** der Fourier-Spra
 ## 7. Referenzen und nächste Schritte
 
 - **Bestehende Roadmap**: [Symbolic_Simplification_Roadmap.md](Symbolic_Simplification_Roadmap.md) — Einheiten in Vereinfachung (Phase 5 dort) mit Phase 3 hier abstimmen.
-- **Chemie & Biologie**: [Chemistry_Biology_Roadmap.md](Chemistry_Biology_Roadmap.md) — Einheiten mol/L/M, Beispiele (Kinetik, Dosis-Wirkung, Wachstum), Convenience-Funktionen, Doku „Fourier für Chemie & Biologie“.
+- **Chemie & Biologie**: [Chemistry_Biology_Roadmap.md](Chemistry_Biology_Roadmap.md) — Einheiten mol/L/M, Beispiele (Kinetik, Dosis-Wirkung, Wachstum), Convenience-Funktionen, Doku „Dedekind für Chemie & Biologie“.
 - **Language Specification**: §15 Standard Library; §12 Implementation Roadmap; „Beyond v1.0“.
 - **Codebasis**: `src/compiler/ml_runtime.py` (Stdlib), `src/compiler/codegen.py` (Built-ins), `src/compiler/compiler.py` (Pipeline), `src/compiler/parser.py` (AST, Zeileninfo).
 - **Nächster konkreter Schritt**: Phase 5 — Symbolische Ableitungen (`diff(expr, x)` als Formel); optional Phase 2/3 verfeinern (z. B. Spalte, IDE-Anzeige).

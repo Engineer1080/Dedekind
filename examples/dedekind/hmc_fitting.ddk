@@ -1,0 +1,29 @@
+fn main() {
+    print("--- Dedekind: HMC (Hamiltonian Monte Carlo) Fitting ---")
+
+    // Einfaches Modell: y = a*x + b; HMC liefert Posterior-Samples
+    x_data = [1.0, 2.0, 3.0, 4.0, 5.0]
+    y_data = [2.8, 5.1, 7.2, 9.0, 11.3]
+
+    fn loss(params, data) {
+        x = data[0]
+        y = data[1]
+        a = params[0]
+        b = params[1]
+        y_pred = a * x + b
+        diff = y_pred - y
+        return (diff * diff).sum()
+    }
+
+    data = [x_data, y_data]
+    params_init = [0.0, 0.0]
+    samples = fit(loss, params_init, data, method="hmc", lr=0.05, steps=200)
+
+    print("HMC-Samples Shape:")
+    print(samples.shape)
+    mean_params = samples.mean(0)
+    print("Mittel der Posterior-Samples (erwarte ca. a=2, b=1):")
+    print(mean_params)
+    print("\nHMC fitting aktiv.")
+}
+main()
