@@ -44,3 +44,7 @@ result.xml
 
 # Ignore setuptools development files in the PyLS subrepo
 external-deps/python-lsp-server/.installation-dir/
+
+# Virtual environment (should not be committed; contains platform-specific deps)
+.venv/
+venv/
