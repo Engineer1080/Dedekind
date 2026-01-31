@@ -1,0 +1,11 @@
+include scripts/*
+include img_src/*.ico
+include img_src/spyder.png
+include MANIFEST.in
+include README.md
+include LICENSE.txt
+include changelogs/Spyder-6.md
+include AUTHORS.txt
+include NOTICE.txt
+include bootstrap.py
+include install_dev_repos.py

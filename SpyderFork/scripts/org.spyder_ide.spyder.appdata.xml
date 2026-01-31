@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>org.spyder_ide.spyder</id>
+
+  <name>Spyder</name>
+  <summary>The Scientific Python Development Environment</summary>
+
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+
+  <recommends>
+    <control>pointing</control>
+    <control>keyboard</control>
+  </recommends>
+
+  <description>
+    <p>
+      Spyder is a powerful scientific environment written in Python, for Python, and designed by and for
+      scientists, engineers and data analysts.
+      It features a unique combination of the advanced editing, analysis, debugging and profiling
+      functionality of a comprehensive development tool with the data exploration, interactive execution,
+      deep inspection and beautiful visualization capabilities of an analysis package.
+    </p>
+    <p>
+      Furthermore, Spyder offers built-in integration with many popular scientific libraries, including NumPy,
+      SciPy, Pandas, IPython, QtConsole, Matplotlib, SymPy, and more, and can be extended further with full
+      plugin support. Spyder can also be used as a PyQt5 extension library, allowing you to build upon its
+      functionality and embed its components, such as the interactive console, in your own software.
+    </p>
+  </description>
+
+  <developer id="spyder-ide.org">
+    <name>The Spyder Project Contributors</name>
+  </developer>
+
+  <launchable type="desktop-id">spyder.desktop</launchable>
+
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/spyder-ide/spyder/master/img_src/screenshot.png</image>
+    </screenshot>
+  </screenshots>
+  <url type="homepage">https://www.spyder-ide.org/</url>
+  <url type="help">https://docs.spyder-ide.org</url>
+  <url type="faq">https://docs.spyder-ide.org/current/faq.html</url>
+  <url type="bugtracker">https://github.com/spyder-ide/spyder/issues</url>
+  <url type="donation">https://www.spyder-ide.org/donate</url>
+  <content_rating type="oars-1.1"/>
+  <releases>
+      <release version="v6.1.2" date="2025-12-17"/>
+      <release version="v6.1.1" date="2025-11-24"/>
+      <release version="v6.1.0" date="2025-10-02"/>
+      <release version="v6.0.8" date="2025-08-26"/>
+      <release version="v6.0.7" date="2025-05-22"/>
+      <release version="v6.0.6" date="2025-05-14"/>
+      <release version="v6.0.5" date="2025-03-26"/>
+      <release version="v6.0.4" date="2025-02-06"/>
+      <release version="v6.0.3" date="2024-12-10"/>
+      <release version="v6.0.2" date="2024-10-31"/>
+      <release version="v6.0.1" date="2024-09-23"/>
+      <release version="v6.0.0" date="2024-09-03"/>
+      <release version="v5.5.6" date="2024-08-27"/>
+      <release version="v5.5.5" date="2024-06-12"/>
+      <release version="v5.5.4" date="2024-04-09"/>
+      <release version="v5.5.3" date="2024-03-17"/>
+      <release version="v5.5.2" date="2024-03-13"/>
+      <release version="v5.5.1" date="2024-02-07"/>
+      <release version="v5.5.0" date="2023-11-08"/>
+      <release version="v5.4.5" date="2023-08-29"/>
+      <release version="v5.4.4" date="2023-07-19"/>
+      <release version="v5.4.3" date="2023-04-05"/>
+      <release version="v5.4.2" date="2023-01-18"/>
+      <release version="v5.4.1" date="2022-12-30"/>
+      <release version="v5.4.0" date="2022-11-04"/>
+  </releases>
+</component>

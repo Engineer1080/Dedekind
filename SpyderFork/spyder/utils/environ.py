@@ -1,0 +1,361 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright © Spyder Project Contributors
+# Licensed under the terms of the MIT License
+# (see spyder/__init__.py for details)
+
+"""
+Environment variable utilities.
+"""
+
+# Standard library imports
+import asyncio
+from functools import lru_cache
+import logging
+import os
+from pathlib import Path
+import re
+import sys
+from textwrap import dedent
+
+try:
+    import winreg
+except Exception:
+    pass
+
+# Third party imports
+import psutil
+from qtpy.QtWidgets import QMessageBox
+
+# Local imports
+from spyder.api.asyncdispatcher import AsyncDispatcher
+from spyder.api.translations import _
+from spyder.config.base import running_in_ci, get_conf_path
+from spyder.utils.icon_manager import ima
+from spyder.utils.programs import run_shell_command
+from spyder.widgets.collectionseditor import CollectionsEditor
+
+logger = logging.getLogger(__name__)
+
+
+@lru_cache
+def _get_user_env_script():
+    """
+    To get user environment variables from login and interactive startup files
+    on posix, both -l and -i flags must be used. Parsing the environment list
+    is problematic if the variable has a newline character, but Python's
+    os.environ can do this for us. However, executing Python in an interactive
+    shell in a subprocess causes Spyder to hang on Linux. Using a shell script
+    resolves the issue. Note that -i must be in the sha-bang line; if -i and
+    -l are swapped, Spyder will hang.
+    """
+    script_text = None
+    shell = os.getenv('SHELL', '/bin/bash')
+    user_env_script = Path(get_conf_path()) / 'user-env.sh'
+
+    if Path(shell).name in ('bash', 'zsh'):
+        script_text = dedent(
+            f"""\
+            #!{shell} -i
+            unset HISTFILE
+
+            # PackageKit's `command-not-found` package can cause recursion, so
+            # unset it here.
+            # Fixes spyder-ide/spyder#24716
+            if type command_not_found_handle >/dev/null 2>&1; then
+                unset -f command_not_found_handle
+            fi
+
+            {shell} -l -c "'{sys.executable}' -c 'import os; print(dict(os.environ))'"
+            """
+        )
+    else:
+        logger.info("Getting user environment variables is not supported "
+                    "for shell '%s'", shell)
+
+    if script_text is not None:
+        user_env_script.write_text(script_text)
+        user_env_script.chmod(0o744)  # Make it executable for the user
+
+    return str(user_env_script)
+
+
+def envdict2listdict(envdict):
+    """Dict --> Dict of lists"""
+    sep = os.path.pathsep
+    for key, val in envdict.items():
+        if isinstance(val, str) and sep in val:
+            envdict[key] = [path.strip() for path in val.split(sep)]
+    return envdict
+
+
+def listdict2envdict(listdict):
+    """Dict of lists --> Dict"""
+    for key, val in listdict.items():
+        if isinstance(val, list):
+            listdict[key] = os.path.pathsep.join(val)
+    return listdict
+
+
+@AsyncDispatcher()
+async def get_user_environment_variables() -> dict:
+    """
+    Get user environment variables from HKCU (Windows) or a subprocess (Unix).
+
+    Returns
+    -------
+    env_var : dict
+        Key-value pairs of environment variables. All values are strings.
+    """
+    env_var = {}
+
+    if os.name == 'nt':
+        key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment")
+        num_values = winreg.QueryInfoKey(key)[1]
+        env_var = dict(
+            [winreg.EnumValue(key, k)[:2] for k in range(num_values)]
+        )
+    elif os.name == 'posix':
+        # Detect if the Spyder process was launched from a system terminal.
+        # This is None if that was not the case.
+        launched_from_terminal = psutil.Process(os.getpid()).terminal()
+
+        # We only need to do this if Spyder was **not** launched from a
+        # terminal. Otherwise, it'll inherit the env vars present in it.
+        # Fixes spyder-ide/spyder#22415
+        if not launched_from_terminal or running_in_ci():
+            try:
+                user_env_script = _get_user_env_script()
+                proc = await run_shell_command(
+                    user_env_script, asynchronous=True, env={}
+                )
+
+                # Use timeout to fix spyder-ide/spyder#21172
+                stdout, stderr = await asyncio.wait_for(
+                    proc.communicate(), timeout=10
+                )
+
+                if stderr:
+                    logger.info(stderr.decode().strip())
+                if stdout:
+                    # Environment variables is final print statement
+                    # Fixes spyder-ide/spyder#25263
+                    env_var_str = stdout.decode().strip().split("\n")[-1]
+                    env_var = eval(env_var_str, None)
+            except Exception as exc:
+                logger.info(exc)
+        else:
+            env_var = dict(os.environ)
+
+    env_var = dict(sorted(env_var.items()))
+    return env_var
+
+
+def get_user_env() -> dict:
+    """
+    Return current user environment variables with parsed values.
+    Note that this function invokes a blocking call to a DispatchFuture.
+
+    Returns
+    -------
+    env : dict
+        Dictionary where item value may be list of strings.
+    """
+    env_dict = get_user_environment_variables().result()
+    return envdict2listdict(env_dict)
+
+
+def set_user_env(env, parent=None):
+    """
+    Set user environment variables via HKCU (Windows) or shell startup file
+    (Unix).
+    """
+    env_dict = clean_env(listdict2envdict(env))
+
+    if os.name == 'nt':
+        types = dict()
+        key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment")
+        for name in env_dict:
+            try:
+                _x, types[name] = winreg.QueryValueEx(key, name)
+            except WindowsError:
+                types[name] = winreg.REG_EXPAND_SZ
+        key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment", 0,
+                             winreg.KEY_SET_VALUE)
+        for name in env_dict:
+            winreg.SetValueEx(key, name, 0, types[name], env_dict[name])
+        try:
+            from win32gui import SendMessageTimeout
+            from win32con import (HWND_BROADCAST, WM_SETTINGCHANGE,
+                                  SMTO_ABORTIFHUNG)
+            SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0,
+                               "Environment", SMTO_ABORTIFHUNG, 5000)
+        except Exception:
+            QMessageBox.warning(
+                parent, _("Warning"),
+                _("Module <b>pywin32 was not found</b>.<br>"
+                  "Please restart this Windows <i>session</i> "
+                  "(not the computer) for changes to take effect.")
+            )
+    elif os.name == 'posix' and running_in_ci():
+        text = "\n".join([f"export {k}={v}" for k, v in env_dict.items()])
+        amend_user_shell_init(text)
+    else:
+        raise NotImplementedError("Not implemented for platform %s", os.name)
+
+
+def amend_user_shell_init(text="", restore=False):
+    """Set user environment variable for pytests on Unix platforms"""
+    if os.name == "nt":
+        return
+
+    HOME = Path(os.environ["HOME"])
+    SHELL = os.environ.get("SHELL", "/bin/bash")
+    if "bash" in SHELL:
+        init_files = [".bash_profile", ".bash_login", ".profile"]
+    elif "zsh" in SHELL:
+        init_files = [".zprofile", ".zshrc"]
+    else:
+        raise Exception(f"{SHELL} not supported.")
+
+    for file in init_files:
+        init_file = HOME / file
+        if init_file.exists():
+            break
+
+    script = init_file.read_text() if init_file.exists() else ""
+    m1 = "# <<<< Spyder Environment <<<<"
+    m2 = "# >>>> Spyder Environment >>>>"
+    if restore:
+        if init_file.exists() and (m1 in script and m2 in script):
+            new_text = ""
+        else:
+            return
+    else:
+        new_text = f"{m1}\n" + text + f"\n{m2}"
+
+    if m1 in script and m2 in script:
+        _script = re.sub(f"{m1}(.*){m2}", new_text, script, flags=re.DOTALL)
+    else:
+        _script = script.rstrip() + "\n\n" + new_text
+
+    init_file.write_text(_script.rstrip() + "\n")
+
+
+def clean_env(env_vars):
+    """
+    Remove non-ascii entries from a dictionary of environments variables.
+
+    The values will be converted to strings or bytes (on Python 2). If an
+    exception is raised, an empty string will be used.
+    """
+    new_env_vars = env_vars.copy()
+    for key, var in env_vars.items():
+        new_env_vars[key] = str(var)
+
+    return new_env_vars
+
+
+def remote_env_dialog_warning(parent, err):
+    QMessageBox.warning(
+        parent,
+        _("Warning"),
+        _("An error occurred while trying to show your "
+          "environment variables. The error was<br><br>"
+          "<tt>{0}</tt>").format(err),
+        QMessageBox.Ok
+    )
+
+
+class RemoteEnvDialog(CollectionsEditor):
+    """Remote process environment variables dialog."""
+
+    def __init__(self, environ=None, parent=None,
+                 title=_("Environment variables"), readonly=True):
+        super().__init__(parent)
+
+        kwargs = dict(title=title, readonly=readonly, icon=ima.icon('environ'))
+
+        if environ is None:
+            self.setup(
+                {}, **kwargs, loading_img="dependencies",
+                loading_msg=_("Retrieving environment variables...")
+            )
+
+            # Get system environment variables
+            future = get_user_environment_variables()
+            future.connect(self._set_data_from_future)
+        else:
+            try:
+                self.setup(environ, **kwargs)
+            except Exception as err:
+                remote_env_dialog_warning(parent, err)
+
+    @AsyncDispatcher.QtSlot
+    def _set_data_from_future(self, future):
+        try:
+            self.data_copy = envdict2listdict(future.result())
+            self.widget.set_data(self.data_copy)
+            self.stacked_widget.setCurrentWidget(self.widget)
+        except Exception as err:
+            remote_env_dialog_warning(self.parent(), err)
+
+
+class EnvDialog(RemoteEnvDialog):
+    """Environment variables Dialog"""
+
+    def __init__(self, parent=None):
+        RemoteEnvDialog.__init__(self, dict(os.environ), parent=parent)
+
+
+class UserEnvDialog(RemoteEnvDialog):
+    """User Environment Variables Viewer/Editor"""
+
+    def __init__(self, parent=None):
+        title = _("User environment variables")
+        readonly = True
+        if os.name == 'nt':
+            title = _(r"User environment variables in Windows registry")
+            readonly = False
+
+        super().__init__(parent=parent, title=title, readonly=readonly)
+
+        if os.name == 'nt':
+            if parent is None:
+                parent = self
+            QMessageBox.warning(
+                parent, _("Warning"),
+                _("If you accept changes, "
+                  "this will modify the current user environment "
+                  "variables directly <b>in Windows registry</b>. "
+                  "Use it with precautions, at your own risks.<br>"
+                  "<br>Note that for changes to take effect, you will "
+                  "need to restart the parent process of this applica"
+                  "tion (simply restart Spyder if you have executed it "
+                  "from a Windows shortcut, otherwise restart any "
+                  "application from which you may have executed it, "
+                  "like <i>Python(x,y) Home</i> for example)")
+            )
+
+    def accept(self):
+        """Reimplement Qt method"""
+        if os.name == 'nt':
+            set_user_env(listdict2envdict(self.get_value()), parent=self)
+        super().accept()
+
+
+def test():
+    """Run Windows environment variable editor"""
+    import sys
+    from spyder.utils.qthelpers import qapplication
+    _ = qapplication()
+    dlg = UserEnvDialog()
+    dlg.show()
+    sys.exit(dlg.exec())
+
+
+if __name__ == "__main__":
+    import logging
+    logging.basicConfig()
+    logger.setLevel(10)
+    test()

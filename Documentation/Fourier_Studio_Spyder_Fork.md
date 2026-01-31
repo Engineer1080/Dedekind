@@ -43,7 +43,7 @@ Spyder unterstützt bereits „Connect to an existing kernel“ und das Starten 
 
 ### Phase 2: Spyder forken → Fourier Studio
 
-- **Repo:** Spyder forken (z. B. `fourier-studio` oder `FourierStudio`); Lizenz MIT beibehalten, keine Quellcode-Veröffentlichungspflicht für eure Änderungen.
+- **Repo:** Spyder-Fork liegt im **FourierLanguage**-Repo im Ordner **`SpyderFork/`** (eigenes Git-Clone; zum Einrichten im Repo-Root: `git clone https://github.com/spyder-ide/spyder.git SpyderFork`). Lizenz MIT beibehalten, keine Quellcode-Veröffentlichungspflicht für eure Änderungen.
 - **Branding:** Name „Fourier Studio“, eigene Icons/Logos, Fenstertitel, ggf. Splash-Screen.
 - **Kernel-Auswahl:** Sicherstellen, dass beim Öffnen einer neuen Konsole die installierten Jupyter-Kernel (inkl. Fourier) angezeigt werden und „Fourier“ startbar ist.
 - **Optional:** Einstellung „Standard-Kernel für neue Konsolen“ = Python oder Fourier.
