@@ -182,7 +182,9 @@ def main():
     app.set_font()
     restarter = Restarter()
 
-    APP_ICON = QIcon(get_image_path("dedekind_app_icon"))
+    # Windows: .ico für sichtbares Taskleisten-Icon
+    icon_name = "dedekind_app_icon_win" if os.name == "nt" else "dedekind_app_icon"
+    APP_ICON = QIcon(get_image_path(icon_name))
     app.setWindowIcon(APP_ICON)
     restarter.set_splash_message(_('Closing Spyder'))
 

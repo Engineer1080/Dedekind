@@ -1417,8 +1417,8 @@ def _plot_ndarray(x, y=None, title=None, xlabel=None, ylabel=None):
 
 def print_latex(s):
     """
-    Gibt LaTeX-String in der Konsole als gerenderte Formel aus (Dedekind Studio / Jupyter).
-    Bsp.: print_latex(r"\\frac{1}{2}") oder print_latex("E = m c^2").
+    Gibt LaTeX-String in der Konsole als Unicode-Formel aus (α, Δ, ∫, ½ etc.); keine Bilder in Plots.
+    Bsp.: print_latex(r"\\frac{1}{2}"), print_latex(r"\\alpha + \\Delta x").
     Wenn kein Kernel vorhanden, Fallback: print(s).
     """
     s = str(s)

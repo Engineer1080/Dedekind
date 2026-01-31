@@ -4889,7 +4889,9 @@ class TestWidget(QSplitter):
                                  tab_mode=False, font=QFont("Courier New", 10),
                                  show_blanks=True, color_scheme='Zenburn')
         self.addWidget(self.editor)
-        self.setWindowIcon(ima.get_icon('dedekind_app_icon', resample=True))
+        # Windows: .ico für sichtbares Taskleisten-Icon
+        icon_name = 'dedekind_app_icon_win' if os.name == 'nt' else 'dedekind_app_icon'
+        self.setWindowIcon(ima.get_icon(icon_name, resample=(os.name != 'nt')))
 
     def load(self, filename):
         self.editor.set_text_from_file(filename)

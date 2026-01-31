@@ -290,7 +290,9 @@ def create_application():
     app = qapplication()
 
     # ---- Set icon (Dedekind Studio branding)
-    app_icon = QIcon(get_image_path("dedekind_app_icon"))
+    # Windows: .ico verwenden, damit die Taskleiste nicht nur schwarz anzeigt
+    icon_name = "dedekind_app_icon_win" if os.name == "nt" else "dedekind_app_icon"
+    app_icon = QIcon(get_image_path(icon_name))
     app.setWindowIcon(app_icon)
 
     # ---- Set font

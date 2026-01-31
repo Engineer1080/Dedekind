@@ -173,8 +173,11 @@ class MainWindow(QMainWindow, SpyderMainWindowMixin, SpyderShortcutsMixin):
             qapp.setAttribute(Qt.AA_UseHighDpiPixmaps)
 
         # Set app icon (Dedekind Studio branding; Taskleiste/Fenster)
-        # Use resample on Windows to prevent blurry icon (spyder-ide/spyder#18283)
-        qapp.setWindowIcon(ima.get_icon("dedekind_app_icon", resample=True))
+        # Windows: .ico verwenden, damit die Taskleiste nicht nur schwarz anzeigt
+        if os.name == "nt":
+            qapp.setWindowIcon(ima.get_icon("dedekind_app_icon_win"))
+        else:
+            qapp.setWindowIcon(ima.get_icon("dedekind_app_icon", resample=True))
 
         # Set default style
         self.default_style = str(qapp.style().objectName())
