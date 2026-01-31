@@ -29,15 +29,15 @@ except ImportError:
 
 class DedekindKernel(Kernel):
     implementation = "Dedekind"
-    implementation_version = "1.0.6"
+    implementation_version = "1.0.8"
     language = "dedekind"
-    language_version = "1.0.6"
+    language_version = "1.0.8"
     language_info = {
         "name": "dedekind",
         "mimetype": "text/x-dedekind",
         "file_extension": ".ddk",
     }
-    banner = "Dedekind Kernel – compile and run Dedekind code (Dedekind Language v1.0.6)"
+    banner = "Dedekind Kernel – compile and run Dedekind code (Dedekind Language v1.0.8)"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
