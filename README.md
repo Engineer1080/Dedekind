@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-1.1.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-1.1.1-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -11,7 +11,7 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **Ricci Calculus**: Native index notation (`A^ij * B_jk`) for Einstein summation.
 - **Sparse Tensors**: Efficient `.sparse()` support for FEM/CFD simulations.
 - **Fundamental Constants**: Mathematical `pi`, `e`; physical CODATA constants: `c`, `G`, `h`, `hbar`, `k_B`, `k_e`, `e_charge`, `epsilon_0`, `mu_0`, `m_e`, `m_p`, `N_A`, `R_gas`, `alpha`, `sigma_SB`, `F_faraday` — all as **Quantity** with SI units.
-- **Physical Units**: SI base m, kg, s, A, K, mol, **cd** (candela); literals (`10[m]`, `5[m/s]`, `1.0[kg]`, `1[cd]`); add/sub same unit; multiply/divide combine units; `^` for powers; display simplified to J, N, Pa, W, Hz, V, F, ohm, S, Wb, T, H, lm, lx, Gy, kat, M. **Chemie**: mol, L, M (= mol/L), ppm, **bar**, **atm**, **g**; **Radioaktivität**: **Bq** (Becquerel, 1/s), **Sv** (Sievert, J/kg), Gy (Gray).
+- **Physical Units**: SI base m, kg, s, A, K, mol, **cd** (candela); literals (`10[m]`, `5[m/s]`, `1.0[kg]`, `1[cd]`); **automatische Umrechnung** bei Addition/Subtraktion für **Länge** (m, cm, km, mm, dm), **Masse** (kg, g, t, mg), **Zeit** (s, min, h, ms), **Druck** (Pa, bar, atm) — z. B. `1[m] + 100[cm]` → `2[m]`, `1[bar] + 100000[Pa]` → `2[bar]`; sonst add/sub gleiche Einheit; multiply/divide kombinieren Einheiten; `^` für Potenzen; Anzeige vereinfacht (J, N, Pa, W, Hz, …). **Chemie**: mol, L, M (= mol/L), ppm, **bar**, **atm**, **g**; **Radioaktivität**: **Bq**, **Sv**, Gy.
 - **4D Rotational Math**: Native Quaternion support (`i`, `j`, `k` suffixes) and `.rotate()` method; unary minus supported (`-1.0 + 0i`).
 - **Differentiable ODE Solvers**: `ode_solve(fun, y0, t)` (RK4/Euler); gradients via `grad()` for physics-informed ML; `linspace(start, stop, steps)` for time grids.
 - **Differentiable PDE Solvers**: `pde_heat_1d(u0, x, t, k)` and `pde_heat_2d(u0, x, y, t, k)` for the heat equation \(u_t = k \cdot \Delta u\); finite differences + `ode_solve`; gradients through `u0` and `k`.
@@ -28,6 +28,9 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
+
+### What's New in v1.1.1
+- **Automatische Einheiten-Umrechnung**: Bei Addition und Subtraktion werden kompatible Einheiten derselben Dimension automatisch umgerechnet. Unterstützt: **Länge** (m, cm, km, mm, dm), **Masse** (kg, g, t, mg), **Zeit** (s, min, h, ms), **Druck** (Pa, bar, atm). Beispiel: `1[m] + 100[cm]` → `2.0[m]`, `1[bar] + 100000[Pa]` → `2.0[bar]`, `1[h] + 30[min]` → `1.5[h]`. Ergebnis-Einheit = Einheit des ersten Operanden. Gilt für `Quantity` und `UncertainQuantity` (Fehlerfortpflanzung bei Umrechnung). Compile-Zeit-Check erlaubt gleiche Dimension; inkompatible Einheiten (z. B. `1[m] + 1[s]`) → CompileError. Beispiel: `examples/dedekind/length_units_conversion.ddk`.
 
 ### What's New in v1.1.0
 - **Konsole**: Reihenfolge von `print_latex()` und `print()` korrigiert – beide schreiben in denselben stdout-Puffer, Ausgabe erscheint in der richtigen Reihenfolge.

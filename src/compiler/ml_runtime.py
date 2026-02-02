@@ -15,6 +15,54 @@ def _normalize_unit_for_compare(unit):
     return u
 
 
+# Einheiten mit automatischer Umrechnung bei +/-: (Basiseinheit, {Einheit: Faktor zur Basis})
+# Wert in Einheit * Faktor = Wert in Basiseinheit
+DIMENSION_TO_BASE = {
+    "length": ("m", {"m": 1.0, "cm": 0.01, "km": 1000.0, "mm": 0.001, "dm": 0.1}),
+    "mass": ("kg", {"kg": 1.0, "g": 0.001, "t": 1000.0, "mg": 1e-6}),
+    "time": ("s", {"s": 1.0, "min": 60.0, "h": 3600.0, "ms": 0.001}),
+    "pressure": ("Pa", {"Pa": 1.0, "bar": 1e5, "atm": 101325.0}),
+}
+# Für Units-Checker: Liste der Einheitenmengen pro Dimension
+ADDITIVE_DIMENSION_UNIT_SETS = [frozenset(tab.keys()) for _b, tab in DIMENSION_TO_BASE.values()]
+
+
+def _get_dimension(unit):
+    """Liefert Dimensionsname (length, mass, time, pressure) oder None."""
+    u = str(unit).strip() if unit else ""
+    for dim, (_base, tab) in DIMENSION_TO_BASE.items():
+        if u in tab:
+            return dim
+    return None
+
+
+def _convert_to_base(value, unit, dimension):
+    """Wert in gegebener Einheit in Basiseinheit umrechnen."""
+    _, tab = DIMENSION_TO_BASE[dimension]
+    u = str(unit).strip()
+    return float(value) * tab.get(u, 1.0)
+
+
+def _convert_from_base(value_base, unit, dimension):
+    """Wert in Basiseinheit in gegebene Einheit umrechnen."""
+    _, tab = DIMENSION_TO_BASE[dimension]
+    u = str(unit).strip()
+    if u not in tab:
+        return float(value_base)
+    return float(value_base) / tab[u]
+
+
+def _convert_between_units(value, std, from_unit, to_unit, dimension):
+    """Wert und Std von from_unit in to_unit umrechnen (für gleiche Dimension). Rückgabe (value, std)."""
+    _, tab = DIMENSION_TO_BASE[dimension]
+    u_from = str(from_unit).strip()
+    u_to = str(to_unit).strip()
+    if u_from not in tab or u_to not in tab:
+        return float(value), float(std)
+    factor = tab[u_from] / tab[u_to]
+    return float(value) * factor, float(std) * abs(factor)
+
+
 class Quantity:
     """Physikalische Größe mit Einheit (z. B. 10[m], 5[m/s], 0.1[M], 50[ppm]). Rechenregeln: gleiche Einheit für +/-, Einheiten multiplizieren/dividieren. Chemie: mol, L, M (= mol/L), ppm, bar, atm, g. Radioaktivität: Bq (1/s), Gy (J/kg), Sv (J/kg, Äquivalentdosis)."""
     def __init__(self, value, unit=""):
@@ -26,6 +74,24 @@ class Quantity:
             return False
         return _normalize_unit_for_compare(self.unit) == _normalize_unit_for_compare(other.unit)
 
+    def _add_sub_quantity(self, other, is_add):
+        """Addition/Subtraktion mit automatischer Umrechnung bei gleicher Dimension (Länge, Masse, Zeit, Druck)."""
+        dim_self = _get_dimension(self.unit)
+        dim_other = _get_dimension(other.unit)
+        if dim_self is not None and dim_self == dim_other:
+            v_self_base = _convert_to_base(self.value, self.unit, dim_self)
+            v_other_base = _convert_to_base(other.value, other.unit, dim_other)
+            result_base = (v_self_base + v_other_base) if is_add else (v_self_base - v_other_base)
+            result_value = _convert_from_base(result_base, self.unit, dim_self)
+            return Quantity(result_value, self.unit)
+        if self._same_unit(other):
+            v = (self.value + other.value) if is_add else (self.value - other.value)
+            return Quantity(v, self.unit)
+        raise ValueError(
+            f"Einheitenfehler bei {'Addition' if is_add else 'Subtraktion'}: [{self.unit}] vs [{other.unit}]. "
+            "Gleiche Einheit oder kompatible Einheiten (Länge: m/cm/km/mm/dm, Masse: kg/g/t/mg, Zeit: s/min/h/ms, Druck: Pa/bar/atm) erforderlich."
+        )
+
     def __add__(self, other):
         if isinstance(other, (int, float)):
             if self.unit:
@@ -35,12 +101,7 @@ class Quantity:
                 )
             return Quantity(self.value + other, "")
         if isinstance(other, Quantity):
-            if not self._same_unit(other):
-                raise ValueError(
-                    f"Einheitenfehler bei Addition: [{self.unit}] vs [{other.unit}]. "
-                    "Für + und - müssen beide Größen die gleiche Einheit haben."
-                )
-            return Quantity(self.value + other.value, self.unit)
+            return self._add_sub_quantity(other, is_add=True)
         return NotImplemented
 
     def __radd__(self, other):
@@ -55,12 +116,7 @@ class Quantity:
                 )
             return Quantity(self.value - other, "")
         if isinstance(other, Quantity):
-            if not self._same_unit(other):
-                raise ValueError(
-                    f"Einheitenfehler bei Subtraktion: [{self.unit}] vs [{other.unit}]. "
-                    "Für + und - müssen beide Größen die gleiche Einheit haben."
-                )
-            return Quantity(self.value - other.value, self.unit)
+            return self._add_sub_quantity(other, is_add=False)
         return NotImplemented
 
     def __rsub__(self, other):
@@ -998,16 +1054,20 @@ def integrate(f, a, b, n=100):
 # Fehlerfortpflanzung für Wissenschaftler: value ± std; Gauß'sche Näherung für +, -, *, /, ^.
 
 class UncertainQuantity:
-    """Größe mit Unsicherheit: value ± std. Gauß'sche Fehlerfortpflanzung für +, -, *, /, ^."""
+    """Größe mit Unsicherheit: value ± std. Gauß'sche Fehlerfortpflanzung für +, -, *, /, ^. Längen (m, cm, km, mm, dm) werden automatisch umgerechnet."""
     def __init__(self, value, std=0.0, unit=""):
         self.value = float(value)
         self.std = _builtin_max(0.0, float(std))
         self.unit = str(unit) if unit else ""
 
-    def _same_unit(self, other):
+    def _compatible_add_sub(self, other):
         if not isinstance(other, UncertainQuantity):
             return False
-        return self.unit == other.unit
+        if self.unit == other.unit:
+            return True
+        d1 = _get_dimension(self.unit)
+        d2 = _get_dimension(other.unit)
+        return d1 is not None and d1 == d2
 
     def __add__(self, other):
         if isinstance(other, (int, float)):
@@ -1015,8 +1075,14 @@ class UncertainQuantity:
                 raise ValueError("UncertainQuantity: Kann Zahl nicht zu Größe mit Einheit addieren.")
             return UncertainQuantity(self.value + other, self.std, "")
         if isinstance(other, UncertainQuantity):
-            if not self._same_unit(other):
-                raise ValueError(f"Einheiten passen nicht: [{self.unit}] vs [{other.unit}]")
+            if not self._compatible_add_sub(other):
+                raise ValueError(f"Einheiten passen nicht: [{self.unit}] vs [{other.unit}] (gleiche Einheit oder kompatible Dimension).")
+            dim = _get_dimension(self.unit)
+            if dim is not None and dim == _get_dimension(other.unit):
+                ov, os_ = _convert_between_units(other.value, other.std, other.unit, self.unit, dim)
+                v = self.value + ov
+                s = (self.std ** 2 + os_ ** 2) ** 0.5
+                return UncertainQuantity(v, s, self.unit)
             v = self.value + other.value
             s = (self.std ** 2 + other.std ** 2) ** 0.5
             return UncertainQuantity(v, s, self.unit)
@@ -1031,8 +1097,14 @@ class UncertainQuantity:
                 raise ValueError("UncertainQuantity: Kann Zahl nicht subtrahieren.")
             return UncertainQuantity(self.value - other, self.std, "")
         if isinstance(other, UncertainQuantity):
-            if not self._same_unit(other):
-                raise ValueError(f"Einheiten passen nicht: [{self.unit}] vs [{other.unit}]")
+            if not self._compatible_add_sub(other):
+                raise ValueError(f"Einheiten passen nicht: [{self.unit}] vs [{other.unit}] (gleiche Einheit oder kompatible Dimension).")
+            dim = _get_dimension(self.unit)
+            if dim is not None and dim == _get_dimension(other.unit):
+                ov, os_ = _convert_between_units(other.value, other.std, other.unit, self.unit, dim)
+                v = self.value - ov
+                s = (self.std ** 2 + os_ ** 2) ** 0.5
+                return UncertainQuantity(v, s, self.unit)
             v = self.value - other.value
             s = (self.std ** 2 + other.std ** 2) ** 0.5
             return UncertainQuantity(v, s, self.unit)
