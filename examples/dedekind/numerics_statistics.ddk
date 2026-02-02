@@ -1,5 +1,5 @@
-// Numerik und Statistik: mean, std, var, median, quantile, percentile, solve, eigh, svd, lstsq,
-// cond, rank, pinv, expm, logm, interp, trapz, root_bisect
+// Numerik und Statistik: mean, std, var, median, quantile, percentile, cov, corrcoef, skew, kurtosis, histogram,
+// solve, eigh, svd, lstsq, cond, rank, pinv, expm, logm, interp, trapz, root_bisect
 fn main() {
     print("--- Dedekind: Numerik & Statistik ---")
 
@@ -19,6 +19,23 @@ fn main() {
     print(quantile(data, 0.5))
     print("percentile(data, 50):")
     print(percentile(data, 50))
+
+    // Zusaetzliche Statistik: cov, corrcoef, skew, kurtosis, histogram
+    x = [1.0, 2.0, 3.0, 4.0, 5.0]
+    y = [2.0, 4.0, 5.0, 4.0, 6.0]
+    print("cov(x, y):")
+    print(cov(x, y))
+    print("corrcoef(x, y):")
+    print(corrcoef(x, y))
+    print("skew(data):")
+    print(skew(data))
+    print("kurtosis(data):")
+    print(kurtosis(data))
+    hist = histogram(data, 3)
+    print("histogram(data, 3) counts:")
+    print(hist[0])
+    print("histogram(data, 3) bin_edges:")
+    print(hist[1])
 
     // Lineares Gleichungssystem: A x = b
     A = [[1.0, 2.0], [3.0, 4.0]]

@@ -20,7 +20,7 @@ _RUNTIME_BUILTIN_NAMES = frozenset({
     'sin', 'cos', 'tan', 'exp', 'log', 'log10', 'sqrt', 'abs',
     'asin', 'acos', 'atan', 'atan2', 'sinh', 'cosh', 'tanh',
     'min', 'max', 'argmin', 'argmax', 'round', 'floor', 'ceil',
-    'mean', 'std', 'var', 'median', 'quantile', 'percentile',
+    'mean', 'std', 'var', 'median', 'quantile', 'percentile', 'cov', 'corrcoef', 'skew', 'kurtosis', 'histogram',
     'norm', 'det', 'trace', 'solve', 'eigh', 'eig', 'svd', 'lstsq',
     'cond', 'rank', 'pinv', 'expm', 'logm', 'interp', 'trapz', 'root_bisect', 'integrate',
     'UncertainQuantity', 'uncertain', 'fit',

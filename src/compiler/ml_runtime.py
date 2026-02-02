@@ -1138,6 +1138,114 @@ def percentile(x, p, dim=None):
     q_t = _to_tensor(p).float() / 100.0
     return torch.quantile(t, q_t, dim=dim)
 
+def cov(x, y=None, unbiased=True):
+    """
+    Kovarianz. x: 1D-Vektor oder 2D-Matrix (Zeilen = Beobachtungen).
+    Wenn y fehlt und x 2D: Kovarianzmatrix (Variablen x Variablen).
+    Wenn x, y 1D: Skalar-Kovarianz cov(x, y). unbiased: True = (N-1), False = N.
+    """
+    t = _to_tensor(x).float().flatten() if _to_tensor(x).dim() == 1 else _to_tensor(x).float()
+    if y is None:
+        if t.dim() == 1:
+            raise ValueError("cov: Bei einem Argument muss x 2D (Zeilen = Beobachtungen) sein.")
+        n = t.shape[0]
+        c = (n - 1) if unbiased and n > 1 else n
+        centered = t - t.mean(dim=0)
+        return (centered.T @ centered) / c
+    # zwei 1D-Vektoren
+    tx, ty = _to_tensor(x).float().flatten(), _to_tensor(y).float().flatten()
+    if tx.numel() != ty.numel():
+        raise ValueError("cov: x und y müssen gleiche Länge haben.")
+    n = tx.numel()
+    c = (n - 1) if unbiased and n > 1 else n
+    return ((tx - tx.mean()) * (ty - ty.mean())).sum() / c
+
+def corrcoef(x, y=None):
+    """
+    Korrelationskoeffizient(en). x: 1D oder 2D (Zeilen = Beobachtungen).
+    Wenn y fehlt und x 2D: Korrelationsmatrix. Wenn x, y 1D: Skalar r_xy.
+    """
+    t = _to_tensor(x).float()
+    if y is None:
+        if t.dim() == 1:
+            raise ValueError("corrcoef: Bei einem Argument muss x 2D sein.")
+        c = cov(t, unbiased=True)
+        if c.dim() == 0:
+            return torch.tensor(1.0, device=c.device, dtype=c.dtype)
+        std = torch.sqrt(torch.diag(c)).clamp(min=1e-12)
+        return c / (std.unsqueeze(1) * std.unsqueeze(0))
+    tx, ty = _to_tensor(x).float().flatten(), _to_tensor(y).float().flatten()
+    if tx.numel() != ty.numel():
+        raise ValueError("corrcoef: x und y müssen gleiche Länge haben.")
+    c = cov(tx, ty, unbiased=True)
+    sx, sy = tx.std(unbiased=True), ty.std(unbiased=True)
+    if sx < 1e-12 or sy < 1e-12:
+        return torch.tensor(0.0 if c.item() == 0 else float("nan"), device=c.device, dtype=c.dtype)
+    return c / (sx * sy)
+
+def skew(x, dim=None, unbiased=True):
+    """
+    Schiefe (third standardized moment). x: Tensor. dim: optional (None = über alle).
+    unbiased: True = Stichproben-Schiefe (Anpassung für kleine N). Rückgabe: Skalar oder Tensor.
+    """
+    t = _to_tensor(x).float()
+    m = t.mean(dim=dim, keepdim=dim is not None)
+    if dim is not None:
+        m = m.squeeze(dim)
+    c = t - m if dim is None else t - m.unsqueeze(dim)
+    n = c.numel() if dim is None else t.shape[dim]
+    s = c.std(unbiased=unbiased, dim=dim)
+    s = s.clamp(min=1e-12)
+    m3 = (c ** 3).mean(dim=dim)
+    return m3 / (s ** 3)
+
+def kurtosis(x, dim=None, unbiased=True, excess=True):
+    """
+    Kurtosis (fourth standardized moment). x: Tensor. dim: optional (None = über alle).
+    unbiased: Stichproben-Anpassung. excess: True = Überschuss-Kurtosis (Normalverteilung = 0). Rückgabe: Skalar oder Tensor.
+    """
+    t = _to_tensor(x).float()
+    m = t.mean(dim=dim, keepdim=dim is not None)
+    if dim is not None:
+        m = m.squeeze(dim)
+    c = t - m if dim is None else t - m.unsqueeze(dim)
+    s = c.std(unbiased=unbiased, dim=dim).clamp(min=1e-12)
+    m4 = (c ** 4).mean(dim=dim)
+    k = m4 / (s ** 4)
+    return k - 3.0 if excess else k
+
+def histogram(x, bins=10, range_lim=None):
+    """
+    Histogramm: Zählt Werte in Klassen. x: 1D-Tensor (oder flach).
+    bins: Anzahl Klassen (int) oder 1D-Tensor mit Klassengrenzen (aufsteigend).
+    range_lim: (min, max) nur wenn bins int; sonst ignoriert. (Nicht 'range' wg. Built-in.)
+    Rückgabe: (counts, bin_edges); counts 1D, bin_edges Länge = len(counts)+1.
+    """
+    t = _to_tensor(x).float().flatten()
+    if t.numel() == 0:
+        raise ValueError("histogram: x darf nicht leer sein.")
+    if isinstance(bins, (int, float)):
+        n_bins = _builtin_max(1, int(bins))
+        if range_lim is not None:
+            low, high = float(range_lim[0]), float(range_lim[1])
+        else:
+            low, high = t.min().item(), t.max().item()
+            if low == high:
+                low, high = low - 0.5, high + 0.5
+        edges = torch.linspace(low, high, n_bins + 1, device=t.device, dtype=t.dtype)
+    else:
+        edges = _to_tensor(bins).float().flatten()
+        if edges.numel() < 2:
+            raise ValueError("histogram: bins als Kanten müssen mindestens 2 Werte haben.")
+        n_bins = edges.numel() - 1
+    # Bin i = [edges[i], edges[i+1]). searchsorted(edges, t, side='right') - 1 = Bin-Index; clamp für Randwerte.
+    idx = torch.searchsorted(edges, t, side="right") - 1
+    idx = idx.clamp(0, n_bins - 1)
+    counts = torch.zeros(n_bins, device=t.device, dtype=torch.long)
+    for i in range(n_bins):
+        counts[i] = (idx == i).sum()
+    return counts.float(), edges
+
 # --- Standard Library: Runden ---
 def round(x):
     """Rundet auf nächste ganze Zahl; x Tensor oder Skalar."""
