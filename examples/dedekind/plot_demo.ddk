@@ -7,6 +7,11 @@ fn main() {
     curve = [0.0, 0.5, 1.0, 1.2, 1.0, 0.5, 0.0]
     plot(curve, title="Kurve", xlabel="Index", ylabel="Wert")
 
-    print("Plots werden in Dedekind Studio angezeigt.")
+    // Streudiagramm und optional Log-Skala
+    x = [1.0, 2.0, 3.0, 4.0, 5.0]
+    y = [2.0, 4.0, 3.0, 5.0, 6.0]
+    scatter(x, y, title="Streudiagramm", xlabel="x", ylabel="y")
+
+    print("Plots werden in Dedekind Studio angezeigt (plot, scatter, contour).")
 }
 main()

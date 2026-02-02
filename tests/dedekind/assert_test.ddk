@@ -1,0 +1,10 @@
+// Mini-Test: assert() – alle Assertions müssen bestehen
+fn main() {
+    assert(1 < 2)
+    assert(1 + 1 == 2, "1+1 muss 2 sein")
+    x = 3.0
+    assert(x > 0)
+    assert(mean([1.0, 2.0, 3.0]) - 2.0 < 0.01, "Mittelwert ~ 2")
+    print("assert_test: alle Assertions bestanden.")
+}
+main()

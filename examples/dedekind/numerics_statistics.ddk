@@ -123,6 +123,20 @@ fn main() {
     print("newton(x^2-2, 1.5) ~ sqrt(2):")
     print(root_n)
 
+    // Signal & Reduktionen: diff, cumsum, clip, shuffle, fftfreq
+    v = [1.0, 2.0, 4.0, 7.0]
+    print("diff([1,2,4,7]):")
+    print(diff(v))
+    print("cumsum([1,2,4,7]):")
+    print(cumsum(v))
+    print("clip([-1,2,5], 0, 4):")
+    print(clip([-1.0, 2.0, 5.0], 0.0, 4.0))
+    print("fftfreq(4, 0.5) (erste 4 Frequenzen, d=0.5):")
+    print(fftfreq(4, 0.5))
+    s = shuffle([1.0, 2.0, 3.0, 4.0])
+    print("shuffle([1,2,3,4]) (Permutation):")
+    print(s)
+
     print("Numerik & Statistik aktiv.")
 }
 main()
