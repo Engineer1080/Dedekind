@@ -1,6 +1,6 @@
 # Was Dedekind aktuell kann
 
-**Stand:** Basierend auf Code und Changelogs (v1.1.5, Februar 2026). Dedekind ist ein **Prototyp** – die Sprache wird nach Python transpiliert und nutzt PyTorch/NumPy als Laufzeit.
+**Stand:** Basierend auf Code und Changelogs (v1.1.6, Februar 2026). Dedekind ist ein **Prototyp** – die Sprache wird nach Python transpiliert und nutzt PyTorch/NumPy als Laufzeit.
 
 ---
 
@@ -19,8 +19,8 @@
 - **Funktionen:** `sin`, `cos`, `tan`, `exp`, `log`, `log10`, `sqrt`, `abs`; Arkus- und Hyperbelfunktionen (`asin`, `acos`, `atan`, `atan2`, `sinh`, `cosh`, `tanh`) – elementweise, differenzierbar.
 - **Reduktionen & Runden:** `min`, `max`, `argmin`, `argmax` (optional `dim`); `round`, `floor`, `ceil`.
 - **Statistik:** `mean(x)`, `std(x)`, `var(x)`, `median(x)` (optional `dim`); `quantile(x, q)`, `percentile(x, p)`; `cov(x, y)`, `corrcoef(x, y)` (Kovarianz/Korrelation, bei 2D x: Matrix); `skew(x)`, `kurtosis(x)` (Schiefe, Kurtosis); `histogram(x, bins, range_lim)` (Zählung in Klassen; range_lim optional (min, max)).
-- **Lineare Algebra:** `norm(x)`, `det(A)`, `trace(A)`; `solve(A, b)` (Ax = b); `eigh(A)` (Eigenwerte/-vektoren symmetrisch); `eig(A)` (allgemein); `svd(A)` (Singulärwertzerlegung); `lstsq(A, y)` (Least Squares); `cond(A)`, `rank(A)`, `pinv(A)` (Kondition, Rang, Pseudo-Inverse); `expm(A)`, `logm(A)` (Matrix-Exponential/-Logarithmus). FFT (`fft`, `ifft`); Matrix-Operationen (transpose, inverse, dot_product). **Autograd:** `grad(f, x)` (Gradient); `jacobian(f, x)` (Jacobi-Matrix); `hessian(f, x)` (Hesse-Matrix).
-- **Numerik:** `interp(x, xp, fp)` (1D-lineare Interpolation); `trapz(y, x)` (Trapez-Integration für diskrete Daten); `root_bisect(f, a, b, tol)` (Nullstelle Bisektion); `newton(f, x0, tol)` (Nullstelle Newton). **Weitere Algorithmen:** `qr(A)` (QR-Zerlegung); `cholesky(A)` (Cholesky); `polyfit(x, y, deg)`, `polyval(p, x)` (Polynom-Anpassung/-Auswertung); `unique(x)`, `argsort(x)` (eindeutige Werte, Sortier-Indizes); `convolve1d(a, v, mode)` (1D-Faltung); `minimize_scalar(f, bounds)` (1D-Minimierung Golden-Section). **Signal & Reduktionen:** `fftfreq(n, d)` (Frequenzachsen zu FFT); `diff(x, n, dim)` (diskrete Ableitung); `cumsum(x, dim)` (kumulative Summe); `clip(x, min_val, max_val)` (Begrenzung); `shuffle(x, dim)` (zufälliges Mischen). **Numerische Integration:** `integrate(f, a, b, n)` (Trapezregel); differenzierbar, wenn `f` Tensoren akzeptiert.
+- **Lineare Algebra:** `norm(x)`, `det(A)`, `trace(A)`; `solve(A, b)` (Ax = b); `eigh(A)` (Eigenwerte/-vektoren symmetrisch); `eig(A)` (allgemein); `svd(A)` (Singulärwertzerlegung); `lstsq(A, y)` (Least Squares); `cond(A)`, `rank(A)`, `pinv(A)` (Kondition, Rang, Pseudo-Inverse); `expm(A)`, `logm(A)` (Matrix-Exponential/-Logarithmus). FFT (`fft`, `ifft`); Matrix-Operationen (transpose, inverse, dot_product). **Symbolische Ableitung:** `diff_sym(expr, x)` (expr, x als Strings; Rückgabe Ableitung als String). **Autograd:** `grad(f, x)` (Gradient); `jacobian(f, x)` (Jacobi-Matrix); `hessian(f, x)` (Hesse-Matrix).
+- **Numerik:** `interp(x, xp, fp)` (1D-lineare Interpolation); `trapz(y, x)`, `simpson(y, x)` (Trapez/Simpson für diskrete Daten); `root_bisect(f, a, b, tol)` (Nullstelle Bisektion); `newton(f, x0, tol)` (1D); `fsolve(f, x0)` (Vektor-Nullstelle Newton); `minimize(f, x0, method="gd"|"lbfgs")` (mehrdimensionale Minimierung). **Weitere Algorithmen:** `qr(A)`, `lu(A)` (QR/LU-Zerlegung); `cholesky(A)`; `matrix_power(A, n)`; `cdist(X, Y, p)` (paarweise Abstände); `cross(a, b)` (3D-Kreuzprodukt); `polyfit`, `polyval`; `unique`, `argsort`; `convolve1d`. **Signal & Reduktionen:** `fftfreq`, `diff`, `cumsum`, `clip`, `shuffle`; `permutation(n)` (Zufallspermutation); `choice(a, size, replace)` (Zufallsstichprobe); `autocorr(x, max_lag)`; `moving_mean(x, window)`. **Spezialfunktionen:** `erf(x)`, `erfc(x)` (Fehlerfunktion); `gamma(x)`, `lgamma(x)` (Gamma/Log-Gamma). **Numerische Integration:** `integrate(f, a, b, n)` (Trapezregel); differenzierbar.
 - **Ricci-Notation:** Indexnotation `A^ij * B_jk` für Einstein-Summen (Auto-Einsum).
 - **LaTeX-Export:** `export_to_latex(source)` bzw. CLI `--latex` – Formeln aus Dedekind-Code als LaTeX; `print_latex(s)` zeigt Formeln **nur in der Konsole** als Unicode (α, Δ, ∫, ½ etc.), keine Bilder in Plots; zukünftig möglich: KaTeX/Web (siehe Documentation/Console_KaTeX_Roadmap.md).
 
@@ -83,7 +83,7 @@
 
 ## Was (noch) nicht oder nur eingeschränkt
 
-- **Symbolik:** Kein symbolisches `diff(expr, x)`; nur numerisches `grad()`. LaTeX-Export für Formeln vorhanden.
+- **Symbolik:** Symbolische Ableitung `diff_sym(expr, x)` ist vorhanden (siehe Mathematik). Keine allgemeine symbolische Vereinfachung oder Gleichungslöser.
 - **Typen/Module:** Kein statisches Typing; kein `import` – alles in einer Datei oder über Compiler-Pipeline.
 - **Performance:** Ziel AOT/MLIR/LLVM; aktuell Transpilation zu Python/PyTorch; native Binaries experimentell (z. B. `.exe`-Erzeugung).
 - **Weitere PDE:** Nur Wärmeleitung 1D/2D; keine Wellen-, Advektions- oder Maxwell-Gleichungen als Standard-API.

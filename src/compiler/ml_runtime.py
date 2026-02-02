@@ -675,6 +675,62 @@ def shuffle(x, dim=0):
     idx = torch.randperm(t.shape[dim], device=t.device)
     return t.index_select(dim, idx)
 
+def permutation(n):
+    """
+    Zufällige Permutation der Indizes 0 .. n-1. n: ganze Zahl. Rückgabe: 1D Long-Tensor.
+    """
+    n_int = int(n)
+    if n_int < 0:
+        raise ValueError("permutation: n muss nichtnegativ sein.")
+    return torch.randperm(n_int)
+
+def choice(a, size=1, replace=True):
+    """
+    Zufällige Stichprobe aus a. a: 1D-Tensor oder Liste. size: Anzahl Ziehungen (default 1).
+    replace: True = mit Zurücklegen, False = ohne. Rückgabe: Tensor der Länge size.
+    """
+    a_t = _to_tensor(a).float().flatten()
+    n = a_t.numel()
+    if n == 0:
+        raise ValueError("choice: a darf nicht leer sein.")
+    size_int = int(size)
+    if not replace and size_int > n:
+        raise ValueError("choice: size darf bei replace=False nicht größer als len(a) sein.")
+    idx = torch.randint(0, n, (size_int,), device=a_t.device) if replace else torch.randperm(n, device=a_t.device)[:size_int]
+    return a_t[idx]
+
+def autocorr(x, max_lag=None):
+    """
+    Autokorrelation (normiert, Lag 0 = 1). x: 1D-Tensor. max_lag: optional (default len(x)-1).
+    Rückgabe: 1D-Tensor der Länge max_lag+1.
+    """
+    x_t = _to_tensor(x).float().flatten()
+    n = x_t.numel()
+    if n < 2:
+        return torch.ones(1, device=x_t.device, dtype=x_t.dtype)
+    x_centered = x_t - x_t.mean()
+    c0 = (x_centered * x_centered).sum()
+    if c0 < 1e-14:
+        return torch.ones(_builtin_min(n, max_lag or n) if max_lag is not None else n, device=x_t.device, dtype=x_t.dtype)
+    max_lag = _builtin_min(max_lag if max_lag is not None else n - 1, n - 1)
+    out = []
+    for k in range(max_lag + 1):
+        c = (x_centered[:-k] * x_centered[k:]).sum() if k > 0 else c0
+        out.append((c / c0).item())
+    return torch.tensor(out, device=x_t.device, dtype=x_t.dtype)
+
+def moving_mean(x, window):
+    """
+    Gleitender Mittelwert. x: 1D-Tensor. window: Fensterbrechte (ungerade empfohlen).
+    Rückgabe: 1D-Tensor (Länge len(x)-window+1); keine Randbehandlung (reduzierte Länge).
+    """
+    x_t = _to_tensor(x).float().flatten()
+    w = _builtin_max(1, int(window))
+    if w > x_t.numel():
+        return x_t.mean().unsqueeze(0)
+    kernel = torch.ones(w, device=x_t.device, dtype=x_t.dtype) / w
+    return convolve1d(x_t, kernel, mode="valid")
+
 # --- Standard Library: Matrix Operations ---
 
 def transpose(data):
@@ -689,6 +745,16 @@ def dot_product(a, b):
     a = _to_tensor(a)
     b = _to_tensor(b)
     return torch.dot(a.flatten(), b.flatten())
+
+def cross(a, b):
+    """
+    Kreuzprodukt (3D). a, b: 1D-Tensoren der Länge 3. Rückgabe: 1D-Tensor der Länge 3.
+    """
+    a_t = _to_tensor(a).float().flatten()
+    b_t = _to_tensor(b).float().flatten()
+    if a_t.numel() != 3 or b_t.numel() != 3:
+        raise ValueError("cross: a und b müssen Länge 3 haben.")
+    return torch.linalg.cross(a_t, b_t)
 
 # --- Standard Library: Machine Learning ---
 
@@ -1072,6 +1138,22 @@ def cosh(x):
 def tanh(x):
     """Tangens hyperbolicus tanh(x)."""
     return torch.tanh(_to_tensor(x).float())
+
+def erf(x):
+    """Fehlerfunktion erf(x); elementweise. Für Normalverteilung, Diffusion."""
+    return torch.erf(_to_tensor(x).float())
+
+def erfc(x):
+    """Komplementäre Fehlerfunktion erfc(x) = 1 - erf(x)."""
+    return torch.erfc(_to_tensor(x).float())
+
+def lgamma(x):
+    """Log-Gamma ln(Gamma(x)); elementweise. Für Verteilungen, Faktorielle."""
+    return torch.lgamma(_to_tensor(x).float())
+
+def gamma(x):
+    """Gamma-Funktion Gamma(x); elementweise. Für x > 0."""
+    return torch.exp(torch.lgamma(_to_tensor(x).float()))
 
 # --- Standard Library: Reduktionen (min, max, argmin, argmax) ---
 def min(x, dim=None):
@@ -1545,6 +1627,38 @@ def cholesky(A):
         raise ValueError("cholesky: Erwartet quadratische 2D-Matrix.")
     return torch.linalg.cholesky(t)
 
+def lu(A):
+    """
+    LU-Zerlegung (mit Zeilenpivot): P @ A = L @ U.
+    Rückgabe: (P, L, U). P: Permutationsmatrix, L: untere, U: obere Dreiecksmatrix.
+    """
+    t = _to_tensor(A).float()
+    if t.dim() != 2 or t.shape[0] != t.shape[1]:
+        raise ValueError("lu: Erwartet quadratische 2D-Matrix.")
+    P, L, U = torch.linalg.lu(t)
+    return P, L, U
+
+def matrix_power(A, n):
+    """
+    Matrix-Potenz A^n (n ganzzahlig). A: quadratische Matrix.
+    """
+    t = _to_tensor(A).float()
+    n_int = int(n)
+    if t.dim() != 2 or t.shape[0] != t.shape[1]:
+        raise ValueError("matrix_power: Erwartet quadratische 2D-Matrix.")
+    return torch.linalg.matrix_power(t, n_int)
+
+def cdist(X, Y, p=2):
+    """
+    Paarweise Abstände. X: (n, d), Y: (m, d). p: Norm (2 = euklidisch, 1 = Manhattan).
+    Rückgabe: (n, m) Tensor mit Abständen.
+    """
+    X_t = _to_tensor(X).float()
+    Y_t = _to_tensor(Y).float()
+    if X_t.dim() != 2 or Y_t.dim() != 2 or X_t.shape[1] != Y_t.shape[1]:
+        raise ValueError("cdist: X und Y müssen 2D mit gleicher Spaltenanzahl sein.")
+    return torch.cdist(X_t, Y_t, p=p)
+
 def polyfit(x, y, deg):
     """
     Polynom-Anpassung: p(x) = p[0] + p[1]*x + ... + p[deg]*x^deg.
@@ -1666,6 +1780,61 @@ def newton(f, x0, tol=1e-8, max_iter=50, h=1e-6):
         x = x - fx / df
     return x
 
+def minimize(f, x0, method="gd", lr=0.01, steps=500):
+    """
+    Mehrdimensionale Minimierung von f(x). x0: Startvektor (1D-Tensor oder Liste).
+    method: "gd" (Gradient Descent) oder "lbfgs". Rückgabe: (x_opt, f_opt) als Tensor und Skalar.
+    """
+    x = _to_tensor(x0).float().clone().detach().requires_grad_(True)
+    if x.dim() != 1:
+        x = x.flatten()
+    n_params = x.numel()
+    if method == "lbfgs":
+        optimizer = torch.optim.LBFGS([x], lr=1.0)
+        def closure():
+            optimizer.zero_grad()
+            out = f(x)
+            out = _to_tensor(out).float()
+            loss = out.sum() if out.numel() > 1 else out
+            loss.backward()
+            return loss
+        for _ in range(_builtin_min(steps, 20)):
+            optimizer.step(closure)
+    else:
+        optimizer = torch.optim.SGD([x], lr=lr)
+        for _ in range(steps):
+            optimizer.zero_grad()
+            out = f(x)
+            out = _to_tensor(out).float()
+            loss = out.sum() if out.numel() > 1 else out
+            loss.backward()
+            optimizer.step()
+    with torch.no_grad():
+        f_opt = f(x)
+        f_opt = _to_tensor(f_opt).float()
+        f_val = f_opt.sum().item() if f_opt.numel() > 1 else f_opt.item()
+    return x.detach(), f_val
+
+def fsolve(f, x0, tol=1e-8, max_iter=50):
+    """
+    Nullstelle für Vektor-Funktion f: R^n -> R^n (Newton für Systeme). x0: Startvektor.
+    Rückgabe: 1D-Tensor (Näherung der Nullstelle).
+    """
+    x = _to_tensor(x0).float().clone()
+    if x.dim() != 1:
+        x = x.flatten()
+    for _ in range(max_iter):
+        fx = f(x)
+        fx = _to_tensor(fx).float().flatten()
+        if fx.numel() != x.numel():
+            raise ValueError("fsolve: f(x) muss gleiche Länge wie x haben.")
+        if torch.linalg.norm(fx).item() < tol:
+            return x
+        J = jacobian(f, x)
+        dx = solve(J, fx.unsqueeze(1)).squeeze()
+        x = x - dx
+    return x
+
 # --- Standard Library: Numerical Integration ---
 # Differenzierbar, wenn f Tensor-Argument akzeptiert und differenzierbar ist.
 
@@ -1687,6 +1856,41 @@ def integrate(f, a, b, n=100):
     dx = (b_val - a_val) / (n_int - 1.0)
     result = (dx / 2.0) * (y[0] + 2.0 * y[1:-1].sum() + y[-1])
     return result.squeeze()
+
+def simpson(y, x=None):
+    """
+    Simpson-Regel für diskrete Daten: int y dx. y: Ordinaten (1D); x: optional, Abszissen (gleiche Länge).
+    Bei ungerader Punktanzahl: volle Simpson 1/3; bei gerader: letztes Intervall Trapez. Rückgabe: Skalar.
+    """
+    y_t = _to_tensor(y).float().flatten()
+    n = y_t.numel()
+    if n < 2:
+        return y_t.sum()
+    if n == 2:
+        return trapz(y_t, x)
+    if x is not None:
+        x_t = _to_tensor(x).float().flatten()
+        if x_t.numel() != n:
+            raise ValueError("simpson: x und y müssen gleiche Länge haben.")
+        h = (x_t[-1] - x_t[0]).item() / (n - 1.0)
+    else:
+        h = 1.0
+    # Simpson 1/3: (h/3)*(y0 + 4*y1 + 2*y2 + 4*y3 + ... + y_n)
+    if n % 2 == 1:
+        # ungerade n = gerade Anzahl Intervalle
+        coeff = torch.ones(n, device=y_t.device, dtype=y_t.dtype)
+        coeff[1:-1:2] = 4.0
+        coeff[2:-1:2] = 2.0
+        s = (h / 3.0) * (y_t * coeff).sum()
+    else:
+        # gerade n: Simpson für erste n-1 Punkte, Trapez für letztes Intervall
+        coeff = torch.ones(n - 1, device=y_t.device, dtype=y_t.dtype)
+        coeff[1:-1:2] = 4.0
+        coeff[2:-1:2] = 2.0
+        h_seg = h * (n - 2) / (n - 1) if x is not None else h
+        s = (h_seg / 3.0) * (y_t[:-1] * coeff).sum()
+        s = s + (h / (n - 1.0) / 2.0) * (y_t[-2] + y_t[-1])
+    return s.squeeze()
 
 # --- Standard Library: Uncertainty Propagation (Gaussian) ---
 # Fehlerfortpflanzung für Wissenschaftler: value ± std; Gauß'sche Näherung für +, -, *, /, ^.
@@ -2066,6 +2270,436 @@ def _dedekind_assert(condition, message=None):
         val = val[0]
     if not bool(val):
         raise AssertionError(message if message is not None else "Assertion failed")
+
+# --- Standard Library: Symbolische Ableitung (eingebettet, kein Import) ---
+# Einfacher AST für Ausdrücke
+class _SymExpr:
+    pass
+
+class _SymVar(_SymExpr):
+    def __init__(self, name: str):
+        self.name = name
+
+class _SymConst(_SymExpr):
+    def __init__(self, value: float):
+        self.value = value
+
+class _SymAdd(_SymExpr):
+    def __init__(self, left: _SymExpr, right: _SymExpr):
+        self.left = left
+        self.right = right
+
+class _SymSub(_SymExpr):
+    def __init__(self, left: _SymExpr, right: _SymExpr):
+        self.left = left
+        self.right = right
+
+class _SymMul(_SymExpr):
+    def __init__(self, left: _SymExpr, right: _SymExpr):
+        self.left = left
+        self.right = right
+
+class _SymDiv(_SymExpr):
+    def __init__(self, left: _SymExpr, right: _SymExpr):
+        self.left = left
+        self.right = right
+
+class _SymPow(_SymExpr):
+    def __init__(self, base: _SymExpr, exp: _SymExpr):
+        self.base = base
+        self.exp = exp
+
+class _SymNeg(_SymExpr):
+    def __init__(self, arg: _SymExpr):
+        self.arg = arg
+
+class _SymSin(_SymExpr):
+    def __init__(self, arg: _SymExpr):
+        self.arg = arg
+
+class _SymCos(_SymExpr):
+    def __init__(self, arg: _SymExpr):
+        self.arg = arg
+
+class _SymTan(_SymExpr):
+    def __init__(self, arg: _SymExpr):
+        self.arg = arg
+
+class _SymExp(_SymExpr):
+    def __init__(self, arg: _SymExpr):
+        self.arg = arg
+
+class _SymLog(_SymExpr):
+    def __init__(self, arg: _SymExpr):
+        self.arg = arg
+
+class _SymSqrt(_SymExpr):
+    def __init__(self, arg: _SymExpr):
+        self.arg = arg
+
+def _sym_tokenize(s):
+    """Tokenizer ohne re: Zeichen für Zeichen."""
+    tokens = []
+    i = 0
+    n = len(s)
+    while i < n:
+        c = s[i]
+        if c in " \t":
+            i += 1
+            continue
+        if c in "+":
+            tokens.append(("PLUS", "+"))
+            i += 1
+            continue
+        if c in "-":
+            tokens.append(("MINUS", "-"))
+            i += 1
+            continue
+        if c in "*":
+            tokens.append(("MUL", "*"))
+            i += 1
+            continue
+        if c in "/":
+            tokens.append(("DIV", "/"))
+            i += 1
+            continue
+        if c in "^":
+            tokens.append(("POW", "^"))
+            i += 1
+            continue
+        if c in "(":
+            tokens.append(("LPAREN", "("))
+            i += 1
+            continue
+        if c in ")":
+            tokens.append(("RPAREN", ")"))
+            i += 1
+            continue
+        if c.isdigit() or (c == "." and i + 1 < n and s[i + 1].isdigit()):
+            start = i
+            if s[i] == ".":
+                i += 1
+            while i < n and s[i].isdigit():
+                i += 1
+            if i < n and s[i] == ".":
+                i += 1
+                while i < n and s[i].isdigit():
+                    i += 1
+            if i < n and s[i] in "eE":
+                i += 1
+                if i < n and s[i] in "+-":
+                    i += 1
+                while i < n and s[i].isdigit():
+                    i += 1
+            try:
+                value = float(s[start:i])
+            except ValueError:
+                raise ValueError("Ungültige Zahl: " + s[start:i])
+            tokens.append(("NUMBER", value))
+            continue
+        if c.isalpha() or c == "_":
+            start = i
+            while i < n and (s[i].isalnum() or s[i] == "_"):
+                i += 1
+            tokens.append(("ID", s[start:i]))
+            continue
+        raise ValueError("Unerwartetes Zeichen: " + repr(c))
+    return tokens
+
+class _SymParser:
+    def __init__(self, tokens):
+        self.tokens = tokens
+        self.pos = 0
+
+    def _peek(self):
+        if self.pos >= len(self.tokens):
+            return None
+        return self.tokens[self.pos]
+
+    def _advance(self):
+        if self.pos >= len(self.tokens):
+            return None
+        t = self.tokens[self.pos]
+        self.pos += 1
+        return t
+
+    def _parse_expr(self) -> _SymExpr:
+        left = self._parse_term()
+        while True:
+            p = self._peek()
+            if p is None:
+                break
+            if p[0] == "PLUS":
+                self._advance()
+                left = _SymAdd(left, self._parse_term())
+            elif p[0] == "MINUS":
+                self._advance()
+                left = _SymSub(left, self._parse_term())
+            else:
+                break
+        return left
+
+    def _parse_term(self) -> _SymExpr:
+        left = self._parse_factor()
+        while True:
+            p = self._peek()
+            if p is None:
+                break
+            if p[0] == "MUL":
+                self._advance()
+                left = _SymMul(left, self._parse_factor())
+            elif p[0] == "DIV":
+                self._advance()
+                left = _SymDiv(left, self._parse_factor())
+            else:
+                break
+        return left
+
+    def _parse_factor(self) -> _SymExpr:
+        base = self._parse_unary()
+        p = self._peek()
+        if p is not None and p[0] == "POW":
+            self._advance()
+            exp = self._parse_factor()
+            return _SymPow(base, exp)
+        return base
+
+    def _parse_unary(self) -> _SymExpr:
+        p = self._peek()
+        if p is None:
+            raise ValueError("Unerwartetes Ende des Ausdrucks")
+        if p[0] == "PLUS":
+            self._advance()
+            return self._parse_unary()
+        if p[0] == "MINUS":
+            self._advance()
+            return _SymNeg(self._parse_unary())
+        return self._parse_atom()
+
+    def _parse_atom(self) -> _SymExpr:
+        p = self._advance()
+        if p is None:
+            raise ValueError("Unerwartetes Ende des Ausdrucks")
+        kind, value = p
+        if kind == "NUMBER":
+            return _SymConst(float(value))
+        if kind == "ID":
+            name = str(value)
+            if name in ("sin", "cos", "tan", "exp", "log", "sqrt"):
+                lp = self._peek()
+                if lp is not None and lp[0] == "LPAREN":
+                    self._advance()
+                    arg = self._parse_expr()
+                    rp = self._advance()
+                    if rp is None or rp[0] != "RPAREN":
+                        raise ValueError("Fehlende ')' nach " + name)
+                    if name == "sin":
+                        return _SymSin(arg)
+                    if name == "cos":
+                        return _SymCos(arg)
+                    if name == "tan":
+                        return _SymTan(arg)
+                    if name == "exp":
+                        return _SymExp(arg)
+                    if name == "log":
+                        return _SymLog(arg)
+                    if name == "sqrt":
+                        return _SymSqrt(arg)
+            return _SymVar(name)
+        if kind == "LPAREN":
+            e = self._parse_expr()
+            rp = self._advance()
+            if rp is None or rp[0] != "RPAREN":
+                raise ValueError("Fehlende ')'")
+            return e
+        raise ValueError(f"Unerwartetes Token: {p}")
+
+def _sym_parse(expr_str):
+    s = expr_str.strip().replace(" ", "")
+    if not s:
+        raise ValueError("Leerer Ausdruck")
+    tokens = _sym_tokenize(s)
+    if not tokens:
+        raise ValueError("Keine gültigen Tokens")
+    p = _SymParser(tokens)
+    e = p._parse_expr()
+    if p.pos < len(tokens):
+        raise ValueError("Rest nach Ausdruck")
+    return e
+
+def _sym_diff(e, var):
+    if isinstance(e, _SymVar):
+        return _SymConst(1.0) if e.name == var else _SymConst(0.0)
+    if isinstance(e, _SymConst):
+        return _SymConst(0.0)
+    if isinstance(e, _SymAdd):
+        return _SymAdd(_sym_diff(e.left, var), _sym_diff(e.right, var))
+    if isinstance(e, _SymSub):
+        return _SymSub(_sym_diff(e.left, var), _sym_diff(e.right, var))
+    if isinstance(e, _SymMul):
+        return _SymAdd(
+            _SymMul(_sym_diff(e.left, var), e.right),
+            _SymMul(e.left, _sym_diff(e.right, var))
+        )
+    if isinstance(e, _SymDiv):
+        return _SymDiv(
+            _SymSub(_SymMul(_sym_diff(e.left, var), e.right), _SymMul(e.left, _sym_diff(e.right, var))),
+            _SymPow(e.right, _SymConst(2.0))
+        )
+    if isinstance(e, _SymPow):
+        if isinstance(e.exp, _SymConst):
+            c = e.exp.value
+            if c == 0:
+                return _SymConst(0.0)
+            if c == 1:
+                return _sym_diff(e.base, var)
+            return _SymMul(_SymConst(c), _SymMul(_SymPow(e.base, _SymConst(c - 1)), _sym_diff(e.base, var)))
+        return _SymMul(
+            _SymPow(e.base, e.exp),
+            _SymAdd(
+                _SymMul(_sym_diff(e.exp, var), _SymLog(e.base)),
+                _SymMul(e.exp, _SymDiv(_sym_diff(e.base, var), e.base))
+            )
+        )
+    if isinstance(e, _SymNeg):
+        return _SymNeg(_sym_diff(e.arg, var))
+    if isinstance(e, _SymSin):
+        return _SymMul(_SymCos(e.arg), _sym_diff(e.arg, var))
+    if isinstance(e, _SymCos):
+        return _SymMul(_SymNeg(_SymSin(e.arg)), _sym_diff(e.arg, var))
+    if isinstance(e, _SymTan):
+        return _SymMul(_SymAdd(_SymConst(1.0), _SymPow(_SymTan(e.arg), _SymConst(2.0))), _sym_diff(e.arg, var))
+    if isinstance(e, _SymExp):
+        return _SymMul(_SymExp(e.arg), _sym_diff(e.arg, var))
+    if isinstance(e, _SymLog):
+        return _SymMul(_SymDiv(_SymConst(1.0), e.arg), _sym_diff(e.arg, var))
+    if isinstance(e, _SymSqrt):
+        return _SymMul(_SymDiv(_SymConst(1.0), _SymMul(_SymConst(2.0), _SymSqrt(e.arg))), _sym_diff(e.arg, var))
+    raise TypeError(f"Unbekannter Ausdruckstyp: {type(e)}")
+
+def _sym_to_string(e, parent_prec=0):
+    if isinstance(e, _SymVar):
+        return e.name
+    if isinstance(e, _SymConst):
+        v = e.value
+        if v == int(v):
+            return str(int(v))
+        return str(v)
+    if isinstance(e, _SymAdd):
+        s = _sym_to_string(e.left, 1) + " + " + _sym_to_string(e.right, 1)
+        return f"({s})" if parent_prec > 0 else s
+    if isinstance(e, _SymSub):
+        s = _sym_to_string(e.left, 1) + " - " + _sym_to_string(e.right, 2)
+        return f"({s})" if parent_prec > 0 else s
+    if isinstance(e, _SymMul):
+        left = _sym_to_string(e.left, 2)
+        right = _sym_to_string(e.right, 2)
+        if isinstance(e.left, (_SymAdd, _SymSub)):
+            left = f"({left})"
+        if isinstance(e.right, (_SymAdd, _SymSub)):
+            right = f"({right})"
+        s = f"{left}*{right}"
+        return f"({s})" if parent_prec > 1 else s
+    if isinstance(e, _SymDiv):
+        num = _sym_to_string(e.left, 2)
+        den = _sym_to_string(e.right, 2)
+        if isinstance(e.left, (_SymAdd, _SymSub)):
+            num = f"({num})"
+        if isinstance(e.right, (_SymAdd, _SymSub, _SymMul)):
+            den = f"({den})"
+        s = f"{num}/{den}"
+        return f"({s})" if parent_prec > 1 else s
+    if isinstance(e, _SymPow):
+        base = _sym_to_string(e.base, 3)
+        exp = _sym_to_string(e.exp, 3)
+        if isinstance(e.base, (_SymAdd, _SymSub, _SymMul, _SymDiv)):
+            base = f"({base})"
+        s = f"{base}^{exp}"
+        return f"({s})" if parent_prec > 2 else s
+    if isinstance(e, _SymNeg):
+        return "-" + _sym_to_string(e.arg, 3)
+    if isinstance(e, _SymSin):
+        return "sin(" + _sym_to_string(e.arg, 0) + ")"
+    if isinstance(e, _SymCos):
+        return "cos(" + _sym_to_string(e.arg, 0) + ")"
+    if isinstance(e, _SymTan):
+        return "tan(" + _sym_to_string(e.arg, 0) + ")"
+    if isinstance(e, _SymExp):
+        return "exp(" + _sym_to_string(e.arg, 0) + ")"
+    if isinstance(e, _SymLog):
+        return "log(" + _sym_to_string(e.arg, 0) + ")"
+    if isinstance(e, _SymSqrt):
+        return "sqrt(" + _sym_to_string(e.arg, 0) + ")"
+    return "?"
+
+def _sym_simplify(e):
+    if isinstance(e, _SymConst):
+        return e
+    if isinstance(e, _SymVar):
+        return e
+    if isinstance(e, _SymAdd):
+        l, r = _sym_simplify(e.left), _sym_simplify(e.right)
+        if isinstance(l, _SymConst) and l.value == 0:
+            return r
+        if isinstance(r, _SymConst) and r.value == 0:
+            return l
+        return _SymAdd(l, r)
+    if isinstance(e, _SymSub):
+        l, r = _sym_simplify(e.left), _sym_simplify(e.right)
+        if isinstance(r, _SymConst) and r.value == 0:
+            return l
+        return _SymSub(l, r)
+    if isinstance(e, _SymMul):
+        l, r = _sym_simplify(e.left), _sym_simplify(e.right)
+        if isinstance(l, _SymConst):
+            if l.value == 0:
+                return _SymConst(0.0)
+            if l.value == 1:
+                return r
+        if isinstance(r, _SymConst):
+            if r.value == 0:
+                return _SymConst(0.0)
+            if r.value == 1:
+                return l
+        return _SymMul(l, r)
+    if isinstance(e, _SymDiv):
+        l, r = _sym_simplify(e.left), _sym_simplify(e.right)
+        if isinstance(l, _SymConst) and l.value == 0:
+            return _SymConst(0.0)
+        return _SymDiv(l, r)
+    if isinstance(e, _SymPow):
+        b, x = _sym_simplify(e.base), _sym_simplify(e.exp)
+        if isinstance(x, _SymConst):
+            if x.value == 0:
+                return _SymConst(1.0)
+            if x.value == 1:
+                return b
+        return _SymPow(b, x)
+    if isinstance(e, _SymNeg):
+        a = _sym_simplify(e.arg)
+        if isinstance(a, _SymConst):
+            return _SymConst(-a.value)
+        return _SymNeg(a)
+    if isinstance(e, (_SymSin, _SymCos, _SymTan, _SymExp, _SymLog, _SymSqrt)):
+        a = _sym_simplify(e.arg)
+        return type(e)(a)
+    return e
+
+def diff_sym(expr, var):
+    """
+    Symbolische Ableitung: leitet den Ausdruck expr nach der Variable var ab.
+    expr: String, z.B. 'x^2 + sin(x)', 'exp(x)*log(x)'.
+    var: Name der Variable, z.B. 'x'.
+    Rückgabe: Ableitung als String.
+    """
+    expr = str(expr).strip()
+    var = str(var).strip()
+    if not var:
+        raise ValueError("Variable darf nicht leer sein")
+    ast = _sym_parse(expr)
+    d = _sym_diff(ast, var)
+    d = _sym_simplify(d)
+    return _sym_to_string(d)
 
 # --- Standard Library: Jacobian / Hessian (Autograd) ---
 

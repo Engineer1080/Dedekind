@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-1.1.5-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-1.1.6-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -29,10 +29,13 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
 
+### What's New in v1.1.6
+- **Symbolische Ableitung**: `diff_sym(expr, var)` – Ausdruck und Variable als Strings, Ableitung als String. Ohne externe Imports (nativ). Unterstützt: +, -, *, /, ^, sin, cos, tan, exp, log, sqrt.
+
 ### What's New in v1.1.5
-- **Assert & Tests**: `assert(condition, message)` löst AssertionError bei falscher Bedingung; Mini-Test-Runner `run_tests.py` für `tests/dedekind/*.ddk`.
+- **Assert & Tests**: `assert(condition, message)`; Mini-Test-Runner `run_tests.py` für `tests/dedekind/*.ddk`.
 - **Plots**: `scatter(x, y)`, `contour(X, Y, Z, levels)`; `plot(..., xscale="log", yscale="log")`.
-- **Autograd**: `jacobian(f, x)`, `hessian(f, x)` (Jacobi- und Hesse-Matrix).
+- **Autograd**: `jacobian(f, x)`, `hessian(f, x)`.
 - **Signal & Reduktionen**: `fftfreq(n, d)`, `diff(x, n, dim)`, `cumsum(x, dim)`, `clip(x, min_val, max_val)`, `shuffle(x, dim)`.
 
 ### What's New in v1.1.4
