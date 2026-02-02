@@ -44,6 +44,7 @@ class Lexer:
             ('PLUS',     r'\+'),                # Add
             ('MINUS',    r'-'),                 # Subtract
             ('MUL',      r'\*'),                # Multiply
+            ('AT',       r'@'),                 # Matrix multiplication (A @ B)
             ('COMMENT',  r'//.*'),              # Comments
             ('DIV',      r'/'),                 # Divide
             ('LPAREN',   r'\('),                # (

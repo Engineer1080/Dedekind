@@ -1,13 +1,13 @@
 # Was Dedekind aktuell kann
 
-**Stand:** Basierend auf Code und Changelogs (v1.1.6, Februar 2026). Dedekind ist ein **Prototyp** – die Sprache wird nach Python transpiliert und nutzt PyTorch/NumPy als Laufzeit.
+**Stand:** Basierend auf Code und Changelogs (v1.1.8, Februar 2026). Dedekind ist ein **Prototyp** – die Sprache wird nach Python transpiliert und nutzt PyTorch/NumPy als Laufzeit.
 
 ---
 
 ## Sprachkern
 
 - **Syntax:** Imperativ, C/JavaScript-ähnlich mit Blöcken in `{}`, Funktionen mit `fn name(args) { ... }`, Kontrollfluss `if`/`else`, `while`, `for ... in`.
-- **Typen:** Dynamische Typinferenz; primitive Typen, Listen, Vektoren/Matrizen als Tensoren, Quaternionen; Property-Zugriff (z. B. `.shape`, `.gpu()`).
+- **Typen:** Dynamische Typinferenz; primitive Typen, Listen, Vektoren/Matrizen als Tensoren, Quaternionen; Property-Zugriff (z. B. `.shape`, `.gpu()`). **Matrix-Multiplikation:** Operator `@` (z. B. `A @ B`).
 - **Ausführungsmodifikatoren:** `.gpu()`, `.cpu()`, `.single()` für Hardware-Platzierung bzw. sequentielle Ausführung; `.sparse()` für Sparse-Tensoren; `.fast()` für MLIR/Inductor-Optimierung (z. B. bei Modellen).
 - **Fehlerbehandlung:** Compiler-Fehler mit Zeilennummer (`CompileError`); Einheiten-Check zur Compile-Zeit (`1[m] + 1[s]` → Fehler); Runtime-Meldungen mit Kontext. **Assert:** `assert(condition, message)` – löst AssertionError bei falscher Bedingung; Mini-Test-Runner `run_tests.py` für `tests/dedekind/*.ddk`.
 
@@ -20,7 +20,7 @@
 - **Reduktionen & Runden:** `min`, `max`, `argmin`, `argmax` (optional `dim`); `round`, `floor`, `ceil`.
 - **Statistik:** `mean(x)`, `std(x)`, `var(x)`, `median(x)` (optional `dim`); `quantile(x, q)`, `percentile(x, p)`; `cov(x, y)`, `corrcoef(x, y)` (Kovarianz/Korrelation, bei 2D x: Matrix); `skew(x)`, `kurtosis(x)` (Schiefe, Kurtosis); `histogram(x, bins, range_lim)` (Zählung in Klassen; range_lim optional (min, max)).
 - **Lineare Algebra:** `norm(x)`, `det(A)`, `trace(A)`; `solve(A, b)` (Ax = b); `eigh(A)` (Eigenwerte/-vektoren symmetrisch); `eig(A)` (allgemein); `svd(A)` (Singulärwertzerlegung); `lstsq(A, y)` (Least Squares); `cond(A)`, `rank(A)`, `pinv(A)` (Kondition, Rang, Pseudo-Inverse); `expm(A)`, `logm(A)` (Matrix-Exponential/-Logarithmus). FFT (`fft`, `ifft`); Matrix-Operationen (transpose, inverse, dot_product). **Symbolische Ableitung:** `diff_sym(expr, x)` (expr, x als Strings; Rückgabe Ableitung als String). **Autograd:** `grad(f, x)` (Gradient); `jacobian(f, x)` (Jacobi-Matrix); `hessian(f, x)` (Hesse-Matrix).
-- **Numerik:** `interp(x, xp, fp)` (1D-lineare Interpolation); `trapz(y, x)`, `simpson(y, x)` (Trapez/Simpson für diskrete Daten); `root_bisect(f, a, b, tol)` (Nullstelle Bisektion); `newton(f, x0, tol)` (1D); `fsolve(f, x0)` (Vektor-Nullstelle Newton); `minimize(f, x0, method="gd"|"lbfgs")` (mehrdimensionale Minimierung). **Weitere Algorithmen:** `qr(A)`, `lu(A)` (QR/LU-Zerlegung); `cholesky(A)`; `matrix_power(A, n)`; `cdist(X, Y, p)` (paarweise Abstände); `cross(a, b)` (3D-Kreuzprodukt); `polyfit`, `polyval`; `unique`, `argsort`; `convolve1d`. **Signal & Reduktionen:** `fftfreq`, `diff`, `cumsum`, `clip`, `shuffle`; `permutation(n)` (Zufallspermutation); `choice(a, size, replace)` (Zufallsstichprobe); `autocorr(x, max_lag)`; `moving_mean(x, window)`. **Spezialfunktionen:** `erf(x)`, `erfc(x)` (Fehlerfunktion); `gamma(x)`, `lgamma(x)` (Gamma/Log-Gamma). **Numerische Integration:** `integrate(f, a, b, n)` (Trapezregel); differenzierbar.
+- **Numerik:** `interp(x, xp, fp)` (1D-lineare Interpolation); `trapz(y, x)`, `simpson(y, x)` (Trapez/Simpson für diskrete Daten); `root_bisect(f, a, b, tol)` (Nullstelle Bisektion); `newton(f, x0, tol)` (1D); `fsolve(f, x0)` (Vektor-Nullstelle Newton); `minimize(f, x0, method="gd"|"lbfgs")` (mehrdimensionale Minimierung). **Weitere Algorithmen:** `qr(A)`, `lu(A)` (QR/LU-Zerlegung); `cholesky(A)`; `matrix_power(A, n)`; `kron(A, B)` (Kronecker-Produkt); `outer(a, b)` (äußeres Produkt); `vander(x, n)` (Vandermonde-Matrix); `matrix_sqrt(A)` (Matrix-Quadratwurzel); `matrix_norm(A, ord)` (Frobenius, Spektralnorm etc.); `cdist(X, Y, p)` (paarweise Abstände); `cross(a, b)` (3D-Kreuzprodukt); `polyfit`, `polyval`; `unique`, `argsort`; `convolve1d`. **Signal & Reduktionen:** `fftfreq`, `diff`, `cumsum`, `clip`, `shuffle`; `permutation(n)` (Zufallspermutation); `choice(a, size, replace)` (Zufallsstichprobe); `autocorr(x, max_lag)`; `moving_mean(x, window)`. **Spezialfunktionen:** `erf(x)`, `erfc(x)` (Fehlerfunktion); `gamma(x)`, `lgamma(x)` (Gamma/Log-Gamma); `bessel_j0(x)`, `bessel_j1(x)` (Bessel J₀, J₁); `bessel_j(n, x)` (Bessel Jₙ); `legendre(n, x)` (Legendre Pₙ); `hypergeom(a, b, c, z)` (₂F₁). **Numerische Integration:** `integrate(f, a, b, n)` (Trapezregel); differenzierbar.
 - **Ricci-Notation:** Indexnotation `A^ij * B_jk` für Einstein-Summen (Auto-Einsum).
 - **LaTeX-Export:** `export_to_latex(source)` bzw. CLI `--latex` – Formeln aus Dedekind-Code als LaTeX; `print_latex(s)` zeigt Formeln **nur in der Konsole** als Unicode (α, Δ, ∫, ½ etc.), keine Bilder in Plots; zukünftig möglich: KaTeX/Web (siehe Documentation/Console_KaTeX_Roadmap.md).
 
@@ -83,7 +83,7 @@
 
 ## Was (noch) nicht oder nur eingeschränkt
 
-- **Symbolik:** Symbolische Ableitung `diff_sym(expr, x)` ist vorhanden (siehe Mathematik). Keine allgemeine symbolische Vereinfachung oder Gleichungslöser.
+- **Symbolik:** Symbolische Ableitung `diff_sym(expr, x)` ist vorhanden (siehe Mathematik). **Symbolische Vereinfachung** (Compiler-Pass): Konstantenfaltung (`2*3` → `6`), `x+0` → `x`, `x*1` → `x`, `0*x` → `0`, `x-0` → `x`, `x^0` → `1`, `x^1` → `x`. Keine allgemeine Gleichungslöser.
 - **Typen/Module:** Kein statisches Typing; kein `import` – alles in einer Datei oder über Compiler-Pipeline.
 - **Performance:** Ziel AOT/MLIR/LLVM; aktuell Transpilation zu Python/PyTorch; native Binaries experimentell (z. B. `.exe`-Erzeugung).
 - **Weitere PDE:** Nur Wärmeleitung 1D/2D; keine Wellen-, Advektions- oder Maxwell-Gleichungen als Standard-API.

@@ -1,0 +1,38 @@
+// Test: Symbolische Vereinfachung (x+0, x*1, 0*x, 2*3, etc.)
+fn main() {
+    a = 2 * 3
+    assert(a == 6)
+
+    b = 1 * 7
+    assert(b == 7)
+
+    c = 0 + 5
+    assert(c == 5)
+
+    d = 3 + 0
+    assert(d == 3)
+
+    e = 10 - 0
+    assert(e == 10)
+
+    f = 4 * 1
+    assert(f == 4)
+
+    g = 1 * 9
+    assert(g == 9)
+
+    h = 0 * 100
+    assert(h == 0)
+
+    i = 8 / 1
+    assert(i == 8)
+
+    j = 2^0
+    assert(j == 1)
+
+    k = 5^1
+    assert(k == 5)
+
+    print("simplify_test: bestanden.")
+}
+main()

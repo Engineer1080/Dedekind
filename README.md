@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-1.1.6-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-1.1.8-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -28,6 +28,13 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
+
+### What's New in v1.1.8
+- **Dokumentation**: Changelog und Versionsangaben vereinheitlicht; `Was_Dedekind_aktuell_kann.md` und Roadmaps aktualisiert.
+
+### What's New in v1.1.7
+- **Matrix-Operator @**: `A @ B` statt `matmul(A, B)` – gleiche Priorität wie * und /.
+- **Spezialfunktionen**: `bessel_j0(x)`, `bessel_j1(x)` (Bessel J₀, J₁); `bessel_j(n, x)` (Bessel Jₙ); `legendre(n, x)` (Legendre Pₙ); `hypergeom(a, b, c, z)` (₂F₁). `bessel_j`, `legendre`, `hypergeom` erfordern scipy.
 
 ### What's New in v1.1.6
 - **Symbolische Ableitung**: `diff_sym(expr, var)` – Ausdruck und Variable als Strings, Ableitung als String. Ohne externe Imports (nativ). Unterstützt: +, -, *, /, ^, sin, cos, tan, exp, log, sqrt.
