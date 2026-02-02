@@ -18,10 +18,23 @@ def _normalize_unit_for_compare(unit):
 # Einheiten mit automatischer Umrechnung bei +/-: (Basiseinheit, {Einheit: Faktor zur Basis})
 # Wert in Einheit * Faktor = Wert in Basiseinheit
 DIMENSION_TO_BASE = {
+    # SI-Basis
     "length": ("m", {"m": 1.0, "cm": 0.01, "km": 1000.0, "mm": 0.001, "dm": 0.1}),
     "mass": ("kg", {"kg": 1.0, "g": 0.001, "t": 1000.0, "mg": 1e-6}),
     "time": ("s", {"s": 1.0, "min": 60.0, "h": 3600.0, "ms": 0.001}),
+    "current": ("A", {"A": 1.0, "mA": 0.001, "kA": 1000.0, "uA": 1e-6, "muA": 1e-6}),
+    "temperature": ("K", {"K": 1.0, "mK": 0.001}),
+    "amount_of_substance": ("mol", {"mol": 1.0, "mmol": 0.001, "kmol": 1000.0}),
+    "luminous_intensity": ("cd", {"cd": 1.0, "mcd": 0.001}),
+    # Abgeleitet / häufig
     "pressure": ("Pa", {"Pa": 1.0, "bar": 1e5, "atm": 101325.0}),
+    "volume": ("L", {"L": 1.0, "mL": 0.001, "dm^3": 1.0, "m^3": 1000.0}),  # dm³ = 1 L, m³ = 1000 L
+    "energy": ("J", {"J": 1.0, "kJ": 1000.0, "MJ": 1e6, "Wh": 3600.0, "kWh": 3.6e6}),
+    "electric_potential": ("V", {"V": 1.0, "mV": 0.001, "kV": 1000.0}),
+    "frequency": ("Hz", {"Hz": 1.0, "kHz": 1000.0, "MHz": 1e6, "GHz": 1e9}),
+    "charge": ("C", {"C": 1.0, "mC": 0.001, "uC": 1e-6}),
+    "resistance": ("ohm", {"ohm": 1.0, "kohm": 1000.0, "Mohm": 1e6}),
+    "power": ("W", {"W": 1.0, "kW": 1000.0, "MW": 1e6}),
 }
 # Für Units-Checker: Liste der Einheitenmengen pro Dimension
 ADDITIVE_DIMENSION_UNIT_SETS = [frozenset(tab.keys()) for _b, tab in DIMENSION_TO_BASE.values()]
@@ -89,7 +102,7 @@ class Quantity:
             return Quantity(v, self.unit)
         raise ValueError(
             f"Einheitenfehler bei {'Addition' if is_add else 'Subtraktion'}: [{self.unit}] vs [{other.unit}]. "
-            "Gleiche Einheit oder kompatible Einheiten (Länge: m/cm/km/mm/dm, Masse: kg/g/t/mg, Zeit: s/min/h/ms, Druck: Pa/bar/atm) erforderlich."
+            "Gleiche Einheit oder kompatible Einheiten derselben Dimension (z. B. Länge, Masse, Zeit, Druck, Strom, Temperatur, mol, cd, Volumen, Energie, Spannung, Frequenz, Ladung, Widerstand, Leistung) erforderlich."
         )
 
     def __add__(self, other):
@@ -191,6 +204,81 @@ def _unit_pow(u, exp):
         return f"{base}^{int(round(e))}"
     return f"{base}^{e}"
 
+
+def _split_product_top_level(u):
+    """Splittet Einheiten-String an '*' nur auf oberster Ebene (Klammern respektierend)."""
+    parts = []
+    current = []
+    depth = 0
+    for c in u:
+        if c == "(":
+            depth += 1
+            current.append(c)
+        elif c == ")":
+            depth -= 1
+            current.append(c)
+        elif c == "*" and depth == 0:
+            parts.append("".join(current).strip())
+            current = []
+        else:
+            current.append(c)
+    if current:
+        parts.append("".join(current).strip())
+    return parts
+
+
+def _parse_base_exp(part):
+    """Liefert (base, exp) für einen Faktor wie 'm', 'm^2', '(m/s)^2'. exp als Zahl."""
+    part = part.strip()
+    if "^" in part:
+        # Rechts vom letzten ^ (nicht in Klammern) steht der Exponent
+        idx = part.rfind("^")
+        base = part[:idx].strip()
+        exp_str = part[idx + 1:].strip()
+        try:
+            exp = int(exp_str) if "." not in exp_str else float(exp_str)
+        except ValueError:
+            return part, 1
+        # Klammern um einfache Basis entfernen für einheitliche Darstellung
+        if base.startswith("(") and base.endswith(")") and base.count("(") == 1 and "/" not in base[1:-1]:
+            base = base[1:-1].strip()
+        return base, exp
+    return part, 1
+
+
+def _collapse_product(u):
+    """Fasst gleiche Faktoren zusammen: m*m -> m^2, m*m*m -> m^3, m^2*m -> m^3, m*m*kg -> m^2*kg."""
+    if not u or "/" in u:
+        return u
+    parts = _split_product_top_level(u)
+    if len(parts) <= 1:
+        return u
+    # Teile, die selbst Produkte sind (z. B. (m*m)), zuerst rekursiv zusammenfassen
+    normalized = []
+    for p in parts:
+        p = p.strip()
+        # Äußere Klammern abziehen, dann ggf. Produkt zusammenfassen
+        if p.startswith("(") and p.endswith(")") and p.count("(") == 1:
+            p = p[1:-1].strip()
+        if "*" in p and "/" not in p:
+            p = _collapse_product(p)
+        normalized.append(p)
+    # Jeden Faktor als (base, exp) und zusammenfassen
+    merged = {}
+    for p in normalized:
+        base, exp = _parse_base_exp(p)
+        merged[base] = merged.get(base, 0) + exp
+    # Sortiert ausgeben: einheitliche Reihenfolge
+    out = []
+    for base in sorted(merged.keys()):
+        e = merged[base]
+        if e == 1:
+            out.append(base)
+        else:
+            out.append(f"{base}^{int(e)}" if isinstance(e, float) and e == int(e) else f"{base}^{e}")
+    return "*".join(out)
+
+
 def _unit_simplify(u):
     """Vereinfacht Einheiten-String für Anzeige. SI-Basis: m, kg, s, A, K, mol, cd. Abgeleitet: J, N, Pa, W, Hz, V, F, ohm, S, Wb, T, H, lm, lx, Gy, kat, M. Chemie/Druck: bar, atm. Masse: g. Radioaktivität: Bq (1/s), Sv (J/kg); Anzeige 1/s→Hz, J/kg→Gy."""
     if not u:
@@ -259,7 +347,9 @@ def _unit_simplify(u):
     # lx (Lux): lm/m^2
     if u in ("lm/m^2", "lm*m^-2"):
         return "lx"
-    # rad, sr: dimensionslos, Anzeige beibehalten
+    # Gleiche Faktoren zusammenfassen: m*m -> m^2, m*m*m -> m^3, m^2*m -> m^3, m*m*kg -> m^2*kg
+    if "*" in u:
+        u = _collapse_product(u)
     return u
 
 # --- Mathematical Constants (dimensionless) ---

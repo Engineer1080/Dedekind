@@ -1,39 +1,55 @@
-// Automatische Umrechnung bei Addition/Subtraktion: Länge, Masse, Zeit, Druck
+// Automatische Umrechnung bei Addition/Subtraktion: SI-Basis + abgeleitete Einheiten
 fn main() {
-    print("--- Dedekind: Automatische Einheiten-Umrechnung ---")
+    print("--- Dedekind: Automatische Einheiten-Umrechnung (SI + abgeleitet) ---")
 
-    // === Länge (m, cm, km, mm, dm) ===
-    a = 1[m] + 100[cm]
+    // === Länge ===
     print("1[m] + 100[cm]:")
-    print(a)
-    b = 1[km] + 500[m]
-    print("1[km] + 500[m]:")
-    print(b)
-
-    // === Masse (kg, g, t, mg) ===
-    c = 1[kg] + 500[g]
+    print(1[m] + 100[cm])
+    // === Masse ===
     print("1[kg] + 500[g]:")
-    print(c)
-    d = 2[t] - 300[kg]
-    print("2[t] - 300[kg]:")
-    print(d)
-
-    // === Zeit (s, min, h, ms) ===
-    e = 90[s] + 1[min]
-    print("90[s] + 1[min]:")
-    print(e)
-    f = 1[h] + 30[min]
+    print(1[kg] + 500[g])
+    // === Zeit ===
     print("1[h] + 30[min]:")
-    print(f)
-
-    // === Druck (Pa, bar, atm) ===
-    g = 1[bar] + 100000[Pa]
+    print(1[h] + 30[min])
+    // === Druck ===
     print("1[bar] + 100000[Pa]:")
-    print(g)
-    h = 2[atm] - 101325[Pa]
-    print("2[atm] - 101325[Pa]:")
-    print(h)
+    print(1[bar] + 100000[Pa])
 
-    print("Automatische Umrechnung (Länge/Masse/Zeit/Druck) aktiv.")
+    // === Strom (A, mA, kA) ===
+    print("1[A] + 500[mA]:")
+    print(1[A] + 500[mA])
+    // === Temperatur (K, mK) ===
+    print("300[K] + 1000[mK]:")
+    print(300[K] + 1000[mK])
+    // === Stoffmenge (mol, mmol, kmol) ===
+    print("1[mol] + 500[mmol]:")
+    print(1[mol] + 500[mmol])
+    // === Lichtstärke (cd, mcd) ===
+    print("1[cd] + 500[mcd]:")
+    print(1[cd] + 500[mcd])
+
+    // === Volumen (L, mL) ===
+    print("1[L] + 250[mL]:")
+    print(1[L] + 250[mL])
+    // === Energie (J, kJ, Wh) ===
+    print("1[kJ] + 500[J]:")
+    print(1[kJ] + 500[J])
+    // === Spannung (V, mV, kV) ===
+    print("1[kV] + 300[V]:")
+    print(1[kV] + 300[V])
+    // === Frequenz (Hz, kHz, MHz) ===
+    print("1[MHz] + 500[kHz]:")
+    print(1[MHz] + 500[kHz])
+    // === Ladung (C, mC) ===
+    print("1[C] + 100[mC]:")
+    print(1[C] + 100[mC])
+    // === Widerstand (ohm, kohm) ===
+    print("1[kohm] + 500[ohm]:")
+    print(1[kohm] + 500[ohm])
+    // === Leistung (W, kW) ===
+    print("1[kW] + 200[W]:")
+    print(1[kW] + 200[W])
+
+    print("Automatische Umrechnung (SI + abgeleitet) aktiv.")
 }
 main()
