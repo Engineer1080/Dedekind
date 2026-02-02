@@ -1474,6 +1474,148 @@ def root_bisect(f, a, b, tol=1e-8, max_iter=200):
             a_val, fa = c, fc
     return (a_val + b_val) / 2.0
 
+def qr(A):
+    """
+    QR-Zerlegung: A = Q @ R. A: (m,n)-Matrix.
+    Rückgabe: (Q, R). Q: (m,m) orthogonal, R: (m,n) obere Dreiecksmatrix.
+    """
+    t = _to_tensor(A).float()
+    if t.dim() != 2:
+        raise ValueError("qr: Erwartet 2D-Matrix.")
+    Q, R = torch.linalg.qr(t)
+    return Q, R
+
+def cholesky(A):
+    """
+    Cholesky-Zerlegung: A = L @ L.T für symmetrische positiv definite A.
+    Rückgabe: L (untere Dreiecksmatrix).
+    """
+    t = _to_tensor(A).float()
+    if t.dim() != 2 or t.shape[0] != t.shape[1]:
+        raise ValueError("cholesky: Erwartet quadratische 2D-Matrix.")
+    return torch.linalg.cholesky(t)
+
+def polyfit(x, y, deg):
+    """
+    Polynom-Anpassung: p(x) = p[0] + p[1]*x + ... + p[deg]*x^deg.
+    x, y: 1D-Tensoren gleicher Länge. deg: Polynomgrad.
+    Rückgabe: Koeffizienten-Tensor (Länge deg+1), niedrigster Grad zuerst.
+    """
+    x_t = _to_tensor(x).float().flatten()
+    y_t = _to_tensor(y).float().flatten()
+    if x_t.numel() != y_t.numel():
+        raise ValueError("polyfit: x und y müssen gleiche Länge haben.")
+    d = _builtin_max(0, int(deg))
+    n = x_t.numel()
+    # Vandermonde: Zeile i = [1, x_i, x_i^2, ...]
+    rows = []
+    for i in range(n):
+        row = [x_t[i].pow(k).item() for k in range(d + 1)]
+        rows.append(row)
+    V = torch.tensor(rows, dtype=torch.float32, device=x_t.device)
+    result = torch.linalg.lstsq(
+        V, y_t.unsqueeze(1), rcond=None
+    )
+    return result.solution.squeeze()
+
+def polyval(p, x):
+    """
+    Polynom auswerten: p[0] + p[1]*x + p[2]*x^2 + ...
+    p: 1D-Koeffizienten (niedrigster Grad zuerst). x: Tensor oder Skalar.
+    """
+    p_t = _to_tensor(p).float().flatten()
+    x_t = _to_tensor(x).float()
+    out = torch.zeros_like(x_t, dtype=torch.float32)
+    for k in range(p_t.numel()):
+        out = out + p_t[k] * x_t.pow(k)
+    return out
+
+def unique(x, sorted=True):
+    """
+    Eindeutige Werte. x: Tensor (wird flach gemacht).
+    sorted: True = aufsteigend sortiert (Default). Rückgabe: 1D-Tensor.
+    """
+    t = _to_tensor(x).float().flatten()
+    u = torch.unique(t, sorted=sorted)
+    return u
+
+def argsort(x, dim=-1, descending=False):
+    """
+    Indizes, die x sortieren. x: Tensor. dim: Achse (default -1).
+    descending: True = absteigend. Rückgabe: Long-Tensor gleicher Form.
+    """
+    t = _to_tensor(x).float()
+    return torch.argsort(t, dim=dim, descending=descending)
+
+def convolve1d(a, v, mode="full"):
+    """
+    1D-Faltung. a, v: 1D-Tensoren. mode: "full" (default), "same" oder "valid".
+    full: Ausgabe Länge len(a)+len(v)-1; same: len(a); valid: len(a)-len(v)+1 (ohne Padding).
+    """
+    a_t = _to_tensor(a).float().flatten()
+    v_t = _to_tensor(v).float().flatten()
+    na, nv = a_t.numel(), v_t.numel()
+    if nv == 0:
+        raise ValueError("convolve1d: Kernel v darf nicht leer sein.")
+    # Faltung als conv1d: a als Signal (1, 1, L), v als Kernel (1, 1, K); groups=1.
+    a_2 = a_t.unsqueeze(0).unsqueeze(0)  # (1, 1, na)
+    v_2 = v_t.flip(0).unsqueeze(0).unsqueeze(0)  # (1, 1, nv) für Korrelation = Faltung
+    padding = nv - 1 if mode == "full" else (nv // 2) if mode == "same" else 0
+    out = torch.nn.functional.conv1d(a_2, v_2, padding=padding)
+    out = out.squeeze()
+    if mode == "valid" and na >= nv:
+        pass  # out hat schon Länge na - nv + 1
+    return out
+
+def minimize_scalar(f, bounds, tol=1e-6, max_iter=100):
+    """
+    1D-Minimierung von f im Intervall bounds = (a, b). Golden-Section-Search.
+    f: Callable mit einem Skalar; Rückgabe Skalar (oder Tensor mit einem Element).
+    Rückgabe: (x_min, f_min) als Python floats.
+    """
+    a_val = float(_to_tensor(bounds[0]).float().squeeze().item())
+    b_val = float(_to_tensor(bounds[1]).float().squeeze().item())
+    if a_val >= b_val:
+        raise ValueError("minimize_scalar: bounds muss (a, b) mit a < b sein.")
+    phi = (1.0 + 5.0 ** 0.5) / 2.0  # golden ratio
+    c = b_val - (b_val - a_val) / phi
+    d = a_val + (b_val - a_val) / phi
+    fc = float(_to_tensor(f(c)).float().squeeze().item())
+    fd = float(_to_tensor(f(d)).float().squeeze().item())
+    for _ in range(max_iter):
+        if (b_val - a_val) < tol:
+            x_min = (a_val + b_val) / 2.0
+            return x_min, float(_to_tensor(f(x_min)).float().squeeze().item())
+        if fc < fd:
+            b_val, d, fd = d, c, fc
+            c = b_val - (b_val - a_val) / phi
+            fc = float(_to_tensor(f(c)).float().squeeze().item())
+        else:
+            a_val, c, fc = c, d, fd
+            d = a_val + (b_val - a_val) / phi
+            fd = float(_to_tensor(f(d)).float().squeeze().item())
+    x_min = (a_val + b_val) / 2.0
+    return x_min, float(_to_tensor(f(x_min)).float().squeeze().item())
+
+def newton(f, x0, tol=1e-8, max_iter=50, h=1e-6):
+    """
+    Nullstelle per Newton-Verfahren (1D). f: Callable mit einem Skalar.
+    x0: Startwert. Numerische Ableitung mit Schrittweite h.
+    Rückgabe: Näherung der Nullstelle (Python float).
+    """
+    x = float(_to_tensor(x0).float().squeeze().item())
+    for _ in range(max_iter):
+        fx = f(x)
+        fx = float(_to_tensor(fx).float().squeeze().item())
+        if abs(fx) < tol:
+            return x
+        df = (f(x + h) - f(x - h)) / (2.0 * h)
+        df = float(_to_tensor(df).float().squeeze().item())
+        if abs(df) < 1e-14:
+            break
+        x = x - fx / df
+    return x
+
 # --- Standard Library: Numerical Integration ---
 # Differenzierbar, wenn f Tensor-Argument akzeptiert und differenzierbar ist.
 
