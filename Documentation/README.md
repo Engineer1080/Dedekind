@@ -6,7 +6,7 @@ This folder contains the **source** and **generated** documentation for the Dede
 
 | File | Description |
 |------|-------------|
-| **Dedekind_Language_Specification.md** | Language Specification (Markdown source, v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9/v0.9.6; Chemie/Biologie v0.9.7; I/O/JSON v0.9.8; Stand v1.1.8) |
+| **Dedekind_Language_Specification.md** | Language Specification (Markdown source, v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9/v0.9.6; Chemie/Biologie v0.9.7; I/O/JSON v0.9.8; Stand v1.1.9) |
 | **Dedekind_Research_and_Architecture.md** | Research foundation & architecture (Markdown source; §10 Sprachfeatures v0.6) |
 | **Symbolic_Simplification_Roadmap.md** | Implementierungs-Roadmap für Symbolic Simplification (Phasen, Optionen, Integration) |
 | **Features_Implementation_Roadmap.md** | Implementierungs-Roadmap für naturwissenschaftliche Features (Verteilungen, Integration, Einheiten Compile-Zeit, NUTS/VI, Fitting, LaTeX, symbolische Ableitungen) |
@@ -40,9 +40,13 @@ pandoc Dedekind_Research_and_Architecture.md -o Dedekind_Research_and_Architectu
 - **Typora / other editors**: Open the `.md` file and export to PDF from the application.
 
 
+## What changed in v1.1.9 (documented here)
+
+- **Version 1.1.9**: Patch: type: ignore für numpy-Import in balance_equation (basedpyright).
+
 ## What changed in v1.1.8 (documented here)
 
-- **Version 1.1.8**: Dokumentation und Versionsangaben vereinheitlicht; Changelog konsolidiert.
+- **Version 1.1.8**: **Differentialgeometrie:** christoffel_symbols, riemann_tensor, covariant_derivative (numerisch). **Zahlentheorie:** gcd, is_prime, mod, mod_inv, mod_pow. **Weitere Einheiten:** concentration_to_pH, pH_to_concentration; percent_wv. **Stöchiometrie:** balance_equation.
 
 ## What changed in v1.1.7 (documented here)
 

@@ -35,6 +35,8 @@ DIMENSION_TO_BASE = {
     "charge": ("C", {"C": 1.0, "mC": 0.001, "uC": 1e-6}),
     "resistance": ("ohm", {"ohm": 1.0, "kohm": 1000.0, "Mohm": 1e6}),
     "power": ("W", {"W": 1.0, "kW": 1000.0, "MW": 1e6}),
+    # Chemie/Biologie: Massenkonzentration (% w/v = g/100mL)
+    "mass_concentration": ("g/L", {"g/L": 1.0, "mg/mL": 1.0, "percent_wv": 10.0}),  # 1% w/v = 10 g/L
 }
 # Für Units-Checker: Liste der Einheitenmengen pro Dimension
 ADDITIVE_DIMENSION_UNIT_SETS = [frozenset(tab.keys()) for _b, tab in DIMENSION_TO_BASE.values()]
@@ -1209,6 +1211,74 @@ def hypergeom(a, b, c, z):
     out = sc.hyp2f1(a_val, b_val, c_val, z_t.detach().cpu().numpy())
     return torch.tensor(out, dtype=torch.float32, device=z_t.device)
 
+# --- Standard Library: Zahlentheorie (gcd, is_prime, mod, mod_inv, mod_pow) ---
+def gcd(a, b):
+    """Größter gemeinsamer Teiler von a und b (ganze Zahlen)."""
+    a_val = int(_to_tensor(a).float().squeeze().item()) if hasattr(a, "__float__") else int(a)
+    b_val = int(_to_tensor(b).float().squeeze().item()) if hasattr(b, "__float__") else int(b)
+    a_val, b_val = abs(a_val), abs(b_val)
+    while b_val:
+        a_val, b_val = b_val, a_val % b_val
+    return a_val
+
+def is_prime(n):
+    """True wenn n eine Primzahl ist (n >= 2, ganzzahlig)."""
+    n_val = int(_to_tensor(n).float().squeeze().item()) if hasattr(n, "__float__") else int(n)
+    if n_val < 2:
+        return False
+    if n_val == 2:
+        return True
+    if n_val % 2 == 0:
+        return False
+    d = 3
+    while d * d <= n_val:
+        if n_val % d == 0:
+            return False
+        d += 2
+    return True
+
+def mod(a, m):
+    """a mod m (positiver Rest). a, m: ganze Zahlen; m > 0."""
+    a_val = int(_to_tensor(a).float().squeeze().item()) if hasattr(a, "__float__") else int(a)
+    m_val = int(_to_tensor(m).float().squeeze().item()) if hasattr(m, "__float__") else int(m)
+    if m_val <= 0:
+        raise ValueError("mod: m muss positiv sein.")
+    r = a_val % m_val
+    return r if r >= 0 else r + m_val
+
+def mod_inv(a, m):
+    """Modulares Inverses: x mit (a*x) mod m == 1. Erfordert gcd(a, m) == 1."""
+    a_val = int(_to_tensor(a).float().squeeze().item()) if hasattr(a, "__float__") else int(a)
+    m_val = int(_to_tensor(m).float().squeeze().item()) if hasattr(m, "__float__") else int(m)
+    if m_val <= 0:
+        raise ValueError("mod_inv: m muss positiv sein.")
+    a_val = a_val % m_val
+    if gcd(a_val, m_val) != 1:
+        raise ValueError("mod_inv: a und m müssen teilerfremd sein.")
+    t, t_new = 0, 1
+    r, r_new = m_val, a_val
+    while r_new:
+        q = r // r_new
+        t, t_new = t_new, t - q * t_new
+        r, r_new = r_new, r - q * r_new
+    return t % m_val if t < 0 else t
+
+def mod_pow(base, exp, m):
+    """Modulare Potenz: (base^exp) mod m. Effizient (Square-and-Multiply)."""
+    base_val = int(_to_tensor(base).float().squeeze().item()) if hasattr(base, "__float__") else int(base)
+    exp_val = int(_to_tensor(exp).float().squeeze().item()) if hasattr(exp, "__float__") else int(exp)
+    m_val = int(_to_tensor(m).float().squeeze().item()) if hasattr(m, "__float__") else int(m)
+    if m_val <= 0:
+        raise ValueError("mod_pow: m muss positiv sein.")
+    base_val = base_val % m_val
+    result = 1
+    while exp_val:
+        if exp_val % 2:
+            result = (result * base_val) % m_val
+        exp_val //= 2
+        base_val = (base_val * base_val) % m_val
+    return result
+
 # --- Standard Library: Reduktionen (min, max, argmin, argmax) ---
 def min(x, dim=None):
     """
@@ -2281,6 +2351,147 @@ def atomic_number(symbol):
     if s not in ATOMIC_NUMBERS:
         raise ValueError(f"atomic_number: unbekanntes Element '{s}'.")
     return ATOMIC_NUMBERS[s]
+
+def concentration_to_pH(c_M):
+    """Konzentration [H+] in mol/L -> pH = -log10(c). c: Skalar oder Tensor."""
+    t = _to_tensor(c_M).float()
+    return -torch.log10(torch.clamp(t, min=1e-30))
+
+def pH_to_concentration(pH):
+    """pH -> [H+] in mol/L = 10^(-pH). pH: Skalar oder Tensor."""
+    t = _to_tensor(pH).float()
+    return torch.pow(10.0, -t)
+
+# --- Standard Library: Differentialgeometrie (Christoffel, Riemann) ---
+def christoffel_symbols(g_func, x, h=1e-5):
+    """
+    Christoffel-Symbole Gamma^k_ij aus Metrik g_ij(x).
+    g_func: Callable(x) -> 2D-Tensor (n,n) Metrik an der Stelle x.
+    x: 1D-Tensor oder Liste der Koordinaten.
+    h: Schrittweite für numerische Ableitung.
+    Rückgabe: 3D-Tensor (n,n,n) mit Gamma[k,i,j] = Gamma^k_ij.
+    """
+    x_t = _to_tensor(x).float().flatten()
+    n = x_t.shape[0]
+    g0 = _to_tensor(g_func(x_t)).float()
+    if g0.dim() != 2 or g0.shape[0] != g0.shape[1] or g0.shape[0] != n:
+        raise ValueError("christoffel_symbols: g_func(x) muss (n,n)-Matrix liefern, n = len(x).")
+    g_inv = torch.linalg.inv(g0)
+    Gamma = torch.zeros(n, n, n, device=g0.device, dtype=g0.dtype)
+    for k in range(n):
+        for i in range(n):
+            for j in range(n):
+                s = 0.0
+                for m in range(n):
+                    x_plus = x_t.clone()
+                    x_plus[j] = x_plus[j] + h
+                    g_plus = _to_tensor(g_func(x_plus)).float()
+                    dg_im_j = (g_plus[i, m].item() - g0[i, m].item()) / h
+                    x_plus2 = x_t.clone()
+                    x_plus2[i] = x_plus2[i] + h
+                    g_plus2 = _to_tensor(g_func(x_plus2)).float()
+                    dg_jm_i = (g_plus2[j, m].item() - g0[j, m].item()) / h
+                    x_plus3 = x_t.clone()
+                    x_plus3[m] = x_plus3[m] + h
+                    g_plus3 = _to_tensor(g_func(x_plus3)).float()
+                    dg_ij_m = (g_plus3[i, j].item() - g0[i, j].item()) / h
+                    s += 0.5 * g_inv[k, m].item() * (dg_im_j + dg_jm_i - dg_ij_m)
+                Gamma[k, i, j] = s
+    return Gamma
+
+def riemann_tensor(g_func, x, h=1e-5):
+    """
+    Riemann-Tensor R^a_bcd aus Metrik g(x).
+    g_func: Callable(x) -> 2D-Tensor Metrik. x: Koordinaten.
+    Rückgabe: 4D-Tensor (n,n,n,n) mit R[a,b,c,d].
+    """
+    Gamma = christoffel_symbols(g_func, x, h)
+    n = Gamma.shape[0]
+    x_t = _to_tensor(x).float().flatten()
+    R = torch.zeros(n, n, n, n, device=Gamma.device, dtype=Gamma.dtype)
+    for a in range(n):
+        for b in range(n):
+            for c in range(n):
+                for d in range(n):
+                    dG_ac_d = 0.0
+                    dG_ad_c = 0.0
+                    if d < n:
+                        x_plus = x_t.clone()
+                        x_plus[d] = x_plus[d] + h
+                        G_plus = christoffel_symbols(g_func, x_plus, h)
+                        dG_ac_d = (G_plus[a, c, b].item() - Gamma[a, c, b].item()) / h
+                    if c < n:
+                        x_plus = x_t.clone()
+                        x_plus[c] = x_plus[c] + h
+                        G_plus = christoffel_symbols(g_func, x_plus, h)
+                        dG_ad_c = (G_plus[a, d, b].item() - Gamma[a, d, b].item()) / h
+                    term1 = sum(Gamma[a, e, c].item() * Gamma[e, b, d].item() for e in range(n))
+                    term2 = sum(Gamma[a, e, d].item() * Gamma[e, b, c].item() for e in range(n))
+                    R[a, b, c, d] = dG_ac_d - dG_ad_c + term1 - term2
+    return R
+
+def covariant_derivative(T, g_func, x, h=1e-5):
+    """
+    Kovariante Ableitung eines Tensorfelds T in Richtung der Koordinaten.
+    T: Callable(x) -> Tensor (beliebiger Rang). g_func: Metrik. x: Koordinaten.
+    Rückgabe: Kovariante Ableitung (gleicher Rang wie T).
+    Vereinfacht für Skalarfeld: Nabla_i f = d_i f (partielle Ableitung).
+    """
+    x_t = _to_tensor(x).float().flatten()
+    T0 = _to_tensor(T(x_t)).float()
+    n = x_t.shape[0]
+    if T0.dim() == 0:
+        grad = torch.zeros(n, device=T0.device, dtype=T0.dtype)
+        for i in range(n):
+            x_plus = x_t.clone()
+            x_plus[i] = x_plus[i] + h
+            grad[i] = (_to_tensor(T(x_plus)).float().item() - T0.item()) / h
+        return grad
+    raise NotImplementedError("covariant_derivative: nur für Skalarfelder implementiert.")
+
+# --- Standard Library: Stöchiometrie ---
+def _parse_formula(s):
+    """Parst Summenformel wie H2O, CaCO3 -> Dict Element -> Anzahl."""
+    import re
+    d = {}
+    for m in re.finditer(r"([A-Z][a-z]?)(\d*)", s):
+        elem, num = m.group(1), m.group(2) or "1"
+        d[elem] = d.get(elem, 0) + int(num)
+    return d
+
+def balance_equation(reactants_str, products_str):
+    """
+    Stöchiometrische Koeffizienten für ausgeglichene Reaktionsgleichung.
+    reactants_str: String wie \"H2 + O2\" (Edukte, + getrennt).
+    products_str: String wie \"H2O\" (Produkte).
+    Rückgabe: (coeff_reactants, coeff_products) als Listen; z. B. ([2, 1], [2]) für 2*H2 + O2 -> 2*H2O.
+    """
+    r_parts = [p.strip() for p in str(reactants_str).split("+") if p.strip()]
+    p_parts = [p.strip() for p in str(products_str).split("+") if p.strip()]
+    r_formulas = [_parse_formula(p) for p in r_parts]
+    p_formulas = [_parse_formula(p) for p in p_parts]
+    all_elems = set()
+    for d in r_formulas + p_formulas:
+        all_elems.update(d.keys())
+    all_elems = sorted(all_elems)
+    n_r, n_p = len(r_formulas), len(p_formulas)
+    A = [[d.get(e, 0) for d in r_formulas] + [-d.get(e, 0) for d in p_formulas] for e in all_elems]
+    import numpy as np  # type: ignore[reportMissingImports]
+    A_np = np.array(A, dtype=float)
+    _, _, vh = np.linalg.svd(A_np)
+    null_vec = vh[-1]
+    if np.allclose(np.abs(null_vec), 0):
+        raise ValueError("balance_equation: Reaktion nicht ausbalancierbar.")
+    if np.min(null_vec) <= 0:
+        null_vec = -null_vec
+    min_pos = np.min(null_vec[null_vec > 0.001]) if np.any(null_vec > 0.001) else 1.0
+    scaled = null_vec / min_pos
+    scaled_int = np.round(scaled * 1000).astype(int)
+    g = scaled_int[0]
+    for x in scaled_int:
+        g = gcd(g, abs(x))
+    coeffs = [int(_builtin_max(1, abs(x // g))) for x in scaled_int]
+    return list(coeffs[:n_r]), list(coeffs[n_r:])
 
 # --- Standard Library: File I/O, Network, JSON ---
 
