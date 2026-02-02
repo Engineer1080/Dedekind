@@ -9,6 +9,7 @@ from .ast_nodes import (
     IfStmt, WhileStmt, ForStmt, VectorLiteral, Subscript,
     CompileError,
 )
+from .ml_runtime import ADDITIVE_DIMENSION_UNIT_SETS
 
 # Bekannte Konstanten und ihre Einheiten (wie in ml_runtime)
 KNOWN_UNITS: Dict[str, str] = {
@@ -28,6 +29,22 @@ def _normalize_chemical_unit(u: Optional[str]) -> Optional[str]:
     if u in ("M", "mol/L", "mol*L^-1", "mol*L^(-1)"):
         return "M"
     return u
+
+
+def _same_dimension(u1: Optional[str], u2: Optional[str]) -> bool:
+    """True, wenn beide Einheiten addierbar/subtrahierbar sind: gleiche Einheit, chemische Norm oder gleiche Dimension (Länge/Masse/Zeit/Druck)."""
+    if u1 is None or u2 is None:
+        return False
+    u1 = (u1 or "").strip()
+    u2 = (u2 or "").strip()
+    if u1 == u2:
+        return True
+    for unit_set in ADDITIVE_DIMENSION_UNIT_SETS:
+        if u1 in unit_set and u2 in unit_set:
+            return True
+    n1 = _normalize_chemical_unit(u1)
+    n2 = _normalize_chemical_unit(u2)
+    return n1 is not None and n2 is not None and n1 == n2
 
 
 def _unit_mul(u1: str, u2: str) -> str:
@@ -75,8 +92,9 @@ def _infer_unit(node: Node) -> Optional[str]:
         left_u = _infer_unit(node.left)
         right_u = _infer_unit(node.right)
         if node.op in ("+", "-"):
-            if left_u is not None and right_u is not None and left_u != right_u:
+            if left_u is not None and right_u is not None and not _same_dimension(left_u, right_u):
                 return None  # Signal: mismatch, handled in check
+            # Gleiche Dimension (z. B. Länge): Ergebnis-Einheit = erste Operand-Einheit
             return left_u if left_u is not None else right_u
         if node.op in ("*", "**"):
             lu = left_u or ""
@@ -114,14 +132,12 @@ def _check_expr(node: Node, filepath: Optional[str]) -> None:
                         return
                 except (TypeError, ValueError):
                     pass
-            # Chemische Einheiten: M und mol/L gelten als gleich
-            left_n = _normalize_chemical_unit(left_u)
-            right_n = _normalize_chemical_unit(right_u)
-            if left_n is not None and right_n is not None and left_n != right_n:
+            # Gleiche Einheit, chemische Norm (M/mol/L) oder Längeneinheiten (m/cm/km/mm/dm) erlaubt
+            if left_u is not None and right_u is not None and not _same_dimension(left_u, right_u):
                 line = getattr(node, "line", None)
                 raise CompileError(
-                    f"Einheiten passen nicht für {node.op}: [{left_u or left_n}] vs [{right_u or right_n}]. "
-                    "Für Addition/Subtraktion muss die gleiche Einheit verwendet werden.",
+                    f"Einheiten passen nicht für {node.op}: [{left_u}] vs [{right_u}]. "
+                    "Gleiche Einheit oder kompatible Dimension (Länge/Masse/Zeit/Druck) erforderlich.",
                     line=line,
                     filepath=filepath,
                 )

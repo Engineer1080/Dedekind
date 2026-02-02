@@ -155,7 +155,7 @@ Example: `E = m * c^2` with `m = 1.0[kg]` yields a result in J (Joule); the runt
 
 ### 15.3 Quantity Arithmetic
 
-- **Addition / Subtraction**: Only allowed when both operands have the **same unit**; otherwise a runtime error is raised.
+- **Addition / Subtraction**: Allowed when both operands have the **same unit**, or when both have **compatible units of the same dimension** (automatic conversion). Supported dimensions: **Length** (m, cm, km, mm, dm), **Mass** (kg, g, t, mg), **Time** (s, min, h, ms), **Pressure** (Pa, bar, atm). Example: `1[m] + 100[cm]` → `2.0[m]`; `1[bar] + 100000[Pa]` → `2.0[bar]`. The result unit is the unit of the **first operand**. Incompatible units (e.g. `1[m] + 1[s]`) raise a compile-time or runtime error.
 - **Multiplication / Division**: Units are combined (e.g. `m * m/s` → `m²/s`; `J/s` for power).
 - **Power**: `Quantity ** exponent` is supported (e.g. `c^2`, `r^2`); the unit is raised to the given exponent (e.g. `(m/s)^2`).
 - **Unary minus**: `-x` is supported for both `Quantity` and `Quaternion` (e.g. `-1.602e-19[C]`, `-1.0 + 0i`).

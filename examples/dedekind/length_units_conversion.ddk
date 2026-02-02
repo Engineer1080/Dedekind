@@ -1,0 +1,39 @@
+// Automatische Umrechnung bei Addition/Subtraktion: Länge, Masse, Zeit, Druck
+fn main() {
+    print("--- Dedekind: Automatische Einheiten-Umrechnung ---")
+
+    // === Länge (m, cm, km, mm, dm) ===
+    a = 1[m] + 100[cm]
+    print("1[m] + 100[cm]:")
+    print(a)
+    b = 1[km] + 500[m]
+    print("1[km] + 500[m]:")
+    print(b)
+
+    // === Masse (kg, g, t, mg) ===
+    c = 1[kg] + 500[g]
+    print("1[kg] + 500[g]:")
+    print(c)
+    d = 2[t] - 300[kg]
+    print("2[t] - 300[kg]:")
+    print(d)
+
+    // === Zeit (s, min, h, ms) ===
+    e = 90[s] + 1[min]
+    print("90[s] + 1[min]:")
+    print(e)
+    f = 1[h] + 30[min]
+    print("1[h] + 30[min]:")
+    print(f)
+
+    // === Druck (Pa, bar, atm) ===
+    g = 1[bar] + 100000[Pa]
+    print("1[bar] + 100000[Pa]:")
+    print(g)
+    h = 2[atm] - 101325[Pa]
+    print("2[atm] - 101325[Pa]:")
+    print(h)
+
+    print("Automatische Umrechnung (Länge/Masse/Zeit/Druck) aktiv.")
+}
+main()
