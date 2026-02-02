@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-1.1.8-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-1.1.9-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -29,8 +29,14 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
 
+### What's New in v1.1.9
+- **Patch:** `# type: ignore[reportMissingImports]` für numpy-Import in `balance_equation` (basedpyright).
+
 ### What's New in v1.1.8
-- **Dokumentation**: Changelog und Versionsangaben vereinheitlicht; `Was_Dedekind_aktuell_kann.md` und Roadmaps aktualisiert.
+- **Differentialgeometrie:** `christoffel_symbols(g_func, x, h)`, `riemann_tensor(g_func, x, h)`, `covariant_derivative(T, g_func, x, h)` – Christoffel-Symbole, Riemann-Tensor, kovariante Ableitung (numerisch).
+- **Zahlentheorie:** `gcd(a, b)`, `is_prime(n)`, `mod(a, m)`, `mod_inv(a, m)`, `mod_pow(base, exp, m)` – ggT, Primzahltest, modulare Arithmetik.
+- **Weitere Einheiten:** pH-Funktionen `concentration_to_pH(c_M)`, `pH_to_concentration(pH)`; Massenkonzentration `[percent_wv]` (= g/100mL).
+- **Stöchiometrie:** `balance_equation(reactants_str, products_str)` – Reaktionsgleichungen ausbalancieren (z. B. H₂ + O₂ → H₂O).
 
 ### What's New in v1.1.7
 - **Matrix-Operator @**: `A @ B` statt `matmul(A, B)` – gleiche Priorität wie * und /.

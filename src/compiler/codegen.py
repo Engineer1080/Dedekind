@@ -31,6 +31,10 @@ _RUNTIME_BUILTIN_NAMES = frozenset({
     'UncertainQuantity', 'uncertain', 'fit',
     'michaelis_menten', 'logistic', 'logistic_growth_dt', 'arrhenius', 'linear_regression',
     'atomic_mass', 'atomic_number',
+    'gcd', 'is_prime', 'mod', 'mod_inv', 'mod_pow',
+    'concentration_to_pH', 'pH_to_concentration',
+    'christoffel_symbols', 'riemann_tensor', 'covariant_derivative',
+    'balance_equation',
     'read_file', 'write_file', 'file_exists', 'http_get', 'http_post',
     'json_parse', 'json_stringify', 'sort', 'quicksort', 'plot', 'scatter', 'contour', 'print_latex',
     'assert', 'diff_sym', 'jacobian', 'hessian',
@@ -338,6 +342,10 @@ class CodeGenerator:
         return f"_to_tensor([{', '.join(elements)}])"
 
     def visit_Identifier(self, node: Identifier):
+        if node.name == "true":
+            return "True"
+        if node.name == "false":
+            return "False"
         return node.name
 
     def visit_IndexedVariable(self, node: IndexedVariable):

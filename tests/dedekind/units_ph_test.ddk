@@ -1,0 +1,20 @@
+// Test: Einheiten % w/v, pH-Funktionen
+fn main() {
+    // 1% w/v = 10 g/L
+    q = Quantity(1, "percent_wv")
+    assert(q.value == 1)
+    assert(q.unit == "percent_wv")
+
+    // concentration_to_pH, pH_to_concentration
+    c = 0.0001
+    ph = concentration_to_pH(c)
+    assert(ph > 3.99)
+    assert(ph < 4.01)
+
+    c_back = pH_to_concentration(7.0)
+    assert(c_back > 9.9e-8)
+    assert(c_back < 1.1e-7)
+
+    print("units_ph_test: bestanden.")
+}
+main()
