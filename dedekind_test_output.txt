@@ -1,2 +1,1 @@
-Hallo Dedekind
-Zeile 2
+Hallo Dedekind\nZeile 2

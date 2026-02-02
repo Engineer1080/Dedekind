@@ -1155,6 +1155,60 @@ def gamma(x):
     """Gamma-Funktion Gamma(x); elementweise. Für x > 0."""
     return torch.exp(torch.lgamma(_to_tensor(x).float()))
 
+def bessel_j0(x):
+    """Bessel-Funktion erster Art, Ordnung 0: J_0(x); elementweise."""
+    return torch.special.bessel_j0(_to_tensor(x).float())
+
+def bessel_j1(x):
+    """Bessel-Funktion erster Art, Ordnung 1: J_1(x); elementweise."""
+    return torch.special.bessel_j1(_to_tensor(x).float())
+
+def bessel_j(n, x):
+    """
+    Bessel-Funktion erster Art, Ordnung n: J_n(x).
+    n: Ordnung (Skalar oder Tensor). x: Argument (Tensor oder Skalar).
+    Erfordert scipy.
+    """
+    try:
+        import scipy.special as sc  # type: ignore[import-untyped]
+    except ImportError:
+        raise RuntimeError("bessel_j(n, x) erfordert scipy. Bitte installieren: pip install scipy")
+    x_t = _to_tensor(x).float()
+    n_val = int(n) if hasattr(n, "__int__") else float(_to_tensor(n).float().item())
+    out = sc.jv(n_val, x_t.detach().cpu().numpy())
+    return torch.tensor(out, dtype=torch.float32, device=x_t.device)
+
+def legendre(n, x):
+    """
+    Legendre-Polynom P_n(x). n: Grad (int). x: Argument (Tensor oder Skalar).
+    Erfordert scipy.
+    """
+    try:
+        import scipy.special as sc  # type: ignore[import-untyped]
+    except ImportError:
+        raise RuntimeError("legendre(n, x) erfordert scipy. Bitte installieren: pip install scipy")
+    x_t = _to_tensor(x).float()
+    n_val = int(n)
+    out = sc.eval_legendre(n_val, x_t.detach().cpu().numpy())
+    return torch.tensor(out, dtype=torch.float32, device=x_t.device)
+
+def hypergeom(a, b, c, z):
+    """
+    Hypergeometrische Funktion 2F1(a, b; c; z).
+    a, b, c: Parameter (Skalare). z: Argument (Tensor oder Skalar).
+    Erfordert scipy.
+    """
+    try:
+        import scipy.special as sc  # type: ignore[import-untyped]
+    except ImportError:
+        raise RuntimeError("hypergeom(a, b, c, z) erfordert scipy. Bitte installieren: pip install scipy")
+    z_t = _to_tensor(z).float()
+    a_val = float(a)
+    b_val = float(b)
+    c_val = float(c)
+    out = sc.hyp2f1(a_val, b_val, c_val, z_t.detach().cpu().numpy())
+    return torch.tensor(out, dtype=torch.float32, device=z_t.device)
+
 # --- Standard Library: Reduktionen (min, max, argmin, argmax) ---
 def min(x, dim=None):
     """
@@ -1647,6 +1701,59 @@ def matrix_power(A, n):
     if t.dim() != 2 or t.shape[0] != t.shape[1]:
         raise ValueError("matrix_power: Erwartet quadratische 2D-Matrix.")
     return torch.linalg.matrix_power(t, n_int)
+
+def kron(A, B):
+    """
+    Kronecker-Produkt A ⊗ B. A: (m,n), B: (p,q) → (m*p, n*q).
+    """
+    a_t = _to_tensor(A).float()
+    b_t = _to_tensor(B).float()
+    return torch.kron(a_t, b_t)
+
+def outer(a, b):
+    """
+    Äußeres Produkt a ⊗ b. a, b: 1D-Vektoren → Matrix (len(a), len(b)).
+    """
+    a_t = _to_tensor(a).float().flatten()
+    b_t = _to_tensor(b).float().flatten()
+    return torch.outer(a_t, b_t)
+
+def vander(x, n=None):
+    """
+    Vandermonde-Matrix: Zeile i = [x_i^0, x_i^1, ..., x_i^(n-1)].
+    x: 1D-Tensor. n: Spaltenanzahl (Default: len(x)); n=None → len(x).
+    Rückgabe: (len(x), n) Matrix.
+    """
+    x_t = _to_tensor(x).float().flatten()
+    if n is None:
+        n = x_t.numel()
+    n_int = int(n)
+    return torch.linalg.vander(x_t, N=n_int)
+
+def matrix_sqrt(A):
+    """
+    Matrix-Quadratwurzel: B mit B @ B = A. A: quadratische positiv semidefinite Matrix.
+    Implementierung über Eigenwertzerlegung.
+    """
+    t = _to_tensor(A).float()
+    if t.dim() != 2 or t.shape[0] != t.shape[1]:
+        raise ValueError("matrix_sqrt: Erwartet quadratische 2D-Matrix.")
+    evals, evecs = torch.linalg.eigh(t)
+    if (evals < -1e-10).any():
+        raise ValueError("matrix_sqrt: Matrix muss positiv semidefinit sein.")
+    evals_sqrt = torch.clamp(evals, min=0.0).sqrt()
+    return evecs @ torch.diag(evals_sqrt) @ evecs.T
+
+def matrix_norm(A, ord=None):
+    """
+    Matrix-Norm. A: 2D-Tensor.
+    ord: "fro" (Frobenius), "nuc" (nuklear), 2 (Spektralnorm), inf, -inf, 1, -1.
+    Default: Frobenius.
+    """
+    t = _to_tensor(A).float()
+    if t.dim() != 2:
+        raise ValueError("matrix_norm: Erwartet 2D-Matrix.")
+    return torch.linalg.norm(t, ord=ord if ord is not None else "fro")
 
 def cdist(X, Y, p=2):
     """

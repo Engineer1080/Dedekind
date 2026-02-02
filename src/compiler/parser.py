@@ -216,7 +216,7 @@ class Parser:
 
     def parse_factor_expr(self):
         left = self.parse_power_expr()
-        while self.peek() and self.peek().type in ['MUL', 'DIV']:
+        while self.peek() and self.peek().type in ['MUL', 'DIV', 'AT']:
             op_tok = self.consume()
             right = self.parse_power_expr()
             left = BinaryOp(left, op_tok.value, right)

@@ -13,6 +13,8 @@ def compile_source(source_code: str, filepath: Optional[str] = None, check_units
         tokens = lexer.tokenize()
         parser = Parser(tokens)
         ast = parser.parse()
+        from .simplify import simplify_program
+        ast = simplify_program(ast)
         if check_units:
             from .units_checker import check_units as run_units_check
             run_units_check(ast, filepath=filepath)

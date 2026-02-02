@@ -19,11 +19,13 @@ _RUNTIME_BUILTIN_NAMES = frozenset({
     'sample', 'log_prob', 'metropolis', 'hmc',
     'sin', 'cos', 'tan', 'exp', 'log', 'log10', 'sqrt', 'abs',
     'asin', 'acos', 'atan', 'atan2', 'sinh', 'cosh', 'tanh', 'erf', 'erfc', 'gamma', 'lgamma',
+    'bessel_j0', 'bessel_j1', 'bessel_j', 'legendre', 'hypergeom',
     'min', 'max', 'argmin', 'argmax', 'round', 'floor', 'ceil',
     'mean', 'std', 'var', 'median', 'quantile', 'percentile', 'cov', 'corrcoef', 'skew', 'kurtosis', 'histogram',
     'norm', 'det', 'trace', 'solve', 'eigh', 'eig', 'svd', 'lstsq',
     'cond', 'rank', 'pinv', 'expm', 'logm', 'interp', 'trapz', 'root_bisect',
-    'qr', 'cholesky', 'lu', 'matrix_power', 'cdist', 'polyfit', 'polyval', 'unique', 'argsort', 'convolve1d',
+    'qr', 'cholesky', 'lu', 'matrix_power', 'kron', 'outer', 'vander', 'matrix_sqrt', 'matrix_norm',
+    'cdist', 'polyfit', 'polyval', 'unique', 'argsort', 'convolve1d',
     'minimize_scalar', 'newton', 'minimize', 'fsolve', 'integrate', 'simpson',
     'permutation', 'choice', 'autocorr', 'moving_mean',
     'UncertainQuantity', 'uncertain', 'fit',
@@ -309,6 +311,8 @@ class CodeGenerator:
         left = self.visit_expression(node.left)
         right = self.visit_expression(node.right)
         op = node.op
+        if op == '@':
+            return f"torch.matmul({left}, {right})"
         if op == '^': op = '**'
         return f"({left} {op} {right})"
 
