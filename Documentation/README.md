@@ -6,7 +6,7 @@ This folder contains the **source** and **generated** documentation for the Dede
 
 | File | Description |
 |------|-------------|
-| **Dedekind_Language_Specification.md** | Language Specification (Markdown source, v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9/v0.9.6; Chemie/Biologie v0.9.7; I/O/JSON v0.9.8; Stand v1.1.1) |
+| **Dedekind_Language_Specification.md** | Language Specification (Markdown source, v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9/v0.9.6; Chemie/Biologie v0.9.7; I/O/JSON v0.9.8; Stand v1.1.2) |
 | **Dedekind_Research_and_Architecture.md** | Research foundation & architecture (Markdown source; §10 Sprachfeatures v0.6) |
 | **Symbolic_Simplification_Roadmap.md** | Implementierungs-Roadmap für Symbolic Simplification (Phasen, Optionen, Integration) |
 | **Features_Implementation_Roadmap.md** | Implementierungs-Roadmap für naturwissenschaftliche Features (Verteilungen, Integration, Einheiten Compile-Zeit, NUTS/VI, Fitting, LaTeX, symbolische Ableitungen) |
@@ -40,9 +40,13 @@ pandoc Dedekind_Research_and_Architecture.md -o Dedekind_Research_and_Architectu
 - **Typora / other editors**: Open the `.md` file and export to PDF from the application.
 
 
+## What changed in v1.1.2 (documented here)
+
+- **Version 1.1.2**: **Einheiten-Anzeige**: Gleiche Faktoren werden zusammengefasst (`m*m` → `m^2`, `m*m*m` → `m^3`, `m^2*m` → `m^3`, `m*m*kg` → `m^2*kg`). Literale `1[m^2]`, `1[m^3]` nutzbar; `m^3` bei Volumen-Umrechnung (z. B. `1[m^3] + 500[L]` → `1.5[m^3]`).
+
 ## What changed in v1.1.1 (documented here)
 
-- **Version 1.1.1**: **Automatische Einheiten-Umrechnung** bei Addition und Subtraktion: Länge (m, cm, km, mm, dm), Masse (kg, g, t, mg), Zeit (s, min, h, ms), Druck (Pa, bar, atm). Z. B. `1[m] + 100[cm]` → `2.0[m]`, `1[bar] + 100000[Pa]` → `2.0[bar]`. Ergebnis-Einheit = erste Operand-Einheit. Gilt für `Quantity` und `UncertainQuantity`. Compile-Zeit-Check erlaubt gleiche Dimension; inkompatible Einheiten → CompileError. Beispiel: `examples/dedekind/length_units_conversion.ddk`.
+- **Version 1.1.1**: **Automatische Einheiten-Umrechnung** bei Addition und Subtraktion: SI-Basis (Länge, Masse, Zeit, Strom, Temperatur, Stoffmenge, Lichtstärke) und abgeleitet (Druck, Volumen, Energie, Spannung, Frequenz, Ladung, Widerstand, Leistung). Z. B. `1[m] + 100[cm]` → `2.0[m]`, `1[kJ] + 500[J]` → `1.5[kJ]`. Ergebnis-Einheit = erste Operand-Einheit. Gilt für `Quantity` und `UncertainQuantity`. Compile-Zeit-Check erlaubt gleiche Dimension; inkompatible Einheiten → CompileError. Beispiel: `examples/dedekind/length_units_conversion.ddk`.
 
 ## What changed in v1.1.0 (documented here)
 

@@ -1,6 +1,6 @@
 # Was Dedekind aktuell kann
 
-**Stand:** Basierend auf Code und Changelogs (v1.1.1, Februar 2026). Dedekind ist ein **Prototyp** – die Sprache wird nach Python transpiliert und nutzt PyTorch/NumPy als Laufzeit.
+**Stand:** Basierend auf Code und Changelogs (v1.1.2, Februar 2026). Dedekind ist ein **Prototyp** – die Sprache wird nach Python transpiliert und nutzt PyTorch/NumPy als Laufzeit.
 
 ---
 
@@ -28,7 +28,7 @@
 ## Physik & Einheiten
 
 - **Einheiten-Literale:** SI-Basiseinheiten m, kg, s, A, K, mol, cd; abgeleitete Einheiten (Pa, W, Hz, V, F, ohm, S, Wb, T, H, lm, lx, Gy, kat, M); Chemie: mol, L, M (= mol/L), ppm, bar, atm, g; Radioaktivität: Bq, Sv.
-- **Arithmetik:** **Automatische Umrechnung** bei Addition/Subtraktion für **Länge** (m, cm, km, mm, dm), **Masse** (kg, g, t, mg), **Zeit** (s, min, h, ms), **Druck** (Pa, bar, atm) — Ergebnis in der Einheit des ersten Operanden; sonst gleiche Einheit für +/-. Multiplikation/Division kombiniert Einheiten; Potenz mit `^`; Anzeige vereinfacht (J, N, Pa, W usw.).
+- **Arithmetik:** **Automatische Umrechnung** bei Addition/Subtraktion für gleiche Dimension; Ergebnis in der Einheit des ersten Operanden. Unterstützt: **SI-Basis** — Länge (m, cm, km, mm, dm), Masse (kg, g, t, mg), Zeit (s, min, h, ms), Strom (A, mA, kA, uA), Temperatur (K, mK), Stoffmenge (mol, mmol, kmol), Lichtstärke (cd, mcd); **abgeleitet** — Druck (Pa, bar, atm), Volumen (L, mL, dm³, m³), Energie (J, kJ, MJ, Wh, kWh), Spannung (V, mV, kV), Frequenz (Hz, kHz, MHz, GHz), Ladung (C, mC, uC), Widerstand (ohm, kohm, Mohm), Leistung (W, kW, MW). Sonst gleiche Einheit für +/-. Multiplikation/Division kombiniert Einheiten; Potenz mit `^`. **Anzeige**: Gleiche Faktoren werden zusammengefasst (z. B. `m*m` → `m^2`, `m*m*m` → `m^3`); Literale `1[m^2]`, `1[m^3]` nutzbar. Anzeige vereinfacht (J, N, Pa, W usw.).
 - **Physikalische Konstanten (CODATA):** `c`, `G`, `h`, `hbar`, `k_B`, `k_e`, `e_charge`, `epsilon_0`, `mu_0`, `m_e`, `m_p`, `N_A`, `R_gas`, `alpha`, `sigma_SB`, `F_faraday` – alle als `Quantity` mit SI-Einheiten.
 - **Differenzierbare ODE:** `ode_solve(fun, y0, t)` (RK4/Euler); `linspace(start, stop, steps)`; Gradients durch `grad()` für Physics-Informed ML.
 - **Differenzierbare PDE:** `pde_heat_1d(u0, x, t, k)`, `pde_heat_2d(u0, x, y, t, k)` für die Wärmeleitungsgleichung; Finite Differenzen + `ode_solve`; Gradients durch `u0` und `k`.
