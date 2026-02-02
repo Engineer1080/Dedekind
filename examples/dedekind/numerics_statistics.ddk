@@ -93,6 +93,36 @@ fn main() {
     print("root_bisect(x^2-2, 1, 2) ~ sqrt(2):")
     print(root)
 
+    // Weitere Algorithmen: qr, cholesky, polyfit, polyval, unique, argsort, convolve1d, minimize_scalar, newton
+    print("qr(A) Q[0,:]:")
+    qr_res = qr(A)
+    print(qr_res[0][0])
+    C = [[4.0, 1.0], [1.0, 3.0]]
+    L = cholesky(C)
+    print("cholesky(C) L:")
+    print(L)
+    xx = [0.0, 1.0, 2.0, 3.0]
+    yy = [1.0, 2.0, 5.0, 10.0]
+    p = polyfit(xx, yy, 2)
+    print("polyfit(xx, yy, 2):")
+    print(p)
+    print("polyval(p, 1.5):")
+    print(polyval(p, 1.5))
+    print("unique([1,2,2,3,1]):")
+    print(unique([1.0, 2.0, 2.0, 3.0, 1.0]))
+    print("argsort([3,1,2]):")
+    print(argsort([3.0, 1.0, 2.0]))
+    print("convolve1d([1,2,3], [1,1]):")
+    print(convolve1d([1.0, 2.0, 3.0], [1.0, 1.0]))
+    fn g(x) { return (x - 1.5) * (x - 1.5) }
+    min_res = minimize_scalar(g, [0.0, 3.0])
+    print("minimize_scalar((x-1.5)^2, [0,3]) x_min:")
+    print(min_res[0])
+    fn h(x) { return x * x - 2.0 }
+    root_n = newton(h, 1.5)
+    print("newton(x^2-2, 1.5) ~ sqrt(2):")
+    print(root_n)
+
     print("Numerik & Statistik aktiv.")
 }
 main()
