@@ -666,6 +666,15 @@ def random_vector(size):
 def random_matrix(rows, cols):
     return torch.randn(rows, cols)
 
+def shuffle(x, dim=0):
+    """
+    Zufälliges Mischen entlang Achse dim. x: Tensor. dim: Achse (default 0).
+    Rückgabe: Tensor gleicher Form (Permutation entlang dim). Nutzt aktuellen Zufallsstand.
+    """
+    t = _to_tensor(x).clone()
+    idx = torch.randperm(t.shape[dim], device=t.device)
+    return t.index_select(dim, idx)
+
 # --- Standard Library: Matrix Operations ---
 
 def transpose(data):
@@ -726,6 +735,35 @@ def fft(data):
 def ifft(data):
     data = _to_complex_tensor(data)
     return torch.fft.ifft(data)
+
+def fftfreq(n, d=1.0):
+    """
+    Frequenzachsen für FFT. n: Anzahl Punkte (int). d: Abtastabstand (Skalar, default 1).
+    Rückgabe: 1D-Tensor der Länge n mit Frequenzen (Einheit 1/d); für Interpretation von fft(x).
+    """
+    n_int = int(n)
+    d_val = float(_to_tensor(d).float().squeeze().item()) if d != 1.0 else 1.0
+    return torch.fft.fftfreq(n_int, d=d_val)
+
+def diff(x, n=1, dim=-1):
+    """
+    Diskrete Ableitung (Differenzen): diff(x) = x[1:] - x[:-1].
+    x: Tensor. n: Ordnung (default 1). dim: Achse (default -1). Rückgabe: Tensor (Länge um n kürzer entlang dim).
+    """
+    t = _to_tensor(x).float()
+    for _ in range(n):
+        t = torch.diff(t, dim=dim)
+    return t
+
+def cumsum(x, dim=None):
+    """
+    Kumulative Summe entlang Achse. x: Tensor. dim: Achse (None = über alle, dann flach).
+    Rückgabe: Tensor gleicher Form wie x (bzw. 1D wenn dim None).
+    """
+    t = _to_tensor(x).float()
+    if dim is None:
+        return t.flatten().cumsum(0)
+    return t.cumsum(dim=dim)
 
 # --- Standard Library: Differentiable ODE Solvers ---
 
@@ -1258,6 +1296,18 @@ def floor(x):
 def ceil(x):
     """Ganzzahlig nach oben; x Tensor oder Skalar."""
     return torch.ceil(_to_tensor(x).float())
+
+def clip(x, min_val=None, max_val=None):
+    """
+    Begrenzt Werte auf [min_val, max_val]. x: Tensor. min_val/max_val: Skalar oder None (keine Grenze).
+    Mindestens eine Grenze angeben. Rückgabe: Tensor gleicher Form.
+    """
+    t = _to_tensor(x).float()
+    if min_val is None and max_val is None:
+        return t
+    min_t = _to_tensor(min_val).float().squeeze() if min_val is not None else None
+    max_t = _to_tensor(max_val).float().squeeze() if max_val is not None else None
+    return torch.clamp(t, min=min_t, max=max_t)
 
 # --- Standard Library: Lineare Algebra (Norm, Det, Spur) ---
 def norm(x, p=None, dim=None):
@@ -2002,6 +2052,61 @@ def json_stringify(obj):
         obj = obj.item()
     return json.dumps(obj, ensure_ascii=False)
 
+# --- Standard Library: Assert (Testing) ---
+
+def _dedekind_assert(condition, message=None):
+    """
+    Prüft eine Bedingung; löst AssertionError aus, wenn condition falsch ist.
+    assert(condition) oder assert(condition, "Fehlermeldung").
+    """
+    val = condition
+    if hasattr(val, "item"):
+        val = val.item() if val.numel() == 1 else bool(val.all().item())
+    elif hasattr(val, "__len__") and len(val) == 1:
+        val = val[0]
+    if not bool(val):
+        raise AssertionError(message if message is not None else "Assertion failed")
+
+# --- Standard Library: Jacobian / Hessian (Autograd) ---
+
+def jacobian(f, x):
+    """
+    Jacobi-Matrix von f an der Stelle x. f: R^n -> R^m (Callable, Tensor -> Tensor).
+    x: 1D-Tensor der Länge n. Rückgabe: Tensor (m, n); Zeile i = Gradient von f_i.
+    """
+    x_t = _to_tensor(x).float().clone().detach().requires_grad_(True)
+    out = f(x_t)
+    out = _to_tensor(out).float()
+    if out.dim() == 0:
+        out = out.unsqueeze(0)
+    out_flat = out.flatten()
+    m, n = out_flat.numel(), x_t.numel()
+    J = torch.zeros(m, n, device=x_t.device, dtype=x_t.dtype)
+    for i in range(m):
+        grad_out = torch.zeros_like(out_flat)
+        grad_out[i] = 1.0
+        g, = torch.autograd.grad(out_flat, x_t, grad_outputs=grad_out, retain_graph=True)
+        J[i] = g.flatten()
+    return J
+
+def hessian(f, x):
+    """
+    Hesse-Matrix von f an der Stelle x. f: R^n -> R (skalar).
+    x: 1D-Tensor der Länge n. Rückgabe: Tensor (n, n).
+    """
+    x_t = _to_tensor(x).float().clone().detach().requires_grad_(True)
+    out = f(x_t)
+    out = _to_tensor(out).float()
+    if out.dim() != 0:
+        out = out.sum()
+    grad_x, = torch.autograd.grad(out, x_t, create_graph=True)
+    n = x_t.numel()
+    H = torch.zeros(n, n, device=x_t.device, dtype=x_t.dtype)
+    for i in range(n):
+        g, = torch.autograd.grad(grad_x[i], x_t, retain_graph=True)
+        H[i] = g.flatten()
+    return H
+
 # --- Standard Library: Sorting ---
 
 def sort(data, descending=False):
@@ -2017,8 +2122,8 @@ def quicksort(data):
 
 _dedekind_plots = []
 
-def _plot_ndarray(x, y=None, title=None, xlabel=None, ylabel=None):
-    """Intern: Erzeugt einen Plot und hängt ihn als Base64-PNG an _dedekind_plots."""
+def _plot_ndarray(x, y=None, title=None, xlabel=None, ylabel=None, kind="line", xscale="linear", yscale="linear"):
+    """Intern: Erzeugt einen Plot und hängt ihn als Base64-PNG an _dedekind_plots. kind: line, scatter."""
     try:
         import base64
         import io
@@ -2037,14 +2142,18 @@ def _plot_ndarray(x, y=None, title=None, xlabel=None, ylabel=None):
     elif not isinstance(x, (list, tuple)): x = list(x)
     if hasattr(y, 'cpu'): y = y.detach().cpu().numpy()
     elif not isinstance(y, (list, tuple)): y = list(y)
-    # Komplexe Werte -> reell (z. B. FFT-Betrag), um UserWarning zu vermeiden
     import numpy as np  # type: ignore[reportMissingImports]
     if getattr(x, 'dtype', None) is not None and np.issubdtype(x.dtype, np.complexfloating):
         x = np.real(x)
     if getattr(y, 'dtype', None) is not None and np.issubdtype(y.dtype, np.complexfloating):
         y = np.real(y)
     fig, ax = plt.subplots()
-    ax.plot(x, y)
+    if kind == "scatter":
+        ax.scatter(x, y)
+    else:
+        ax.plot(x, y)
+    if xscale == "log": ax.set_xscale("log")
+    if yscale == "log": ax.set_yscale("log")
     if title: ax.set_title(title)
     if xlabel: ax.set_xlabel(xlabel)
     if ylabel: ax.set_ylabel(ylabel)
@@ -2053,10 +2162,8 @@ def _plot_ndarray(x, y=None, title=None, xlabel=None, ylabel=None):
     plt.close(fig)
     png_bytes = buf.getvalue()
     _dedekind_plots.append(base64.b64encode(png_bytes).decode('ascii'))
-    # In Dedekind Studio: Bild an Plots-Pane senden (Kernel oder IPython)
     try:
         import sys
-        # Dedekind-Kernel injiziert _dedekind_display_image ins Exec-Namespace
         for i in range(1, 8):
             try:
                 f = sys._getframe(i)
@@ -2067,7 +2174,49 @@ def _plot_ndarray(x, y=None, title=None, xlabel=None, ylabel=None):
                 g['_dedekind_display_image'](png_bytes, 'image/png')
                 break
         else:
-            # IPython/Jupyter-Kernel (z. B. wenn Dedekind in IPython läuft)
+            from IPython import get_ipython  # type: ignore[import-untyped]
+            ip = get_ipython()
+            if ip is not None:
+                from IPython.display import display, Image  # type: ignore[import-untyped]
+                display(Image(data=png_bytes))
+    except Exception:
+        pass
+
+def _plot_contour_inner(X, Y, Z, title=None, xlabel=None, ylabel=None, levels=10):
+    """Intern: Contour-Plot; X, Y, Z als NumPy-Arrays (Z 2D)."""
+    try:
+        import base64
+        import io
+        import matplotlib  # type: ignore[import-untyped]
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt  # type: ignore[import-untyped]
+        import numpy as np  # type: ignore[reportMissingImports]
+    except ImportError:
+        print("contour(): matplotlib nicht installiert. pip install matplotlib")
+        return
+    fig, ax = plt.subplots()
+    nlev = int(levels) if levels is not None else 10
+    ax.contour(X, Y, Z, levels=nlev)
+    if title: ax.set_title(title)
+    if xlabel: ax.set_xlabel(xlabel)
+    if ylabel: ax.set_ylabel(ylabel)
+    buf = io.BytesIO()
+    fig.savefig(buf, format='png', dpi=100, bbox_inches='tight')
+    plt.close(fig)
+    png_bytes = buf.getvalue()
+    _dedekind_plots.append(base64.b64encode(png_bytes).decode('ascii'))
+    try:
+        import sys
+        for i in range(1, 8):
+            try:
+                f = sys._getframe(i)
+            except ValueError:
+                break
+            g = f.f_globals
+            if '_dedekind_display_image' in g:
+                g['_dedekind_display_image'](png_bytes, 'image/png')
+                break
+        else:
             from IPython import get_ipython  # type: ignore[import-untyped]
             ip = get_ipython()
             if ip is not None:
@@ -2099,12 +2248,11 @@ def print_latex(s):
         print(s)
 
 
-def plot(x=None, y=None, title=None, xlabel=None, ylabel=None):
+def plot(x=None, y=None, title=None, xlabel=None, ylabel=None, xscale="linear", yscale="linear"):
     """
-    Zeichnet Daten und zeigt sie in Dedekind Studio an.
-    plot(y)           – y über Index
-    plot(x, y)        – y über x
-    plot(y, title="…") – mit Titel
+    Zeichnet Daten (Linie) und zeigt sie in Dedekind Studio an.
+    plot(y) – y über Index; plot(x, y) – y über x.
+    xscale, yscale: "linear" (default) oder "log".
     """
     if x is None and y is None:
         return
@@ -2115,4 +2263,35 @@ def plot(x=None, y=None, title=None, xlabel=None, ylabel=None):
         x = _to_tensor(x) if hasattr(x, '__iter__') else x
     if not isinstance(y, (list, tuple)) and not hasattr(y, 'shape'):
         y = _to_tensor(y) if hasattr(y, '__iter__') else y
-    _plot_ndarray(x, y, title=title, xlabel=xlabel, ylabel=ylabel)
+    _plot_ndarray(x, y, title=title, xlabel=xlabel, ylabel=ylabel, kind="line", xscale=xscale, yscale=yscale)
+
+def scatter(x=None, y=None, title=None, xlabel=None, ylabel=None):
+    """
+    Streudiagramm: Punkte (x, y). scatter(y) – y über Index; scatter(x, y) – Punkte.
+    Zeigt in Dedekind Studio an.
+    """
+    if x is None and y is None:
+        return
+    if y is None:
+        y = _to_tensor(x) if isinstance(x, (list, tuple)) else x
+        x = None
+    elif not isinstance(x, (list, tuple)) and not hasattr(x, 'shape'):
+        x = _to_tensor(x) if hasattr(x, '__iter__') else x
+    if not isinstance(y, (list, tuple)) and not hasattr(y, 'shape'):
+        y = _to_tensor(y) if hasattr(y, '__iter__') else y
+    _plot_ndarray(x, y, title=title, xlabel=xlabel, ylabel=ylabel, kind="scatter")
+
+def contour(X, Y, Z, title=None, xlabel=None, ylabel=None, levels=10):
+    """
+    Höhenlinien-Plot. X, Y: 1D- oder 2D-Koordinaten (z. B. linspace); Z: 2D-Matrix (Werte).
+    levels: Anzahl Konturlinien (default 10). Zeigt in Dedekind Studio an.
+    """
+    import numpy as np  # type: ignore[reportMissingImports]
+    X_t = _to_tensor(X).float().detach().cpu().numpy()
+    Y_t = _to_tensor(Y).float().detach().cpu().numpy()
+    Z_t = _to_tensor(Z).float().detach().cpu().numpy()
+    if Z_t.ndim != 2:
+        raise ValueError("contour: Z muss 2D-Matrix sein.")
+    if X_t.ndim == 1 and Y_t.ndim == 1:
+        X_t, Y_t = np.meshgrid(X_t, Y_t)
+    _plot_contour_inner(X_t, Y_t, Z_t, title=title, xlabel=xlabel, ylabel=ylabel, levels=levels)

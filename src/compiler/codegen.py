@@ -13,7 +13,7 @@ _TORCH_MEMBER_NAMES = frozenset({'gpu', 'cpu', 'single'})
 _RUNTIME_BUILTIN_NAMES = frozenset({
     'Quantity', 'Quaternion', 'Dense', 'Sequential', 'compile_model',
     'random_vector', 'random_matrix', 'transpose', 'inverse', 'dot_product',
-    'relu', 'softmax', 'convolution', 'pooling', 'fft', 'ifft', 'linspace',
+    'relu', 'softmax', 'convolution', 'pooling', 'fft', 'ifft', 'fftfreq', 'diff', 'cumsum', 'clip', 'shuffle', 'linspace',
     'ode_solve', 'pde_heat_1d', 'pde_heat_2d',
     'Normal', 'Uniform', 'Bernoulli', 'Exponential', 'Gamma', 'Beta', 'Poisson',
     'sample', 'log_prob', 'metropolis', 'hmc',
@@ -29,7 +29,8 @@ _RUNTIME_BUILTIN_NAMES = frozenset({
     'michaelis_menten', 'logistic', 'logistic_growth_dt', 'arrhenius', 'linear_regression',
     'atomic_mass', 'atomic_number',
     'read_file', 'write_file', 'file_exists', 'http_get', 'http_post',
-    'json_parse', 'json_stringify', 'sort', 'quicksort', 'plot', 'print_latex',
+    'json_parse', 'json_stringify', 'sort', 'quicksort', 'plot', 'scatter', 'contour', 'print_latex',
+    'assert', 'jacobian', 'hessian',
     # Constants (from ml_runtime)
     'pi', 'e', 'c', 'G', 'h', 'k_B', 'k_e', 'hbar', 'e_charge', 'epsilon_0', 'mu_0',
     'm_e', 'm_p', 'N_A', 'R_gas', 'alpha', 'sigma_SB', 'F_faraday',
@@ -372,6 +373,8 @@ class CodeGenerator:
              return f"{target}({', '.join(all_args)})"
         
         all_args_str = ", ".join(args + kwargs)
+        if func_name == "assert":
+            return f"_dedekind_assert({all_args_str})"
         if obj_expr:
             return f"{obj_expr}.{func_name}({all_args_str})"
         else:

@@ -1,6 +1,6 @@
 # Was Dedekind aktuell kann
 
-**Stand:** Basierend auf Code und Changelogs (v1.1.4, Februar 2026). Dedekind ist ein **Prototyp** – die Sprache wird nach Python transpiliert und nutzt PyTorch/NumPy als Laufzeit.
+**Stand:** Basierend auf Code und Changelogs (v1.1.5, Februar 2026). Dedekind ist ein **Prototyp** – die Sprache wird nach Python transpiliert und nutzt PyTorch/NumPy als Laufzeit.
 
 ---
 
@@ -9,7 +9,7 @@
 - **Syntax:** Imperativ, C/JavaScript-ähnlich mit Blöcken in `{}`, Funktionen mit `fn name(args) { ... }`, Kontrollfluss `if`/`else`, `while`, `for ... in`.
 - **Typen:** Dynamische Typinferenz; primitive Typen, Listen, Vektoren/Matrizen als Tensoren, Quaternionen; Property-Zugriff (z. B. `.shape`, `.gpu()`).
 - **Ausführungsmodifikatoren:** `.gpu()`, `.cpu()`, `.single()` für Hardware-Platzierung bzw. sequentielle Ausführung; `.sparse()` für Sparse-Tensoren; `.fast()` für MLIR/Inductor-Optimierung (z. B. bei Modellen).
-- **Fehlerbehandlung:** Compiler-Fehler mit Zeilennummer (`CompileError`); Einheiten-Check zur Compile-Zeit (`1[m] + 1[s]` → Fehler); Runtime-Meldungen mit Kontext.
+- **Fehlerbehandlung:** Compiler-Fehler mit Zeilennummer (`CompileError`); Einheiten-Check zur Compile-Zeit (`1[m] + 1[s]` → Fehler); Runtime-Meldungen mit Kontext. **Assert:** `assert(condition, message)` – löst AssertionError bei falscher Bedingung; Mini-Test-Runner `run_tests.py` für `tests/dedekind/*.ddk`.
 
 ---
 
@@ -19,8 +19,8 @@
 - **Funktionen:** `sin`, `cos`, `tan`, `exp`, `log`, `log10`, `sqrt`, `abs`; Arkus- und Hyperbelfunktionen (`asin`, `acos`, `atan`, `atan2`, `sinh`, `cosh`, `tanh`) – elementweise, differenzierbar.
 - **Reduktionen & Runden:** `min`, `max`, `argmin`, `argmax` (optional `dim`); `round`, `floor`, `ceil`.
 - **Statistik:** `mean(x)`, `std(x)`, `var(x)`, `median(x)` (optional `dim`); `quantile(x, q)`, `percentile(x, p)`; `cov(x, y)`, `corrcoef(x, y)` (Kovarianz/Korrelation, bei 2D x: Matrix); `skew(x)`, `kurtosis(x)` (Schiefe, Kurtosis); `histogram(x, bins, range_lim)` (Zählung in Klassen; range_lim optional (min, max)).
-- **Lineare Algebra:** `norm(x)`, `det(A)`, `trace(A)`; `solve(A, b)` (Ax = b); `eigh(A)` (Eigenwerte/-vektoren symmetrisch); `eig(A)` (allgemein); `svd(A)` (Singulärwertzerlegung); `lstsq(A, y)` (Least Squares); `cond(A)`, `rank(A)`, `pinv(A)` (Kondition, Rang, Pseudo-Inverse); `expm(A)`, `logm(A)` (Matrix-Exponential/-Logarithmus). FFT (`fft`, `ifft`); Matrix-Operationen (transpose, inverse, dot_product).
-- **Numerik:** `interp(x, xp, fp)` (1D-lineare Interpolation); `trapz(y, x)` (Trapez-Integration für diskrete Daten); `root_bisect(f, a, b, tol)` (Nullstelle Bisektion); `newton(f, x0, tol)` (Nullstelle Newton). **Weitere Algorithmen:** `qr(A)` (QR-Zerlegung); `cholesky(A)` (Cholesky); `polyfit(x, y, deg)`, `polyval(p, x)` (Polynom-Anpassung/-Auswertung); `unique(x)`, `argsort(x)` (eindeutige Werte, Sortier-Indizes); `convolve1d(a, v, mode)` (1D-Faltung); `minimize_scalar(f, bounds)` (1D-Minimierung Golden-Section). **Numerische Integration:** `integrate(f, a, b, n)` (Trapezregel); differenzierbar, wenn `f` Tensoren akzeptiert.
+- **Lineare Algebra:** `norm(x)`, `det(A)`, `trace(A)`; `solve(A, b)` (Ax = b); `eigh(A)` (Eigenwerte/-vektoren symmetrisch); `eig(A)` (allgemein); `svd(A)` (Singulärwertzerlegung); `lstsq(A, y)` (Least Squares); `cond(A)`, `rank(A)`, `pinv(A)` (Kondition, Rang, Pseudo-Inverse); `expm(A)`, `logm(A)` (Matrix-Exponential/-Logarithmus). FFT (`fft`, `ifft`); Matrix-Operationen (transpose, inverse, dot_product). **Autograd:** `grad(f, x)` (Gradient); `jacobian(f, x)` (Jacobi-Matrix); `hessian(f, x)` (Hesse-Matrix).
+- **Numerik:** `interp(x, xp, fp)` (1D-lineare Interpolation); `trapz(y, x)` (Trapez-Integration für diskrete Daten); `root_bisect(f, a, b, tol)` (Nullstelle Bisektion); `newton(f, x0, tol)` (Nullstelle Newton). **Weitere Algorithmen:** `qr(A)` (QR-Zerlegung); `cholesky(A)` (Cholesky); `polyfit(x, y, deg)`, `polyval(p, x)` (Polynom-Anpassung/-Auswertung); `unique(x)`, `argsort(x)` (eindeutige Werte, Sortier-Indizes); `convolve1d(a, v, mode)` (1D-Faltung); `minimize_scalar(f, bounds)` (1D-Minimierung Golden-Section). **Signal & Reduktionen:** `fftfreq(n, d)` (Frequenzachsen zu FFT); `diff(x, n, dim)` (diskrete Ableitung); `cumsum(x, dim)` (kumulative Summe); `clip(x, min_val, max_val)` (Begrenzung); `shuffle(x, dim)` (zufälliges Mischen). **Numerische Integration:** `integrate(f, a, b, n)` (Trapezregel); differenzierbar, wenn `f` Tensoren akzeptiert.
 - **Ricci-Notation:** Indexnotation `A^ij * B_jk` für Einstein-Summen (Auto-Einsum).
 - **LaTeX-Export:** `export_to_latex(source)` bzw. CLI `--latex` – Formeln aus Dedekind-Code als LaTeX; `print_latex(s)` zeigt Formeln **nur in der Konsole** als Unicode (α, Δ, ∫, ½ etc.), keine Bilder in Plots; zukünftig möglich: KaTeX/Web (siehe Documentation/Console_KaTeX_Roadmap.md).
 
@@ -76,7 +76,8 @@
 - **Compiler:** Transpilation von `.ddk` nach Python; CLI `python -m src.compiler.compiler <file.ddk>`; Optionen `--latex`, `--no-units-check`.
 - **Dedekind Studio:** Spyder-Fork mit nativem Dedekind- und Python-Kernel; Editor mit Syntax-Highlighting (Einheiten, Ricci-Indizes); Plots-Pane für `plot()`; wissenschaftliche Beispiele als Tabs; Fenster-/Taskleisten-Icon (Windows: .ico für scharfe Darstellung).
 - **Jupyter-Kernel:** Dedekind in Jupyter/Spyder-Konsolen; persistenter Kontext über Zellen.
-- **Beispiele:** Über 40 `.ddk`-Beispiele in `examples/dedekind/`; Batch-Test mit `run_examples.py` (-q, -v, --compile, --filter).
+- **Beispiele:** Über 40 `.ddk`-Beispiele in `examples/dedekind/`; Batch-Test mit `run_examples.py` (-q, -v, --compile, --filter). **Tests:** `assert(condition, message)`; Mini-Test-Runner `run_tests.py` für `tests/dedekind/*.ddk`.
+- **Plots:** `plot(x, y, title=..., xscale="linear"|"log", yscale="log")`; `scatter(x, y)`; `contour(X, Y, Z, levels=...)`.
 
 ---
 

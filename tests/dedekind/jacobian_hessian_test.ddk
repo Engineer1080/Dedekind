@@ -1,0 +1,20 @@
+// Mini-Test: jacobian(f, x) und hessian(f, x)
+fn main() {
+    // f(x) = x[0]^2 + x[1]^2  -> grad = (2*x0, 2*x1), Hessian = diag(2,2)
+    fn f(x) {
+        return x[0] * x[0] + x[1] * x[1]
+    }
+    x = [1.0, 2.0]
+    J = jacobian(f, x)
+    assert(J.shape[0] == 1)
+    assert(J.shape[1] == 2)
+    assert(J[0][0] - 2.0 < 0.01)
+    assert(J[0][1] - 4.0 < 0.01)
+    H = hessian(f, x)
+    assert(H.shape[0] == 2)
+    assert(H.shape[1] == 2)
+    assert(H[0][0] - 2.0 < 0.01)
+    assert(H[1][1] - 2.0 < 0.01)
+    print("jacobian_hessian_test: bestanden.")
+}
+main()
