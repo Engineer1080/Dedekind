@@ -1,6 +1,6 @@
 # Was Dedekind aktuell kann
 
-**Stand:** Basierend auf Code und Changelogs (v1.1.2, Februar 2026). Dedekind ist ein **Prototyp** – die Sprache wird nach Python transpiliert und nutzt PyTorch/NumPy als Laufzeit.
+**Stand:** Basierend auf Code und Changelogs (v1.1.3, Februar 2026). Dedekind ist ein **Prototyp** – die Sprache wird nach Python transpiliert und nutzt PyTorch/NumPy als Laufzeit.
 
 ---
 
@@ -18,8 +18,9 @@
 - **Konstanten:** `pi`, `e` (dimensionslos).
 - **Funktionen:** `sin`, `cos`, `tan`, `exp`, `log`, `log10`, `sqrt`, `abs`; Arkus- und Hyperbelfunktionen (`asin`, `acos`, `atan`, `atan2`, `sinh`, `cosh`, `tanh`) – elementweise, differenzierbar.
 - **Reduktionen & Runden:** `min`, `max`, `argmin`, `argmax` (optional `dim`); `round`, `floor`, `ceil`.
-- **Lineare Algebra:** `norm(x)`, `det(A)`, `trace(A)`; FFT (`fft`, `ifft`); Matrix-Operationen (transpose, inverse, dot_product).
-- **Numerische Integration:** `integrate(f, a, b, n)` (Trapezregel); differenzierbar, wenn `f` Tensoren akzeptiert.
+- **Statistik:** `mean(x)`, `std(x)`, `var(x)`, `median(x)` (optional `dim`); `quantile(x, q)`, `percentile(x, p)`.
+- **Lineare Algebra:** `norm(x)`, `det(A)`, `trace(A)`; `solve(A, b)` (Ax = b); `eigh(A)` (Eigenwerte/-vektoren symmetrisch); `eig(A)` (allgemein); `svd(A)` (Singulärwertzerlegung); `lstsq(A, y)` (Least Squares); `cond(A)`, `rank(A)`, `pinv(A)` (Kondition, Rang, Pseudo-Inverse); `expm(A)`, `logm(A)` (Matrix-Exponential/-Logarithmus). FFT (`fft`, `ifft`); Matrix-Operationen (transpose, inverse, dot_product).
+- **Numerik:** `interp(x, xp, fp)` (1D-lineare Interpolation); `trapz(y, x)` (Trapez-Integration für diskrete Daten); `root_bisect(f, a, b, tol)` (Nullstelle per Bisektion). **Numerische Integration:** `integrate(f, a, b, n)` (Trapezregel); differenzierbar, wenn `f` Tensoren akzeptiert.
 - **Ricci-Notation:** Indexnotation `A^ij * B_jk` für Einstein-Summen (Auto-Einsum).
 - **LaTeX-Export:** `export_to_latex(source)` bzw. CLI `--latex` – Formeln aus Dedekind-Code als LaTeX; `print_latex(s)` zeigt Formeln **nur in der Konsole** als Unicode (α, Δ, ∫, ½ etc.), keine Bilder in Plots; zukünftig möglich: KaTeX/Web (siehe Documentation/Console_KaTeX_Roadmap.md).
 
