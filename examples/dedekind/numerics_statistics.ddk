@@ -1,0 +1,81 @@
+// Numerik und Statistik: mean, std, var, median, quantile, percentile, solve, eigh, svd, lstsq,
+// cond, rank, pinv, expm, logm, interp, trapz, root_bisect
+fn main() {
+    print("--- Dedekind: Numerik & Statistik ---")
+
+    // Statistik
+    data = [1.0, 2.0, 3.0, 4.0, 5.0]
+    print("Daten:")
+    print(data)
+    print("mean(data):")
+    print(mean(data))
+    print("std(data):")
+    print(std(data))
+    print("var(data):")
+    print(var(data))
+    print("median(data):")
+    print(median(data))
+    print("quantile(data, 0.5):")
+    print(quantile(data, 0.5))
+    print("percentile(data, 50):")
+    print(percentile(data, 50))
+
+    // Lineares Gleichungssystem: A x = b
+    A = [[1.0, 2.0], [3.0, 4.0]]
+    b = [1.0, 2.0]
+    x = solve(A, b)
+    print("solve(A, b) fuer A*x = b:")
+    print(x)
+
+    // Eigenwerte (symmetrische Matrix)
+    S = [[2.0, 1.0], [1.0, 2.0]]
+    result = eigh(S)
+    evals = result[0]
+    evecs = result[1]
+    print("eigh(S) Eigenwerte:")
+    print(evals)
+    print("eigh(S) Eigenvektoren (Spalten):")
+    print(evecs)
+
+    // Least Squares
+    A_ls = [[1.0, 1.0], [1.0, 2.0], [1.0, 3.0]]
+    y_ls = [2.0, 4.0, 6.0]
+    x_ls = lstsq(A_ls, y_ls)
+    print("lstsq(A, y) Loesung:")
+    print(x_ls)
+
+    // Zusaetzliche Numerik: cond, rank, pinv, expm, interp, trapz, root_bisect
+    print("cond(A):")
+    print(cond(A))
+    print("rank(A_ls):")
+    print(rank(A_ls))
+    print("pinv(A) (Pseudo-Inverse):")
+    print(pinv(A))
+
+    // Matrix-Exponential (kleine Matrix)
+    E = [[0.0, 1.0], [0.0, 0.0]]
+    print("expm(E) (Nilpotent E):")
+    print(expm(E))
+
+    // 1D-Interpolation
+    xp = [0.0, 1.0, 2.0]
+    fp = [0.0, 2.0, 1.0]
+    xi = [0.5, 1.5]
+    print("interp([0.5, 1.5], xp, fp):")
+    print(interp(xi, xp, fp))
+
+    // Trapez-Integration diskrete Daten
+    y_trap = [1.0, 2.0, 3.0, 2.0]
+    x_trap = [0.0, 1.0, 2.0, 3.0]
+    print("trapz(y, x):")
+    print(trapz(y_trap, x_trap))
+
+    // Nullstelle per Bisektion: f(x)=x^2-2, Nullstelle sqrt(2)
+    fn f(x) { return x * x - 2.0 }
+    root = root_bisect(f, 1.0, 2.0)
+    print("root_bisect(x^2-2, 1, 2) ~ sqrt(2):")
+    print(root)
+
+    print("Numerik & Statistik aktiv.")
+}
+main()

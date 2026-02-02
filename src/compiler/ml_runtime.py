@@ -1077,6 +1077,67 @@ def argmax(x, dim=None):
         return torch.argmax(t)
     return torch.argmax(t, dim=dim)
 
+# --- Standard Library: Statistik (mean, std, var, median, quantile, percentile) ---
+def mean(x, dim=None):
+    """
+    Arithmetischer Mittelwert. x: Tensor oder Skalar.
+    dim: optional, Achse (None = über alle Elemente). Rückgabe: Skalar oder Tensor.
+    """
+    t = _to_tensor(x).float()
+    if dim is None:
+        return t.mean()
+    return t.mean(dim=dim)
+
+def std(x, dim=None, unbiased=True):
+    """
+    Standardabweichung. x: Tensor. dim: optional (None = über alle).
+    unbiased: True = Stichprobe (N-1), False = Population (N). Rückgabe: Skalar oder Tensor.
+    """
+    t = _to_tensor(x).float()
+    if dim is None:
+        return t.std(unbiased=unbiased)
+    return t.std(dim=dim, unbiased=unbiased)
+
+def var(x, dim=None, unbiased=True):
+    """
+    Varianz. x: Tensor. dim: optional (None = über alle).
+    unbiased: True = Stichprobe (N-1), False = Population (N). Rückgabe: Skalar oder Tensor.
+    """
+    t = _to_tensor(x).float()
+    if dim is None:
+        return t.var(unbiased=unbiased)
+    return t.var(dim=dim, unbiased=unbiased)
+
+def median(x, dim=None):
+    """
+    Median der Elemente. x: Tensor. dim: optional (None = über alle).
+    Bei dim gesetzt: Rückgabe wie min/max nur die Werte (Median pro Achse).
+    """
+    t = _to_tensor(x).float()
+    if dim is None:
+        return t.median()
+    return t.median(dim=dim).values
+
+def quantile(x, q, dim=None):
+    """
+    Quantil(e). x: Tensor. q: Skalar oder Tensor von Quantilen (0..1).
+    dim: optional (None = über alle). Rückgabe: Tensor mit Quantilswerten.
+    """
+    t = _to_tensor(x).float()
+    q_t = _to_tensor(q).float() if not isinstance(q, (int, float)) else torch.tensor(float(q), device=t.device, dtype=t.dtype)
+    return torch.quantile(t, q_t, dim=dim)
+
+def percentile(x, p, dim=None):
+    """
+    Perzentil(e). x: Tensor. p: Skalar oder Tensor von Perzentilen (0..100).
+    dim: optional (None = über alle). Rückgabe: Tensor mit Perzentilwerten.
+    """
+    t = _to_tensor(x).float()
+    if isinstance(p, (int, float)):
+        return torch.quantile(t, float(p) / 100.0, dim=dim)
+    q_t = _to_tensor(p).float() / 100.0
+    return torch.quantile(t, q_t, dim=dim)
+
 # --- Standard Library: Runden ---
 def round(x):
     """Rundet auf nächste ganze Zahl; x Tensor oder Skalar."""
@@ -1117,6 +1178,193 @@ def trace(A):
     if t.dim() != 2:
         raise ValueError("trace: Erwartet 2D-Matrix.")
     return torch.trace(t)
+
+def solve(A, b):
+    """
+    Lineares Gleichungssystem: löst A x = b. A: (n,n)-Matrix, b: (n,) oder (n,k).
+    Rückgabe: x mit gleicher Form wie b.
+    """
+    A_t = _to_tensor(A).float()
+    b_t = _to_tensor(b).float()
+    if A_t.dim() != 2 or b_t.dim() not in (1, 2):
+        raise ValueError("solve: A muss 2D-Matrix sein, b Vektor oder Matrix.")
+    if b_t.dim() == 1:
+        b_t = b_t.unsqueeze(1)
+    x = torch.linalg.solve(A_t, b_t)
+    return x.squeeze(-1) if b_t.shape[-1] == 1 else x
+
+def eigh(A):
+    """
+    Eigenwerte und -vektoren einer symmetrischen (oder hermiteschen) Matrix A.
+    Rückgabe: (eigenvalues, eigenvectors); eigenvalues 1D, eigenvectors Spalten = Eigenvektoren.
+    """
+    A_t = _to_tensor(A).float()
+    if A_t.dim() != 2:
+        raise ValueError("eigh: Erwartet 2D-Matrix.")
+    evals, evecs = torch.linalg.eigh(A_t)
+    return evals, evecs
+
+def eig(A):
+    """
+    Eigenwerte und -vektoren einer allgemeinen Matrix A.
+    Rückgabe: (eigenvalues, eigenvectors); kann komplex sein bei reeller Matrix.
+    """
+    A_t = _to_tensor(A).float()
+    if A_t.dim() != 2:
+        raise ValueError("eig: Erwartet 2D-Matrix.")
+    evals, evecs = torch.linalg.eig(A_t)
+    return evals, evecs
+
+def svd(A, full_matrices=True):
+    """
+    Singulärwertzerlegung: A = U @ diag(S) @ Vh.
+    Rückgabe: (U, S, Vh). S: Singulärwerte (1D); U, Vh: unitäre Matrizen.
+    full_matrices: True = volle U/Vh, False = reduzierte Form.
+    """
+    A_t = _to_tensor(A).float()
+    if A_t.dim() != 2:
+        raise ValueError("svd: Erwartet 2D-Matrix.")
+    U, S, Vh = torch.linalg.svd(A_t, full_matrices=full_matrices)
+    return U, S, Vh
+
+def lstsq(A, y, rcond=None):
+    """
+    Least Squares: minimiert ||A x - y||. A: (m,n), y: (m,) oder (m,k).
+    Rückgabe: Lösung x, Form (n,) oder (n,k).
+    """
+    A_t = _to_tensor(A).float()
+    y_t = _to_tensor(y).float()
+    if A_t.dim() != 2 or y_t.dim() not in (1, 2):
+        raise ValueError("lstsq: A muss 2D-Matrix sein, y Vektor oder Matrix.")
+    if y_t.dim() == 1:
+        y_t = y_t.unsqueeze(1)
+    result = torch.linalg.lstsq(
+        A_t, y_t, rcond=rcond if rcond is not None else 1e-15
+    )
+    x = result.solution
+    return x.squeeze(-1) if x.shape[-1] == 1 else x
+
+def cond(A, p=None):
+    """
+    Konditionszahl der Matrix A (bezüglich Norm p).
+    p: optional, "fro" oder 2 (default), "nuc", inf, -inf, 1, -1.
+    """
+    t = _to_tensor(A).float()
+    if t.dim() != 2:
+        raise ValueError("cond: Erwartet 2D-Matrix.")
+    p_val = p if p is not None else 2
+    return torch.linalg.cond(t, p=p_val)
+
+def rank(A, tol=None):
+    """
+    Numerischer Rang der Matrix A (Anzahl Singulärwerte > tol).
+    tol: optional; wenn None, wird ein vernünftiger Default verwendet.
+    """
+    t = _to_tensor(A).float()
+    if t.dim() != 2:
+        raise ValueError("rank: Erwartet 2D-Matrix.")
+    if tol is not None:
+        return torch.linalg.matrix_rank(t, tol=float(tol))
+    return torch.linalg.matrix_rank(t)
+
+def pinv(A, rcond=None):
+    """
+    Moore-Penrose-Pseudo-Inverse von A. A: (m,n); Rückgabe (n,m).
+    rcond: optional; Singulärwerte unter rcond*max(S) werden weggelassen.
+    """
+    t = _to_tensor(A).float()
+    if t.dim() != 2:
+        raise ValueError("pinv: Erwartet 2D-Matrix.")
+    r = rcond if rcond is not None else 1e-15
+    return torch.linalg.pinv(t, rcond=r)
+
+def expm(A):
+    """
+    Matrix-Exponential: exp(A) = I + A + A^2/2! + ... .
+    A: quadratische Matrix; Rückgabe: gleiche Form.
+    """
+    t = _to_tensor(A).float()
+    if t.dim() != 2 or t.shape[0] != t.shape[1]:
+        raise ValueError("expm: Erwartet quadratische 2D-Matrix.")
+    return torch.linalg.matrix_exp(t)
+
+def logm(A):
+    """
+    Matrix-Logarithmus: logm(A) so dass expm(logm(A)) = A.
+    A: quadratische Matrix; Rückgabe kann komplex sein bei nicht-positiven Eigenwerten.
+    Implementierung über Eigenwertzerlegung.
+    """
+    t = _to_tensor(A).float()
+    if t.dim() != 2 or t.shape[0] != t.shape[1]:
+        raise ValueError("logm: Erwartet quadratische 2D-Matrix.")
+    evals, evecs = torch.linalg.eig(t)
+    log_evals = torch.log(evals)
+    # evecs: Spalten = Eigenvektoren; A = evecs @ diag(evals) @ inv(evecs)
+    evecs_inv = torch.linalg.inv(evecs)
+    diag_log = torch.diag(log_evals)
+    return evecs @ diag_log @ evecs_inv
+
+def interp(x, xp, fp):
+    """
+    1D-lineare Interpolation: Werte x anhand Stützstellen (xp, fp).
+    x: Stellen, an denen interpoliert wird (Tensor oder Liste).
+    xp, fp: Stützstellen (monoton steigend xp). Rückgabe: Tensor gleicher Form wie x.
+    """
+    import numpy as np  # type: ignore[reportMissingImports]
+    x_t = _to_tensor(x).float().flatten()
+    xp_t = _to_tensor(xp).float().flatten()
+    fp_t = _to_tensor(fp).float().flatten()
+    if xp_t.numel() != fp_t.numel():
+        raise ValueError("interp: xp und fp müssen gleiche Länge haben.")
+    x_np = x_t.detach().cpu().numpy()
+    xp_np = xp_t.detach().cpu().numpy()
+    fp_np = fp_t.detach().cpu().numpy()
+    out_np = np.interp(x_np, xp_np, fp_np)
+    return torch.tensor(out_np, dtype=torch.float32, device=x_t.device)
+
+def trapz(y, x=None):
+    """
+    Trapez-Integration für diskrete Daten: int y dx.
+    y: Ordinaten (Tensor 1D); x: optional, Abszissen (1D, gleiche Länge wie y).
+    Wenn x fehlt, äquidistante Abstände 1. Rückgabe: Skalar.
+    """
+    import numpy as np  # type: ignore[reportMissingImports]
+    y_t = _to_tensor(y).float().flatten()
+    y_np = y_t.detach().cpu().numpy()
+    if x is not None:
+        x_t = _to_tensor(x).float().flatten()
+        if x_t.numel() != y_t.numel():
+            raise ValueError("trapz: x und y müssen gleiche Länge haben.")
+        x_np = x_t.detach().cpu().numpy()
+        result = np.trapz(y_np, x_np)
+    else:
+        result = np.trapz(y_np)
+    return torch.tensor(float(result), dtype=torch.float32)
+
+def root_bisect(f, a, b, tol=1e-8, max_iter=200):
+    """
+    Nullstelle von f im Intervall [a, b] (Bisektion). f(a) und f(b) müssen unterschiedliche Vorzeichen haben.
+    f: Callable mit einem Skalar; Rückgabe Skalar.
+    tol: Abbruch wenn |b-a| < tol. max_iter: maximale Schrittzahl.
+    Rückgabe: Näherung der Nullstelle (Python float).
+    """
+    a_val = float(_to_tensor(a).float().squeeze().item())
+    b_val = float(_to_tensor(b).float().squeeze().item())
+    fa, fb = f(a_val), f(b_val)
+    if fa * fb > 0:
+        raise ValueError("root_bisect: f(a) und f(b) müssen unterschiedliche Vorzeichen haben.")
+    for _ in range(max_iter):
+        c = (a_val + b_val) / 2.0
+        if (b_val - a_val) / 2.0 < tol:
+            return c
+        fc = f(c)
+        if fc == 0:
+            return c
+        if fa * fc < 0:
+            b_val, fb = c, fc
+        else:
+            a_val, fa = c, fc
+    return (a_val + b_val) / 2.0
 
 # --- Standard Library: Numerical Integration ---
 # Differenzierbar, wenn f Tensor-Argument akzeptiert und differenzierbar ist.
@@ -1253,7 +1501,8 @@ class UncertainQuantity:
         return NotImplemented
 
     def __repr__(self):
-        u = f" [{self.unit}]" if self.unit else ""
+        display_unit = _unit_simplify(self.unit) if self.unit else ""
+        u = f" [{display_unit}]" if display_unit else ""
         return f"{self.value} ± {self.std}{u}"
 
 def uncertain(value, std, unit=""):
@@ -1539,7 +1788,7 @@ def _plot_ndarray(x, y=None, title=None, xlabel=None, ylabel=None):
     if hasattr(y, 'cpu'): y = y.detach().cpu().numpy()
     elif not isinstance(y, (list, tuple)): y = list(y)
     # Komplexe Werte -> reell (z. B. FFT-Betrag), um UserWarning zu vermeiden
-    import numpy as np
+    import numpy as np  # type: ignore[reportMissingImports]
     if getattr(x, 'dtype', None) is not None and np.issubdtype(x.dtype, np.complexfloating):
         x = np.real(x)
     if getattr(y, 'dtype', None) is not None and np.issubdtype(y.dtype, np.complexfloating):
