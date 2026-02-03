@@ -342,6 +342,12 @@ class Parser:
                 line=line_at,
             )
 
+        # Handle Postfix Factorial: n!
+        if self.peek() and self.peek().type == 'FACTORIAL':
+            fact_tok = self.consume('FACTORIAL')
+            node = PostfixFactorial(node)
+            node.line = fact_tok.line
+
         # Handle Method Chaining, Modifiers & Subscripts
         while self.peek() and self.peek().type in ['LPAREN', 'DOT', 'MODIFIER', 'LBRACKET']:
             

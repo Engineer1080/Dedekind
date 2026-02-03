@@ -35,7 +35,8 @@ class Lexer:
             ('MODIFIER', r'\.(gpu|cpu|single)'), # Modifiers .gpu, .cpu, .single
             ('ARROW',    r'=>'),                # Arrow operator
             ('EQ',       r'=='),                # Equal
-            ('NEQ',      r'!='),                # Not equal
+            ('NEQ',      r'!='),                # Not equal (MUST come before FACTORIAL)
+            ('FACTORIAL', r'!'),                # Factorial operator (postfix)
             ('LE',       r'<='),                # Less or equal
             ('GE',       r'>='),                # Greater or equal
             ('ASSIGN',   r'='),                 # Assignment operator (CHECK ORDER: EQ before ASSIGN)

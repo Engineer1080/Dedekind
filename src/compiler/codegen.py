@@ -31,7 +31,7 @@ _RUNTIME_BUILTIN_NAMES = frozenset({
     'UncertainQuantity', 'uncertain', 'fit',
     'michaelis_menten', 'logistic', 'logistic_growth_dt', 'arrhenius', 'linear_regression',
     'atomic_mass', 'atomic_number',
-    'gcd', 'is_prime', 'mod', 'mod_inv', 'mod_pow',
+    'gcd', 'is_prime', 'mod', 'mod_inv', 'mod_pow', 'factorial',
     'concentration_to_pH', 'pH_to_concentration',
     'christoffel_symbols', 'riemann_tensor', 'covariant_derivative',
     'balance_equation',
@@ -56,6 +56,8 @@ def _program_uses_torch(node: Node) -> bool:
         return True
     if type(node).__name__ == 'IndexedVariable':
         return True
+    if type(node).__name__ == 'PostfixFactorial':
+        return True  # factorial() requires runtime
     if type(node).__name__ == 'Identifier':
         if getattr(node, 'name', None) in _RUNTIME_BUILTIN_NAMES:
             return True
@@ -411,6 +413,10 @@ class CodeGenerator:
         target = self.visit_Subscript(node.target)
         value = self.visit_expression(node.value)
         return f"{target} = {value}"
+
+    def visit_PostfixFactorial(self, node: PostfixFactorial):
+        operand = self.visit_expression(node.operand)
+        return f"factorial({operand})"
 
     def visit_expression(self, node: Node):
         method_name = f'visit_{self.type_name(node)}'
