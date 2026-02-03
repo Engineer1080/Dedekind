@@ -1279,6 +1279,26 @@ def mod_pow(base, exp, m):
         base_val = (base_val * base_val) % m_val
     return result
 
+def factorial(n):
+    """
+    Fakultät: n! = n * (n-1) * ... * 2 * 1.
+    n: Integer oder Tensor (elementweise).
+    Nutzt Gamma-Funktion: n! = gamma(n+1).
+    Für negative Zahlen: ValueError.
+    """
+    t = _to_tensor(n)
+    # Konvertiere zu Float für Gamma-Funktion
+    t_float = t.float()
+    # Prüfe auf negative Werte
+    if torch.any(t_float < 0):
+        raise ValueError("factorial: Argument muss nicht-negativ sein.")
+    # n! = gamma(n+1)
+    result = gamma(t_float + 1.0)
+    # Wenn Eingabe Integer war, runde Ergebnis (Gamma gibt Float zurück)
+    if isinstance(n, (int, float)) and not isinstance(n, bool):
+        return float(result.item()) if result.numel() == 1 else result
+    return result
+
 # --- Standard Library: Reduktionen (min, max, argmin, argmax) ---
 def min(x, dim=None):
     """

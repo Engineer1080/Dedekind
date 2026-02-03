@@ -122,3 +122,8 @@ class Subscript(Node):
 class ItemAssignment(Node):
     target: Subscript
     value: Node
+
+@dataclass
+class PostfixFactorial(Node):
+    """Postfix-Fakultät: n!"""
+    operand: Node
