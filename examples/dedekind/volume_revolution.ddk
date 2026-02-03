@@ -1,0 +1,56 @@
+// Rotationskoerper: Volumen bei Rotation um x-, y-Achse oder beliebige Achse
+// Zusaetzlich: Satz von Pappus (Volumen = 2*pi * R * A, R = Abstand Schwerpunkt-Achse)
+
+fn main() {
+    print("--- Dedekind: Rotationskoerper ---")
+    
+    // Kugel: y = sqrt(r^2 - x^2) von -r bis r, Rotation um x-Achse
+    // V = (4/3)*pi*r^3
+    r = 1.0
+    fn f_kugel(x) { return sqrt(r * r - x * x) }
+    v_kugel = volume_revolution_x(f_kugel, -r + 0.001, r - 0.001, 500)
+    v_exakt = (4.0 / 3.0) * pi * r * r * r
+    print("Kugel (r=1): Rotation y=sqrt(1-x^2) um x-Achse")
+    print("  Volumen (numerisch):", v_kugel)
+    print("  Volumen (exakt 4/3*pi):", v_exakt)
+    
+    // Kegel: y = (h/r)*x von 0 bis r, Rotation um x-Achse
+    // V = (1/3)*pi*r^2*h
+    h = 2.0
+    fn f_kegel(x) { return (h / r) * x }
+    v_kegel = volume_revolution_x(f_kegel, 0.0, r, 300)
+    v_kegel_exakt = (1.0 / 3.0) * pi * r * r * h
+    print("Kegel (r=1, h=2): Rotation y=2x um x-Achse")
+    print("  Volumen (numerisch):", v_kegel)
+    print("  Volumen (exakt pi*r^2*h/3):", v_kegel_exakt)
+    
+    // Paraboloid: y = x^2 von 0 bis 1, Rotation um y-Achse (Mantel-Methode)
+    // V = 2*pi * int_0^1 x*x^2 dx = 2*pi * [x^4/4]_0^1 = pi/2
+    fn f_par(x) { return x * x }
+    v_par = volume_revolution_y(f_par, 0.0, 1.0, 300)
+    print("Paraboloid y=x^2, x in [0,1]: Rotation um y-Achse")
+    print("  Volumen (numerisch):", v_par)
+    print("  Volumen (exakt pi/2):", pi / 2.0)
+    
+    // Beliebige Achse: volume_revolution_vertical (x=x0), volume_revolution_horizontal (y=y0)
+    fn f_line(x) { return 1.0 - x }
+    v_vert = volume_revolution_vertical(f_line, 0.0, 1.0, 0.5, 200)
+    print("Dreieck y=1-x, x in [0,1]: Rotation um x=0.5 (vertikal):")
+    print("  volume_revolution_vertical:", v_vert)
+    
+    v_horiz = volume_revolution_horizontal(f_kegel, 0.0, r, 0.0, 200)
+    print("Kegel y=2x: Rotation um y=0 (horizontal) = volume_revolution_x:")
+    print("  volume_revolution_horizontal:", v_horiz)
+    
+    // Satz von Pappus: V = 2*pi * R * A (R = Abstand Schwerpunkt-Achse)
+    v_pappus_v = pappus_volume_vertical(f_par, 0.0, 1.0, 0.0, 300)
+    print("Pappus (vertikal, x0=0): Paraboloid y=x^2:")
+    print("  pappus_volume_vertical:", v_pappus_v)
+    
+    v_pappus_h = pappus_volume_horizontal(f_kegel, 0.0, r, 0.0, 300)
+    print("Pappus (horizontal, y0=0): Kegel y=2x:")
+    print("  pappus_volume_horizontal:", v_pappus_h)
+    
+    print("Rotationskoerper aktiv.")
+}
+main()

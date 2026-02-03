@@ -34,6 +34,9 @@ _RUNTIME_BUILTIN_NAMES = frozenset({
     'cdist', 'polyfit', 'polyval', 'unique', 'argsort', 'convolve1d',
     'minimize_scalar', 'newton', 'minimize', 'fsolve', 'integrate', 'simpson',
     'riemann_sum', 'zeta',
+    'volume_revolution_x', 'volume_revolution_y',
+    'volume_revolution_vertical', 'volume_revolution_horizontal',
+    'pappus_volume_vertical', 'pappus_volume_horizontal',
     'permutation', 'choice', 'autocorr', 'moving_mean',
     'UncertainQuantity', 'uncertain', 'fit',
     'michaelis_menten', 'logistic', 'logistic_growth_dt', 'arrhenius', 'linear_regression',
@@ -130,6 +133,9 @@ def _ast_children(node: Node):
     if type(node).__name__ == 'BinaryOp':
         yield getattr(node, 'left', None)
         yield getattr(node, 'right', None)
+        return
+    if type(node).__name__ == 'UnaryOp':
+        yield getattr(node, 'operand', None)
         return
     if type(node).__name__ == 'MemberAccess':
         yield getattr(node, 'obj', None)
@@ -332,6 +338,17 @@ class CodeGenerator:
         if op == '@':
             return f"torch.matmul({left}, {right})"
         if op == '^': op = '**'
+        # Logische Operatoren: and, or, xor, nand, nor, xnor
+        if op == 'nand':
+            return f"(not (({left}) and ({right})))"
+        if op == 'nor':
+            return f"(not (({left}) or ({right})))"
+        if op == 'xnor':
+            return f"(not (({left}) ^ ({right})))"
+        if op == 'xor':
+            return f"(({left}) ^ ({right}))"
+        if op in ('and', 'or'):
+            return f"(({left}) {op} ({right}))"
         return f"({left} {op} {right})"
 
     def visit_Literal(self, node: Literal):
@@ -429,6 +446,12 @@ class CodeGenerator:
     def visit_PostfixFactorial(self, node: PostfixFactorial):
         operand = self.visit_expression(node.operand)
         return f"factorial({operand})"
+
+    def visit_UnaryOp(self, node):
+        operand = self.visit_expression(node.operand)
+        if node.op == 'not':
+            return f"(not ({operand}))"
+        return f"({node.op} {operand})"
 
     def visit_expression(self, node: Node):
         method_name = f'visit_{self.type_name(node)}'

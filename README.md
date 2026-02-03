@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-1.2.8-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-1.2.9-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -28,6 +28,12 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
+
+### What's New in v1.2.9
+
+- **Betragsstriche:** `|expr|` = syntaktischer Zucker für `abs(expr)`; z. B. `x = |-1|` → 1. Beispiel: `abs_bars.ddk`.
+- **Rotationskörper:** `volume_revolution_x(f, a, b, n)`, `volume_revolution_y(f, a, b, n)` (um x-/y-Achse); `volume_revolution_vertical(f, a, b, x0, n)`, `volume_revolution_horizontal(f, a, b, y0, n)` (um beliebige Achsen); `pappus_volume_vertical`, `pappus_volume_horizontal` (Satz von Pappus: V=2π·R·A). Beispiel: `volume_revolution.ddk`.
+- **Logische Operatoren:** `and`, `or`, `not`, `xor`, `nand`, `nor`, `xnor` als Keywords (Python-ähnlich). Präzedenz: `or` < `xor` < `and`/`nand`/`nor`/`xnor` < `not`. Beispiel: `logical_operators.ddk`.
 
 ### What's New in v1.2.8
 
@@ -314,7 +320,9 @@ Example programs are in `examples/dedekind/`, including:
 - `distributions_extended.ddk` – Exponential, Gamma, Beta, Poisson; `sample`, `log_prob`
 - `dirichlet_distribution_function.ddk` – Dirichlet-Verteilung und Dirichlet-Funktion D(x)
 - `dedekind_cuts_rings.ddk` – Dedekind-Schnitte (Konstruktion von R aus Q) und Dedekind-Ringe (Ideal-Faktorisierung in Z)
-- `riemann_zeta_sums.ddk` – Riemann-Zeta ζ(s) und Riemann-Summen (links, rechts, Mittelpunkt)  
+- `riemann_zeta_sums.ddk` – Riemann-Zeta ζ(s) und Riemann-Summen (links, rechts, Mittelpunkt)
+- `volume_revolution.ddk` – Rotationskörper (Kugel, Kegel, Paraboloid)
+- `abs_bars.ddk` – Betragsstriche `|x|` = abs(x)  
 - `integration.ddk` – numerical integration `integrate(f, a, b)` and `sin`/`cos`  
 - `uncertainty_propagation.ddk` – `uncertain(value, std)`; Gauß'sche Fehlerfortpflanzung  
 - `curve_fitting.ddk` – `fit(loss_fn, params_init, data)` für lineare Regression  

@@ -1,13 +1,13 @@
 # Dedekind — Ausgereiftheit für Mathematik, Physik, Informatik, Biologie und Chemie
 
 **Dedekind Language**  
-Draft: January 2026 · Stand: v1.2.6 (Prototyp)
+Draft: January 2026 · Stand: v1.3.0 (Prototyp)
 
 ---
 
 ## Übersicht
 
-Dedekind ist aktuell ein **Prototyp (v1.2.8)**. Die folgende Einschätzung bezieht sich auf den **aktuellen Implementierungsstand** und nennt Lücken sowie Roadmap-Punkte.
+Dedekind ist aktuell ein **Prototyp (v1.2.9)**. Die folgende Einschätzung bezieht sich auf den **aktuellen Implementierungsstand** und nennt Lücken sowie Roadmap-Punkte.
 
 | Domäne       | Ausgereiftheit (kurz) | Nutzbar für …                          | Wichtige Lücken / Roadmap          |
 |-------------|------------------------|----------------------------------------|------------------------------------|
@@ -26,7 +26,7 @@ Dedekind ist aktuell ein **Prototyp (v1.2.8)**. Die folgende Einschätzung bezie
 - **Konstanten**: `pi`, `e` als `Quantity` (dimensionslos).
 - **Elementare Funktionen**: `sin`, `cos`, `tan`, `exp`, `log`, `log10`, `sqrt`, `abs`; Arkus- und Hyperbelfunktionen (`asin`, `acos`, `atan`, `atan2`, `sinh`, `cosh`, `tanh`); elementweise, differenzierbar.
 - **Reduktionen & Runden**: `min`, `max`, `argmin`, `argmax` (optional `dim`); `round`, `floor`, `ceil`.
-- **Lineare Algebra**: `norm(x)`, `det(A)`, `trace(A)`; `eigh`, `eig`, `svd`, `qr`, `lstsq`, `cond`, `rank`, `pinv`; Tensoren, Matrizen, `.shape`; FFT (`fft`, `ifft`). **Numerik**: `integrate`, `trapz`, `simpson`, `riemann_sum`; `zeta(s)` (Riemann-Zeta).
+- **Lineare Algebra**: `norm(x)`, `det(A)`, `trace(A)`; `eigh`, `eig`, `svd`, `qr`, `lstsq`, `cond`, `rank`, `pinv`; Tensoren, Matrizen, `.shape`; FFT (`fft`, `ifft`). **Numerik**: `integrate`, `trapz`, `simpson`, `riemann_sum`; `zeta(s)` (Riemann-Zeta); `volume_revolution_x`, `volume_revolution_y`, `volume_revolution_vertical`, `volume_revolution_horizontal`; `pappus_volume_vertical`, `pappus_volume_horizontal` (Satz von Pappus).
 - **Numerische Integration**: `integrate(f, a, b, n)` (Trapezregel); differenzierbar, wenn `f` Tensor akzeptiert.
 - **Statistik & Stochastik**: Verteilungen `Normal`, `Uniform`, `Bernoulli`, `Exponential`, `Gamma`, `Beta`, `Poisson`; `sample`, `log_prob`; MCMC (`metropolis`, `hmc`); Fitting `fit(..., method="gd"|"mcmc"|"hmc")`.
 - **Tensor-Notation**: Ricci-ähnliche Indexnotation (`A^ij * B_jk`) für Einstein-Summen.

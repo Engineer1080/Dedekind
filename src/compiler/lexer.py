@@ -54,6 +54,7 @@ class Lexer:
             ('RBRACE',   r'\}'),                # }
             ('LBRACKET', r'\['),                # [
             ('RBRACKET', r'\]'),                # ]
+            ('PIPE',     r'\|'),                # | (Betragsstriche: |x| = abs(x))
             ('COMMA',    r','),                 # ,
             ('DOT',      r'\.'),                # .
             ('CARET',    r'\^'),                # ^ (contravariant index)
@@ -87,7 +88,8 @@ class Lexer:
                     line=line,
                 )
             else:
-                keywords = {'fn', 'return', 'if', 'else', 'while', 'for', 'in', 'grad', 'einsum'}
+                keywords = {'fn', 'return', 'if', 'else', 'while', 'for', 'in', 'grad', 'einsum',
+                           'and', 'or', 'not', 'xor', 'nand', 'nor', 'xnor'}
                 if kind == 'ID' and value in keywords:
                     kind = value.upper()
                 # RAWSTRING: Token-Wert = Inhalt ohne r" und "
