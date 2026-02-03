@@ -27,7 +27,9 @@ DIMENSION_TO_BASE = {
     "amount_of_substance": ("mol", {"mol": 1.0, "mmol": 0.001, "kmol": 1000.0}),
     "luminous_intensity": ("cd", {"cd": 1.0, "mcd": 0.001}),
     # Abgeleitet / häufig
-    "pressure": ("Pa", {"Pa": 1.0, "bar": 1e5, "atm": 101325.0}),
+    "pressure": ("Pa", {"Pa": 1.0, "kPa": 1000.0, "MPa": 1e6, "bar": 1e5, "atm": 101325.0}),
+    "force": ("N", {"N": 1.0, "kN": 1000.0, "MN": 1e6}),
+    "permeability": ("m^2", {"m^2": 1.0, "D": 9.869233e-13, "mD": 9.869233e-16}),  # Darcy: 1 D ≈ 9.87e-13 m²
     "volume": ("L", {"L": 1.0, "mL": 0.001, "dm^3": 1.0, "m^3": 1000.0}),  # dm³ = 1 L, m³ = 1000 L
     "energy": ("J", {"J": 1.0, "kJ": 1000.0, "MJ": 1e6, "Wh": 3600.0, "kWh": 3.6e6}),
     "electric_potential": ("V", {"V": 1.0, "mV": 0.001, "kV": 1000.0}),
@@ -3010,6 +3012,101 @@ def linear_regression(x, y):
 
     params_opt = fit(loss, params_init, data, method="gd", lr=0.01, steps=500)
     return params_opt  # [slope, intercept]
+
+# --- Quick Wins: Musik (cents, equal temperament) ---
+def cents_to_ratio(cents):
+    """Cent zu Frequenzverhältnis: ratio = 2^(cents/1200). 100 cent = Halbton."""
+    c = _to_tensor(cents).float()
+    return torch.pow(2.0, c / 1200.0)
+
+
+def ratio_to_cents(ratio):
+    """Frequenzverhältnis zu Cent: cents = 1200 * log2(ratio)."""
+    r = _to_tensor(ratio).float()
+    return 1200.0 * torch.log2(torch.clamp(r, min=1e-30))
+
+
+def equal_temperament(n, a4_hz=440.0):
+    """
+    Frequenz des n-ten Halbtons in gleichstufiger Stimmung (A4 = 440 Hz Referenz).
+    n=0 → A4, n=12 → A5, n=-12 → A3. Rückgabe in Hz.
+    """
+    n_val = int(n) if isinstance(n, (int, float)) else int(_to_tensor(n).item())
+    return a4_hz * (2.0 ** (n_val / 12.0))
+
+
+# --- Quick Wins: Ökonomie (discount_factor, cobb_douglas, solow_rhs) ---
+def discount_factor(r, t, discrete=False):
+    """
+    Barwertfaktor: continuous exp(-r*t) oder discrete 1/(1+r)^t.
+    r: Zinssatz, t: Zeit; differenzierbar.
+    """
+    r_t = _to_tensor(r).float()
+    t_t = _to_tensor(t).float()
+    if discrete:
+        return 1.0 / torch.pow(1.0 + r_t, t_t)
+    return torch.exp(-r_t * t_t)
+
+
+def cobb_douglas(K, L, alpha, A=1.0):
+    """
+    Cobb-Douglas Produktionsfunktion: Y = A * K^alpha * L^(1-alpha).
+    K: Kapital, L: Arbeit, alpha: Kapitalanteil; differenzierbar.
+    """
+    K_t = _to_tensor(K).float()
+    L_t = _to_tensor(L).float()
+    a = _to_tensor(alpha).float()
+    A_t = _to_tensor(A).float()
+    return A_t * torch.pow(K_t, a) * torch.pow(L_t, 1.0 - a)
+
+
+def solow_rhs(K, s, delta, n, g, alpha):
+    """
+    RHS für Solow-Wachstumsmodell: dK/dt = s*Y - (delta+n+g)*K mit Y = K^alpha.
+    K: Kapital, s: Sparquote, delta: Abschreibung, n: Bevölkerungswachstum,
+    g: technologischer Fortschritt, alpha: Kapitalanteil.
+    Nutzung: fn rhs(t, y) { return [solow_rhs(y[0], s, delta, n, g, alpha)] }; ode_solve(rhs, [K0], t).
+    """
+    K_t = _to_tensor(K).float()
+    Y = torch.pow(K_t, float(alpha))
+    return float(s) * Y - (float(delta) + float(n) + float(g)) * K_t
+
+
+# --- Quick Wins: Geologie (darcy_velocity) ---
+def darcy_velocity(K, grad_P, mu):
+    """
+    Darcy-Gesetz: v = -(K/mu) * grad_P. Durchlässigkeit K [m² oder D], Viskosität mu [Pa·s], Druckgradient grad_P [Pa/m].
+    Rückgabe: Geschwindigkeit [m/s]. K, grad_P, mu: Skalar oder Tensor; differenzierbar.
+    """
+    K_t = _to_tensor(K).float()
+    g_t = _to_tensor(grad_P).float()
+    mu_t = _to_tensor(mu).float()
+    return -(K_t / mu_t) * g_t
+
+
+# --- Quick Wins: Werkstoffe (Johnson-Mehl-Avrami) ---
+def johnson_mehl_avrami(t, k, n):
+    """
+    Johnson-Mehl-Avrami-Kolmogorov: Umwandlungsanteil f(t) = 1 - exp(-(k*t)^n).
+    t: Zeit, k: Geschwindigkeitskonstante, n: Avrami-Exponent; differenzierbar.
+    """
+    t_t = _to_tensor(t).float()
+    k_t = _to_tensor(k).float()
+    n_t = _to_tensor(n).float()
+    return 1.0 - torch.exp(-torch.pow(k_t * t_t, n_t))
+
+
+def avrami_rate(t, k, n):
+    """
+    Zeitableitung der JMAK-Umwandlung: df/dt = n*k*(k*t)^(n-1) * exp(-(k*t)^n).
+    RHS für ode_solve: fn rhs(t, y) { return [avrami_rate(t, k, n)] }; ode_solve(rhs, [0], t).
+    """
+    t_t = _to_tensor(t).float()
+    k_t = _to_tensor(k).float()
+    n_t = _to_tensor(n).float()
+    kt = k_t * t_t
+    return n_t * k_t * torch.pow(kt, n_t - 1.0) * torch.exp(-torch.pow(kt, n_t))
+
 
 # --- Standard Library: Chemische Elemente (Atommassen, Ordnungszahlen) ---
 # IUPAC-nah (g/mol); häufigste Elemente für Chemie/Biologie.

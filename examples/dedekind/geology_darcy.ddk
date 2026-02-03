@@ -1,0 +1,20 @@
+// Quick Wins: Geologie — Darcy-Gesetz v = -(K/mu) * grad_P
+fn main() {
+    print("--- Dedekind: Geologie Darcy-Gesetz ---")
+
+    // K in m², grad_P in Pa/m, mu in Pa·s
+    K = 1.0e-12
+    grad_P = 1e5
+    mu = 0.001
+
+    v = darcy_velocity(K, grad_P, mu)
+    print("Darcy-Geschwindigkeit (K=1e-12 m², grad_P=1e5 Pa/m, mu=1 mPa·s):")
+    print(v)
+
+    // Einheiten D, mD für Durchlässigkeit
+    print("1[D] + 1000[mD] (Darcy):")
+    print(1[D] + 1000[mD])
+
+    print("Darcy Quick Win aktiv.")
+}
+main()
