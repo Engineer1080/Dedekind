@@ -15,6 +15,7 @@ _RUNTIME_BUILTIN_NAMES = frozenset({
     'random_vector', 'random_matrix', 'transpose', 'inverse', 'dot_product', 'cross',
     'relu', 'softmax', 'convolution', 'pooling', 'fft', 'ifft', 'fftfreq', 'diff', 'cumsum', 'clip', 'shuffle', 'linspace',
     'ode_solve', 'pde_heat_1d', 'pde_heat_2d',
+    'sparse_laplacian_2d', 'sparse_diffusion_step', 'sparse_diffusion_simulate',
     'Normal', 'Uniform', 'Bernoulli', 'Exponential', 'Gamma', 'Beta', 'Poisson',
     'sample', 'log_prob', 'metropolis', 'hmc',
     'sin', 'cos', 'tan', 'exp', 'log', 'log10', 'sqrt', 'abs',

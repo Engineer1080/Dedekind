@@ -936,6 +936,92 @@ def pde_heat_2d(u0, x, y, t, k, bc="dirichlet"):
 
     return ode_solve(rhs, u0.flatten(), t).reshape(t.numel(), nx, ny)
 
+# --- Sparse PDE: 2D Laplacian und Diffusion ---
+
+def sparse_laplacian_2d(N, dx=None):
+    """
+    Baut den 2D-Laplacian als sparse COO-Matrix (5-Punkt-Stencil) für ein N×N-Gitter.
+    Dirichlet-Rand: Randzeilen sind 0 (dT/dt=0 am Rand).
+    N: Gittergröße; dx: Gitterabstand (default 1/(N-1) für Einheitsintervall).
+    Rückgabe: Sparse-Tensor (N², N²).
+    """
+    N = int(N)
+    if N < 2:
+        raise ValueError("sparse_laplacian_2d: N muss >= 2 sein.")
+    if dx is None:
+        dx = 1.0 / _builtin_max(N - 1, 1)
+    dx2 = dx * dx
+    rows, cols, vals = [], [], []
+    for i in range(N):
+        for j in range(N):
+            row = i * N + j
+            # Dirichlet BC: Randpunkte haben dT/dt=0 → Laplacian-Zeile = 0
+            if i == 0 or i == N - 1 or j == 0 or j == N - 1:
+                rows.append(row)
+                cols.append(row)
+                vals.append(0.0)  # Zeile = 0, Rand bleibt unverändert (wird nach Step auf 0 gesetzt)
+                continue
+            # Innen: 5-Punkt-Stencil (∇²u ≈ (Nachbarn - 4*Mitte)/dx²)
+            n_neighbors = 0
+            for di, dj in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                ni, nj = i + di, j + dj
+                col = ni * N + nj
+                rows.append(row)
+                cols.append(col)
+                vals.append(1.0 / dx2)
+                n_neighbors += 1
+            rows.append(row)
+            cols.append(row)
+            vals.append(-n_neighbors / dx2)
+    indices = torch.tensor([rows, cols], dtype=torch.long)
+    values = torch.tensor(vals, dtype=torch.float32)
+    L = torch.sparse_coo_tensor(indices, values, (N * N, N * N)).coalesce()
+    return L
+
+def sparse_diffusion_step(T, L, dt, alpha):
+    """
+    Ein expliziter Euler-Schritt für ∂T/∂t = α ∇²T.
+    T: 2D-Tensor (N,N); L: sparse Laplacian von sparse_laplacian_2d(N); dt, alpha: Skalare.
+    Dirichlet BC: Rand wird nach dem Schritt auf 0 gesetzt.
+    Rückgabe: T neu (2D).
+    """
+    T = _to_tensor(T).float()
+    if T.dim() != 2 or T.shape[0] != T.shape[1]:
+        raise ValueError("sparse_diffusion_step: T muss quadratische 2D-Matrix sein.")
+    N = T.shape[0]
+    if L.shape != (N * N, N * N):
+        raise ValueError("sparse_diffusion_step: L muss zu T passen (N²×N²).")
+    dt = float(dt)
+    alpha = float(alpha)
+    T_flat = T.flatten().unsqueeze(1)
+    lap_T = torch.sparse.mm(L, T_flat).squeeze(1)
+    T_new_flat = T_flat.squeeze(1) + dt * alpha * lap_T
+    T_new = T_new_flat.reshape(N, N)
+    # Dirichlet BC: Rand = 0
+    T_new[0, :] = 0.0
+    T_new[-1, :] = 0.0
+    T_new[:, 0] = 0.0
+    T_new[:, -1] = 0.0
+    return T_new
+
+def sparse_diffusion_simulate(T0, n_steps, dt, alpha):
+    """
+    Vollständige sparse 2D-Diffusionssimulation: ∂T/∂t = α ∇²T.
+    T0: Anfangsbedingung 2D (N,N); n_steps: Zeitschritte; dt, alpha: Skalare.
+    Dirichlet BC: Rand = 0. Rückgabe: Liste [T0, T1, ..., T_n_steps].
+    """
+    T0 = _to_tensor(T0).float()
+    if T0.dim() != 2 or T0.shape[0] != T0.shape[1]:
+        raise ValueError("sparse_diffusion_simulate: T0 muss quadratische 2D-Matrix sein.")
+    N = T0.shape[0]
+    L = sparse_laplacian_2d(N)
+    result = [T0.clone()]
+    T = T0.clone()
+    for _ in range(int(n_steps) - 1):
+        T = sparse_diffusion_step(T, L, dt, alpha)
+        result.append(T.clone())
+    return result
+
 # --- Standard Library: Probabilistic Programming ---
 # Verteilungen und Bayesian Inference (torch.distributions)
 

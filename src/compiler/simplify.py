@@ -137,13 +137,14 @@ class SimplifyVisitor:
             if _is_numeric(right) and lb == 0:
                 return left
         if op == "*":
+            # Nur falten wenn beide Literale (x*0 mit Tensor x darf nicht zu 0 werden)
             if _is_numeric(left):
-                if la == 0:
+                if la == 0 and _is_numeric(right):
                     return _make_literal(0, line)
                 if la == 1:
                     return right
             if _is_numeric(right):
-                if lb == 0:
+                if lb == 0 and _is_numeric(left):
                     return _make_literal(0, line)
                 if lb == 1:
                     return left
