@@ -12,6 +12,7 @@ _TORCH_MEMBER_NAMES = frozenset({'gpu', 'cpu', 'single'})
 # If the program uses any of these, we must inject the ML runtime.
 _RUNTIME_BUILTIN_NAMES = frozenset({
     'Quantity', 'Quaternion', 'Dense', 'Sequential', 'compile_model',
+    'DedekindCut', 'DedekindIdeal', 'DedekindRingZ',
     'random_vector', 'random_matrix', 'transpose', 'inverse', 'dot_product', 'cross',
     'relu', 'softmax', 'convolution', 'pooling', 'fft', 'ifft', 'fftfreq', 'diff', 'cumsum', 'clip', 'shuffle', 'linspace', 'arange', 'arithmetic', 'geometric', 'sequence',
     'ode_solve', 'pde_heat_1d', 'pde_heat_2d', 'pde_advection_1d', 'pde_advection_2d', 'pde_wave_1d', 'pde_wave_2d', 'pde_burgers_1d', 'pde_burgers_2d',
@@ -32,6 +33,7 @@ _RUNTIME_BUILTIN_NAMES = frozenset({
     'qr', 'cholesky', 'lu', 'matrix_power', 'kron', 'outer', 'vander', 'matrix_sqrt', 'matrix_norm',
     'cdist', 'polyfit', 'polyval', 'unique', 'argsort', 'convolve1d',
     'minimize_scalar', 'newton', 'minimize', 'fsolve', 'integrate', 'simpson',
+    'riemann_sum', 'zeta',
     'permutation', 'choice', 'autocorr', 'moving_mean',
     'UncertainQuantity', 'uncertain', 'fit',
     'michaelis_menten', 'logistic', 'logistic_growth_dt', 'arrhenius', 'linear_regression',
@@ -40,6 +42,7 @@ _RUNTIME_BUILTIN_NAMES = frozenset({
     'darcy_velocity', 'johnson_mehl_avrami', 'avrami_rate',
     'atomic_mass', 'atomic_number',
     'gcd', 'is_prime', 'mod', 'mod_inv', 'mod_pow', 'factorial', 'binom',
+    'dedekind_cut_from_rational', 'dedekind_cut_sqrt2', 'ideal', 'ideal_factor',
     'ttest_one_sample', 'ttest_two_sample',
     'concentration_to_pH', 'pH_to_concentration',
     'christoffel_symbols', 'riemann_tensor', 'covariant_derivative',
@@ -198,7 +201,7 @@ class CodeGenerator:
         self.code.append("# Dedekind ML Runtime")
         ml_runtime_path = __file__.replace('codegen.py', 'ml_runtime.py')
         try:
-            with open(ml_runtime_path, 'r') as f:
+            with open(ml_runtime_path, 'r', encoding='utf-8') as f:
                 ml_code = f.read()
                 reached_code = False
                 for line in ml_code.split('\n'):

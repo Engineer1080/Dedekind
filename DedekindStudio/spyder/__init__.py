@@ -31,7 +31,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 from packaging.version import parse  # type: ignore[reportMissingImports]
 
-version_info = (1, 2, 7)
+version_info = (1, 2, 8)
 
 __version__ = str(parse('.'.join(map(str, version_info))))
 __installer_version__ = __version__

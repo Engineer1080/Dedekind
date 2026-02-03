@@ -2,7 +2,7 @@
 
 **Language Specification v0.2**  
 Mario Michael Heinrich · github.com/Engineer1080  
-Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit), v0.9.6 (Math-Funktionen), v0.9.7 (Chemie/Biologie: mol, L, M, ppm), v0.9.8 (Convenience, Elemente, Datei-I/O, Netzwerk, JSON), v1.0.0 (Release), v1.0.1–v1.0.6 (Patch), v1.2.6 (Winkel rad/deg, deg_to_rad, rad_to_deg), v1.2.7 (Dirichlet-Verteilung, dirichlet_function)
+Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit), v0.9.6 (Math-Funktionen), v0.9.7 (Chemie/Biologie: mol, L, M, ppm), v0.9.8 (Convenience, Elemente, Datei-I/O, Netzwerk, JSON), v1.0.0 (Release), v1.0.1–v1.0.6 (Patch), v1.2.6 (Winkel rad/deg, deg_to_rad, rad_to_deg), v1.2.7 (Dirichlet-Verteilung, dirichlet_function), v1.2.8 (Dedekind-Schnitte, Dedekind-Ringe, Riemann-Zeta, Riemann-Summen)
 
 ---
 
@@ -246,6 +246,7 @@ Dedekind provides **numerical integration** and **math functions** for scientifi
 **Numerical integration:**
 
 - **`integrate(f, a, b, n=100)`**: Numerically integrates \(f(x)\) from `a` to `b` using the trapezoidal rule with `n` points. `f` must accept a 1D tensor (the grid) and return a tensor of the same length; the integral is differentiable with respect to parameters in `f` when using autograd.
+- **`riemann_sum(f, a, b, n=100, method="left"|"right"|"midpoint")`**: Riemann sum approximation of \(\int_a^b f(x)\,dx\). `method`: left endpoint, right endpoint, or midpoint (default). Differentiable when `f` is.
 
 **Trigonometrie:** **`sin(x)`**, **`cos(x)`**, **`tan(x)`**.
 
@@ -262,6 +263,12 @@ Dedekind provides **numerical integration** and **math functions** for scientifi
 **Runden:** **`round(x)`**, **`floor(x)`**, **`ceil(x)`**.
 
 **Dirichlet-Funktion:** **`dirichlet_function(x)`** — Dirichlet function D(x): returns 1 if x is rational (denominator ≤10000, tolerance 1e-6), else 0; element-wise for tensors. See `examples/dedekind/dirichlet_distribution_function.ddk`.
+
+**Dedekind-Schnitte:** **`DedekindCut(x)`** — Dedekind cut representing real x as lower set A = {q ∈ Q : q < x}. **`dedekind_cut_from_rational(p, q)`** — cut for rational p/q. **`dedekind_cut_sqrt2()`** — cut for √2. Methods: `lower_set_contains(cut, q)`, `to_float()`; arithmetic `+`, `-`, `*`, comparisons. See `examples/dedekind/dedekind_cuts_rings.ddk`.
+
+**Dedekind-Ringe:** **`DedekindRingZ()`** — ring of integers Z as Dedekind domain. **`ideal(n)`** — principal ideal (n) in Z. **`ideal_factor(i)`** — factor ideal into prime ideals; for Z: (n) = ∏ (p_i)^(e_i). **`DedekindIdeal`** has `.factor()`, `.norm()`, `*` (ideal multiplication). See `examples/dedekind/dedekind_cuts_rings.ddk`.
+
+**Riemann-Zeta:** **`zeta(s)`** — Riemann zeta function \(\zeta(s) = \sum_{n=1}^\infty 1/n^s\); uses scipy. For s=1 the series diverges (returns inf). See `examples/dedekind/riemann_zeta_sums.ddk`.
 
 **Lineare Algebra:** **`norm(x, p=None, dim=None)`** — Vektor- oder Matrixnorm (default p=2); **`det(A)`** — Determinante; **`trace(A)`** — Spur.
 
