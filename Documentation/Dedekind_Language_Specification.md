@@ -2,7 +2,7 @@
 
 **Language Specification v0.2**  
 Mario Michael Heinrich · github.com/Engineer1080  
-Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit), v0.9.6 (Math-Funktionen), v0.9.7 (Chemie/Biologie: mol, L, M, ppm), v0.9.8 (Convenience, Elemente, Datei-I/O, Netzwerk, JSON), v1.0.0 (Release), v1.0.1–v1.0.6 (Patch), v1.2.6 (Winkel rad/deg, deg_to_rad, rad_to_deg)
+Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit), v0.9.6 (Math-Funktionen), v0.9.7 (Chemie/Biologie: mol, L, M, ppm), v0.9.8 (Convenience, Elemente, Datei-I/O, Netzwerk, JSON), v1.0.0 (Release), v1.0.1–v1.0.6 (Patch), v1.2.6 (Winkel rad/deg, deg_to_rad, rad_to_deg), v1.2.7 (Dirichlet-Verteilung, dirichlet_function)
 
 ---
 
@@ -223,12 +223,12 @@ Example: exponential decay dy/dt = -0.1*y; then `grad(final_state, y0)` gives d 
 
 Dedekind provides **first-class distributions** and **Bayesian inference** via `torch.distributions`:
 
-- **Distributions**: `Normal(mu, sigma)`, `Uniform(low, high)`, `Bernoulli(p)`, `Exponential(rate)`, `Gamma(concentration, rate)`, `Beta(alpha, beta)`, `Poisson(rate)` – return distribution objects.
+- **Distributions**: `Normal(mu, sigma)`, `Uniform(low, high)`, `Bernoulli(p)`, `Exponential(rate)`, `Gamma(concentration, rate)`, `Beta(alpha, beta)`, `Poisson(rate)`, `Dirichlet(alpha)` – return distribution objects. `Dirichlet(alpha)` is a multivariate distribution on the simplex (e.g. for topic modeling); `alpha` is a list or 1D tensor of concentration parameters.
 - **sample(dist)** / **sample(dist, n)**: Draw one or `n` samples from a distribution.
 - **log_prob(dist, value)**: Log-probability of `value` under `dist` (for inference).
 - **metropolis(log_prior_fn, log_likelihood_fn, data, init_theta, num_steps, step_size)**: Metropolis-Hastings MCMC. `log_prior_fn(theta)` and `log_likelihood_fn(data, theta)` return log-probs (tensor or scalar). Returns posterior samples of shape `(num_steps, *theta_shape)`.
 
-Example: infer mean `theta` of Normal data with prior Normal(0,1); see `examples/dedekind/probabilistic.ddk`. Extended distributions (Exponential, Gamma, Beta, Poisson): see `examples/dedekind/distributions_extended.ddk`.
+Example: infer mean `theta` of Normal data with prior Normal(0,1); see `examples/dedekind/probabilistic.ddk`. Extended distributions (Exponential, Gamma, Beta, Poisson, Dirichlet): see `examples/dedekind/distributions_extended.ddk` and `examples/dedekind/dirichlet_distribution_function.ddk`.
 
 ### 15.9 Differentiable PDE Solvers (v0.8)
 
@@ -260,6 +260,8 @@ Dedekind provides **numerical integration** and **math functions** for scientifi
 **Reduktionen:** **`min(x, dim=None)`**, **`max(x, dim=None)`** — Minimum/Maximum; **`argmin(x, dim=None)`**, **`argmax(x, dim=None)`** — Index des Min/Max.
 
 **Runden:** **`round(x)`**, **`floor(x)`**, **`ceil(x)`**.
+
+**Dirichlet-Funktion:** **`dirichlet_function(x)`** — Dirichlet function D(x): returns 1 if x is rational (denominator ≤10000, tolerance 1e-6), else 0; element-wise for tensors. See `examples/dedekind/dirichlet_distribution_function.ddk`.
 
 **Lineare Algebra:** **`norm(x, p=None, dim=None)`** — Vektor- oder Matrixnorm (default p=2); **`det(A)`** — Determinante; **`trace(A)`** — Spur.
 

@@ -7,7 +7,7 @@ Draft: January 2026 · Stand: v1.2.6 (Prototyp)
 
 ## Übersicht
 
-Dedekind ist aktuell ein **Prototyp (v1.2.6)**. Die folgende Einschätzung bezieht sich auf den **aktuellen Implementierungsstand** und nennt Lücken sowie Roadmap-Punkte.
+Dedekind ist aktuell ein **Prototyp (v1.2.7)**. Die folgende Einschätzung bezieht sich auf den **aktuellen Implementierungsstand** und nennt Lücken sowie Roadmap-Punkte.
 
 | Domäne       | Ausgereiftheit (kurz) | Nutzbar für …                          | Wichtige Lücken / Roadmap          |
 |-------------|------------------------|----------------------------------------|------------------------------------|
@@ -37,7 +37,7 @@ Dedekind ist aktuell ein **Prototyp (v1.2.6)**. Die folgende Einschätzung bezie
 - **Symbolische Mathematik**: `diff_sym(expr, var)` liefert Ableitung als String; keine allgemeine symbolische Vereinfachung. Geplant: Phase 5 (Symbolic Simplification).
 - **LA**: Umfangreiche API vorhanden; spezielle Domänen (z. B. strukturierte Matrizen) optional.
 - **Differentialgeometrie**: Ricci-Notation, `christoffel_symbols`, `riemann_tensor`, `covariant_derivative` (numerisch) vorhanden.
-- **Zahlentheorie**: `gcd`, `is_prime`, `mod`, `mod_inv`, `mod_pow`; `binom(n, k)`; Fakultät `n!`.
+- **Zahlentheorie**: `gcd`, `is_prime`, `mod`, `mod_inv`, `mod_pow`; `binom(n, k)`; Fakultät `n!`; `dirichlet_function(x)` (D(x)=1 wenn x rational, sonst 0).
 
 **Fazit Mathematik**: Für **numerische Analysis, lineare Algebra, Statistik, Integration und Stochastik** gut nutzbar; für **symbolische und höhere mathematische Themen** noch Lücken. **Ausgereiftheit: gut nutzbar.**
 
@@ -58,7 +58,7 @@ Dedekind ist aktuell ein **Prototyp (v1.2.6)**. Die folgende Einschätzung bezie
 
 ### Lücken / Roadmap
 
-- **PDE**: Wärmeleitung, Advektion, Wellengleichung, Burgers, Reaktions-Diffusion, Advektions-Diffusion und Maxwell (FDTD 1D/2D) als Standard-API vorhanden. Weitere PDE-Typen (z. B. Navier-Stokes) fehlen.
+- **PDE**: Wärmeleitung, Advektion, Wellengleichung, Burgers, Reaktions-Diffusion, Advektions-Diffusion, Maxwell (FDTD 1D/2D) und Navier-Stokes 2D (Chorin-Projektion) als Standard-API vorhanden.
 - **Lagrange/Hamilton**: Keine eingebaute Formulierung; mit `ode_solve` und eigener RHS modellierbar.
 - **Feldtheorie**: Keine speziellen Primitiven.
 
