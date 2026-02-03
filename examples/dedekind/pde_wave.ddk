@@ -1,0 +1,27 @@
+fn main() {
+    print("--- Dedekind: Wellengleichung (u_tt = c² u_xx) ---")
+    print_latex(r"u_{tt} = c^2 \nabla^2 u \quad \mathrm{Welle}")
+    
+    // 1D: Angeregter String, periodische Ränder
+    n = 101
+    x = linspace(0, 1, n)
+    t = linspace(0, 2.0, 201)
+    c = 1.0
+    
+    // Anfangsbedingung: Gauß-Puls (Auslenkung), v0=0 (ruhend)
+    u0 = exp(-200.0 * (x - 0.5) * (x - 0.5))
+    
+    sol = pde_wave_1d(u0, x, t, c)
+    print("1D Wave: u(t=0) Puls in der Mitte")
+    print("1D Wave: u(t=2) Puls hat sich ausgebreitet (periodisch)")
+    print("Shape (Zeit, Raum):")
+    print(sol.shape)
+    
+    // Plot: Anfang, Mitte, Ende
+    plot(x, sol[0], title="t=0 (Anfang)")
+    plot(x, sol[100], title="t=1 (Ausbreitung)")
+    plot(x, sol[200], title="t=2 (zurueck)")
+    
+    print("Wellen-Solver aktiv.")
+}
+main()

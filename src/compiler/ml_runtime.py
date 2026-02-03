@@ -1025,6 +1025,189 @@ def pde_advection_2d(u0, x, y, t, vx, vy, bc="periodic"):
 
     return ode_solve(rhs, u0.flatten(), t).reshape(t.numel(), nx, ny)
 
+# --- Wellengleichung: u_tt = c² ∇²u (Reduktion auf System 1. Ordnung: u_t=v, v_t=c²∇²u) ---
+
+def pde_wave_1d(u0, x, t, c, v0=None, bc="periodic"):
+    """
+    Differenzierbarer 1D-Wellensolver: u_tt = c² u_xx.
+    Reduktion auf u_t=v, v_t=c² u_xx; zentrale Differenzen für u_xx.
+    u0: Anfangsauslenkung u(0,x); x: Ortsgitter; t: Zeitgitter; c: Ausbreitungsgeschwindigkeit.
+    v0: Anfangsgeschwindigkeit u_t(0,x) (optional, default 0).
+    bc: 'periodic' (default) oder 'dirichlet'. Rückgabe: (len(t), len(x)).
+    """
+    u0 = _to_tensor(u0).float().flatten()
+    v0 = _to_tensor(v0).float().flatten().to(u0.device) if v0 is not None else torch.zeros_like(u0)
+    x = _to_tensor(x).float().flatten().to(u0.device)
+    t = _to_tensor(t).float().flatten().to(u0.device)
+    c_val = float(_to_tensor(c).float().item())
+    n = u0.numel()
+    if x.numel() != n or v0.numel() != n:
+        raise ValueError("pde_wave_1d: len(u0), len(v0), len(x) müssen übereinstimmen.")
+    if n < 3:
+        raise ValueError("pde_wave_1d: mindestens 3 Gitterpunkte.")
+    dx = float((x[-1] - x[0]).item()) / _builtin_max(n - 1, 1)
+    if abs(dx) < 1e-14:
+        dx = 1.0
+    dx2 = dx * dx
+    y0 = torch.cat([u0, v0], dim=0)
+
+    def rhs(t_cur, y):
+        u = y[:n]
+        v = y[n:]
+        if bc == "periodic":
+            u_left = torch.roll(u, 1, dims=0)
+            u_right = torch.roll(u, -1, dims=0)
+        else:
+            u_left = torch.cat([u[:1], u[:-1]])
+            u_right = torch.cat([u[1:], u[-1:]])
+        u_xx = (u_left - 2.0 * u + u_right) / dx2
+        dudt = v
+        dvdt = c_val * c_val * u_xx
+        return torch.cat([dudt, dvdt], dim=0)
+
+    sol = ode_solve(rhs, y0, t)
+    return sol[:, :n]
+
+def pde_wave_2d(u0, x, y, t, c, v0=None, bc="periodic"):
+    """
+    Differenzierbarer 2D-Wellensolver: u_tt = c² (u_xx + u_yy).
+    u0: Anfangsauslenkung 2D; x, y: Ortsgitter; t: Zeitgitter; c: Ausbreitungsgeschwindigkeit.
+    v0: Anfangsgeschwindigkeit 2D (optional, default 0).
+    bc: 'periodic' (default) oder 'dirichlet'. Rückgabe: (len(t), nx, ny).
+    """
+    u0 = _to_tensor(u0).float()
+    if u0.dim() == 1:
+        raise ValueError("pde_wave_2d: u0 muss 2D-Gitter (nx, ny) sein.")
+    nx, ny = u0.shape[0], u0.shape[1]
+    v0 = _to_tensor(v0).float().to(u0.device) if v0 is not None else torch.zeros_like(u0)
+    if v0.shape != u0.shape:
+        v0 = torch.zeros_like(u0)
+    x = _to_tensor(x).float().flatten().to(u0.device)
+    y = _to_tensor(y).float().flatten().to(u0.device)
+    t = _to_tensor(t).float().flatten().to(u0.device)
+    c_val = float(_to_tensor(c).float().item())
+    if x.numel() != nx or y.numel() != ny:
+        raise ValueError("pde_wave_2d: x/y Länge muss zu u0 passen.")
+    dx = float((x[-1] - x[0]).item()) / _builtin_max(nx - 1, 1)
+    dy = float((y[-1] - y[0]).item()) / _builtin_max(ny - 1, 1)
+    if abs(dx) < 1e-14:
+        dx = 1.0
+    if abs(dy) < 1e-14:
+        dy = 1.0
+    dx2, dy2 = dx * dx, dy * dy
+    n = nx * ny
+    y0 = torch.cat([u0.flatten(), v0.flatten()], dim=0)
+
+    def rhs(t_cur, y_flat):
+        u = y_flat[:n].reshape(nx, ny)
+        v = y_flat[n:].reshape(nx, ny)
+        if bc == "periodic":
+            u_left = torch.roll(u, 1, dims=0)
+            u_right = torch.roll(u, -1, dims=0)
+            u_bottom = torch.roll(u, 1, dims=1)
+            u_top = torch.roll(u, -1, dims=1)
+        else:
+            u_left = torch.cat([u[:1, :], u[:-1, :]], dim=0)
+            u_right = torch.cat([u[1:, :], u[-1:, :]], dim=0)
+            u_bottom = torch.cat([u[:, :1], u[:, :-1]], dim=1)
+            u_top = torch.cat([u[:, 1:], u[:, -1:]], dim=1)
+        u_xx = (u_left - 2.0 * u + u_right) / dx2
+        u_yy = (u_bottom - 2.0 * u + u_top) / dy2
+        lap_u = u_xx + u_yy
+        dudt = v
+        dvdt = c_val * c_val * lap_u
+        return torch.cat([dudt.flatten(), dvdt.flatten()], dim=0)
+
+    sol = ode_solve(rhs, y0, t)
+    return sol[:, :n].reshape(t.numel(), nx, ny)
+
+# --- Burgers-Gleichung: u_t + u*u_x = ν*u_xx (Upwind für Advektion, zentral für Diffusion) ---
+
+def pde_burgers_1d(u0, x, t, nu, bc="periodic"):
+    """
+    Differenzierbarer 1D-Burgers-Solver: u_t + u*u_x = ν*u_xx.
+    Upwind für nichtlinearen Advektionsterm u*u_x; zentrale Differenzen für ν*u_xx.
+    u0: Anfangsbedingung (1D); x: Ortsgitter; t: Zeitgitter; nu: Viskosität (ν≥0).
+    bc: 'periodic' (default) oder 'dirichlet'. Rückgabe: (len(t), len(x)).
+    """
+    u0 = _to_tensor(u0).float().flatten()
+    x = _to_tensor(x).float().flatten().to(u0.device)
+    t = _to_tensor(t).float().flatten().to(u0.device)
+    nu_val = float(_to_tensor(nu).float().item())
+    n = u0.numel()
+    if x.numel() != n:
+        raise ValueError("pde_burgers_1d: len(u0) muss len(x) entsprechen.")
+    if n < 3:
+        raise ValueError("pde_burgers_1d: mindestens 3 Gitterpunkte.")
+    dx = float((x[-1] - x[0]).item()) / _builtin_max(n - 1, 1)
+    if abs(dx) < 1e-14:
+        dx = 1.0
+    dx2 = dx * dx
+
+    def rhs(t_cur, u):
+        u = u.flatten()
+        if bc == "periodic":
+            u_left = torch.roll(u, 1, dims=0)
+            u_right = torch.roll(u, -1, dims=0)
+        else:
+            u_left = torch.cat([u[:1], u[:-1]])
+            u_right = torch.cat([u[1:], u[-1:]])
+        u_xx = (u_left - 2.0 * u + u_right) / dx2
+        adv = torch.where(u > 0, -u * (u - u_left) / dx, -u * (u_right - u) / dx)
+        dudt = adv + nu_val * u_xx
+        return dudt
+
+    return ode_solve(rhs, u0, t)
+
+def pde_burgers_2d(u0, x, y, t, nu, bc="periodic"):
+    """
+    Differenzierbarer 2D-Burgers-Solver: u_t + u*u_x + u*u_y = ν*(u_xx + u_yy).
+    Upwind für nichtlinearen Advektionsterm u·∇u; zentrale Differenzen für ν∇²u.
+    u0: Anfangsbedingung 2D (nx, ny); x, y: Ortsgitter; t: Zeitgitter; nu: Viskosität (ν≥0).
+    bc: 'periodic' (default) oder 'dirichlet'. Rückgabe: (len(t), nx, ny).
+    """
+    u0 = _to_tensor(u0).float()
+    if u0.dim() == 1:
+        raise ValueError("pde_burgers_2d: u0 muss 2D-Gitter (nx, ny) sein.")
+    nx, ny = u0.shape[0], u0.shape[1]
+    x = _to_tensor(x).float().flatten().to(u0.device)
+    y = _to_tensor(y).float().flatten().to(u0.device)
+    t = _to_tensor(t).float().flatten().to(u0.device)
+    nu_val = float(_to_tensor(nu).float().item())
+    if x.numel() != nx or y.numel() != ny:
+        raise ValueError("pde_burgers_2d: x/y Länge muss zu u0 passen.")
+    if nx < 3 or ny < 3:
+        raise ValueError("pde_burgers_2d: mindestens 3×3 Gitterpunkte.")
+    dx = float((x[-1] - x[0]).item()) / _builtin_max(nx - 1, 1)
+    dy = float((y[-1] - y[0]).item()) / _builtin_max(ny - 1, 1)
+    if abs(dx) < 1e-14:
+        dx = 1.0
+    if abs(dy) < 1e-14:
+        dy = 1.0
+    dx2, dy2 = dx * dx, dy * dy
+
+    def rhs(t_cur, u_flat):
+        u = u_flat.reshape(nx, ny)
+        if bc == "periodic":
+            u_left = torch.roll(u, 1, dims=0)
+            u_right = torch.roll(u, -1, dims=0)
+            u_bottom = torch.roll(u, 1, dims=1)
+            u_top = torch.roll(u, -1, dims=1)
+        else:
+            u_left = torch.cat([u[:1, :], u[:-1, :]], dim=0)
+            u_right = torch.cat([u[1:, :], u[-1:, :]], dim=0)
+            u_bottom = torch.cat([u[:, :1], u[:, :-1]], dim=1)
+            u_top = torch.cat([u[:, 1:], u[:, -1:]], dim=1)
+        u_xx = (u_left - 2.0 * u + u_right) / dx2
+        u_yy = (u_bottom - 2.0 * u + u_top) / dy2
+        lap_u = u_xx + u_yy
+        adv_x = torch.where(u > 0, -u * (u - u_left) / dx, -u * (u_right - u) / dx)
+        adv_y = torch.where(u > 0, -u * (u - u_bottom) / dy, -u * (u_top - u) / dy)
+        dudt = adv_x + adv_y + nu_val * lap_u
+        return dudt.flatten()
+
+    return ode_solve(rhs, u0.flatten(), t).reshape(t.numel(), nx, ny)
+
 # --- Sparse PDE: 2D Laplacian und Diffusion ---
 
 def sparse_laplacian_2d(N, dx=None):
