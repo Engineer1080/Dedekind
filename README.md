@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-1.3.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-1.3.1-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -28,6 +28,10 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
+
+### What's New in v1.3.1
+
+- **Medizin, Pharmakologie & Epidemiologie:** `hill_equation`, `one_compartment_pk`, `half_life` (Pharmakokinetik); `sir_model`, `basic_reproduction_number` (Epidemiologie); `confidence_interval`, `odds_ratio`, `sensitivity_specificity` (Biostatistik). Beispiele: `pharmacology_quickwins.ddk`, `epidemiology_sir.ddk`, `biostatistics_quickwins.ddk`.
 
 ### What's New in v1.3.0
 
@@ -229,6 +233,7 @@ Dedekind unterstützt **chemische und biologische Anwendungen** mit denselben Ba
 - **Wachstum**: Logistisches Wachstum \(dN/dt = r N (1 - N/K)\) mit `ode_solve` — Beispiel: `biology_growth.ddk`.
 - **Convenience**: `michaelis_menten(S, Vmax, Km)`, `logistic(t, r, K, N0)`, `logistic_growth_dt(N, r, K)`, `arrhenius(T, A, Ea)`, `linear_regression(x, y)` — einzeilig aufrufbar.
 - **Chemische Elemente**: `atomic_mass("C")` → Atommasse in g/mol (Quantity); `atomic_number("C")` → Ordnungszahl; IUPAC-nah für H, C, N, O, S, P, Na, Cl, Fe, … (ca. 50 Elemente). Beispiel: Molare Masse H₂O = 2*atomic_mass("H") + atomic_mass("O"); `chemistry_elements.ddk`.
+- **Medizin, Pharmakologie & Epidemiologie**: `hill_equation`, `one_compartment_pk`, `half_life` (Pharmakokinetik); `sir_model`, `basic_reproduction_number` (Epidemiologie); `confidence_interval`, `odds_ratio`, `sensitivity_specificity` (Biostatistik) — Beispiele: `pharmacology_quickwins.ddk`, `epidemiology_sir.ddk`, `biostatistics_quickwins.ddk`.
 
 Konstanten wie `N_A`, `R_gas`, `F_faraday` sind als **Quantity** mit SI-Einheiten (`1/mol`, `J/(K*mol)`, `C/mol`) verfügbar. Ausführliche Roadmap: `Documentation/Chemistry_Biology_Roadmap.md`.
 
@@ -340,6 +345,9 @@ Example programs are in `examples/dedekind/`, including:
 - `chemistry_elements.ddk` – Atommasse `atomic_mass("C")` (g/mol), Ordnungszahl `atomic_number("C")`; Molare Masse H₂O, C₂H₆  
 - `dose_response.ddk` – Dosis-Wirkung (EC50/Vmax/Km) mit `michaelis_menten` und `fit`  
 - `biology_growth.ddk` – logistisches Wachstum mit `logistic_growth_dt`/`logistic` und `ode_solve`  
+- `pharmacology_quickwins.ddk` – Hill-Gleichung, Ein-Kompartiment-PK, Halbwertszeit  
+- `epidemiology_sir.ddk` – SIR-Modell, R₀  
+- `biostatistics_quickwins.ddk` – Konfidenzintervall, Odds Ratio, Sensitivität/Spezifität  
 - `probabilistic.ddk` – distributions, sampling, and Bayesian inference with `metropolis`  
 - `conditional_logic.ddk`, `basic_loops.ddk` – control flow  
 - `mnist_classifier.ddk` – neural network with `Sequential`/`Dense`  

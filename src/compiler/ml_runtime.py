@@ -3786,6 +3786,118 @@ def linear_regression(x, y):
     params_opt = fit(loss, params_init, data, method="gd", lr=0.01, steps=500)
     return params_opt  # [slope, intercept]
 
+
+# --- Standard Library: Medizin, Pharmakologie, Epidemiologie (Quick Wins) ---
+
+def hill_equation(dose, Emax, EC50, n=1.0):
+    """
+    Hill-Gleichung: E = Emax * dose^n / (EC50^n + dose^n).
+    dose, Emax, EC50, n: Tensor oder Skalar; differenzierbar.
+    n: Steilheit (Hill-Koeffizient); n=1 entspricht Michaelis-Menten.
+    """
+    dose = _to_tensor(dose).float()
+    Emax = _to_tensor(Emax).float()
+    EC50 = _to_tensor(EC50).float()
+    n_val = _to_tensor(n).float()
+    return Emax * (dose ** n_val) / ((EC50 ** n_val) + (dose ** n_val))
+
+
+def one_compartment_pk(C0, ke, t):
+    """
+    Ein-Kompartiment-Modell (Elimination 1. Ordnung): C(t) = C0 * exp(-ke*t).
+    C0: Anfangskonzentration, ke: Eliminationskonstante (1/Zeit), t: Zeitgitter (1D).
+    Rückgabe: Konzentration zu jedem Zeitpunkt (differenzierbar).
+    """
+    C0 = _to_tensor(C0).float()
+    ke = _to_tensor(ke).float()
+    t = _to_tensor(t).float()
+    return C0 * torch.exp(-ke * t)
+
+
+def half_life(ke):
+    """
+    Halbwertszeit aus Eliminationskonstante: t1/2 = ln(2) / ke.
+    ke: Eliminationskonstante (1/Zeit). Rückgabe: Halbwertszeit (differenzierbar).
+    """
+    ke = _to_tensor(ke).float()
+    return (0.6931471805599453) / ke  # ln(2)
+
+
+def sir_model(S0, I0, R0, beta, gamma, t):
+    """
+    SIR-Kompartimentmodell: dS/dt = -beta*S*I, dI/dt = beta*S*I - gamma*I, dR/dt = gamma*I.
+    S0, I0, R0: Anfangsbestände (Susceptible, Infected, Recovered). beta: Kontaktrate, gamma: Erholungsrate.
+    t: Zeitgitter (1D). Rückgabe: (len(t), 3) – Spalten S, I, R.
+    """
+    def rhs(_, y):
+        S, I, R = y[0], y[1], y[2]
+        N = S + I + R
+        if N < 1e-14:
+            return torch.stack([torch.tensor(0.0), torch.tensor(0.0), torch.tensor(0.0)])
+        dS = -beta * S * I / N
+        dI = beta * S * I / N - gamma * I
+        dR = gamma * I
+        return torch.stack([dS, dI, dR])
+    y0_t = torch.tensor([float(S0), float(I0), float(R0)], dtype=torch.float32)
+    return ode_solve(rhs, y0_t, t)
+
+
+def basic_reproduction_number(beta, gamma):
+    """
+    Basisreproduktionszahl R0 = beta / gamma (SIR-Modell, homogene Population).
+    beta: Kontaktrate, gamma: Erholungsrate. Rückgabe: R0 (differenzierbar).
+    """
+    beta = _to_tensor(beta).float()
+    gamma = _to_tensor(gamma).float()
+    return beta / gamma
+
+
+def confidence_interval(x, alpha=0.05):
+    """
+    Konfidenzintervall für den Mittelwert (t-Verteilung).
+    x: 1D-Tensor oder Liste. alpha: Signifikanzniveau (z.B. 0.05 für 95% CI).
+    Rückgabe: (untere_Grenze, obere_Grenze).
+    """
+    import scipy.stats as scistats  # type: ignore[import-untyped]
+    t = _to_tensor(x).float().flatten()
+    n = t.numel()
+    if n < 2:
+        raise ValueError("confidence_interval: mindestens 2 Beobachtungen nötig.")
+    m = t.mean().item()
+    s = t.std(unbiased=True).item()
+    se = s / (n ** 0.5)
+    df = n - 1
+    t_crit = scistats.t.ppf(1.0 - alpha / 2.0, df)
+    lo = m - t_crit * se
+    hi = m + t_crit * se
+    return (float(lo), float(hi))
+
+
+def odds_ratio(a, b, c, d):
+    """
+    Odds Ratio aus 2x2-Kontingenztafel:   | a  b |
+                                          | c  d |
+    OR = (a*d) / (b*c). Rückgabe: Odds Ratio (float).
+    """
+    a, b, c, d = float(a), float(b), float(c), float(d)
+    if b * c < 1e-20:
+        return float('inf') if a * d > 0 else float('nan')
+    return (a * d) / (b * c)
+
+
+def sensitivity_specificity(TP, FN, FP, TN):
+    """
+    Sensitivität, Spezifität, positiver/negativer prädiktiver Wert aus 2x2-Tabelle.
+    TP, FN, FP, TN: True/False Positives/Negatives.
+    Rückgabe: (sensitivity, specificity, PPV, NPV).
+    """
+    TP, FN, FP, TN = float(TP), float(FN), float(FP), float(TN)
+    sens = TP / (TP + FN) if (TP + FN) > 0 else float('nan')
+    spec = TN / (TN + FP) if (TN + FP) > 0 else float('nan')
+    ppv = TP / (TP + FP) if (TP + FP) > 0 else float('nan')
+    npv = TN / (TN + FN) if (TN + FN) > 0 else float('nan')
+    return (sens, spec, ppv, npv)
+
 # --- Quick Wins: Musik (cents, equal temperament) ---
 def cents_to_ratio(cents):
     """Cent zu Frequenzverhältnis: ratio = 2^(cents/1200). 100 cent = Halbton."""

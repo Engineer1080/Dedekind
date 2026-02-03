@@ -14,7 +14,7 @@ This folder contains the **source** and **generated** documentation for the Dede
 | **Underserved_Sciences_Roadmap.md** | Roadmap für Wissenschaften, die von R/Python vernachlässigt werden (Geologie, Werkstoffe, Bauingenieurwesen, Ökonomie, Musik, Lehre) |
 | **Commercialization_Options.md** | Potenzielle Kommerzialisierungsoptionen (Beratung, Support, Lizenzen, SaaS, Förderung, Phasierung, Risiken) |
 | **IDE_Studio_Roadmap.md** | Dedekind in bestehenden IDEs (VS Code, Jupyter) + Dedekind Studio als kommerzielle Wissenschaftler-IDE (Einheiten, Plots, Postgres, LaTeX, lokale KI) |
-| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.3.0; Stärken, Lücken, Roadmap) |
+| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.3.1; Stärken, Lücken, Roadmap) |
 | **Dedekind_Language_Specification_v0.1.pdf** | Legacy PDF (v0.1); for current spec use the Markdown or generate v0.2 PDF below |
 | **Dedekind_Research_Papers_and_Architecture.pdf** | Legacy PDF; for current content use the Markdown or generate PDF below |
 
@@ -40,6 +40,10 @@ pandoc Dedekind_Research_and_Architecture.md -o Dedekind_Research_and_Architectu
 - **Online**: Paste the Markdown into a service that converts Markdown to PDF (e.g. markdown-to-pdf converters).
 - **Typora / other editors**: Open the `.md` file and export to PDF from the application.
 
+
+## What changed in v1.3.1 (documented here)
+
+- **Version 1.3.1**: **Medizin, Pharmakologie & Epidemiologie (Quick Wins):** `hill_equation(dose, Emax, EC50, n)` – Hill-Gleichung; `one_compartment_pk(C0, ke, t)` – Ein-Kompartiment-PK; `half_life(ke)` – Halbwertszeit; `sir_model(S0, I0, R0, beta, gamma, t)` – SIR-Kompartimentmodell; `basic_reproduction_number(beta, gamma)` – R₀; `confidence_interval(x, alpha)` – Konfidenzintervall; `odds_ratio(a, b, c, d)` – Odds Ratio; `sensitivity_specificity(TP, FN, FP, TN)` – Sensitivität, Spezifität, PPV, NPV. Beispiele: `pharmacology_quickwins.ddk`, `epidemiology_sir.ddk`, `biostatistics_quickwins.ddk`.
 
 ## What changed in v1.3.0 (documented here)
 

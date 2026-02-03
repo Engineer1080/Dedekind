@@ -1,0 +1,27 @@
+// Dedekind: Pharmakologie Quick Wins — Hill, Ein-Kompartiment, Halbwertszeit
+
+print("=== Pharmakologie Quick Wins ===")
+
+// Hill-Gleichung: E = Emax * dose^n / (EC50^n + dose^n)
+dose = [0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0]
+E = hill_equation(dose, 3.0, 2.0, 1.5)
+print("Hill (Emax=3, EC50=2, n=1.5):")
+print(E)
+
+// Ein-Kompartiment-PK: C(t) = C0 * exp(-ke*t)
+C0 = 100.0
+ke = 0.1
+t = linspace(0, 30, 61)
+C = one_compartment_pk(C0, ke, t)
+print("PK Konzentration bei t=0, 10, 20, 30:")
+print(C[0])
+print(C[20])
+print(C[40])
+print(C[60])
+
+// Halbwertszeit: t1/2 = ln(2)/ke
+t12 = half_life(ke)
+print("Halbwertszeit (ke=0.1):")
+print(t12)
+
+print("Pharmakologie Quick Wins aktiv.")

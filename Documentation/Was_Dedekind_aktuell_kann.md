@@ -1,6 +1,6 @@
 # Was Dedekind aktuell kann
 
-**Stand:** Basierend auf Code und Changelogs (v1.3.0, Februar 2026). Dedekind ist ein **Prototyp** – die Sprache wird nach Python transpiliert und nutzt PyTorch/NumPy als Laufzeit.
+**Stand:** Basierend auf Code und Changelogs (v1.3.1, Februar 2026). Dedekind ist ein **Prototyp** – die Sprache wird nach Python transpiliert und nutzt PyTorch/NumPy als Laufzeit.
 
 ---
 
@@ -55,6 +55,15 @@
 - **Chemische Elemente:** `atomic_mass("C")` (g/mol), `atomic_number("C")`; ca. 50 Elemente (IUPAC-nah); molare Masse z. B. H₂O, C₂H₆.
 - **Stöchiometrie:** `balance_equation(reactants_str, products_str)` – Koeffizienten für ausgeglichene Reaktionsgleichung (z. B. `"H2 + O2"`, `"H2O"` → ([2,1], [2])); nutzt lineare Algebra (Nullraum via SVD).
 - **Beispiele:** Kinetik 1. Ordnung, Dosis-Wirkung (EC50, Michaelis-Menten), logistisches Wachstum mit `ode_solve` und `fit`.
+
+---
+
+## Medizin, Pharmakologie & Epidemiologie
+
+- **Pharmakologie:** `hill_equation(dose, Emax, EC50, n)` – Hill-Gleichung E = Emax·doseⁿ/(EC50ⁿ+doseⁿ); `one_compartment_pk(C0, ke, t)` – Ein-Kompartiment C(t)=C0·e^(-ke·t); `half_life(ke)` – Halbwertszeit t₁/₂ = ln(2)/ke.
+- **Epidemiologie:** `sir_model(S0, I0, R0, beta, gamma, t)` – SIR-Kompartimentmodell; `basic_reproduction_number(beta, gamma)` – R₀ = β/γ.
+- **Biostatistik:** `confidence_interval(x, alpha)` – Konfidenzintervall für Mittelwert (t-Verteilung); `odds_ratio(a, b, c, d)` – Odds Ratio aus 2×2-Tabelle; `sensitivity_specificity(TP, FN, FP, TN)` – Sensitivität, Spezifität, PPV, NPV.
+- **Beispiele:** `pharmacology_quickwins.ddk`, `epidemiology_sir.ddk`, `biostatistics_quickwins.ddk`.
 
 ---
 
