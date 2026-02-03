@@ -41,6 +41,8 @@ _RUNTIME_BUILTIN_NAMES = frozenset({
     'permutation', 'choice', 'autocorr', 'moving_mean',
     'UncertainQuantity', 'uncertain', 'fit',
     'michaelis_menten', 'logistic', 'logistic_growth_dt', 'arrhenius', 'linear_regression',
+    'hill_equation', 'one_compartment_pk', 'half_life', 'sir_model', 'basic_reproduction_number',
+    'confidence_interval', 'odds_ratio', 'sensitivity_specificity',
     'cents_to_ratio', 'ratio_to_cents', 'equal_temperament',
     'discount_factor', 'cobb_douglas', 'solow_rhs',
     'darcy_velocity', 'johnson_mehl_avrami', 'avrami_rate',
