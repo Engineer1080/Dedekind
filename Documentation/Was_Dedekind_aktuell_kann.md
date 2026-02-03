@@ -1,6 +1,6 @@
 # Was Dedekind aktuell kann
 
-**Stand:** Basierend auf Code und Changelogs (v1.2.0, Februar 2026). Dedekind ist ein **Prototyp** – die Sprache wird nach Python transpiliert und nutzt PyTorch/NumPy als Laufzeit.
+**Stand:** Basierend auf Code und Changelogs (v1.2.1, Februar 2026). Dedekind ist ein **Prototyp** – die Sprache wird nach Python transpiliert und nutzt PyTorch/NumPy als Laufzeit.
 
 ---
 
@@ -32,7 +32,7 @@
 - **Arithmetik:** **Automatische Umrechnung** bei Addition/Subtraktion für gleiche Dimension; Ergebnis in der Einheit des ersten Operanden. Unterstützt: **SI-Basis** — Länge (m, cm, km, mm, dm), Masse (kg, g, t, mg), Zeit (s, min, h, ms), Strom (A, mA, kA, uA), Temperatur (K, mK), Stoffmenge (mol, mmol, kmol), Lichtstärke (cd, mcd); **abgeleitet** — Druck (Pa, bar, atm), Volumen (L, mL, dm³, m³), Energie (J, kJ, MJ, Wh, kWh), Spannung (V, mV, kV), Frequenz (Hz, kHz, MHz, GHz), Ladung (C, mC, uC), Widerstand (ohm, kohm, Mohm), Leistung (W, kW, MW). Sonst gleiche Einheit für +/-. Multiplikation/Division kombiniert Einheiten; Potenz mit `^`. **Anzeige**: Gleiche Faktoren werden zusammengefasst (z. B. `m*m` → `m^2`, `m*m*m` → `m^3`); Literale `1[m^2]`, `1[m^3]` nutzbar. Anzeige vereinfacht (J, N, Pa, W usw.).
 - **Physikalische Konstanten (CODATA):** `c`, `G`, `h`, `hbar`, `k_B`, `k_e`, `e_charge`, `epsilon_0`, `mu_0`, `m_e`, `m_p`, `N_A`, `R_gas`, `alpha`, `sigma_SB`, `F_faraday` – alle als `Quantity` mit SI-Einheiten.
 - **Differenzierbare ODE:** `ode_solve(fun, y0, t)` (RK4/Euler); `linspace(start, stop, steps)`; Gradients durch `grad()` für Physics-Informed ML.
-- **Differenzierbare PDE:** `pde_heat_1d(u0, x, t, k)`, `pde_heat_2d(u0, x, y, t, k)` für die Wärmeleitungsgleichung; Finite Differenzen + `ode_solve`; Gradients durch `u0` und `k`.
+- **Differenzierbare PDE:** `pde_heat_1d`, `pde_heat_2d` (Wärmeleitung); `pde_advection_1d(u0, x, t, v)`, `pde_advection_2d(u0, x, y, t, vx, vy)` (Advektion u_t + v·∇u = 0, Upwind, periodische Ränder); Finite Differenzen + `ode_solve`.
 - **Quaternionen:** Native Unterstützung (`i`, `j`, `k`-Suffixe), `.rotate()`; unäres Minus (`-1.0 + 0i`).
 - **Uncertainty Propagation:** `uncertain(value, std)` bzw. `UncertainQuantity` – Gauß’sche Fehlerfortpflanzung für +, -, *, /, ^; optional mit Einheit.
 
@@ -89,7 +89,7 @@
 - **Symbolik:** Symbolische Ableitung `diff_sym(expr, x)` ist vorhanden (siehe Mathematik). **Symbolische Vereinfachung** (Compiler-Pass): Konstantenfaltung (`2*3` → `6`), `x+0` → `x`, `x*1` → `x`, `0*x` → `0`, `x-0` → `x`, `x^0` → `1`, `x^1` → `x`. Keine allgemeine Gleichungslöser.
 - **Typen/Module:** Kein statisches Typing; kein `import` – alles in einer Datei oder über Compiler-Pipeline.
 - **Performance:** Ziel AOT/MLIR/LLVM; aktuell Transpilation zu Python/PyTorch; native Binaries experimentell (z. B. `.exe`-Erzeugung).
-- **Weitere PDE:** Nur Wärmeleitung 1D/2D; keine Wellen-, Advektions- oder Maxwell-Gleichungen als Standard-API.
+- **Weitere PDE:** Wärmeleitung und Advektion 1D/2D vorhanden; keine Wellen- oder Maxwell-Gleichungen als Standard-API.
 
 ---
 

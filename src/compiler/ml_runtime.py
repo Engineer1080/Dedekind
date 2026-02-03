@@ -936,6 +936,95 @@ def pde_heat_2d(u0, x, y, t, k, bc="dirichlet"):
 
     return ode_solve(rhs, u0.flatten(), t).reshape(t.numel(), nx, ny)
 
+# --- Advection: u_t + v·∇u = 0 (Upwind-Schema, periodische Randbedingungen) ---
+
+def pde_advection_1d(u0, x, t, v, bc="periodic"):
+    """
+    Differenzierbarer 1D-Advektionssolver: u_t + v*u_x = 0.
+    Upwind-Schema (stabil für CFL |v|*dt/dx <= 1).
+    u0: Anfangsbedingung (1D); x: Ortsgitter; t: Zeitgitter; v: Geschwindigkeit (Skalar).
+    bc: 'periodic' = periodische Ränder (default); 'zero_gradient' = du/dx=0 am Rand.
+    Rückgabe: (len(t), len(x)).
+    """
+    u0 = _to_tensor(u0).float().flatten()
+    x = _to_tensor(x).float().flatten().to(u0.device)
+    t = _to_tensor(t).float().flatten().to(u0.device)
+    v_val = float(_to_tensor(v).float().item())
+    n = u0.numel()
+    if x.numel() != n:
+        raise ValueError("pde_advection_1d: len(u0) muss len(x) entsprechen.")
+    if n < 2:
+        raise ValueError("pde_advection_1d: mindestens 2 Gitterpunkte.")
+    dx = float((x[-1] - x[0]).item()) / _builtin_max(n - 1, 1)
+    if abs(dx) < 1e-14:
+        dx = 1.0
+
+    def rhs(t_cur, u):
+        u = u.flatten()
+        if bc == "periodic":
+            u_left = torch.roll(u, 1, dims=0)
+            u_right = torch.roll(u, -1, dims=0)
+        else:
+            u_left = torch.cat([u[:1], u[:-1]])
+            u_right = torch.cat([u[1:], u[-1:]])
+        if v_val > 0:
+            dudt = -v_val * (u - u_left) / dx
+        else:
+            dudt = -v_val * (u_right - u) / dx
+        return dudt
+
+    return ode_solve(rhs, u0, t)
+
+def pde_advection_2d(u0, x, y, t, vx, vy, bc="periodic"):
+    """
+    Differenzierbarer 2D-Advektionssolver: u_t + vx*u_x + vy*u_y = 0.
+    Upwind-Schema (stabil für CFL).
+    u0: Anfangsbedingung 2D (nx, ny); x, y: Ortsgitter; t: Zeitgitter; vx, vy: Geschwindigkeitskomponenten.
+    bc: 'periodic' (default) oder 'zero_gradient'. Rückgabe: (len(t), nx, ny).
+    """
+    u0 = _to_tensor(u0).float()
+    if u0.dim() == 1:
+        raise ValueError("pde_advection_2d: u0 muss 2D-Gitter (nx, ny) sein.")
+    nx, ny = u0.shape[0], u0.shape[1]
+    x = _to_tensor(x).float().flatten().to(u0.device)
+    y = _to_tensor(y).float().flatten().to(u0.device)
+    t = _to_tensor(t).float().flatten().to(u0.device)
+    vx_val = float(_to_tensor(vx).float().item())
+    vy_val = float(_to_tensor(vy).float().item())
+    if x.numel() != nx or y.numel() != ny:
+        raise ValueError("pde_advection_2d: x/y Länge muss zu u0 passen.")
+    dx = float((x[-1] - x[0]).item()) / _builtin_max(nx - 1, 1)
+    dy = float((y[-1] - y[0]).item()) / _builtin_max(ny - 1, 1)
+    if abs(dx) < 1e-14:
+        dx = 1.0
+    if abs(dy) < 1e-14:
+        dy = 1.0
+
+    def rhs(t_cur, u_flat):
+        u = u_flat.reshape(nx, ny)
+        if bc == "periodic":
+            u_left = torch.roll(u, 1, dims=0)
+            u_right = torch.roll(u, -1, dims=0)
+            u_bottom = torch.roll(u, 1, dims=1)
+            u_top = torch.roll(u, -1, dims=1)
+        else:
+            u_left = torch.cat([u[:1, :], u[:-1, :]], dim=0)
+            u_right = torch.cat([u[1:, :], u[-1:, :]], dim=0)
+            u_bottom = torch.cat([u[:, :1], u[:, :-1]], dim=1)
+            u_top = torch.cat([u[:, 1:], u[:, -1:]], dim=1)
+        dudt = torch.zeros_like(u)
+        if vx_val > 0:
+            dudt = dudt - vx_val * (u - u_left) / dx
+        else:
+            dudt = dudt - vx_val * (u_right - u) / dx
+        if vy_val > 0:
+            dudt = dudt - vy_val * (u - u_bottom) / dy
+        else:
+            dudt = dudt - vy_val * (u_top - u) / dy
+        return dudt.flatten()
+
+    return ode_solve(rhs, u0.flatten(), t).reshape(t.numel(), nx, ny)
+
 # --- Sparse PDE: 2D Laplacian und Diffusion ---
 
 def sparse_laplacian_2d(N, dx=None):
