@@ -1,21 +1,21 @@
 # Dedekind — Ausgereiftheit für Mathematik, Physik, Informatik, Biologie und Chemie
 
 **Dedekind Language**  
-Draft: January 2026 · Stand: v0.9.8 (Prototyp)
+Draft: January 2026 · Stand: v1.2.6 (Prototyp)
 
 ---
 
 ## Übersicht
 
-Dedekind ist aktuell ein **Prototyp (v1.0.6)**. Die folgende Einschätzung bezieht sich auf den **aktuellen Implementierungsstand** und nennt Lücken sowie Roadmap-Punkte.
+Dedekind ist aktuell ein **Prototyp (v1.2.6)**. Die folgende Einschätzung bezieht sich auf den **aktuellen Implementierungsstand** und nennt Lücken sowie Roadmap-Punkte.
 
 | Domäne       | Ausgereiftheit (kurz) | Nutzbar für …                          | Wichtige Lücken / Roadmap          |
 |-------------|------------------------|----------------------------------------|------------------------------------|
 | **Mathematik** | Gut nutzbar          | Analysis, LA, Statistik, Integration  | Symbolik, Differentiale, mehr LA  |
 | **Physik**    | Gut nutzbar          | Mechanik, E&M, Thermodynamik, ODE/PDE | Weitere PDE, mehr Konstanten       |
 | **Informatik**| Grundlegend          | ML-Pipeline, Algos, Kontrollfluss      | Typen, Module, Tooling, Performance|
-| **Biologie** | Grundlegend          | Wachstum, Fitting, Unsicherheit       | Convenience-Funktionen, Ökosystem  |
-| **Chemie**    | Grundlegend          | Kinetik, Konzentration, Einheiten      | Convenience, weitere Einheiten      |
+| **Biologie** | Grundlegend          | Wachstum, Fitting, Unsicherheit, `logistic` | Lotka-Volterra, weitere Modelle     |
+| **Chemie**    | Grundlegend          | Kinetik, Konzentration, Einheiten, Convenience | Gleichgewichte, weitere Einheiten   |
 
 ---
 
@@ -26,7 +26,7 @@ Dedekind ist aktuell ein **Prototyp (v1.0.6)**. Die folgende Einschätzung bezie
 - **Konstanten**: `pi`, `e` als `Quantity` (dimensionslos).
 - **Elementare Funktionen**: `sin`, `cos`, `tan`, `exp`, `log`, `log10`, `sqrt`, `abs`; Arkus- und Hyperbelfunktionen (`asin`, `acos`, `atan`, `atan2`, `sinh`, `cosh`, `tanh`); elementweise, differenzierbar.
 - **Reduktionen & Runden**: `min`, `max`, `argmin`, `argmax` (optional `dim`); `round`, `floor`, `ceil`.
-- **Lineare Algebra**: `norm(x)`, `det(A)`, `trace(A)`; Tensoren, Matrizen, `.shape`; FFT (`fft`, `ifft`).
+- **Lineare Algebra**: `norm(x)`, `det(A)`, `trace(A)`; `eigh`, `eig`, `svd`, `qr`, `lstsq`, `cond`, `rank`, `pinv`; Tensoren, Matrizen, `.shape`; FFT (`fft`, `ifft`).
 - **Numerische Integration**: `integrate(f, a, b, n)` (Trapezregel); differenzierbar, wenn `f` Tensor akzeptiert.
 - **Statistik & Stochastik**: Verteilungen `Normal`, `Uniform`, `Bernoulli`, `Exponential`, `Gamma`, `Beta`, `Poisson`; `sample`, `log_prob`; MCMC (`metropolis`, `hmc`); Fitting `fit(..., method="gd"|"mcmc"|"hmc")`.
 - **Tensor-Notation**: Ricci-ähnliche Indexnotation (`A^ij * B_jk`) für Einstein-Summen.
@@ -34,10 +34,10 @@ Dedekind ist aktuell ein **Prototyp (v1.0.6)**. Die folgende Einschätzung bezie
 
 ### Lücken / Roadmap
 
-- **Symbolische Mathematik**: Kein `diff(expr, x)` als Formel; nur numerisches `grad()`. Geplant in Features-Roadmap Phase 5 (Symbolic Simplification).
-- **Weitere LA**: Kein eingebautes Eigenwert/Eigenvektor, SVD, QR; über Tensoren/Backend möglich, aber keine Dedekind-API.
-- **Differentialgeometrie**: Ricci-Notation vorhanden; keine kovariante Ableitung oder Riemann-Tensor als Bibliothek.
-- **Zahlentheorie / Diskrete Mathematik**: Keine speziellen Primitiven.
+- **Symbolische Mathematik**: `diff_sym(expr, var)` liefert Ableitung als String; keine allgemeine symbolische Vereinfachung. Geplant: Phase 5 (Symbolic Simplification).
+- **LA**: Umfangreiche API vorhanden; spezielle Domänen (z. B. strukturierte Matrizen) optional.
+- **Differentialgeometrie**: Ricci-Notation, `christoffel_symbols`, `riemann_tensor`, `covariant_derivative` (numerisch) vorhanden.
+- **Zahlentheorie**: `gcd`, `is_prime`, `mod`, `mod_inv`, `mod_pow`; `binom(n, k)`; Fakultät `n!`.
 
 **Fazit Mathematik**: Für **numerische Analysis, lineare Algebra, Statistik, Integration und Stochastik** gut nutzbar; für **symbolische und höhere mathematische Themen** noch Lücken. **Ausgereiftheit: gut nutzbar.**
 
@@ -47,7 +47,7 @@ Dedekind ist aktuell ein **Prototyp (v1.0.6)**. Die folgende Einschätzung bezie
 
 ### Was vorhanden ist
 
-- **Einheiten**: `Quantity`, Literale mit Einheiten (`10[m]`, `5[m/s]`, `1.0[kg]`); Addition/Subtraktion nur bei gleicher Einheit; Multiplikation/Division kombiniert Einheiten; `^` für Potenzen; Anzeige vereinfacht (J, N, M).
+- **Einheiten**: `Quantity`, Literale mit Einheiten (`10[m]`, `5[m/s]`, `1.0[kg]`); **automatische Umrechnung** bei Addition/Subtraktion für gleiche Dimension (Länge, Masse, Zeit, Druck, Winkel rad/deg, …); Multiplikation/Division kombiniert Einheiten; `^` für Potenzen; Anzeige vereinfacht (J, N, Pa, M).
 - **Compile-Zeit-Check**: `1[m] + 1[s]` → Compiler-Fehler mit Zeile; `units_checker.py`, CLI `--no-units-check`.
 - **Konstanten (CODATA)**: `c`, `G`, `h`, `hbar`, `k_B`, `k_e`, `e_charge`, `epsilon_0`, `mu_0`, `m_e`, `m_p`, `N_A`, `R_gas`, `alpha`, `sigma_SB`, `F_faraday` — alle als `Quantity` mit SI-Einheiten.
 - **Differenzierbare ODE**: `ode_solve(fun, y0, t)` (RK4/Euler); `grad()` durch `y0` und Parameter; `linspace(start, stop, steps)`.
@@ -58,7 +58,7 @@ Dedekind ist aktuell ein **Prototyp (v1.0.6)**. Die folgende Einschätzung bezie
 
 ### Lücken / Roadmap
 
-- **Weitere PDE**: Wärmeleitung, Advektion, Wellengleichung, Burgers, Reaktions-Diffusion, Advektions-Diffusion und Maxwell (FDTD 1D/2D) als Standard-API vorhanden.
+- **PDE**: Wärmeleitung, Advektion, Wellengleichung, Burgers, Reaktions-Diffusion, Advektions-Diffusion und Maxwell (FDTD 1D/2D) als Standard-API vorhanden. Weitere PDE-Typen (z. B. Navier-Stokes) fehlen.
 - **Lagrange/Hamilton**: Keine eingebaute Formulierung; mit `ode_solve` und eigener RHS modellierbar.
 - **Feldtheorie**: Keine speziellen Primitiven.
 
@@ -80,7 +80,7 @@ Dedekind ist aktuell ein **Prototyp (v1.0.6)**. Die folgende Einschätzung bezie
 
 - **Typsystem**: Kein statisches Typing; nur Laufzeit- und Einheiten-Check.
 - **Module/Imports**: Kein `import`; alles in einer Datei oder über Compiler-Pipeline.
-- **Standardbibliothek**: **Datei-I/O** (`read_file`, `write_file`, `file_exists`), **Netzwerk** (`http_get`, `http_post`), **JSON** (`json_parse`, `json_stringify`); Zugriff auf geparste Objekte z. B. `obj["key"]`. Beispiel: `file_io_json.ddk`.
+- **Standardbibliothek (vorhanden)**: Datei-I/O (`read_file`, `write_file`, `file_exists`), Netzwerk (`http_get`, `http_post`), JSON (`json_parse`, `json_stringify`); Zugriff `obj["key"]`. Beispiel: `file_io_json.ddk`.
 - **Tooling**: Dedekind Studio (IDE) vorhanden; Debugger, Profiler, Test-Runner nicht als Teil der Sprache.
 - **Performance**: AOT/MLIR/LLVM als Ziel; aktuell Transpilation zu Python/PyTorch; native Binaries experimentell.
 
@@ -92,19 +92,18 @@ Dedekind ist aktuell ein **Prototyp (v1.0.6)**. Die folgende Einschätzung bezie
 
 ### Was vorhanden ist
 
-- **Dynamische Systeme**: `ode_solve` für beliebige ODEs (z. B. logistisches Wachstum \(dN/dt = r N (1 - N/K)\)).
+- **Dynamische Systeme**: `ode_solve` für beliebige ODEs; Convenience: `logistic(t, r, K, N0)`, `logistic_growth_dt(N, r, K)` für logistisches Wachstum.
 - **Fitting**: `fit(loss_fn, params_init, data, method="gd"|"mcmc"|"hmc")` — Parameter aus Daten (z. B. Wachstumsrate, Kapazität).
 - **Statistik & Unsicherheit**: Verteilungen, `uncertain(value, std)`, MCMC/HMC für Bayesian Inference.
 - **Beispiel**: `biology_growth.ddk` — logistisches Wachstum mit `ode_solve`.
 
 ### Lücken / Roadmap (Chemistry_Biology_Roadmap)
 
-- **Convenience-Funktionen**: `logistic_growth(N, r, K)` bzw. analytische Lösung `logistic(t, r, K, N0)` noch nicht als eingebaute API; mit `ode_solve` und eigener RHS umsetzbar.
 - **Weitere Modelle**: Keine vordefinierten Ökologie-/Populationsmodelle (z. B. Lotka-Volterra) als Standard-API.
 - **Einheiten**: Physikalische Einheiten (inkl. chemische) nutzbar; keine biologischen Konventionen (z. B. Zellzahl, Verdünnungsstufen) als eigene Einheiten.
-- **Dokumentation**: Abschnitt „Dedekind für Chemie & Biologie“ im README; Roadmap mit Phase 2 (Convenience).
+- **Dokumentation**: Abschnitt „Dedekind für Chemie & Biologie“ im README; Chemistry_Biology_Roadmap.
 
-**Fazit Biologie**: Für **Wachstumsmodelle, Fitting und Unsicherheit** grundlegend nutzbar; Convenience und domänenspezifische Modelle sind geplant. **Ausgereiftheit: grundlegend.**
+**Fazit Biologie**: Für **Wachstumsmodelle, Fitting und Unsicherheit** grundlegend nutzbar; `logistic` vorhanden; weitere Modelle (Lotka-Volterra) geplant. **Ausgereiftheit: grundlegend.**
 
 ---
 
@@ -115,19 +114,17 @@ Dedekind ist aktuell ein **Prototyp (v1.0.6)**. Die folgende Einschätzung bezie
 - **Einheiten**: mol, L, M (= mol/L), ppm; `0.1[M]`, `1[mol]`, `50[ppm]`; M und mol/L gelten als gleiche Einheit (Runtime und Compile-Check).
 - **Konstanten**: `N_A`, `R_gas`, `F_faraday` als `Quantity` mit SI-Einheiten (`1/mol`, `J/(K*mol)`, `C/mol`).
 - **Kinetik**: Reaktion 1. Ordnung \(c(t) = c_0 e^{-kt}\) mit `ode_solve` oder analytisch mit `exp`; Einheiten [M], [1/s].
-- **Dosis-Wirkung / Michaelis-Menten**: \(v = V_{\max}[S]/(K_M + [S])\) über `fit` an Daten (EC50, \(K_M\), \(V_{\max}\)).
+- **Dosis-Wirkung / Michaelis-Menten**: `michaelis_menten(S, Vmax, Km)`; \(v = V_{\max}[S]/(K_M + [S])\) über `fit` an Daten (EC50, \(K_M\), \(V_{\max}\)).
 - **Uncertainty**: `uncertain(value, std)` mit Einheit für Fehlerfortpflanzung.
-- **Beispiele**: `chemistry_kinetics.ddk`, `dose_response.ddk`; `universal_constants.ddk` (inkl. chemischer Konstanten).
+- **Convenience**: `michaelis_menten`, `arrhenius`, `linear_regression`; `atomic_mass`, `atomic_number`; `balance_equation` (Stöchiometrie).
+- **Beispiele**: `chemistry_kinetics.ddk`, `dose_response.ddk`, `chemistry_elements.ddk`; `universal_constants.ddk` (inkl. chemischer Konstanten).
 
 ### Lücken / Roadmap (Chemistry_Biology_Roadmap)
 
-- **Convenience-Funktionen**: `michaelis_menten(S, Vmax, Km)`, `arrhenius(T, A, Ea)` noch nicht als eingebaute API; Phase 2 geplant.
-- **Weitere Einheiten**: bar, atm, pH-Hinweis (pH = -log10([H+])), % w/v optional — Phase 3.
 - **Gleichgewichte**: Keine vordefinierten Gleichgewichts- oder Titrationsmodelle als Standard-API.
-- **Elemente**: `atomic_mass("C")` (g/mol), `atomic_number("C")`; ca. 50 Elemente (IUPAC-nah); Molare Masse z. B. 2*atomic_mass("H")+atomic_mass("O"). Beispiel: `chemistry_elements.ddk`.
-- **Stöchiometrie**: Keine dedizierte Reaktionsgleichungs- oder Reaktionsnetzwerk-API (Gleichungen ausbalancieren o. Ä.).
+- **Weitere Einheiten**: bar, atm, g, pH-Funktionen, % w/v vorhanden; weitere domänenspezifische Einheiten optional.
 
-**Fazit Chemie**: Für **Kinetik 1. Ordnung, Konzentrationen, Einheiten, Dosis-Wirkung und Fitting** grundlegend nutzbar; Convenience und weitere Einheiten sind in der Roadmap. **Ausgereiftheit: grundlegend.**
+**Fazit Chemie**: Für **Kinetik, Konzentrationen, Einheiten, Dosis-Wirkung, Fitting, Stöchiometrie und Elemente** grundlegend nutzbar; Gleichgewichte fehlen. **Ausgereiftheit: grundlegend.**
 
 ---
 
@@ -138,7 +135,7 @@ Dedekind ist aktuell ein **Prototyp (v1.0.6)**. Die folgende Einschätzung bezie
 | **Mathematik** | Gut       | Analysis, LA, Statistik, Integration, FFT   | Symbolik, ggf. mehr LA-Primitive          |
 | **Physik**    | Gut       | Einheiten, ODE/PDE, Konstanten, Uncertainty | Weitere PDE, ggf. Lagrange/Hamilton       |
 | **Informatik**| Grundlegend| ML, Tensoren, Kontrollfluss, Algos           | Typen, Module, Tooling, AOT-Reife          |
-| **Biologie**  | Grundlegend| ODE, Fitting, Unsicherheit                  | `logistic_growth`, weitere Modelle        |
-| **Chemie**    | Grundlegend| Einheiten mol/L/M/ppm, Kinetik, Fitting      | `michaelis_menten`, `arrhenius`, bar/atm  |
+| **Biologie**  | Grundlegend| ODE, Fitting, Unsicherheit, `logistic`      | Lotka-Volterra, weitere Modelle          |
+| **Chemie**    | Grundlegend| Einheiten mol/L/M/ppm, Kinetik, Fitting, Convenience | Gleichgewichte, weitere Einheiten        |
 
-**Gesamtbewertung**: Dedekind ist für **Mathematik und Physik** bereits **gut nutzbar** (numerische und einheitenbewusste Anwendungen). Für **Informatik** ist die Basis gelegt, aber Typen, Module und Tooling fehlen für „ausgereift“. Für **Biologie und Chemie** sind die **Grundbausteine** (Einheiten, ODE, Fitting, Unsicherheit) da; **Convenience-Funktionen und weitere Einheiten** würden die Ausgereiftheit in diesen Domänen deutlich erhöhen (Chemistry_Biology_Roadmap Phase 2/3).
+**Gesamtbewertung**: Dedekind ist für **Mathematik und Physik** bereits **gut nutzbar** (numerische und einheitenbewusste Anwendungen). Für **Informatik** ist die Basis gelegt, aber Typen, Module und Tooling fehlen für „ausgereift“. Für **Biologie und Chemie** sind die **Grundbausteine** (Einheiten, ODE, Fitting, Unsicherheit) sowie **Convenience-Funktionen** (`logistic`, `michaelis_menten`, `arrhenius`, `balance_equation`, Elemente) da; **Gleichgewichte und weitere domänenspezifische Modelle** würden die Ausgereiftheit weiter erhöhen.

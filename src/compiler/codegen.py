@@ -4,7 +4,7 @@ from .ast_nodes import *
 _TORCH_FUNC_NAMES = frozenset({
     'gpu', 'cpu', 'fast', 'with_grad', 'sparse', 'grad', 'einsum', 'matmul',
     'randn', 'relu', 'softmax', 'conv2d', 'max_pool2d', 'fft', 'ifft',
-    'linspace', 'stack', 'to_tensor', 'to_gpu', 'to_cpu',
+    'linspace', 'arange', 'arithmetic', 'geometric', 'sequence', 'stack', 'to_tensor', 'to_gpu', 'to_cpu',
 })
 _TORCH_MEMBER_NAMES = frozenset({'gpu', 'cpu', 'single'})
 
@@ -13,7 +13,7 @@ _TORCH_MEMBER_NAMES = frozenset({'gpu', 'cpu', 'single'})
 _RUNTIME_BUILTIN_NAMES = frozenset({
     'Quantity', 'Quaternion', 'Dense', 'Sequential', 'compile_model',
     'random_vector', 'random_matrix', 'transpose', 'inverse', 'dot_product', 'cross',
-    'relu', 'softmax', 'convolution', 'pooling', 'fft', 'ifft', 'fftfreq', 'diff', 'cumsum', 'clip', 'shuffle', 'linspace',
+    'relu', 'softmax', 'convolution', 'pooling', 'fft', 'ifft', 'fftfreq', 'diff', 'cumsum', 'clip', 'shuffle', 'linspace', 'arange', 'arithmetic', 'geometric', 'sequence',
     'ode_solve', 'pde_heat_1d', 'pde_heat_2d', 'pde_advection_1d', 'pde_advection_2d', 'pde_wave_1d', 'pde_wave_2d', 'pde_burgers_1d', 'pde_burgers_2d',
     'pde_reaction_diffusion_1d', 'pde_reaction_diffusion_2d',
     'pde_advection_diffusion_1d', 'pde_advection_diffusion_2d',
@@ -22,7 +22,7 @@ _RUNTIME_BUILTIN_NAMES = frozenset({
     'Normal', 'Uniform', 'Bernoulli', 'Exponential', 'Gamma', 'Beta', 'Poisson',
     'sample', 'log_prob', 'metropolis', 'hmc',
     'sin', 'cos', 'tan', 'exp', 'log', 'log10', 'sqrt', 'abs',
-    'asin', 'acos', 'atan', 'atan2', 'sinh', 'cosh', 'tanh', 'erf', 'erfc', 'gamma', 'lgamma',
+    'asin', 'acos', 'atan', 'atan2', 'deg_to_rad', 'rad_to_deg', 'sinh', 'cosh', 'tanh', 'erf', 'erfc', 'gamma', 'lgamma',
     'bessel_j0', 'bessel_j1', 'bessel_j', 'legendre', 'hypergeom',
     'min', 'max', 'argmin', 'argmax', 'round', 'floor', 'ceil',
     'mean', 'std', 'var', 'median', 'quantile', 'percentile', 'cov', 'corrcoef', 'skew', 'kurtosis', 'histogram',
@@ -38,7 +38,8 @@ _RUNTIME_BUILTIN_NAMES = frozenset({
     'discount_factor', 'cobb_douglas', 'solow_rhs',
     'darcy_velocity', 'johnson_mehl_avrami', 'avrami_rate',
     'atomic_mass', 'atomic_number',
-    'gcd', 'is_prime', 'mod', 'mod_inv', 'mod_pow', 'factorial',
+    'gcd', 'is_prime', 'mod', 'mod_inv', 'mod_pow', 'factorial', 'binom',
+    'ttest_one_sample', 'ttest_two_sample',
     'concentration_to_pH', 'pH_to_concentration',
     'christoffel_symbols', 'riemann_tensor', 'covariant_derivative',
     'balance_equation',

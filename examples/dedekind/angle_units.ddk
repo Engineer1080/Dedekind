@@ -1,0 +1,34 @@
+// Winkel als native Einheiten: rad, deg mit automatischer Umrechnung
+// sin/cos/tan erwarten Radiant; deg_to_rad / rad_to_deg für Konvertierung
+
+print("=== Winkel-Einheiten rad / deg ===")
+
+// Addition/Subtraktion mit automatischer Umrechnung
+a = 90[deg]
+b = (pi / 2) * 1[rad]
+sum = a + b
+print("90[deg] + pi/2[rad] =", sum)
+
+diff = 180[deg] - 1[rad]
+print("180[deg] - 1[rad] =", diff)
+
+// Trigonometrie: sin/cos erwarten Radiant
+// Option 1: Skalar in Grad → deg_to_rad(90) = pi/2
+print("sin(deg_to_rad(90)) =", sin(deg_to_rad(90)))
+
+// Option 2: Quantity in Grad → deg_to_rad(90[deg]) liefert Wert in rad
+theta_deg = 45[deg]
+theta_rad_val = deg_to_rad(theta_deg)
+print("sin(45°) = sin(deg_to_rad(45[deg])) =", sin(theta_rad_val))
+
+// rad_to_deg für Rückumrechnung
+half_pi = pi / 2
+print("rad_to_deg(pi/2) =", rad_to_deg(half_pi))
+print("rad_to_deg(pi) =", rad_to_deg(pi))
+
+// atan2 liefert Radiant; Umrechnung in Grad
+x = 1.0
+y = 1.0
+angle_rad = atan2(y, x)
+print("atan2(1,1) [rad] =", angle_rad)
+print("atan2(1,1) [deg] =", rad_to_deg(angle_rad))

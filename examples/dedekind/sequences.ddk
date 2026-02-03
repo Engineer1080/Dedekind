@@ -1,0 +1,38 @@
+// Mathematische Folgen: arange, arithmetic, geometric, sequence
+fn main() {
+    print("--- Dedekind: Mathematische Folgen ---")
+
+    // arange: 0, 1, 2, ..., n-1
+    print("arange(10):")
+    print(arange(10))
+
+    // arange(start, stop)
+    print("arange(2, 8):")
+    print(arange(2, 8))
+
+    // arange(start, stop, step)
+    print("arange(0, 10, 2):")
+    print(arange(0, 10, 2))
+
+    // Arithmetische Folge: a_n = a0 + n*d
+    print("arithmetic(1, 3, 5) = [1, 4, 7, 10, 13]:")
+    print(arithmetic(1, 3, 5))
+
+    // Geometrische Folge: a_n = a0 * r^n
+    print("geometric(1, 2, 6) = [1, 2, 4, 8, 16, 32]:")
+    print(geometric(1, 2, 6))
+
+    // Allgemeine Folge: sequence(f, n) = [f(0), f(1), ..., f(n-1)]
+    fn quad(k) { return k * k }
+    print("sequence(quad, 6) = Quadratzahlen [0,1,4,9,16,25]:")
+    print(sequence(quad, 6))
+
+    // for-Schleife mit arange
+    print("for i in arange(5):")
+    for i in arange(5) {
+        print(i)
+    }
+
+    print("Mathematische Folgen aktiv.")
+}
+main()

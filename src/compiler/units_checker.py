@@ -137,7 +137,7 @@ def _check_expr(node: Node, filepath: Optional[str]) -> None:
                 line = getattr(node, "line", None)
                 raise CompileError(
                     f"Einheiten passen nicht für {node.op}: [{left_u}] vs [{right_u}]. "
-                    "Gleiche Einheit oder kompatible Dimension (Länge/Masse/Zeit/Druck) erforderlich.",
+                    "Gleiche Einheit oder kompatible Dimension (Länge/Masse/Zeit/Druck/Winkel rad/deg) erforderlich.",
                     line=line,
                     filepath=filepath,
                 )
