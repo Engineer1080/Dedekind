@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-1.1.9-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-1.2.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -28,6 +28,12 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
+
+### What's New in v1.2.0
+- **Sparse CFD:** `sparse_laplacian_2d(N)`, `sparse_diffusion_step(T, L, dt, alpha)`, `sparse_diffusion_simulate(T0, n_steps, dt, alpha)` für echte 2D-Wärmediffusion ∂T/∂t = α∇²T.
+- **Beispiel cfd_sparse_sim.ddk:** Echte Simulation (50×50 Gitter, 100 Zeitschritte, Konturplots) statt Platzhalter.
+- **Compiler-Fix:** `tensor * 0` wird nur noch zu `0` vereinfacht, wenn beide Operanden Literale sind (Fix für `random_matrix(N,N)*0.0`).
+- **Postfix-Fakultät:** Operator `n!` (z. B. `5!`, `n!`); AST PostfixFactorial, Lexer, Parser, Runtime `factorial(n)`; Beispiel `factorial_test.ddk`.
 
 ### What's New in v1.1.9
 - **Patch:** `# type: ignore[reportMissingImports]` für numpy-Import in `balance_equation` (basedpyright).

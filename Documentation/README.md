@@ -6,7 +6,7 @@ This folder contains the **source** and **generated** documentation for the Dede
 
 | File | Description |
 |------|-------------|
-| **Dedekind_Language_Specification.md** | Language Specification (Markdown source, v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9/v0.9.6; Chemie/Biologie v0.9.7; I/O/JSON v0.9.8; Stand v1.1.9) |
+| **Dedekind_Language_Specification.md** | Language Specification (Markdown source, v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9/v0.9.6; Chemie/Biologie v0.9.7; I/O/JSON v0.9.8; Stand v1.2.0) |
 | **Dedekind_Research_and_Architecture.md** | Research foundation & architecture (Markdown source; §10 Sprachfeatures v0.6) |
 | **Symbolic_Simplification_Roadmap.md** | Implementierungs-Roadmap für Symbolic Simplification (Phasen, Optionen, Integration) |
 | **Features_Implementation_Roadmap.md** | Implementierungs-Roadmap für naturwissenschaftliche Features (Verteilungen, Integration, Einheiten Compile-Zeit, NUTS/VI, Fitting, LaTeX, symbolische Ableitungen) |
@@ -39,6 +39,10 @@ pandoc Dedekind_Research_and_Architecture.md -o Dedekind_Research_and_Architectu
 - **Online**: Paste the Markdown into a service that converts Markdown to PDF (e.g. markdown-to-pdf converters).
 - **Typora / other editors**: Open the `.md` file and export to PDF from the application.
 
+
+## What changed in v1.2.0 (documented here)
+
+- **Version 1.2.0**: **Sparse CFD:** `sparse_laplacian_2d(N)`, `sparse_diffusion_step(T, L, dt, alpha)`, `sparse_diffusion_simulate(T0, n_steps, dt, alpha)` für echte 2D-Wärmediffusion ∂T/∂t = α∇²T. Beispiel `cfd_sparse_sim.ddk` mit echter Simulation (50×50 Gitter, 100 Zeitschritte, Konturplots). **Compiler:** Vereinfachung `tensor * 0` → `0` nur wenn beide Operanden Literale (Fix für `random_matrix(N,N)*0.0`). **Postfix-Fakultät:** Operator `n!` (z. B. `5!`, `n!`); AST PostfixFactorial, Lexer, Parser, Runtime `factorial(n)`; Beispiel `factorial_test.ddk`.
 
 ## What changed in v1.1.9 (documented here)
 
