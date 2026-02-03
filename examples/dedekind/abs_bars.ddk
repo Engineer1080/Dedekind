@@ -1,0 +1,24 @@
+// Betragsstriche: |x| = abs(x) - leichte mathematische Syntax
+
+fn main() {
+    print("--- Dedekind: Betragsstriche |x| = abs(x) ---")
+    
+    x = |-1|
+    print("x = |-1| =", x)
+    
+    y = |3 - 5|
+    print("y = |3 - 5| =", y)
+    
+    z = |-2.5|
+    print("z = |-2.5| =", z)
+    
+    a = 7
+    b = |a - 10|
+    print("a = 7, b = |a - 10| =", b)
+    
+    c = ||-3||
+    print("c = ||-3|| =", c)
+    
+    print("Betragsstriche aktiv.")
+}
+main()

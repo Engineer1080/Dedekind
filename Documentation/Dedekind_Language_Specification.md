@@ -2,7 +2,7 @@
 
 **Language Specification v0.2**  
 Mario Michael Heinrich · github.com/Engineer1080  
-Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit), v0.9.6 (Math-Funktionen), v0.9.7 (Chemie/Biologie: mol, L, M, ppm), v0.9.8 (Convenience, Elemente, Datei-I/O, Netzwerk, JSON), v1.0.0 (Release), v1.0.1–v1.0.6 (Patch), v1.2.6 (Winkel rad/deg, deg_to_rad, rad_to_deg), v1.2.7 (Dirichlet-Verteilung, dirichlet_function), v1.2.8 (Dedekind-Schnitte, Dedekind-Ringe, Riemann-Zeta, Riemann-Summen)
+Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit), v0.9.6 (Math-Funktionen), v0.9.7 (Chemie/Biologie: mol, L, M, ppm), v0.9.8 (Convenience, Elemente, Datei-I/O, Netzwerk, JSON), v1.0.0 (Release), v1.0.1–v1.0.6 (Patch), v1.2.6 (Winkel rad/deg, deg_to_rad, rad_to_deg), v1.2.7 (Dirichlet-Verteilung, dirichlet_function), v1.2.8 (Dedekind-Schnitte, Dedekind-Ringe, Riemann-Zeta, Riemann-Summen), v1.2.9 (Betragsstriche, Rotationskörper, logische Operatoren)
 
 ---
 
@@ -52,7 +52,7 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 
 ## 4. Syntax Overview
 
-Variables, functions (`fn name(args) { ... }`), control flow (`if`/`else`, `for`, `while`), and expression modifiers. See implementation and examples in `examples/dedekind/`.
+Variables, functions (`fn name(args) { ... }`), control flow (`if`/`else`, `for`, `while`), and expression modifiers. **Absolute value bars:** `|expr|` is syntactic sugar for `abs(expr)`; e.g. `x = |-1|` yields 1. See implementation and examples in `examples/dedekind/`.
 
 ## 5. Execution Modifiers
 
@@ -247,6 +247,12 @@ Dedekind provides **numerical integration** and **math functions** for scientifi
 
 - **`integrate(f, a, b, n=100)`**: Numerically integrates \(f(x)\) from `a` to `b` using the trapezoidal rule with `n` points. `f` must accept a 1D tensor (the grid) and return a tensor of the same length; the integral is differentiable with respect to parameters in `f` when using autograd.
 - **`riemann_sum(f, a, b, n=100, method="left"|"right"|"midpoint")`**: Riemann sum approximation of \(\int_a^b f(x)\,dx\). `method`: left endpoint, right endpoint, or midpoint (default). Differentiable when `f` is.
+- **`volume_revolution_x(f, a, b, n=100)`**: Volume of revolution: rotate \(y=f(x)\) about the x-axis. \(V = \pi \int_a^b f(x)^2\,dx\) (disk method).
+- **`volume_revolution_y(f, a, b, n=100)`**: Volume of revolution: rotate \(y=f(x)\) about the y-axis. \(V = 2\pi \int_a^b x\,f(x)\,dx\) (shell method). Valid for \(f(x)\ge 0\), \(a,b>0\).
+- **`volume_revolution_vertical(f, a, b, x0, n=100)`**: Rotate about vertical axis \(x=x_0\). \(V = 2\pi \int_a^b |x-x_0|\,f(x)\,dx\).
+- **`volume_revolution_horizontal(f, a, b, y0, n=100)`**: Rotate about horizontal axis \(y=y_0\). \(V = \pi \int_a^b (f(x)-y_0)^2\,dx\). \(f\) should lie entirely on one side of \(y_0\).
+- **`pappus_volume_vertical(f, a, b, x0, n=100)`**: Pappus theorem: \(V = 2\pi\,R\,A\) with \(R=|\bar{x}-x_0|\), \(\bar{x}\) centroid.
+- **`pappus_volume_horizontal(f, a, b, y0, n=100)`**: Pappus theorem: \(V = 2\pi\,R\,A\) with \(R=|\bar{y}-y_0|\), \(\bar{y}\) centroid.
 
 **Trigonometrie:** **`sin(x)`**, **`cos(x)`**, **`tan(x)`**.
 

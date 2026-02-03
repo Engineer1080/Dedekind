@@ -134,10 +134,8 @@ class Parser:
         start_line = self.peek().line
         self.consume('FOR')
         var_name = self.consume('ID').value
-        if self.peek().type == 'ID' and self.peek().value == 'in':
-             self.consume()
-        elif self.tokens[self.pos].value == 'in':
-             self.consume()
+        if self.peek() and self.peek().type == 'IN':
+            self.consume('IN')
         collection = self.parse_expression()
         self.consume('LBRACE')
         body = []
@@ -193,9 +191,46 @@ class Parser:
         return node
 
     def parse_expression(self):
-        # Lowest precedence: Comparisons
+        # Lowest precedence: logische Operatoren (or, xor, and, nand, nor, xnor, not)
+        return self.parse_logical_or()
+
+    def parse_logical_or(self):
+        left = self.parse_logical_xor()
+        while self.peek() and self.peek().type == 'OR':
+            op_tok = self.consume()
+            right = self.parse_logical_xor()
+            left = BinaryOp(left, 'or', right)
+            left.line = op_tok.line
+        return left
+
+    def parse_logical_xor(self):
+        left = self.parse_logical_and()
+        while self.peek() and self.peek().type == 'XOR':
+            op_tok = self.consume()
+            right = self.parse_logical_and()
+            left = BinaryOp(left, 'xor', right)
+            left.line = op_tok.line
+        return left
+
+    def parse_logical_and(self):
+        left = self.parse_logical_not()
+        while self.peek() and self.peek().type in ['AND', 'NAND', 'NOR', 'XNOR']:
+            op_tok = self.consume()
+            op_val = op_tok.value  # 'and', 'nand', 'nor', 'xnor'
+            right = self.parse_logical_not()
+            left = BinaryOp(left, op_val, right)
+            left.line = op_tok.line
+        return left
+
+    def parse_logical_not(self):
+        if self.peek() and self.peek().type == 'NOT':
+            op_tok = self.consume()
+            operand = self.parse_logical_not()
+            node = UnaryOp('not', operand)
+            node.line = op_tok.line
+            return node
         return self.parse_comparison()
-        
+
     def parse_comparison(self):
         left = self.parse_term_expr()
         while self.peek() and self.peek().type in ['EQ', 'NEQ', 'LT', 'GT', 'LE', 'GE']:
@@ -299,6 +334,12 @@ class Parser:
             self.consume('RPAREN')
             if hasattr(node, 'line') and node.line is None:
                 node.line = line_at
+        elif token.type == 'PIPE':
+            self.consume('PIPE')
+            inner = self.parse_expression()
+            self.consume('PIPE')
+            node = Call(Identifier('abs'), [inner], [], [])
+            node.line = line_at
         elif token.type == 'ID':
             name_token = self.consume()
             value = name_token.value

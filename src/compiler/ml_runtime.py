@@ -3330,6 +3330,105 @@ def zeta(s):
             out.flatten()[i] = float(sc.zeta(v, 1).real)
     return out
 
+def volume_revolution_x(f, a, b, n=100):
+    """
+    Rotationskörper: Volumen bei Rotation von y=f(x) um die x-Achse.
+    V = pi * int_a^b f(x)^2 dx (Kreisscheiben-Methode).
+    f: Callable mit Tensor-Argument; a, b: Integrationsgrenzen; n: Stützstellen.
+    Rückgabe: Skalar-Tensor; differenzierbar.
+    """
+    def g(x):
+        y = f(x)
+        y = _to_tensor(y).float().flatten()
+        return y * y
+    return (pi * integrate(g, a, b, n)).squeeze()
+
+def volume_revolution_y(f, a, b, n=100):
+    """
+    Rotationskörper: Volumen bei Rotation von y=f(x) um die y-Achse (Mantel-Methode).
+    V = 2*pi * int_a^b x * f(x) dx. Gültig für f(x)>=0, a,b>0 (oder angepasste Grenzen).
+    f: Callable mit Tensor-Argument; a, b: Integrationsgrenzen; n: Stützstellen.
+    Rückgabe: Skalar-Tensor; differenzierbar.
+    """
+    def g(x):
+        y = f(x)
+        y = _to_tensor(y).float().flatten()
+        return x * y
+    return (2.0 * pi * integrate(g, a, b, n)).squeeze()
+
+def volume_revolution_vertical(f, a, b, x0, n=100):
+    """
+    Rotationskörper: Rotation von y=f(x) um vertikale Achse x=x0 (parallel zur y-Achse).
+    V = 2*pi * int_a^b |x - x0| * f(x) dx (Mantel-Methode).
+    f: Callable mit Tensor-Argument; a, b: Integrationsgrenzen; x0: Achsenposition; n: Stützstellen.
+    """
+    x0_val = float(_to_tensor(x0).float().squeeze().item())
+
+    def g(x):
+        y = f(x)
+        y = _to_tensor(y).float().flatten()
+        r = torch.abs(x.float().flatten() - x0_val)
+        return r * y
+    return (2.0 * pi * integrate(g, a, b, n)).squeeze()
+
+def volume_revolution_horizontal(f, a, b, y0, n=100):
+    """
+    Rotationskörper: Rotation von y=f(x) um horizontale Achse y=y0 (parallel zur x-Achse).
+    V = pi * int_a^b (f(x) - y0)^2 dx (Kreisscheiben-Methode).
+    f sollte vollständig auf einer Seite von y0 liegen (nicht schneiden).
+    """
+    y0_val = float(_to_tensor(y0).float().squeeze().item())
+
+    def g(x):
+        y = f(x)
+        y = _to_tensor(y).float().flatten()
+        d = y - y0_val
+        return d * d
+    return (pi * integrate(g, a, b, n)).squeeze()
+
+def pappus_volume_vertical(f, a, b, x0, n=100):
+    """
+    Satz von Pappus (Volumen): Rotation einer Fläche um vertikale Achse x=x0.
+    V = 2*pi * R * A, wobei A = int f dx, R = |x̄ - x0|, x̄ = (1/A)*int x*f dx (Schwerpunkt).
+    Äquivalent zu volume_revolution_vertical, aber über Schwerpunkt formuliert.
+    """
+    x0_val = float(_to_tensor(x0).float().squeeze().item())
+    a_val = float(_to_tensor(a).float().squeeze().item())
+    b_val = float(_to_tensor(b).float().squeeze().item())
+    n_int = _builtin_max(2, int(n))
+    x = torch.linspace(a_val, b_val, n_int)
+    y = _to_tensor(f(x)).float().flatten()
+    if y.numel() != n_int:
+        raise ValueError("pappus_volume_vertical: f(x) muss gleiche Länge wie Stützstellen haben.")
+    dx = (b_val - a_val) / (n_int - 1.0)
+    A = (dx / 2.0) * (y[0] + 2.0 * y[1:-1].sum() + y[-1])
+    My = (dx / 2.0) * ((x[0] * y[0]) + 2.0 * (x[1:-1] * y[1:-1]).sum() + (x[-1] * y[-1]))
+    x_bar = My / (A + 1e-12)
+    R = torch.abs(x_bar - x0_val)
+    return (2.0 * pi * R * A).squeeze()
+
+def pappus_volume_horizontal(f, a, b, y0, n=100):
+    """
+    Satz von Pappus (Volumen): Rotation einer Fläche um horizontale Achse y=y0.
+    V = 2*pi * R * A, wobei A = int f dx, R = |ȳ - y0|, ȳ = (1/(2A))*int f^2 dx (y-Koordinate des Schwerpunkts).
+    Äquivalent zu volume_revolution_horizontal, aber über Schwerpunkt formuliert.
+    """
+    y0_val = float(_to_tensor(y0).float().squeeze().item())
+    a_val = float(_to_tensor(a).float().squeeze().item())
+    b_val = float(_to_tensor(b).float().squeeze().item())
+    n_int = _builtin_max(2, int(n))
+    x = torch.linspace(a_val, b_val, n_int)
+    y = _to_tensor(f(x)).float().flatten()
+    if y.numel() != n_int:
+        raise ValueError("pappus_volume_horizontal: f(x) muss gleiche Länge wie Stützstellen haben.")
+    dx = (b_val - a_val) / (n_int - 1.0)
+    A = (dx / 2.0) * (y[0] + 2.0 * y[1:-1].sum() + y[-1])
+    y_sq = y * y
+    Mx = (dx / 2.0) * (y_sq[0] + 2.0 * y_sq[1:-1].sum() + y_sq[-1]) * 0.5
+    y_bar = Mx / (A + 1e-12)
+    R = torch.abs(y_bar - y0_val)
+    return (2.0 * pi * R * A).squeeze()
+
 # --- Standard Library: Uncertainty Propagation (Gaussian) ---
 # Fehlerfortpflanzung für Wissenschaftler: value ± std; Gauß'sche Näherung für +, -, *, /, ^.
 

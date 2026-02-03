@@ -51,6 +51,12 @@ class BinaryOp(Node):
     right: Node
 
 @dataclass
+class UnaryOp(Node):
+    """Unärer Operator, z.B. not x."""
+    op: str
+    operand: Node
+
+@dataclass
 class Call(Node):
     func_name: Node  # Can be an identifier or another call (chaining)
     args: List[Node]
