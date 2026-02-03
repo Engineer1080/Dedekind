@@ -124,6 +124,7 @@ Da Dedekind noch ein Prototyp ist, können **neue Sprach- und Runtime-Features**
 
 | Feature | Domäne(n) | Beschreibung | Aufwand |
 |---------|-----------|--------------|---------|
+| **rad, deg** | Physik, Lehre, Bau | Winkel mit automatischer Umrechnung; `deg_to_rad(x)`, `rad_to_deg(x)` | ✅ v1.2.6 |
 | **kN, MPa, MN** | Bau, Werkstoffe | Ingenieur-Konventionen: `1[kN] = 1000[N]`, `1[MPa] = 1e6[Pa]` | Gering |
 | **Darcy [D], mD** | Geologie | Durchlässigkeit: 1 D ≈ 9.87e−13 m² | Gering |
 | **wt%, at%** | Chemie, Werkstoffe | Gewichts-/Atomprozent als Einheit oder Konvention | Mittel |

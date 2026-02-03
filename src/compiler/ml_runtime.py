@@ -39,6 +39,8 @@ DIMENSION_TO_BASE = {
     "power": ("W", {"W": 1.0, "kW": 1000.0, "MW": 1e6}),
     # Chemie/Biologie: Massenkonzentration (% w/v = g/100mL)
     "mass_concentration": ("g/L", {"g/L": 1.0, "mg/mL": 1.0, "percent_wv": 10.0}),  # 1% w/v = 10 g/L
+    # Winkel (SI-Ergänzung: rad; deg = pi/180 rad)
+    "angle": ("rad", {"rad": 1.0, "deg": 0.017453292519943295}),  # 1 deg = pi/180 rad
 }
 # Für Units-Checker: Liste der Einheitenmengen pro Dimension
 ADDITIVE_DIMENSION_UNIT_SETS = [frozenset(tab.keys()) for _b, tab in DIMENSION_TO_BASE.values()]
@@ -106,7 +108,7 @@ class Quantity:
             return Quantity(v, self.unit)
         raise ValueError(
             f"Einheitenfehler bei {'Addition' if is_add else 'Subtraktion'}: [{self.unit}] vs [{other.unit}]. "
-            "Gleiche Einheit oder kompatible Einheiten derselben Dimension (z. B. Länge, Masse, Zeit, Druck, Strom, Temperatur, mol, cd, Volumen, Energie, Spannung, Frequenz, Ladung, Widerstand, Leistung) erforderlich."
+            "Gleiche Einheit oder kompatible Einheiten derselben Dimension (z. B. Länge, Masse, Zeit, Druck, Strom, Temperatur, mol, cd, Volumen, Energie, Spannung, Frequenz, Ladung, Widerstand, Leistung, Winkel rad/deg) erforderlich."
         )
 
     def __add__(self, other):
@@ -845,6 +847,65 @@ def linspace(start, stop, steps):
     return torch.linspace(float(s.item()) if s.numel() == 1 else float(s.item()),
                           float(e.item()) if e.numel() == 1 else float(e.item()),
                           n)
+
+
+# --- Mathematische Folgen (arithmetisch, geometrisch, allgemein) ---
+
+def arange(start_or_stop, stop=None, step=None):
+    """
+    Integer-Folge wie numpy.arange.
+    arange(n) → [0, 1, 2, ..., n-1]
+    arange(start, stop) → [start, start+1, ..., stop-1]
+    arange(start, stop, step) → [start, start+step, ...] (stop exklusive)
+    Rückgabe: 1D-Tensor (float32).
+    """
+    if stop is None and step is None:
+        return torch.arange(int(start_or_stop), dtype=torch.float32)
+    if step is None:
+        return torch.arange(int(start_or_stop), int(stop), dtype=torch.float32)
+    return torch.arange(float(start_or_stop), float(stop), float(step))
+
+
+def arithmetic(a0, d, n):
+    """
+    Arithmetische Folge: a_n = a0 + n*d für n = 0, 1, ..., n-1.
+    a0: Startwert, d: Differenz, n: Anzahl Glieder.
+    Rückgabe: 1D-Tensor [a0, a0+d, a0+2d, ..., a0+(n-1)d]; differenzierbar in a0, d.
+    """
+    a0_t = _to_tensor(a0).float().squeeze()
+    d_t = _to_tensor(d).float().squeeze()
+    n_val = int(n)
+    k = torch.arange(n_val, dtype=torch.float32, device=a0_t.device if a0_t.dim() > 0 else None)
+    return a0_t + d_t * k
+
+
+def geometric(a0, r, n):
+    """
+    Geometrische Folge: a_n = a0 * r^n für n = 0, 1, ..., n-1.
+    a0: Startwert, r: Quotient, n: Anzahl Glieder.
+    Rückgabe: 1D-Tensor [a0, a0*r, a0*r^2, ..., a0*r^(n-1)]; differenzierbar in a0, r.
+    """
+    a0_t = _to_tensor(a0).float().squeeze()
+    r_t = _to_tensor(r).float().squeeze()
+    n_val = int(n)
+    k = torch.arange(n_val, dtype=torch.float32, device=a0_t.device if a0_t.dim() > 0 else None)
+    return a0_t * torch.pow(r_t, k)
+
+
+def sequence(f, n):
+    """
+    Allgemeine Folge: [f(0), f(1), ..., f(n-1)].
+    f: Funktion mit einem Argument (Index n); n: Anzahl Glieder.
+    Nutzung: fn term(k) { return k * k }; seq = sequence(term, 10)
+    Rückgabe: 1D-Tensor; f muss Skalar oder 0D-Tensor zurückgeben.
+    """
+    n_val = int(n)
+    out = []
+    for k in range(n_val):
+        val = f(k)
+        out.append(_to_tensor(val).float().squeeze())
+    return torch.stack(out)
+
 
 def ode_solve(fun, y0, t, method="rk4"):
     """
@@ -1817,6 +1878,34 @@ def atan2(y, x):
     """Arkustangens atan2(y, x); Winkel der (x,y)-Richtung, Wertebereich (-pi, pi]."""
     return torch.atan2(_to_tensor(y).float(), _to_tensor(x).float())
 
+def deg_to_rad(x):
+    """Winkel von Grad in Radiant. x: Skalar, Tensor oder Quantity [deg]/[rad]. Bei [deg] → [rad]; bei [rad] unverändert; Skalar als Grad angenommen."""
+    u = (getattr(x, "unit", None) or "").strip()
+    if isinstance(x, Quantity):
+        if _get_dimension(u) == "angle" and u == "rad":
+            return Quantity(x.value, "rad")
+        return Quantity(x.value * 0.017453292519943295, "rad")  # deg oder dimensionslos
+    if isinstance(x, UncertainQuantity):
+        if _get_dimension(u) == "angle" and u == "rad":
+            return UncertainQuantity(x.value, x.std, "rad")
+        return UncertainQuantity(x.value * 0.017453292519943295, x.std * 0.017453292519943295, "rad")
+    val = float(_to_tensor(x).item()) if hasattr(_to_tensor(x), 'item') else float(_to_tensor(x))
+    return val * 0.017453292519943295  # pi/180
+
+def rad_to_deg(x):
+    """Winkel von Radiant in Grad. x: Skalar, Tensor oder Quantity [rad]/[deg]. Bei [rad] → [deg]; bei [deg] unverändert; Skalar als Radiant angenommen."""
+    u = (getattr(x, "unit", None) or "").strip()
+    if isinstance(x, Quantity):
+        if _get_dimension(u) == "angle" and u == "deg":
+            return Quantity(x.value, "deg")
+        return Quantity(x.value * 57.29577951308232, "deg")  # rad oder dimensionslos
+    if isinstance(x, UncertainQuantity):
+        if _get_dimension(u) == "angle" and u == "deg":
+            return UncertainQuantity(x.value, x.std, "deg")
+        return UncertainQuantity(x.value * 57.29577951308232, x.std * 57.29577951308232, "deg")
+    val = float(_to_tensor(x).item()) if hasattr(_to_tensor(x), 'item') else float(_to_tensor(x))
+    return val * 57.29577951308232  # 180/pi
+
 def sinh(x):
     """Sinus hyperbolicus sinh(x)."""
     return torch.sinh(_to_tensor(x).float())
@@ -1986,6 +2075,74 @@ def factorial(n):
     if isinstance(n, (int, float)) and not isinstance(n, bool):
         return float(result.item()) if result.numel() == 1 else result
     return result
+
+
+def binom(n, k):
+    """
+    Binomialkoeffizient: n über k = C(n,k) = n! / (k! * (n-k)!).
+    n, k: nichtnegative ganze Zahlen. Nutzt multiplikative Formel für Stabilität.
+    """
+    n_val = int(n)
+    k_val = int(k)
+    if n_val < 0 or k_val < 0:
+        raise ValueError("binom: n und k müssen nichtnegativ sein.")
+    if k_val > n_val:
+        return 0
+    if k_val == 0 or k_val == n_val:
+        return 1
+    k_val = _builtin_min(k_val, n_val - k_val)
+    result = 1.0
+    for i in range(k_val):
+        result = result * (n_val - i) / (i + 1)
+    return int(result) if abs(result - round(result)) < 1e-9 else result
+
+
+def ttest_one_sample(x, mu0):
+    """
+    Ein-Stichproben-t-Test: Prüft, ob Mittelwert der Stichprobe x von mu0 abweicht.
+    x: 1D-Tensor oder Liste. mu0: hypothetischer Mittelwert.
+    Rückgabe: (t_statistik, p_value) — zweiseitiger Test.
+    """
+    import scipy.stats as scistats  # type: ignore[import-untyped]
+    t = _to_tensor(x).float().flatten()
+    n = t.numel()
+    if n < 2:
+        raise ValueError("ttest_one_sample: mindestens 2 Beobachtungen nötig.")
+    m = t.mean().item()
+    s = t.std(unbiased=True).item()
+    if s < 1e-14:
+        return float(m - mu0), 0.0 if abs(m - mu0) > 1e-14 else 1.0
+    t_stat = (m - mu0) / (s / (n ** 0.5))
+    df = n - 1
+    p_val = 2.0 * (1.0 - scistats.t.cdf(abs(t_stat), df))
+    return (float(t_stat), float(p_val))
+
+
+def ttest_two_sample(x, y):
+    """
+    Zwei-Stichproben-t-Test (Welch): Prüft, ob die Mittelwerte von x und y sich unterscheiden.
+    Annahme: ungleiche Varianzen (Welch-t-Test).
+    x, y: 1D-Tensoren oder Listen.
+    Rückgabe: (t_statistik, p_value) — zweiseitiger Test.
+    """
+    import scipy.stats as scistats  # type: ignore[import-untyped]
+    tx = _to_tensor(x).float().flatten()
+    ty = _to_tensor(y).float().flatten()
+    n1, n2 = tx.numel(), ty.numel()
+    if n1 < 2 or n2 < 2:
+        raise ValueError("ttest_two_sample: mindestens 2 Beobachtungen pro Stichprobe nötig.")
+    m1, m2 = tx.mean().item(), ty.mean().item()
+    v1, v2 = tx.var(unbiased=True).item(), ty.var(unbiased=True).item()
+    se = (v1 / n1 + v2 / n2) ** 0.5
+    if se < 1e-14:
+        return float(m1 - m2), 0.0 if abs(m1 - m2) > 1e-14 else 1.0
+    t_stat = (m1 - m2) / se
+    num = (v1 / n1 + v2 / n2) ** 2
+    denom = (v1 / n1) ** 2 / (n1 - 1) + (v2 / n2) ** 2 / (n2 - 1)
+    df_val = _builtin_max(num / (denom + 1e-14), 1.0)
+    p_val = 2.0 * (1.0 - scistats.t.cdf(abs(t_stat), df_val))
+    return (float(t_stat), float(p_val))
+
 
 # --- Standard Library: Reduktionen (min, max, argmin, argmax) ---
 def min(x, dim=None):

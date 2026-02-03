@@ -2,7 +2,7 @@
 
 **Language Specification v0.2**  
 Mario Michael Heinrich · github.com/Engineer1080  
-Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit), v0.9.6 (Math-Funktionen), v0.9.7 (Chemie/Biologie: mol, L, M, ppm), v0.9.8 (Convenience, Elemente, Datei-I/O, Netzwerk, JSON), v1.0.0 (Release), v1.0.1 (Patch), v1.0.2 (Patch), v1.0.3 (Patch), v1.0.4 (Patch), v1.0.5 (Patch), v1.0.6 (Patch)
+Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit), v0.9.6 (Math-Funktionen), v0.9.7 (Chemie/Biologie: mol, L, M, ppm), v0.9.8 (Convenience, Elemente, Datei-I/O, Netzwerk, JSON), v1.0.0 (Release), v1.0.1–v1.0.6 (Patch), v1.2.6 (Winkel rad/deg, deg_to_rad, rad_to_deg)
 
 ---
 
@@ -102,7 +102,7 @@ This section documents the **physical units** and **universal constants** featur
 
 ### 15.1 Unit Literals
 
-Values can carry SI units using bracket notation. **SI base units**: m (metre), kg (kilogram), s (second), A (ampere), K (kelvin), mol (mole), **cd (candela)**. Supplementary: rad (radian), sr (steradiant). **Non-SI but supported**: **bar**, **atm** (pressure; 1 bar = 10⁵ Pa, 1 atm ≈ 101325 Pa); **g** (gram, 10⁻³ kg); **Bq** (Becquerel, activity = 1/s); **Sv** (Sievert, equivalent dose = J/kg).
+Values can carry SI units using bracket notation. **SI base units**: m (metre), kg (kilogram), s (second), A (ampere), K (kelvin), mol (mole), **cd (candela)**. Supplementary: **rad** (radian), **deg** (degree, 1 deg = π/180 rad; automatic conversion with rad), sr (steradiant). **Non-SI but supported**: **bar**, **atm** (pressure; 1 bar = 10⁵ Pa, 1 atm ≈ 101325 Pa); **g** (gram, 10⁻³ kg); **Bq** (Becquerel, activity = 1/s); **Sv** (Sievert, equivalent dose = J/kg).
 
 ```dedekind
 distance = 10[m]
@@ -155,7 +155,7 @@ Example: `E = m * c^2` with `m = 1.0[kg]` yields a result in J (Joule); the runt
 
 ### 15.3 Quantity Arithmetic
 
-- **Addition / Subtraction**: Allowed when both operands have the **same unit**, or when both have **compatible units of the same dimension** (automatic conversion). Supported dimensions: **SI base** — length (m, cm, km, mm, dm), mass (kg, g, t, mg), time (s, min, h, ms), current (A, mA, kA, uA), temperature (K, mK), amount of substance (mol, mmol, kmol), luminous intensity (cd, mcd); **derived** — pressure (Pa, bar, atm), volume (L, mL, dm³, m³), energy (J, kJ, MJ, Wh, kWh), electric potential (V, mV, kV), frequency (Hz, kHz, MHz, GHz), charge (C, mC, uC), resistance (ohm, kohm, Mohm), power (W, kW, MW). Example: `1[m] + 100[cm]` → `2.0[m]`; `1[kJ] + 500[J]` → `1.5[kJ]`. The result unit is the unit of the **first operand**. Incompatible units (e.g. `1[m] + 1[s]`) raise a compile-time or runtime error.
+- **Addition / Subtraction**: Allowed when both operands have the **same unit**, or when both have **compatible units of the same dimension** (automatic conversion). Supported dimensions: **SI base** — length (m, cm, km, mm, dm), mass (kg, g, t, mg), time (s, min, h, ms), current (A, mA, kA, uA), temperature (K, mK), amount of substance (mol, mmol, kmol), luminous intensity (cd, mcd); **derived** — pressure (Pa, bar, atm), volume (L, mL, dm³, m³), energy (J, kJ, MJ, Wh, kWh), electric potential (V, mV, kV), frequency (Hz, kHz, MHz, GHz), charge (C, mC, uC), resistance (ohm, kohm, Mohm), power (W, kW, MW); **angle** — rad, deg. Example: `1[m] + 100[cm]` → `2.0[m]`; `90[deg] + (pi/2)*1[rad]` → `180[deg]`. The result unit is the unit of the **first operand**. **Conversion functions**: `deg_to_rad(x)`, `rad_to_deg(x)` for scalars, tensors, or Quantity. Incompatible units (e.g. `1[m] + 1[s]`) raise a compile-time or runtime error.
 - **Multiplication / Division**: Units are combined (e.g. `m * m/s` → `m²/s`; `J/s` for power).
 - **Power**: `Quantity ** exponent` is supported (e.g. `c^2`, `r^2`); the unit is raised to the given exponent (e.g. `(m/s)^2`).
 - **Unary minus**: `-x` is supported for both `Quantity` and `Quaternion` (e.g. `-1.602e-19[C]`, `-1.0 + 0i`).
