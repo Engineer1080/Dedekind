@@ -1415,6 +1415,127 @@ def pde_advection_diffusion_2d(u0, x, y, t, vx, vy, D, bc="periodic"):
 
     return ode_solve(rhs, u0.flatten(), t).reshape(t.numel(), nx, ny)
 
+# --- Maxwell-Gleichungen: FDTD (∇×E=-∂B/∂t, ∇×B=μ₀ε₀∂E/∂t) ---
+
+def pde_maxwell_1d(E0, B0, x, t, c_light=1.0, bc="periodic"):
+    """
+    Differenzierbarer 1D-Maxwell-FDTD: Ebene Welle E_y(x,t), B_z(x,t).
+    ∂E_y/∂t = -c² ∂B_z/∂x, ∂B_z/∂t = -∂E_y/∂x; zentrale Differenzen.
+    E0, B0: Anfangsbedingungen 1D (E_y, B_z); x: Ortsgitter; t: Zeitgitter.
+    c_light: Lichtgeschwindigkeit (default 1). bc: 'periodic' (default) oder 'dirichlet'.
+    Rückgabe: (E_sol, B_sol) je (len(t), len(x)). CFL: dt <= dx/c empfohlen.
+    """
+    E0 = _to_tensor(E0).float().flatten()
+    B0 = _to_tensor(B0).float().flatten().to(E0.device)
+    x = _to_tensor(x).float().flatten().to(E0.device)
+    t = _to_tensor(t).float().flatten().to(E0.device)
+    c_val = float(_to_tensor(c_light).float().item())
+    n = E0.numel()
+    if B0.numel() != n or x.numel() != n:
+        raise ValueError("pde_maxwell_1d: len(E0), len(B0), len(x) müssen übereinstimmen.")
+    if n < 3:
+        raise ValueError("pde_maxwell_1d: mindestens 3 Gitterpunkte.")
+    dx = float((x[-1] - x[0]).item()) / _builtin_max(n - 1, 1)
+    if abs(dx) < 1e-14:
+        dx = 1.0
+    c2 = c_val * c_val
+    y0 = torch.cat([E0, B0], dim=0)
+
+    def rhs(t_cur, y):
+        E = y[:n]
+        B = y[n:]
+        if bc == "periodic":
+            E_left = torch.roll(E, 1, dims=0)
+            E_right = torch.roll(E, -1, dims=0)
+            B_left = torch.roll(B, 1, dims=0)
+            B_right = torch.roll(B, -1, dims=0)
+        else:
+            E_left = torch.cat([E[:1], E[:-1]])
+            E_right = torch.cat([E[1:], E[-1:]])
+            B_left = torch.cat([B[:1], B[:-1]])
+            B_right = torch.cat([B[1:], B[-1:]])
+        dB_dx = (B_right - B_left) / (2.0 * dx)
+        dE_dx = (E_right - E_left) / (2.0 * dx)
+        dE_dt = -c2 * dB_dx
+        dB_dt = -dE_dx
+        return torch.cat([dE_dt, dB_dt], dim=0)
+
+    sol = ode_solve(rhs, y0, t)
+    E_sol = sol[:, :n]
+    B_sol = sol[:, n:]
+    return E_sol, B_sol
+
+def pde_maxwell_2d(Ez0, Hx0, Hy0, x, y, t, c_light=1.0, bc="periodic"):
+    """
+    Differenzierbarer 2D-Maxwell-FDTD (TM-Mode): E_z, H_x, H_y.
+    ∂E_z/∂t = c²(∂H_y/∂x - ∂H_x/∂y), ∂H_x/∂t = -∂E_z/∂y, ∂H_y/∂t = ∂E_z/∂x.
+    Ez0, Hx0, Hy0: Anfangsbedingungen 2D (nx, ny); x, y: Ortsgitter; t: Zeitgitter.
+    c_light: Lichtgeschwindigkeit. bc: 'periodic' (default) oder 'dirichlet'.
+    Rückgabe: (Ez_sol, Hx_sol, Hy_sol) je (len(t), nx, ny). CFL: dt <= dx/(c√2) empfohlen.
+    """
+    Ez0 = _to_tensor(Ez0).float()
+    Hx0 = _to_tensor(Hx0).float().to(Ez0.device)
+    Hy0 = _to_tensor(Hy0).float().to(Ez0.device)
+    if Ez0.dim() == 1 or Hx0.dim() == 1 or Hy0.dim() == 1:
+        raise ValueError("pde_maxwell_2d: Ez0, Hx0, Hy0 müssen 2D-Gitter (nx, ny) sein.")
+    nx, ny = Ez0.shape[0], Ez0.shape[1]
+    if Hx0.shape != (nx, ny) or Hy0.shape != (nx, ny):
+        raise ValueError("pde_maxwell_2d: Ez0, Hx0, Hy0 müssen gleiche Form haben.")
+    x = _to_tensor(x).float().flatten().to(Ez0.device)
+    y = _to_tensor(y).float().flatten().to(Ez0.device)
+    t = _to_tensor(t).float().flatten().to(Ez0.device)
+    c_val = float(_to_tensor(c_light).float().item())
+    if x.numel() != nx or y.numel() != ny:
+        raise ValueError("pde_maxwell_2d: x/y Länge muss zu Ez0 passen.")
+    if nx < 3 or ny < 3:
+        raise ValueError("pde_maxwell_2d: mindestens 3×3 Gitterpunkte.")
+    dx = float((x[-1] - x[0]).item()) / _builtin_max(nx - 1, 1)
+    dy = float((y[-1] - y[0]).item()) / _builtin_max(ny - 1, 1)
+    if abs(dx) < 1e-14:
+        dx = 1.0
+    if abs(dy) < 1e-14:
+        dy = 1.0
+    c2 = c_val * c_val
+    n = nx * ny
+    y0 = torch.cat([Ez0.flatten(), Hx0.flatten(), Hy0.flatten()], dim=0)
+
+    def rhs(t_cur, y_flat):
+        Ez = y_flat[:n].reshape(nx, ny)
+        Hx = y_flat[n:2 * n].reshape(nx, ny)
+        Hy = y_flat[2 * n:].reshape(nx, ny)
+        if bc == "periodic":
+            Ez_left = torch.roll(Ez, 1, dims=0)
+            Ez_right = torch.roll(Ez, -1, dims=0)
+            Ez_bottom = torch.roll(Ez, 1, dims=1)
+            Ez_top = torch.roll(Ez, -1, dims=1)
+            Hy_left = torch.roll(Hy, 1, dims=0)
+            Hy_right = torch.roll(Hy, -1, dims=0)
+            Hx_bottom = torch.roll(Hx, 1, dims=1)
+            Hx_top = torch.roll(Hx, -1, dims=1)
+        else:
+            Ez_left = torch.cat([Ez[:1, :], Ez[:-1, :]], dim=0)
+            Ez_right = torch.cat([Ez[1:, :], Ez[-1:, :]], dim=0)
+            Ez_bottom = torch.cat([Ez[:, :1], Ez[:, :-1]], dim=1)
+            Ez_top = torch.cat([Ez[:, 1:], Ez[:, -1:]], dim=1)
+            Hy_left = torch.cat([Hy[:1, :], Hy[:-1, :]], dim=0)
+            Hy_right = torch.cat([Hy[1:, :], Hy[-1:, :]], dim=0)
+            Hx_bottom = torch.cat([Hx[:, :1], Hx[:, :-1]], dim=1)
+            Hx_top = torch.cat([Hx[:, 1:], Hx[:, -1:]], dim=1)
+        dHy_dx = (Hy_right - Hy_left) / (2.0 * dx)
+        dHx_dy = (Hx_top - Hx_bottom) / (2.0 * dy)
+        dEz_dx = (Ez_right - Ez_left) / (2.0 * dx)
+        dEz_dy = (Ez_top - Ez_bottom) / (2.0 * dy)
+        dEz_dt = c2 * (dHy_dx - dHx_dy)
+        dHx_dt = -dEz_dy
+        dHy_dt = dEz_dx
+        return torch.cat([dEz_dt.flatten(), dHx_dt.flatten(), dHy_dt.flatten()], dim=0)
+
+    sol = ode_solve(rhs, y0, t)
+    Ez_sol = sol[:, :n].reshape(t.numel(), nx, ny)
+    Hx_sol = sol[:, n:2 * n].reshape(t.numel(), nx, ny)
+    Hy_sol = sol[:, 2 * n:].reshape(t.numel(), nx, ny)
+    return Ez_sol, Hx_sol, Hy_sol
+
 # --- Sparse PDE: 2D Laplacian und Diffusion ---
 
 def sparse_laplacian_2d(N, dx=None):

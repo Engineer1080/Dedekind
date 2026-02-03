@@ -1,0 +1,51 @@
+fn main() {
+    print("--- Dedekind: Maxwell-Gleichungen (FDTD) ---")
+    print_latex(r"\nabla \times \mathbf{E} = -\frac{\partial \mathbf{B}}{\partial t} \quad \nabla \times \mathbf{B} = \mu_0 \varepsilon_0 \frac{\partial \mathbf{E}}{\partial t}")
+    
+    // 1D: Ebene Welle E_y(x,t), B_z(x,t) - Gauß-Puls
+    n = 101
+    x = linspace(0, 1, n)
+    t = linspace(0, 0.4, 81)
+    c_light = 1.0
+    
+    E0 = exp(-200.0 * (x - 0.3) * (x - 0.3))
+    B0 = exp(-200.0 * (x - 0.3) * (x - 0.3))  // E und B in Phase für rechtslaufende Welle
+    
+    result_1d = pde_maxwell_1d(E0, B0, x, t, c_light)
+    E_sol = result_1d[0]
+    B_sol = result_1d[1]
+    
+    print("1D Maxwell: E_y, B_z - Gauß-Puls propagiert")
+    print("E Shape:")
+    print(E_sol.shape)
+    
+    plot(x, E_sol[0], title="1D E_y t=0 (Anfang)")
+    plot(x, E_sol[80], title="1D E_y t=0.4 (propagiert)")
+    
+    // 2D: TM-Mode E_z, H_x, H_y - Punktquelle
+    nx = 41
+    ny = 41
+    x2 = linspace(0, 1, nx)
+    y2 = linspace(0, 1, ny)
+    t2 = linspace(0, 0.3, 31)
+    
+    Ez0 = random_matrix(nx, ny) * 0.0
+    Hx0 = random_matrix(nx, ny) * 0.0
+    Hy0 = random_matrix(nx, ny) * 0.0
+    Ez0[20][20] = 1.0
+    
+    result_2d = pde_maxwell_2d(Ez0, Hx0, Hy0, x2, y2, t2, c_light)
+    Ez_sol = result_2d[0]
+    Hx_sol = result_2d[1]
+    Hy_sol = result_2d[2]
+    
+    print("2D Maxwell TM: E_z Punktquelle, kreisförmige Ausbreitung")
+    print("Ez Shape:")
+    print(Ez_sol.shape)
+    
+    contour(x2, y2, Ez_sol[0], title="2D E_z t=0 (Anfang)", levels=8)
+    contour(x2, y2, Ez_sol[30], title="2D E_z t=0.3 (propagiert)", levels=8)
+    
+    print("Maxwell-FDTD aktiv.")
+}
+main()
