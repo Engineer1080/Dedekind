@@ -945,6 +945,127 @@ def ode_solve(fun, y0, t, method="rk4"):
         out.append(y)
     return torch.stack(out, dim=0)
 
+
+def lagrange_ode_rhs(L_func):
+    """
+    Erzeugt die rechte Seite für ode_solve aus einer Lagrangefunktion L(q, v).
+    Euler-Lagrange: d/dt(∂L/∂v) = ∂L/∂q  =>  q̈ = (∂L/∂q - ∂²L/∂q∂v·v) / ∂²L/∂v².
+    L_func(q, v): Callable; q, v werden als 1D-Tensoren übergeben (Länge 1 für 1D).
+    Rückgabe: fun(t, y) mit y = [q, v]; dy/dt = [v, q̈].
+    """
+    def rhs(t, y):
+        y_t = _to_tensor(y).float().flatten()
+        if y_t.numel() < 2:
+            raise ValueError("lagrange_ode_rhs: y muss mindestens [q, v] (Länge 2) haben.")
+        n = y_t.numel() // 2
+        q = y_t[:n].clone().detach().requires_grad_(True)
+        v = y_t[n:].clone().detach().requires_grad_(True)
+        L_val = L_func(q, v)
+        L_val = _to_tensor(L_val).float().squeeze()
+        if L_val.dim() > 0:
+            L_val = L_val.sum()
+        dL_dq, = torch.autograd.grad(L_val, q, create_graph=True, allow_unused=True)
+        dL_dv, = torch.autograd.grad(L_val, v, create_graph=True, allow_unused=True)
+        dL_dq = dL_dq if dL_dq is not None else torch.zeros_like(q)
+        dL_dv = dL_dv if dL_dv is not None else torch.zeros_like(v)
+        d2L_dv2 = torch.autograd.grad(dL_dv.sum(), v, retain_graph=True, allow_unused=True)[0]
+        d2L_dqdv = torch.autograd.grad(dL_dv.sum(), q, retain_graph=True, allow_unused=True)[0]
+        d2L_dv2 = d2L_dv2 if d2L_dv2 is not None else torch.ones_like(v)
+        d2L_dqdv = d2L_dqdv if d2L_dqdv is not None else torch.zeros_like(q)
+        denom = d2L_dv2
+        if (denom.abs() < 1e-12).any():
+            raise ValueError("lagrange_ode_rhs: ∂²L/∂v² zu klein (singulär). Typisch bei L = T - V mit T = ½mv².")
+        a = (dL_dq - d2L_dqdv * v) / denom
+        return torch.cat([v.detach(), a.detach()])
+    return rhs
+
+
+def hamilton_ode_rhs(H_func):
+    """
+    Erzeugt die rechte Seite für ode_solve aus einer Hamiltonfunktion H(q, p).
+    Hamilton-Gleichungen: dq/dt = ∂H/∂p, dp/dt = -∂H/∂q.
+    H_func(q, p): Callable; q, p als 1D-Tensoren.
+    Rückgabe: fun(t, y) mit y = [q, p]; dy/dt = [∂H/∂p, -∂H/∂q].
+    """
+    def rhs(t, y):
+        y_t = _to_tensor(y).float().flatten()
+        if y_t.numel() < 2:
+            raise ValueError("hamilton_ode_rhs: y muss mindestens [q, p] (Länge 2) haben.")
+        n = y_t.numel() // 2
+        q = y_t[:n].clone().detach().requires_grad_(True)
+        p = y_t[n:].clone().detach().requires_grad_(True)
+        H_val = H_func(q, p)
+        H_val = _to_tensor(H_val).float().squeeze()
+        if H_val.dim() > 0:
+            H_val = H_val.sum()
+        dH_dq, = torch.autograd.grad(H_val, q)
+        dH_dp, = torch.autograd.grad(H_val, p)
+        return torch.cat([dH_dp.detach(), -dH_dq.detach()])
+    return rhs
+
+
+def lotka_volterra(x0, y0, a, b, c, d, t):
+    """
+    Lotka-Volterra Räuber-Beute-Modell: dx/dt = a*x - b*x*y, dy/dt = -c*y + d*x*y.
+    x0, y0: Anfangsbestände (Beute, Räuber). a, b, c, d: Parameter.
+    t: Zeitgitter (1D). Rückgabe: (len(t), 2) – erste Spalte Beute, zweite Räuber.
+    """
+    def rhs(_, y):
+        x, y_pred = y[0], y[1]
+        dx = a * x - b * x * y_pred
+        dy = -c * y_pred + d * x * y_pred
+        return torch.stack([dx, dy])
+    y0_t = torch.tensor([float(x0), float(y0)], dtype=torch.float32)
+    return ode_solve(rhs, y0_t, t)
+
+
+def chemical_equilibrium(K, n_A, n_B, n_C, n_D, A0, B0, C0, D0, tol=1e-10):
+    """
+    Chemisches Gleichgewicht für aA + bB <-> cC + dD (Massenwirkungsgesetz).
+    K: Gleichgewichtskonstante; n_A, n_B, n_C, n_D: Stöchiometriekoeffizienten (a, b, c, d).
+    A0, B0, C0, D0: Anfangskonzentrationen [mol/L].
+    Reaktionslaufzahl ξ: [A]=A0-n_A*ξ, [B]=B0-n_B*ξ, [C]=C0+n_C*ξ, [D]=D0+n_D*ξ.
+    K = ([C]^n_C * [D]^n_D) / ([A]^n_A * [B]^n_B). Rückgabe: (A_eq, B_eq, C_eq, D_eq).
+    """
+    K = float(K)
+    n_A, n_B, n_C, n_D = float(n_A), float(n_B), float(n_C), float(n_D)
+    A0, B0, C0, D0 = float(A0), float(B0), float(C0), float(D0)
+    xi_max = _builtin_min(A0 / n_A if n_A > 0 else 1e10, B0 / n_B if n_B > 0 else 1e10)
+    xi_max = _builtin_max(0.0, _builtin_min(xi_max, 1e10))
+
+    def residual(xi):
+        A = A0 - n_A * xi
+        B = B0 - n_B * xi
+        C = C0 + n_C * xi
+        D = D0 + n_D * xi
+        if A <= 0 or B <= 0:
+            return 1e10
+        lhs = (C ** n_C) * (D ** n_D)
+        rhs = K * (A ** n_A) * (B ** n_B)
+        return lhs - rhs
+
+    xi_lo, xi_hi = 0.0, xi_max
+    if residual(xi_lo) * residual(xi_hi) > 0:
+        xi_eq = 0.0
+    else:
+        for _ in range(200):
+            xi_mid = (xi_lo + xi_hi) / 2.0
+            if (xi_hi - xi_lo) / 2.0 < tol:
+                xi_eq = xi_mid
+                break
+            if residual(xi_mid) * residual(xi_lo) < 0:
+                xi_hi = xi_mid
+            else:
+                xi_lo = xi_mid
+        else:
+            xi_eq = (xi_lo + xi_hi) / 2.0
+    A_eq = _builtin_max(0.0, A0 - n_A * xi_eq)
+    B_eq = _builtin_max(0.0, B0 - n_B * xi_eq)
+    C_eq = C0 + n_C * xi_eq
+    D_eq = D0 + n_D * xi_eq
+    return (A_eq, B_eq, C_eq, D_eq)
+
+
 # --- Standard Library: Differentiable PDE Solvers ---
 # 1D/2D Heat equation u_t = k * Laplacian(u); Finite-Differenzen + ode_solve (differenzierbar in u0, k).
 
@@ -4473,6 +4594,35 @@ def diff_sym(expr, var):
     d = _sym_diff(ast, var)
     d = _sym_simplify(d)
     return _sym_to_string(d)
+
+
+def integrate_sym(expr, var):
+    """
+    Unbestimmtes (symbolisches) Integral: ∫ expr d(var).
+    expr: String, z.B. 'x^2', 'sin(x)', 'exp(x)*x'.
+    var: Name der Integrationsvariable, z.B. 'x'.
+    Rückgabe: Stammfunktion als String (ohne Integrationskonstante C).
+    Nutzt SymPy für robuste symbolische Integration.
+    """
+    try:
+        import sympy  # type: ignore[reportMissingImports]
+    except ImportError:
+        raise ImportError("integrate_sym erfordert sympy. Bitte installieren: pip install sympy")
+    expr_str = str(expr).strip().replace(" ", "")
+    var_str = str(var).strip()
+    if not var_str:
+        raise ValueError("Integrationsvariable darf nicht leer sein")
+    # Dedekind-Syntax (^) für SymPy (**) konvertieren
+    expr_sympy = expr_str.replace("^", "**")
+    try:
+        x = sympy.Symbol(var_str)
+        sym_expr = sympy.sympify(expr_sympy)
+        result = sympy.integrate(sym_expr, x)
+        out = str(result)
+        # Optional: ** zurück zu ^ für Dedekind-Konsistenz
+        return out.replace("**", "^")
+    except Exception as e:
+        raise ValueError(f"integrate_sym: Konnte '{expr}' nicht nach {var_str} integrieren: {e}") from e
 
 # --- Standard Library: Jacobian / Hessian (Autograd) ---
 

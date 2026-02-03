@@ -1,0 +1,36 @@
+// Lagrange- und Hamilton-Mechanik: lagrange_ode_rhs(L), hamilton_ode_rhs(H)
+
+print("=== Lagrange / Hamilton in Dedekind ===")
+
+// Harmonischer Oszillator: L = ½m v² - ½k q²  (m=1, k=1)
+// Euler-Lagrange liefert: q̈ = -k/m * q
+m = 1.0
+k = 1.0
+fn L(q, v) {
+    return 0.5 * m * v[0] * v[0] - 0.5 * k * q[0] * q[0]
+}
+
+rhs_lagrange = lagrange_ode_rhs(L)
+y0 = [1.0, 0.0]  // q(0)=1, v(0)=0
+t = linspace(0, 2 * pi, 101)
+traj = ode_solve(rhs_lagrange, y0, t)
+
+print("Harmonischer Oszillator (Lagrange): q(0)=1, v(0)=0")
+print("q(t) bei t=0, pi/2, pi:")
+print(traj[0][0])
+print(traj[25][0])
+print(traj[50][0])
+
+// Hamilton: H = p²/(2m) + ½k q²
+fn H(q, p) {
+    return p[0] * p[0] / (2 * m) + 0.5 * k * q[0] * q[0]
+}
+
+rhs_hamilton = hamilton_ode_rhs(H)
+y0_h = [1.0, 0.0]  // q(0)=1, p(0)=0
+traj_h = ode_solve(rhs_hamilton, y0_h, t)
+
+print("Hamilton: q(t) bei t=pi:")
+print(traj_h[50][0])
+
+print("Lagrange/Hamilton aktiv.")

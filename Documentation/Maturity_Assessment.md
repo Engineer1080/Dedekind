@@ -7,7 +7,7 @@ Draft: January 2026 · Stand: v1.3.0 (Prototyp)
 
 ## Übersicht
 
-Dedekind ist aktuell ein **Prototyp (v1.2.9)**. Die folgende Einschätzung bezieht sich auf den **aktuellen Implementierungsstand** und nennt Lücken sowie Roadmap-Punkte.
+Dedekind ist aktuell ein **Prototyp (v1.3.0)**. Die folgende Einschätzung bezieht sich auf den **aktuellen Implementierungsstand** und nennt Lücken sowie Roadmap-Punkte.
 
 | Domäne       | Ausgereiftheit (kurz) | Nutzbar für …                          | Wichtige Lücken / Roadmap          |
 |-------------|------------------------|----------------------------------------|------------------------------------|
@@ -59,7 +59,7 @@ Dedekind ist aktuell ein **Prototyp (v1.2.9)**. Die folgende Einschätzung bezie
 ### Lücken / Roadmap
 
 - **PDE**: Wärmeleitung, Advektion, Wellengleichung, Burgers, Reaktions-Diffusion, Advektions-Diffusion, Maxwell (FDTD 1D/2D) und Navier-Stokes 2D (Chorin-Projektion) als Standard-API vorhanden.
-- **Lagrange/Hamilton**: Keine eingebaute Formulierung; mit `ode_solve` und eigener RHS modellierbar.
+- **Lagrange/Hamilton**: `lagrange_ode_rhs(L)`, `hamilton_ode_rhs(H)` – RHS für ode_solve aus L(q,v) bzw. H(q,p).
 - **Feldtheorie**: Keine speziellen Primitiven.
 
 **Fazit Physik**: Für **Mechanik, E&M (über Konstanten und Einheiten), Thermodynamik, ODE/PDE (Wärme), Unsicherheit und Rotationen** gut nutzbar. **Ausgereiftheit: gut nutzbar.**
@@ -99,7 +99,7 @@ Dedekind ist aktuell ein **Prototyp (v1.2.9)**. Die folgende Einschätzung bezie
 
 ### Lücken / Roadmap (Chemistry_Biology_Roadmap)
 
-- **Weitere Modelle**: Keine vordefinierten Ökologie-/Populationsmodelle (z. B. Lotka-Volterra) als Standard-API.
+- **Weitere Modelle**: `lotka_volterra(x0, y0, a, b, c, d, t)` – Räuber-Beute-Modell vorhanden.
 - **Einheiten**: Physikalische Einheiten (inkl. chemische) nutzbar; keine biologischen Konventionen (z. B. Zellzahl, Verdünnungsstufen) als eigene Einheiten.
 - **Dokumentation**: Abschnitt „Dedekind für Chemie & Biologie“ im README; Chemistry_Biology_Roadmap.
 
@@ -121,7 +121,7 @@ Dedekind ist aktuell ein **Prototyp (v1.2.9)**. Die folgende Einschätzung bezie
 
 ### Lücken / Roadmap (Chemistry_Biology_Roadmap)
 
-- **Gleichgewichte**: Keine vordefinierten Gleichgewichts- oder Titrationsmodelle als Standard-API.
+- **Gleichgewichte**: `chemical_equilibrium(K, n_A, n_B, n_C, n_D, A0, B0, C0, D0)` – Massenwirkungsgesetz für aA + bB <-> cC + dD.
 - **Weitere Einheiten**: bar, atm, g, pH-Funktionen, % w/v vorhanden; weitere domänenspezifische Einheiten optional.
 
 **Fazit Chemie**: Für **Kinetik, Konzentrationen, Einheiten, Dosis-Wirkung, Fitting, Stöchiometrie und Elemente** grundlegend nutzbar; Gleichgewichte fehlen. **Ausgereiftheit: grundlegend.**

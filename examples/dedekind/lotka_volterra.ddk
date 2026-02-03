@@ -1,0 +1,28 @@
+// Lotka-Volterra Räuber-Beute-Modell: dx/dt = ax - bxy, dy/dt = -cy + dxy
+
+print("=== Lotka-Volterra in Dedekind ===")
+
+// Parameter: a=Wachstum Beute, b=Prädation, c=Sterberate Räuber, d=Reproduktion Räuber
+x0 = 40.0   // Anfangsbestand Beute (z.B. Hasen)
+y0 = 9.0    // Anfangsbestand Räuber (z.B. Füchse)
+a = 0.5     // Wachstumsrate Beute
+b = 0.02    // Prädationsrate
+c = 0.3     // Sterberate Räuber
+d = 0.01    // Reproduktion Räuber pro Beute
+
+t = linspace(0, 50, 501)
+traj = lotka_volterra(x0, y0, a, b, c, d, t)
+
+print("Anfangsbestände: Beute", x0, ", Räuber", y0)
+print("Beute x(t) bei t=0, 10, 25, 50:")
+print(traj[0][0])
+print(traj[100][0])
+print(traj[250][0])
+print(traj[500][0])
+print("Räuber y(t) bei t=0, 10, 25, 50:")
+print(traj[0][1])
+print(traj[100][1])
+print(traj[250][1])
+print(traj[500][1])
+
+print("Lotka-Volterra aktiv.")

@@ -1,0 +1,24 @@
+// Unbestimmte Integrale (symbolische Integration): integrate_sym(expr, var)
+
+print("=== Symbolische Integration in Dedekind ===")
+
+// Grundintegrale
+print("integrate_sym(x^2, x)     =", integrate_sym("x^2", "x"))
+print("integrate_sym(x, x)       =", integrate_sym("x", "x"))
+print("integrate_sym(1, x)       =", integrate_sym("1", "x"))
+print("integrate_sym(sin(x), x)  =", integrate_sym("sin(x)", "x"))
+print("integrate_sym(cos(x), x)  =", integrate_sym("cos(x)", "x"))
+print("integrate_sym(exp(x), x)  =", integrate_sym("exp(x)", "x"))
+print("integrate_sym(1/x, x)     =", integrate_sym("1/x", "x"))
+
+// Kombinationen
+print("")
+print("integrate_sym(x^2 + 2*x, x) =", integrate_sym("x^2 + 2*x", "x"))
+print("integrate_sym(x*sin(x), x)  =", integrate_sym("x*sin(x)", "x"))
+
+// Verifizierung: Ableitung der Stammfunktion = Integrand
+f = integrate_sym("x^3 + cos(x)", "x")
+df = diff_sym(f, "x")
+print("")
+print("Stammfunktion von x^3 + cos(x):", f)
+print("Ableitung davon (sollte Integrand sein):", df)

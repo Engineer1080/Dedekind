@@ -15,7 +15,8 @@ _RUNTIME_BUILTIN_NAMES = frozenset({
     'DedekindCut', 'DedekindIdeal', 'DedekindRingZ',
     'random_vector', 'random_matrix', 'transpose', 'inverse', 'dot_product', 'cross',
     'relu', 'softmax', 'convolution', 'pooling', 'fft', 'ifft', 'fftfreq', 'diff', 'cumsum', 'clip', 'shuffle', 'linspace', 'arange', 'arithmetic', 'geometric', 'sequence',
-    'ode_solve', 'pde_heat_1d', 'pde_heat_2d', 'pde_advection_1d', 'pde_advection_2d', 'pde_wave_1d', 'pde_wave_2d', 'pde_burgers_1d', 'pde_burgers_2d',
+    'ode_solve', 'lagrange_ode_rhs', 'hamilton_ode_rhs', 'lotka_volterra', 'chemical_equilibrium',
+    'pde_heat_1d', 'pde_heat_2d', 'pde_advection_1d', 'pde_advection_2d', 'pde_wave_1d', 'pde_wave_2d', 'pde_burgers_1d', 'pde_burgers_2d',
     'pde_reaction_diffusion_1d', 'pde_reaction_diffusion_2d',
     'pde_advection_diffusion_1d', 'pde_advection_diffusion_2d',
     'pde_maxwell_1d', 'pde_maxwell_2d', 'pde_navier_stokes_2d',
@@ -52,7 +53,7 @@ _RUNTIME_BUILTIN_NAMES = frozenset({
     'balance_equation',
     'read_file', 'write_file', 'file_exists', 'http_get', 'http_post',
     'json_parse', 'json_stringify', 'sort', 'quicksort', 'plot', 'scatter', 'contour', 'print_latex',
-    'assert', 'diff_sym', 'jacobian', 'hessian',
+    'assert', 'diff_sym', 'integrate_sym', 'jacobian', 'hessian',
     # Constants (from ml_runtime)
     'pi', 'e', 'c', 'G', 'h', 'k_B', 'k_e', 'hbar', 'e_charge', 'epsilon_0', 'mu_0',
     'm_e', 'm_p', 'N_A', 'R_gas', 'alpha', 'sigma_SB', 'F_faraday',
