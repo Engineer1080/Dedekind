@@ -7,7 +7,7 @@ Draft: January 2026 · Stand: v1.2.6 (Prototyp)
 
 ## Übersicht
 
-Dedekind ist aktuell ein **Prototyp (v1.2.7)**. Die folgende Einschätzung bezieht sich auf den **aktuellen Implementierungsstand** und nennt Lücken sowie Roadmap-Punkte.
+Dedekind ist aktuell ein **Prototyp (v1.2.8)**. Die folgende Einschätzung bezieht sich auf den **aktuellen Implementierungsstand** und nennt Lücken sowie Roadmap-Punkte.
 
 | Domäne       | Ausgereiftheit (kurz) | Nutzbar für …                          | Wichtige Lücken / Roadmap          |
 |-------------|------------------------|----------------------------------------|------------------------------------|
@@ -26,7 +26,7 @@ Dedekind ist aktuell ein **Prototyp (v1.2.7)**. Die folgende Einschätzung bezie
 - **Konstanten**: `pi`, `e` als `Quantity` (dimensionslos).
 - **Elementare Funktionen**: `sin`, `cos`, `tan`, `exp`, `log`, `log10`, `sqrt`, `abs`; Arkus- und Hyperbelfunktionen (`asin`, `acos`, `atan`, `atan2`, `sinh`, `cosh`, `tanh`); elementweise, differenzierbar.
 - **Reduktionen & Runden**: `min`, `max`, `argmin`, `argmax` (optional `dim`); `round`, `floor`, `ceil`.
-- **Lineare Algebra**: `norm(x)`, `det(A)`, `trace(A)`; `eigh`, `eig`, `svd`, `qr`, `lstsq`, `cond`, `rank`, `pinv`; Tensoren, Matrizen, `.shape`; FFT (`fft`, `ifft`).
+- **Lineare Algebra**: `norm(x)`, `det(A)`, `trace(A)`; `eigh`, `eig`, `svd`, `qr`, `lstsq`, `cond`, `rank`, `pinv`; Tensoren, Matrizen, `.shape`; FFT (`fft`, `ifft`). **Numerik**: `integrate`, `trapz`, `simpson`, `riemann_sum`; `zeta(s)` (Riemann-Zeta).
 - **Numerische Integration**: `integrate(f, a, b, n)` (Trapezregel); differenzierbar, wenn `f` Tensor akzeptiert.
 - **Statistik & Stochastik**: Verteilungen `Normal`, `Uniform`, `Bernoulli`, `Exponential`, `Gamma`, `Beta`, `Poisson`; `sample`, `log_prob`; MCMC (`metropolis`, `hmc`); Fitting `fit(..., method="gd"|"mcmc"|"hmc")`.
 - **Tensor-Notation**: Ricci-ähnliche Indexnotation (`A^ij * B_jk`) für Einstein-Summen.
@@ -37,7 +37,7 @@ Dedekind ist aktuell ein **Prototyp (v1.2.7)**. Die folgende Einschätzung bezie
 - **Symbolische Mathematik**: `diff_sym(expr, var)` liefert Ableitung als String; keine allgemeine symbolische Vereinfachung. Geplant: Phase 5 (Symbolic Simplification).
 - **LA**: Umfangreiche API vorhanden; spezielle Domänen (z. B. strukturierte Matrizen) optional.
 - **Differentialgeometrie**: Ricci-Notation, `christoffel_symbols`, `riemann_tensor`, `covariant_derivative` (numerisch) vorhanden.
-- **Zahlentheorie**: `gcd`, `is_prime`, `mod`, `mod_inv`, `mod_pow`; `binom(n, k)`; Fakultät `n!`; `dirichlet_function(x)` (D(x)=1 wenn x rational, sonst 0).
+- **Zahlentheorie**: `gcd`, `is_prime`, `mod`, `mod_inv`, `mod_pow`; `binom(n, k)`; Fakultät `n!`; `dirichlet_function(x)` (D(x)=1 wenn x rational, sonst 0). **Dedekind-Schnitte**: `DedekindCut`, `dedekind_cut_from_rational`, `dedekind_cut_sqrt2` (Konstruktion der reellen Zahlen aus Q). **Dedekind-Ringe**: `DedekindRingZ`, `ideal(n)`, `ideal_factor` (Z mit eindeutiger Ideal-Faktorisierung).
 
 **Fazit Mathematik**: Für **numerische Analysis, lineare Algebra, Statistik, Integration und Stochastik** gut nutzbar; für **symbolische und höhere mathematische Themen** noch Lücken. **Ausgereiftheit: gut nutzbar.**
 

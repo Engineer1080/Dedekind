@@ -1915,6 +1915,168 @@ def dirichlet_function(x):
             out.flatten()[i] = 0.0
     return out
 
+# --- Dedekind-Schnitte (Dedekind Cuts): Konstruktion der reellen Zahlen aus Q ---
+class DedekindCut:
+    """
+    Dedekind-Schnitt: Repräsentation einer reellen Zahl als untere Menge A ⊆ Q mit:
+    - A ≠ ∅, A ≠ Q; A abwärts abgeschlossen; A hat kein Maximum.
+    - Untere Menge A = {q ∈ Q : q < x} für die reelle Zahl x.
+    Implementierung: Speichert x als float; lower_set_contains(q) prüft q < x.
+    """
+    def __init__(self, value):
+        """Erzeuge Schnitt für reelle Zahl value. value: float, int oder Tensor-Skalar."""
+        try:
+            t = _to_tensor(value)
+            self._value = float(t.squeeze().item())
+        except Exception:
+            self._value = float(value)
+
+    def lower_set_contains(self, q):
+        """Prüft, ob rationale Zahl q in der unteren Menge liegt: q < x."""
+        q_val = float(_to_tensor(q).squeeze().item()) if hasattr(q, "item") or hasattr(q, "__float__") else float(q)
+        return q_val < self._value
+
+    def to_float(self):
+        """Reelle Zahl als float (approximativ)."""
+        return self._value
+
+    def __add__(self, other):
+        if isinstance(other, DedekindCut):
+            return DedekindCut(self._value + other._value)
+        return DedekindCut(self._value + float(other))
+
+    def __radd__(self, other):
+        return DedekindCut(float(other) + self._value)
+
+    def __sub__(self, other):
+        if isinstance(other, DedekindCut):
+            return DedekindCut(self._value - other._value)
+        return DedekindCut(self._value - float(other))
+
+    def __rsub__(self, other):
+        return DedekindCut(float(other) - self._value)
+
+    def __mul__(self, other):
+        if isinstance(other, DedekindCut):
+            return DedekindCut(self._value * other._value)
+        return DedekindCut(self._value * float(other))
+
+    def __rmul__(self, other):
+        return DedekindCut(float(other) * self._value)
+
+    def __neg__(self):
+        return DedekindCut(-self._value)
+
+    def __lt__(self, other):
+        if isinstance(other, DedekindCut):
+            return self._value < other._value
+        return self._value < float(other)
+
+    def __le__(self, other):
+        if isinstance(other, DedekindCut):
+            return self._value <= other._value
+        return self._value <= float(other)
+
+    def __gt__(self, other):
+        if isinstance(other, DedekindCut):
+            return self._value > other._value
+        return self._value > float(other)
+
+    def __ge__(self, other):
+        if isinstance(other, DedekindCut):
+            return self._value >= other._value
+        return self._value >= float(other)
+
+    def __repr__(self):
+        return f"DedekindCut({self._value})"
+
+
+def dedekind_cut_from_rational(p, q):
+    """Erzeuge Dedekind-Schnitt für rationale Zahl p/q (q ≠ 0)."""
+    p_val = int(_to_tensor(p).squeeze().item())
+    q_val = int(_to_tensor(q).squeeze().item())
+    if q_val == 0:
+        raise ValueError("dedekind_cut_from_rational: Nenner darf nicht 0 sein.")
+    return DedekindCut(p_val / q_val)
+
+
+def dedekind_cut_sqrt2():
+    """Dedekind-Schnitt für √2: Untere Menge = {q ∈ Q : q < 0 oder q² < 2}."""
+    return DedekindCut(1.4142135623730951)  # sqrt(2)
+
+
+def ideal(n):
+    """Erzeuge Hauptideal (n) im Ring Z. n: ganze Zahl."""
+    return DedekindIdeal(n, "Z")
+
+
+def ideal_factor(i):
+    """Zerlege Ideal in Primideale. Für Z: (n) = ∏ (p_i)^(e_i). Rückgabe: [(p, e), ...]."""
+    if isinstance(i, DedekindIdeal):
+        return i.factor()
+    raise TypeError("ideal_factor: Argument muss DedekindIdeal sein.")
+
+
+# --- Dedekind-Ringe: Integritätsbereiche mit eindeutiger Ideal-Faktorisierung ---
+class DedekindIdeal:
+    """
+    Ideal in einem Dedekind-Ring. Für Z: Hauptideal (n) = nZ.
+    Jedes Ideal faktorisiert eindeutig in Primideale.
+    """
+    def __init__(self, n, ring="Z"):
+        """n: Erzeuger für Z (nZ = (n)). ring: 'Z' für ganze Zahlen."""
+        self.n = abs(int(n)) if n != 0 else 0
+        self.ring = ring
+
+    def factor(self):
+        """Zerlege Ideal in Primideale. Für Z: (n) = ∏ (p_i)^(e_i) mit n = ∏ p_i^e_i."""
+        if self.n == 0:
+            return []
+        n = self.n
+        factors = []
+        d = 2
+        while d * d <= n:
+            e = 0
+            while n % d == 0:
+                n //= d
+                e += 1
+            if e > 0:
+                factors.append((d, e))
+            d += 1 if d == 2 else 2
+        if n > 1:
+            factors.append((n, 1))
+        return factors
+
+    def norm(self):
+        """Norm des Ideals. Für Z: |(n)| = |n|."""
+        return self.n
+
+    def __mul__(self, other):
+        """Ideal-Multiplikation. Für Z: (a)(b) = (ab)."""
+        if isinstance(other, DedekindIdeal) and self.ring == other.ring == "Z":
+            return DedekindIdeal(self.n * other.n, self.ring)
+        return NotImplemented
+
+    def __repr__(self):
+        return f"DedekindIdeal({self.n})"
+
+
+class DedekindRingZ:
+    """
+    Ring der ganzen Zahlen Z als Dedekind-Ring.
+    Jedes Ideal (n) faktorisiert eindeutig in Primideale.
+    """
+    def __init__(self):
+        pass
+
+    def ideal(self, n):
+        """Erzeuge Hauptideal (n) = nZ."""
+        return DedekindIdeal(n, "Z")
+
+    def __repr__(self):
+        return "DedekindRingZ()"
+
+
 def sample(dist, sample_shape=None):
     """Draw sample(s) from distribution. sample_shape: e.g. [] for one sample, [n] for n samples."""
     if sample_shape is None:
@@ -3116,6 +3278,57 @@ def simpson(y, x=None):
         s = (h_seg / 3.0) * (y_t[:-1] * coeff).sum()
         s = s + (h / (n - 1.0) / 2.0) * (y_t[-2] + y_t[-1])
     return s.squeeze()
+
+def riemann_sum(f, a, b, n=100, method="midpoint"):
+    """
+    Riemann-Summe: Approximation von int_a^b f(x) dx.
+    f: Callable mit einem Argument (Tensor); a, b: Integrationsgrenzen; n: Anzahl Teilintervalle.
+    method: "left" (links), "right" (rechts), "midpoint" (Mittelpunkt, default).
+    Rückgabe: Skalar-Tensor; differenzierbar bzgl. in f verwendeter Parameter.
+    """
+    a_val = float(_to_tensor(a).float().squeeze().item())
+    b_val = float(_to_tensor(b).float().squeeze().item())
+    n_int = _builtin_max(1, int(n))
+    dx = (b_val - a_val) / n_int
+    if method == "left":
+        x = torch.linspace(a_val, b_val - dx, n_int)
+    elif method == "right":
+        x = torch.linspace(a_val + dx, b_val, n_int)
+    else:  # midpoint
+        x = torch.linspace(a_val + dx / 2.0, b_val - dx / 2.0, n_int)
+    y = f(x)
+    y = _to_tensor(y).float().flatten()
+    if y.numel() != n_int:
+        raise ValueError("riemann_sum: f(x) muss gleiche Länge wie Stützstellen haben.")
+    return (dx * y.sum()).squeeze()
+
+def zeta(s):
+    """
+    Riemann-Zeta-Funktion ζ(s) = Σ_{n=1}^∞ 1/n^s.
+    s: reell oder komplex; Konvergenz für Re(s) > 1; analytische Fortsetzung für s ≠ 1.
+    Nutzt scipy.special.zeta. Für s=1: harmonische Reihe divergiert → inf.
+    """
+    try:
+        import scipy.special as sc  # type: ignore[import-untyped]
+    except ImportError:
+        raise RuntimeError("zeta(s) erfordert scipy. Bitte installieren: pip install scipy")
+    s_t = _to_tensor(s).float()
+    _abs = builtins.abs  # Python built-in für komplexe Zahlen
+    if s_t.dim() == 0:
+        s_val = complex(s_t.item())
+        if _abs(s_val - 1.0) < 1e-12:
+            return torch.tensor(float("inf"), dtype=torch.float32)
+        out = sc.zeta(s_val, 1)  # Riemann zeta (q=1)
+        return torch.tensor(float(out.real), dtype=torch.float32)
+    out = torch.zeros_like(s_t)
+    flat = s_t.flatten()
+    for i in range(flat.numel()):
+        v = complex(flat[i].item())
+        if _abs(v - 1.0) < 1e-12:
+            out.flatten()[i] = float("inf")
+        else:
+            out.flatten()[i] = float(sc.zeta(v, 1).real)
+    return out
 
 # --- Standard Library: Uncertainty Propagation (Gaussian) ---
 # Fehlerfortpflanzung für Wissenschaftler: value ± std; Gauß'sche Näherung für +, -, *, /, ^.

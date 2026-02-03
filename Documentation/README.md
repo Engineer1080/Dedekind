@@ -6,7 +6,7 @@ This folder contains the **source** and **generated** documentation for the Dede
 
 | File | Description |
 |------|-------------|
-| **Dedekind_Language_Specification.md** | Language Specification (Markdown source, v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9/v0.9.6; Chemie/Biologie v0.9.7; I/O/JSON v0.9.8; Stand v1.2.7: Dirichlet-Verteilung, dirichlet_function) |
+| **Dedekind_Language_Specification.md** | Language Specification (Markdown source, v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9/v0.9.6; Chemie/Biologie v0.9.7; I/O/JSON v0.9.8; Stand v1.2.8: Dedekind-Schnitte, Dedekind-Ringe, Riemann-Zeta, Riemann-Summen) |
 | **Dedekind_Research_and_Architecture.md** | Research foundation & architecture (Markdown source; §10 Sprachfeatures v0.6) |
 | **Symbolic_Simplification_Roadmap.md** | Implementierungs-Roadmap für Symbolic Simplification (Phasen, Optionen, Integration) |
 | **Features_Implementation_Roadmap.md** | Implementierungs-Roadmap für naturwissenschaftliche Features (Verteilungen, Integration, Einheiten Compile-Zeit, NUTS/VI, Fitting, LaTeX, symbolische Ableitungen) |
@@ -14,7 +14,7 @@ This folder contains the **source** and **generated** documentation for the Dede
 | **Underserved_Sciences_Roadmap.md** | Roadmap für Wissenschaften, die von R/Python vernachlässigt werden (Geologie, Werkstoffe, Bauingenieurwesen, Ökonomie, Musik, Lehre) |
 | **Commercialization_Options.md** | Potenzielle Kommerzialisierungsoptionen (Beratung, Support, Lizenzen, SaaS, Förderung, Phasierung, Risiken) |
 | **IDE_Studio_Roadmap.md** | Dedekind in bestehenden IDEs (VS Code, Jupyter) + Dedekind Studio als kommerzielle Wissenschaftler-IDE (Einheiten, Plots, Postgres, LaTeX, lokale KI) |
-| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.2.7; Stärken, Lücken, Roadmap) |
+| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.2.8; Stärken, Lücken, Roadmap) |
 | **Dedekind_Language_Specification_v0.1.pdf** | Legacy PDF (v0.1); for current spec use the Markdown or generate v0.2 PDF below |
 | **Dedekind_Research_Papers_and_Architecture.pdf** | Legacy PDF; for current content use the Markdown or generate PDF below |
 
@@ -40,6 +40,10 @@ pandoc Dedekind_Research_and_Architecture.md -o Dedekind_Research_and_Architectu
 - **Online**: Paste the Markdown into a service that converts Markdown to PDF (e.g. markdown-to-pdf converters).
 - **Typora / other editors**: Open the `.md` file and export to PDF from the application.
 
+
+## What changed in v1.2.8 (documented here)
+
+- **Version 1.2.8**: **Dedekind-Schnitte:** `DedekindCut(x)`, `dedekind_cut_from_rational(p,q)`, `dedekind_cut_sqrt2()` – Konstruktion der reellen Zahlen aus Q. **Dedekind-Ringe:** `DedekindRingZ()`, `ideal(n)`, `ideal_factor(i)` – Z mit Ideal-Faktorisierung. **Riemann-Zeta:** `zeta(s)` – ζ(s)=Σ 1/n^s (scipy). **Riemann-Summen:** `riemann_sum(f, a, b, n, method="left"|"right"|"midpoint")`. Beispiele: `dedekind_cuts_rings.ddk`, `riemann_zeta_sums.ddk`.
 
 ## What changed in v1.2.7 (documented here)
 

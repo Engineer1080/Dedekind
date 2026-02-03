@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-1.2.7-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-1.2.8-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -28,6 +28,13 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
+
+### What's New in v1.2.8
+
+- **Dedekind-Schnitte:** `DedekindCut(x)` – Konstruktion der reellen Zahlen aus Q; `dedekind_cut_from_rational(p,q)`, `dedekind_cut_sqrt2()`; `lower_set_contains(cut,q)`, `to_float()`; Arithmetik und Vergleiche.
+- **Dedekind-Ringe:** `DedekindRingZ()`, `ideal(n)`, `ideal_factor(i)` – Z mit eindeutiger Ideal-Faktorisierung; `DedekindIdeal` mit `.factor()`, `.norm()`, `*`.
+- **Riemann-Zeta-Funktion:** `zeta(s)` – ζ(s)=Σ 1/n^s (scipy); ζ(2)=π²/6, ζ(4)=π⁴/90.
+- **Riemann-Summen:** `riemann_sum(f, a, b, n, method="left"|"right"|"midpoint")` – Approximation von ∫f dx. Beispiele: `dedekind_cuts_rings.ddk`, `riemann_zeta_sums.ddk`.
 
 ### What's New in v1.2.7
 
@@ -305,7 +312,9 @@ Example programs are in `examples/dedekind/`, including:
 - `differentiable_ode.ddk` – differentiable ODE solver with `ode_solve` and `grad`  
 - `pde_heat.ddk` – differentiable PDE solver (1D/2D heat equation) with `pde_heat_1d` / `pde_heat_2d`  
 - `distributions_extended.ddk` – Exponential, Gamma, Beta, Poisson; `sample`, `log_prob`
-- `dirichlet_distribution_function.ddk` – Dirichlet-Verteilung und Dirichlet-Funktion D(x)  
+- `dirichlet_distribution_function.ddk` – Dirichlet-Verteilung und Dirichlet-Funktion D(x)
+- `dedekind_cuts_rings.ddk` – Dedekind-Schnitte (Konstruktion von R aus Q) und Dedekind-Ringe (Ideal-Faktorisierung in Z)
+- `riemann_zeta_sums.ddk` – Riemann-Zeta ζ(s) und Riemann-Summen (links, rechts, Mittelpunkt)  
 - `integration.ddk` – numerical integration `integrate(f, a, b)` and `sin`/`cos`  
 - `uncertainty_propagation.ddk` – `uncertain(value, std)`; Gauß'sche Fehlerfortpflanzung  
 - `curve_fitting.ddk` – `fit(loss_fn, params_init, data)` für lineare Regression  
