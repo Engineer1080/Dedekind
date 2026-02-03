@@ -1,0 +1,11 @@
+// Unbestimmte Integrale: integrate_sym(expr, var)
+fn main() {
+    assert(integrate_sym("x^2", "x") == "x^3/3")
+    assert(integrate_sym("1", "x") == "x")
+    assert(integrate_sym("sin(x)", "x") == "-cos(x)")
+    assert(integrate_sym("cos(x)", "x") == "sin(x)")
+    assert(integrate_sym("exp(x)", "x") == "exp(x)")
+    assert(integrate_sym("1/x", "x") == "log(x)")
+    print("integrate_sym_test: bestanden.")
+}
+main()

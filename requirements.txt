@@ -6,6 +6,7 @@ flask-cors>=3.0
 torch>=2.0
 matplotlib>=3.5
 scipy>=1.9
+sympy>=1.10
 
 # Dedekind Jupyter Kernel (für Spyder / Jupyter / Dedekind Studio)
 ipykernel>=6.0
