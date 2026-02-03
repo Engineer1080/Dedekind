@@ -51,14 +51,14 @@ Dedekind ist aktuell ein **Prototyp (v1.0.6)**. Die folgende Einschätzung bezie
 - **Compile-Zeit-Check**: `1[m] + 1[s]` → Compiler-Fehler mit Zeile; `units_checker.py`, CLI `--no-units-check`.
 - **Konstanten (CODATA)**: `c`, `G`, `h`, `hbar`, `k_B`, `k_e`, `e_charge`, `epsilon_0`, `mu_0`, `m_e`, `m_p`, `N_A`, `R_gas`, `alpha`, `sigma_SB`, `F_faraday` — alle als `Quantity` mit SI-Einheiten.
 - **Differenzierbare ODE**: `ode_solve(fun, y0, t)` (RK4/Euler); `grad()` durch `y0` und Parameter; `linspace(start, stop, steps)`.
-- **Differenzierbare PDE**: `pde_heat_1d(u0, x, t, k)`, `pde_heat_2d(u0, x, y, t, k)` für Wärmeleitung; Finite Differenzen + `ode_solve`; Gradients durch `u0`, `k`.
+- **Differenzierbare PDE**: `pde_heat_1d`, `pde_heat_2d` (Wärmeleitung); `pde_advection_1d`, `pde_advection_2d` (Advektion u_t + v·∇u = 0, Upwind, periodisch); Finite Differenzen + `ode_solve`; Gradients durch `u0`, Parameter.
 - **Quaternionen**: Native Unterstützung (`i`, `j`, `k`), `.rotate()`; für Rotationen und Signalverarbeitung.
 - **Uncertainty**: `uncertain(value, std)`, `UncertainQuantity` — Gauß’sche Fehlerfortpflanzung; optional mit Einheit.
-- **Beispiele**: `universal_constants.ddk`, `physical_units.ddk`, `differentiable_ode.ddk`, `pde_heat.ddk`, `relativity_physics.ddk`, `signal_physics.ddk`, `quantum_rotations.ddk`.
+- **Beispiele**: `universal_constants.ddk`, `physical_units.ddk`, `differentiable_ode.ddk`, `pde_heat.ddk`, `pde_advection.ddk`, `relativity_physics.ddk`, `signal_physics.ddk`, `quantum_rotations.ddk`.
 
 ### Lücken / Roadmap
 
-- **Weitere PDE**: Nur Wärmeleitung 1D/2D; keine Wellen-, Advektions- oder Maxwell-Gleichungen als Standard-API.
+- **Weitere PDE**: Wärmeleitung und Advektion 1D/2D vorhanden; keine Wellen- oder Maxwell-Gleichungen als Standard-API.
 - **Lagrange/Hamilton**: Keine eingebaute Formulierung; mit `ode_solve` und eigener RHS modellierbar.
 - **Feldtheorie**: Keine speziellen Primitiven.
 
