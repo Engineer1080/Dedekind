@@ -51,14 +51,14 @@ Dedekind ist aktuell ein **Prototyp (v1.0.6)**. Die folgende Einschätzung bezie
 - **Compile-Zeit-Check**: `1[m] + 1[s]` → Compiler-Fehler mit Zeile; `units_checker.py`, CLI `--no-units-check`.
 - **Konstanten (CODATA)**: `c`, `G`, `h`, `hbar`, `k_B`, `k_e`, `e_charge`, `epsilon_0`, `mu_0`, `m_e`, `m_p`, `N_A`, `R_gas`, `alpha`, `sigma_SB`, `F_faraday` — alle als `Quantity` mit SI-Einheiten.
 - **Differenzierbare ODE**: `ode_solve(fun, y0, t)` (RK4/Euler); `grad()` durch `y0` und Parameter; `linspace(start, stop, steps)`.
-- **Differenzierbare PDE**: `pde_heat_1d`, `pde_heat_2d` (Wärmeleitung); `pde_advection_1d`, `pde_advection_2d` (Advektion); `pde_wave_1d`, `pde_wave_2d` (Wellengleichung); `pde_burgers_1d`, `pde_burgers_2d` (Burgers u_t + u·∇u = ν∇²u); Finite Differenzen + `ode_solve`; Gradients durch `u0`, Parameter.
+- **Differenzierbare PDE**: `pde_heat_1d`, `pde_heat_2d` (Wärmeleitung); `pde_advection_1d`, `pde_advection_2d` (Advektion); `pde_wave_1d`, `pde_wave_2d` (Wellengleichung); `pde_burgers_1d`, `pde_burgers_2d` (Burgers); `pde_reaction_diffusion_1d` (Fisher-KPP), `pde_reaction_diffusion_2d` (Gray-Scott); `pde_advection_diffusion_1d`, `pde_advection_diffusion_2d`; Finite Differenzen + `ode_solve`; Gradients durch `u0`, Parameter.
 - **Quaternionen**: Native Unterstützung (`i`, `j`, `k`), `.rotate()`; für Rotationen und Signalverarbeitung.
 - **Uncertainty**: `uncertain(value, std)`, `UncertainQuantity` — Gauß’sche Fehlerfortpflanzung; optional mit Einheit.
-- **Beispiele**: `universal_constants.ddk`, `physical_units.ddk`, `differentiable_ode.ddk`, `pde_heat.ddk`, `pde_advection.ddk`, `pde_wave.ddk`, `pde_burgers.ddk`, `relativity_physics.ddk`, `signal_physics.ddk`, `quantum_rotations.ddk`.
+- **Beispiele**: `universal_constants.ddk`, `physical_units.ddk`, `differentiable_ode.ddk`, `pde_heat.ddk`, `pde_advection.ddk`, `pde_wave.ddk`, `pde_burgers.ddk`, `pde_reaction_diffusion.ddk`, `pde_advection_diffusion.ddk`, `relativity_physics.ddk`, `signal_physics.ddk`, `quantum_rotations.ddk`.
 
 ### Lücken / Roadmap
 
-- **Weitere PDE**: Wärmeleitung, Advektion, Wellengleichung, Burgers 1D/2D vorhanden; keine Maxwell-Gleichungen als Standard-API.
+- **Weitere PDE**: Wärmeleitung, Advektion, Wellengleichung, Burgers, Reaktions-Diffusion, Advektions-Diffusion 1D/2D vorhanden; keine Maxwell-Gleichungen als Standard-API.
 - **Lagrange/Hamilton**: Keine eingebaute Formulierung; mit `ode_solve` und eigener RHS modellierbar.
 - **Feldtheorie**: Keine speziellen Primitiven.
 

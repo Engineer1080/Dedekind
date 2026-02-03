@@ -1,0 +1,52 @@
+fn main() {
+    print("--- Dedekind: Reaktions-Diffusion ---")
+    print_latex(r"u_t = D \nabla^2 u + f(u) \quad \mathrm{Fisher-KPP}")
+    
+    // 1D: Fisher-KPP u_t = D*u_xx + r*u*(1-u)
+    n = 101
+    x = linspace(0, 1, n)
+    t = linspace(0, 2.0, 101)
+    D = 0.01
+    r = 1.0
+    
+    u0 = exp(-80.0 * (x - 0.5) * (x - 0.5))
+    
+    sol = pde_reaction_diffusion_1d(u0, x, t, D, r, "fisher")
+    print("1D Fisher-KPP: u(t=0) Gauß-Puls")
+    print("1D Fisher-KPP: u(t=2) Reaktion + Diffusion")
+    print("Shape:")
+    print(sol.shape)
+    
+    plot(x, sol[0], title="1D t=0 (Anfang)")
+    plot(x, sol[100], title="1D t=2 (Fisher-KPP)")
+    
+    // 2D: Gray-Scott (Turing-Muster)
+    nx = 64
+    ny = 64
+    x2 = linspace(0, 1, nx)
+    y2 = linspace(0, 1, ny)
+    t2 = linspace(0, 0.5, 51)
+    Du = 0.0002
+    Dv = 0.0001
+    a = 0.04
+    b = 0.06
+    
+    u0_2d = random_matrix(nx, ny) * 0.0 + 1.0
+    v0_2d = random_matrix(nx, ny) * 0.0
+    v0_2d[30][30] = 1.0
+    v0_2d[34][34] = 1.0
+    
+    result = pde_reaction_diffusion_2d(u0_2d, v0_2d, x2, y2, t2, Du, Dv, a, b)
+    u_sol = result[0]
+    v_sol = result[1]
+    
+    print("2D Gray-Scott: Turing-Muster")
+    print("u Shape:")
+    print(u_sol.shape)
+    
+    contour(x2, y2, v_sol[0], title="2D v t=0 (Anfang)", levels=8)
+    contour(x2, y2, v_sol[50], title="2D v t=0.5 (Turing)", levels=8)
+    
+    print("Reaktions-Diffusion aktiv.")
+}
+main()

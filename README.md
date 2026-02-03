@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-1.2.2-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-1.2.3-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -14,7 +14,7 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **Physical Units**: SI base m, kg, s, A, K, mol, **cd** (candela); literals (`10[m]`, `5[m/s]`, `1.0[kg]`, `1[cd]`); **automatische Umrechnung** bei Addition/Subtraktion für gleiche Dimension — **SI-Basis**: Länge (m, cm, km, mm, dm), Masse (kg, g, t, mg), Zeit (s, min, h, ms), Strom (A, mA, kA, uA), Temperatur (K, mK), Stoffmenge (mol, mmol, kmol), Lichtstärke (cd, mcd); **abgeleitet**: Druck (Pa, bar, atm), Volumen (L, mL, dm³, m³), Energie (J, kJ, MJ, Wh, kWh), Spannung (V, mV, kV), Frequenz (Hz, kHz, MHz, GHz), Ladung (C, mC, uC), Widerstand (ohm, kohm, Mohm), Leistung (W, kW, MW). Ergebnis = Einheit des ersten Operanden; z. B. `1[m] + 100[cm]` → `2[m]`, `1[kJ] + 500[J]` → `1.5[kJ]`. Sonst add/sub gleiche Einheit; multiply/divide kombinieren Einheiten; `^` für Potenzen; Anzeige vereinfacht (J, N, Pa, W, Hz, …). **Chemie**: mol, L, M (= mol/L), ppm, **bar**, **atm**, **g**; **Radioaktivität**: **Bq**, **Sv**, Gy.
 - **4D Rotational Math**: Native Quaternion support (`i`, `j`, `k` suffixes) and `.rotate()` method; unary minus supported (`-1.0 + 0i`).
 - **Differentiable ODE Solvers**: `ode_solve(fun, y0, t)` (RK4/Euler); gradients via `grad()` for physics-informed ML; `linspace(start, stop, steps)` for time grids.
-- **Differentiable PDE Solvers**: `pde_heat_1d`, `pde_heat_2d` (heat); `pde_advection_1d`, `pde_advection_2d` (advection); `pde_wave_1d`, `pde_wave_2d` (wave); `pde_burgers_1d`, `pde_burgers_2d` (Burgers u_t + u·∇u = ν∇²u); finite differences + `ode_solve`; gradients through `u0` and parameters.
+- **Differentiable PDE Solvers**: `pde_heat_1d`, `pde_heat_2d` (heat); `pde_advection_1d`, `pde_advection_2d` (advection); `pde_wave_1d`, `pde_wave_2d` (wave); `pde_burgers_1d`, `pde_burgers_2d` (Burgers); `pde_reaction_diffusion_1d` (Fisher-KPP), `pde_reaction_diffusion_2d` (Gray-Scott); `pde_advection_diffusion_1d`, `pde_advection_diffusion_2d`; finite differences + `ode_solve`; gradients through `u0` and parameters.
 - **Probabilistic Programming**: First-class distributions `Normal(mu, sigma)`, `Uniform(low, high)`, `Bernoulli(p)`, `Exponential(rate)`, `Gamma(concentration, rate)`, `Beta(alpha, beta)`, `Poisson(rate)`; `sample(dist)`, `log_prob(dist, value)`; Bayesian inference via `metropolis(log_prior, log_likelihood, data, init, steps)`.
 - **Numerical Integration**: `integrate(f, a, b, n)` — trapezoidal quadrature; differentiable when `f` accepts a tensor.
 - **Math Functions**: `sin`, `cos`, `tan`, `exp`, `log`, `log10`, `sqrt`, `abs`; `asin`, `acos`, `atan`, `atan2(y,x)`; `sinh`, `cosh`, `tanh` — element-wise, differentiable; Tensor or scalar. **Reductions**: `min(x)`, `max(x)`, `argmin(x)`, `argmax(x)` (optional `dim`). **Rounding**: `round(x)`, `floor(x)`, `ceil(x)`. **Linear algebra**: `norm(x)`, `det(A)`, `trace(A)`.
@@ -28,6 +28,10 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
+
+### What's New in v1.2.3
+- **Reaktions-Diffusion:** `pde_reaction_diffusion_1d(u0, x, t, D, r, reaction="fisher")` (Fisher-KPP u_t = D∇²u + r·u·(1-u)); `pde_reaction_diffusion_2d(u0, v0, x, y, t, Du, Dv, a, b)` (Gray-Scott, Turing-Muster); Beispiel `pde_reaction_diffusion.ddk`.
+- **Advektions-Diffusion:** `pde_advection_diffusion_1d(u0, x, t, v, D)`, `pde_advection_diffusion_2d(u0, x, y, t, vx, vy, D)` für u_t + v·∇u = D∇²u; Upwind + zentrale Differenzen; Beispiel `pde_advection_diffusion.ddk`.
 
 ### What's New in v1.2.2
 - **Wellengleichung:** `pde_wave_1d(u0, x, t, c, v0)`, `pde_wave_2d(u0, x, y, t, c, v0)` für u_tt = c²∇²u; Reduktion auf System 1. Ordnung; zentrale Differenzen; periodische oder dirichlet Randbedingungen; Beispiel `pde_wave.ddk`.
