@@ -1208,6 +1208,213 @@ def pde_burgers_2d(u0, x, y, t, nu, bc="periodic"):
 
     return ode_solve(rhs, u0.flatten(), t).reshape(t.numel(), nx, ny)
 
+# --- Reaktions-Diffusion: u_t = D∇²u + f(u) bzw. Gray-Scott (u,v) ---
+
+def pde_reaction_diffusion_1d(u0, x, t, D, r, reaction="fisher", bc="periodic"):
+    """
+    Differenzierbarer 1D-Reaktions-Diffusionssolver: u_t = D*u_xx + f(u).
+    reaction="fisher": Fisher-KPP f(u)=r*u*(1-u); zentrale Differenzen für Diffusion.
+    u0: Anfangsbedingung (1D); x: Ortsgitter; t: Zeitgitter; D: Diffusionskoeffizient; r: Reaktionsrate.
+    bc: 'periodic' (default) oder 'dirichlet'. Rückgabe: (len(t), len(x)).
+    """
+    u0 = _to_tensor(u0).float().flatten()
+    x = _to_tensor(x).float().flatten().to(u0.device)
+    t = _to_tensor(t).float().flatten().to(u0.device)
+    D_val = float(_to_tensor(D).float().item())
+    r_val = float(_to_tensor(r).float().item())
+    n = u0.numel()
+    if x.numel() != n:
+        raise ValueError("pde_reaction_diffusion_1d: len(u0) muss len(x) entsprechen.")
+    if n < 3:
+        raise ValueError("pde_reaction_diffusion_1d: mindestens 3 Gitterpunkte.")
+    dx = float((x[-1] - x[0]).item()) / _builtin_max(n - 1, 1)
+    if abs(dx) < 1e-14:
+        dx = 1.0
+    dx2 = dx * dx
+
+    def rhs(t_cur, u):
+        u = u.flatten()
+        if bc == "periodic":
+            u_left = torch.roll(u, 1, dims=0)
+            u_right = torch.roll(u, -1, dims=0)
+        else:
+            u_left = torch.cat([u[:1], u[:-1]])
+            u_right = torch.cat([u[1:], u[-1:]])
+        u_xx = (u_left - 2.0 * u + u_right) / dx2
+        if reaction == "fisher":
+            react = r_val * u * (1.0 - u)
+        else:
+            react = r_val * u
+        dudt = D_val * u_xx + react
+        return dudt
+
+    return ode_solve(rhs, u0, t)
+
+def pde_reaction_diffusion_2d(u0, v0, x, y, t, Du, Dv, a, b, bc="periodic"):
+    """
+    Differenzierbarer 2D-Gray-Scott-Solver: u_t = Du∇²u - u*v² + a*(1-u), v_t = Dv∇²v + u*v² - b*v.
+    Turing-Muster, zentrale Differenzen. u0, v0: Anfangsbedingungen 2D (nx, ny); x, y: Ortsgitter.
+    t: Zeitgitter; Du, Dv: Diffusionskoeffizienten; a, b: Gray-Scott-Parameter.
+    bc: 'periodic' (default) oder 'dirichlet'. Rückgabe: (u_sol, v_sol) je (len(t), nx, ny).
+    """
+    u0 = _to_tensor(u0).float()
+    v0 = _to_tensor(v0).float().to(u0.device)
+    if u0.dim() == 1 or v0.dim() == 1:
+        raise ValueError("pde_reaction_diffusion_2d: u0 und v0 müssen 2D-Gitter (nx, ny) sein.")
+    nx, ny = u0.shape[0], u0.shape[1]
+    if v0.shape != u0.shape:
+        raise ValueError("pde_reaction_diffusion_2d: u0 und v0 müssen gleiche Form haben.")
+    x = _to_tensor(x).float().flatten().to(u0.device)
+    y = _to_tensor(y).float().flatten().to(u0.device)
+    t = _to_tensor(t).float().flatten().to(u0.device)
+    Du_val = float(_to_tensor(Du).float().item())
+    Dv_val = float(_to_tensor(Dv).float().item())
+    a_val = float(_to_tensor(a).float().item())
+    b_val = float(_to_tensor(b).float().item())
+    if x.numel() != nx or y.numel() != ny:
+        raise ValueError("pde_reaction_diffusion_2d: x/y Länge muss zu u0 passen.")
+    if nx < 3 or ny < 3:
+        raise ValueError("pde_reaction_diffusion_2d: mindestens 3×3 Gitterpunkte.")
+    dx = float((x[-1] - x[0]).item()) / _builtin_max(nx - 1, 1)
+    dy = float((y[-1] - y[0]).item()) / _builtin_max(ny - 1, 1)
+    if abs(dx) < 1e-14:
+        dx = 1.0
+    if abs(dy) < 1e-14:
+        dy = 1.0
+    dx2, dy2 = dx * dx, dy * dy
+    n = nx * ny
+    y0 = torch.cat([u0.flatten(), v0.flatten()], dim=0)
+
+    def _lap(u):
+        if bc == "periodic":
+            u_left = torch.roll(u, 1, dims=0)
+            u_right = torch.roll(u, -1, dims=0)
+            u_bottom = torch.roll(u, 1, dims=1)
+            u_top = torch.roll(u, -1, dims=1)
+        else:
+            u_left = torch.cat([u[:1, :], u[:-1, :]], dim=0)
+            u_right = torch.cat([u[1:, :], u[-1:, :]], dim=0)
+            u_bottom = torch.cat([u[:, :1], u[:, :-1]], dim=1)
+            u_top = torch.cat([u[:, 1:], u[:, -1:]], dim=1)
+        u_xx = (u_left - 2.0 * u + u_right) / dx2
+        u_yy = (u_bottom - 2.0 * u + u_top) / dy2
+        return u_xx + u_yy
+
+    def rhs(t_cur, y_flat):
+        u = y_flat[:n].reshape(nx, ny)
+        v = y_flat[n:].reshape(nx, ny)
+        uv2 = u * v * v
+        lap_u = _lap(u)
+        lap_v = _lap(v)
+        dudt = Du_val * lap_u - uv2 + a_val * (1.0 - u)
+        dvdt = Dv_val * lap_v + uv2 - b_val * v
+        return torch.cat([dudt.flatten(), dvdt.flatten()], dim=0)
+
+    sol = ode_solve(rhs, y0, t)
+    u_sol = sol[:, :n].reshape(t.numel(), nx, ny)
+    v_sol = sol[:, n:].reshape(t.numel(), nx, ny)
+    return u_sol, v_sol
+
+# --- Advektions-Diffusion: u_t + v·∇u = D∇²u ---
+
+def pde_advection_diffusion_1d(u0, x, t, v, D, bc="periodic"):
+    """
+    Differenzierbarer 1D-Advektions-Diffusionssolver: u_t + v*u_x = D*u_xx.
+    Upwind für Advektion, zentrale Differenzen für Diffusion.
+    u0: Anfangsbedingung (1D); x: Ortsgitter; t: Zeitgitter; v: Geschwindigkeit; D: Diffusionskoeffizient.
+    bc: 'periodic' (default) oder 'dirichlet'. Rückgabe: (len(t), len(x)).
+    """
+    u0 = _to_tensor(u0).float().flatten()
+    x = _to_tensor(x).float().flatten().to(u0.device)
+    t = _to_tensor(t).float().flatten().to(u0.device)
+    v_val = float(_to_tensor(v).float().item())
+    D_val = float(_to_tensor(D).float().item())
+    n = u0.numel()
+    if x.numel() != n:
+        raise ValueError("pde_advection_diffusion_1d: len(u0) muss len(x) entsprechen.")
+    if n < 3:
+        raise ValueError("pde_advection_diffusion_1d: mindestens 3 Gitterpunkte.")
+    dx = float((x[-1] - x[0]).item()) / _builtin_max(n - 1, 1)
+    if abs(dx) < 1e-14:
+        dx = 1.0
+    dx2 = dx * dx
+
+    def rhs(t_cur, u):
+        u = u.flatten()
+        if bc == "periodic":
+            u_left = torch.roll(u, 1, dims=0)
+            u_right = torch.roll(u, -1, dims=0)
+        else:
+            u_left = torch.cat([u[:1], u[:-1]])
+            u_right = torch.cat([u[1:], u[-1:]])
+        u_xx = (u_left - 2.0 * u + u_right) / dx2
+        if v_val > 0:
+            adv = -v_val * (u - u_left) / dx
+        else:
+            adv = -v_val * (u_right - u) / dx
+        dudt = adv + D_val * u_xx
+        return dudt
+
+    return ode_solve(rhs, u0, t)
+
+def pde_advection_diffusion_2d(u0, x, y, t, vx, vy, D, bc="periodic"):
+    """
+    Differenzierbarer 2D-Advektions-Diffusionssolver: u_t + vx*u_x + vy*u_y = D*(u_xx + u_yy).
+    Upwind für Advektion, zentrale Differenzen für Diffusion.
+    u0: Anfangsbedingung 2D (nx, ny); x, y: Ortsgitter; t: Zeitgitter; vx, vy: Geschwindigkeit; D: Diffusionskoeffizient.
+    bc: 'periodic' (default) oder 'dirichlet'. Rückgabe: (len(t), nx, ny).
+    """
+    u0 = _to_tensor(u0).float()
+    if u0.dim() == 1:
+        raise ValueError("pde_advection_diffusion_2d: u0 muss 2D-Gitter (nx, ny) sein.")
+    nx, ny = u0.shape[0], u0.shape[1]
+    x = _to_tensor(x).float().flatten().to(u0.device)
+    y = _to_tensor(y).float().flatten().to(u0.device)
+    t = _to_tensor(t).float().flatten().to(u0.device)
+    vx_val = float(_to_tensor(vx).float().item())
+    vy_val = float(_to_tensor(vy).float().item())
+    D_val = float(_to_tensor(D).float().item())
+    if x.numel() != nx or y.numel() != ny:
+        raise ValueError("pde_advection_diffusion_2d: x/y Länge muss zu u0 passen.")
+    if nx < 3 or ny < 3:
+        raise ValueError("pde_advection_diffusion_2d: mindestens 3×3 Gitterpunkte.")
+    dx = float((x[-1] - x[0]).item()) / _builtin_max(nx - 1, 1)
+    dy = float((y[-1] - y[0]).item()) / _builtin_max(ny - 1, 1)
+    if abs(dx) < 1e-14:
+        dx = 1.0
+    if abs(dy) < 1e-14:
+        dy = 1.0
+    dx2, dy2 = dx * dx, dy * dy
+
+    def rhs(t_cur, u_flat):
+        u = u_flat.reshape(nx, ny)
+        if bc == "periodic":
+            u_left = torch.roll(u, 1, dims=0)
+            u_right = torch.roll(u, -1, dims=0)
+            u_bottom = torch.roll(u, 1, dims=1)
+            u_top = torch.roll(u, -1, dims=1)
+        else:
+            u_left = torch.cat([u[:1, :], u[:-1, :]], dim=0)
+            u_right = torch.cat([u[1:, :], u[-1:, :]], dim=0)
+            u_bottom = torch.cat([u[:, :1], u[:, :-1]], dim=1)
+            u_top = torch.cat([u[:, 1:], u[:, -1:]], dim=1)
+        u_xx = (u_left - 2.0 * u + u_right) / dx2
+        u_yy = (u_bottom - 2.0 * u + u_top) / dy2
+        lap_u = u_xx + u_yy
+        dudt = torch.zeros_like(u)
+        if vx_val > 0:
+            dudt = dudt - vx_val * (u - u_left) / dx
+        else:
+            dudt = dudt - vx_val * (u_right - u) / dx
+        if vy_val > 0:
+            dudt = dudt - vy_val * (u - u_bottom) / dy
+        else:
+            dudt = dudt - vy_val * (u_top - u) / dy
+        dudt = dudt + D_val * lap_u
+        return dudt.flatten()
+
+    return ode_solve(rhs, u0.flatten(), t).reshape(t.numel(), nx, ny)
+
 # --- Sparse PDE: 2D Laplacian und Diffusion ---
 
 def sparse_laplacian_2d(N, dx=None):
