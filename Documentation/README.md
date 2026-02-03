@@ -6,11 +6,12 @@ This folder contains the **source** and **generated** documentation for the Dede
 
 | File | Description |
 |------|-------------|
-| **Dedekind_Language_Specification.md** | Language Specification (Markdown source, v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9/v0.9.6; Chemie/Biologie v0.9.7; I/O/JSON v0.9.8; Stand v1.2.4) |
+| **Dedekind_Language_Specification.md** | Language Specification (Markdown source, v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9/v0.9.6; Chemie/Biologie v0.9.7; I/O/JSON v0.9.8; Stand v1.2.5) |
 | **Dedekind_Research_and_Architecture.md** | Research foundation & architecture (Markdown source; §10 Sprachfeatures v0.6) |
 | **Symbolic_Simplification_Roadmap.md** | Implementierungs-Roadmap für Symbolic Simplification (Phasen, Optionen, Integration) |
 | **Features_Implementation_Roadmap.md** | Implementierungs-Roadmap für naturwissenschaftliche Features (Verteilungen, Integration, Einheiten Compile-Zeit, NUTS/VI, Fitting, LaTeX, symbolische Ableitungen) |
 | **Chemistry_Biology_Roadmap.md** | Roadmap für Chemie und Biologie (Einheiten mol/L/M, Beispiele Kinetik/Dosis-Wirkung/Wachstum, Convenience-Funktionen, Doku „Dedekind für Chemie & Biologie“) |
+| **Underserved_Sciences_Roadmap.md** | Roadmap für Wissenschaften, die von R/Python vernachlässigt werden (Geologie, Werkstoffe, Bauingenieurwesen, Ökonomie, Musik, Lehre) |
 | **Commercialization_Options.md** | Potenzielle Kommerzialisierungsoptionen (Beratung, Support, Lizenzen, SaaS, Förderung, Phasierung, Risiken) |
 | **IDE_Studio_Roadmap.md** | Dedekind in bestehenden IDEs (VS Code, Jupyter) + Dedekind Studio als kommerzielle Wissenschaftler-IDE (Einheiten, Plots, Postgres, LaTeX, lokale KI) |
 | **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v0.9.8; Stärken, Lücken, Roadmap) |
@@ -39,6 +40,10 @@ pandoc Dedekind_Research_and_Architecture.md -o Dedekind_Research_and_Architectu
 - **Online**: Paste the Markdown into a service that converts Markdown to PDF (e.g. markdown-to-pdf converters).
 - **Typora / other editors**: Open the `.md` file and export to PDF from the application.
 
+
+## What changed in v1.2.5 (documented here)
+
+- **Version 1.2.5**: **Quick Wins (vernachlässigte Wissenschaften):** Einheiten kN, MPa, MN, kPa, D, mD (Bau, Werkstoffe, Geologie). Musik: `cents_to_ratio`, `ratio_to_cents`, `equal_temperament`. Ökonomie: `discount_factor`, `cobb_douglas`, `solow_rhs`. Geologie: `darcy_velocity`. Werkstoffe: `johnson_mehl_avrami`, `avrami_rate`. Beispiele: `quickwins_units.ddk`, `music_intervals.ddk`, `economics_solow.ddk`, `geology_darcy.ddk`, `materials_jmak.ddk`. Parser: Wissenschaftliche Notation (1e5, 1e-12) korrekt geparst.
 
 ## What changed in v1.2.4 (documented here)
 

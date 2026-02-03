@@ -238,7 +238,7 @@ class Parser:
         node = None
         if token.type == 'NUMBER':
             num_tok = self.consume()
-            value = float(num_tok.value) if '.' in num_tok.value else int(num_tok.value)
+            value = float(num_tok.value) if ('.' in num_tok.value or 'e' in num_tok.value.lower()) else int(num_tok.value)
             if self.peek() and self.peek().type == 'LBRACKET':
                 self.consume('LBRACKET')
                 unit_parts = []

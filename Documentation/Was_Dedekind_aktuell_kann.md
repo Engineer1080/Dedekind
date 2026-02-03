@@ -1,6 +1,6 @@
 # Was Dedekind aktuell kann
 
-**Stand:** Basierend auf Code und Changelogs (v1.2.4, Februar 2026). Dedekind ist ein **Prototyp** – die Sprache wird nach Python transpiliert und nutzt PyTorch/NumPy als Laufzeit.
+**Stand:** Basierend auf Code und Changelogs (v1.2.5, Februar 2026). Dedekind ist ein **Prototyp** – die Sprache wird nach Python transpiliert und nutzt PyTorch/NumPy als Laufzeit.
 
 ---
 
@@ -28,7 +28,7 @@
 
 ## Physik & Einheiten
 
-- **Einheiten-Literale:** SI-Basiseinheiten m, kg, s, A, K, mol, cd; abgeleitete Einheiten (Pa, W, Hz, V, F, ohm, S, Wb, T, H, lm, lx, Gy, kat, M); Chemie: mol, L, M (= mol/L), ppm, bar, atm, g; Radioaktivität: Bq, Sv.
+- **Einheiten-Literale:** SI-Basiseinheiten m, kg, s, A, K, mol, cd; abgeleitete Einheiten (Pa, W, Hz, V, F, ohm, S, Wb, T, H, lm, lx, Gy, kat, M); Chemie: mol, L, M (= mol/L), ppm, bar, atm, g; Radioaktivität: Bq, Sv. **Quick Wins:** Kraft (N, kN, MN), Druck (kPa, MPa), Durchlässigkeit (m², D, mD) für Bau, Werkstoffe, Geologie.
 - **Arithmetik:** **Automatische Umrechnung** bei Addition/Subtraktion für gleiche Dimension; Ergebnis in der Einheit des ersten Operanden. Unterstützt: **SI-Basis** — Länge (m, cm, km, mm, dm), Masse (kg, g, t, mg), Zeit (s, min, h, ms), Strom (A, mA, kA, uA), Temperatur (K, mK), Stoffmenge (mol, mmol, kmol), Lichtstärke (cd, mcd); **abgeleitet** — Druck (Pa, bar, atm), Volumen (L, mL, dm³, m³), Energie (J, kJ, MJ, Wh, kWh), Spannung (V, mV, kV), Frequenz (Hz, kHz, MHz, GHz), Ladung (C, mC, uC), Widerstand (ohm, kohm, Mohm), Leistung (W, kW, MW). Sonst gleiche Einheit für +/-. Multiplikation/Division kombiniert Einheiten; Potenz mit `^`. **Anzeige**: Gleiche Faktoren werden zusammengefasst (z. B. `m*m` → `m^2`, `m*m*m` → `m^3`); Literale `1[m^2]`, `1[m^3]` nutzbar. Anzeige vereinfacht (J, N, Pa, W usw.).
 - **Physikalische Konstanten (CODATA):** `c`, `G`, `h`, `hbar`, `k_B`, `k_e`, `e_charge`, `epsilon_0`, `mu_0`, `m_e`, `m_p`, `N_A`, `R_gas`, `alpha`, `sigma_SB`, `F_faraday` – alle als `Quantity` mit SI-Einheiten.
 - **Differenzierbare ODE:** `ode_solve(fun, y0, t)` (RK4/Euler); `linspace(start, stop, steps)`; Gradients durch `grad()` für Physics-Informed ML.
@@ -58,6 +58,16 @@
 
 ---
 
+## Quick Wins (vernachlässigte Wissenschaften)
+
+- **Musik:** `cents_to_ratio(cents)`, `ratio_to_cents(ratio)`, `equal_temperament(n, a4_hz)` – Frequenzverhältnisse, gleichstufige Stimmung.
+- **Ökonomie:** `discount_factor(r, t, discrete)`, `cobb_douglas(K, L, alpha, A)`, `solow_rhs(K, s, delta, n, g, alpha)` – Barwert, Cobb-Douglas, Solow RHS.
+- **Geologie:** `darcy_velocity(K, grad_P, mu)` – Darcy-Gesetz v = -(K/μ)∇P.
+- **Werkstoffe:** `johnson_mehl_avrami(t, k, n)`, `avrami_rate(t, k, n)` – JMAK-Phasenumwandlung.
+- **Beispiele:** `quickwins_units.ddk`, `music_intervals.ddk`, `economics_solow.ddk`, `geology_darcy.ddk`, `materials_jmak.ddk`.
+
+---
+
 ## Machine Learning & Tensoren
 
 - **Modelle:** `Sequential([Dense(...), ...])`, `Dense(n, activation="relu"|"softmax"|…)`; Forward-Pass mit `model.forward(input)`; `.fast()` für torch.compile (MLIR/Inductor).
@@ -79,7 +89,7 @@
 - **Compiler:** Transpilation von `.ddk` nach Python; CLI `python -m src.compiler.compiler <file.ddk>`; Optionen `--latex`, `--no-units-check`.
 - **Dedekind Studio:** Spyder-Fork mit nativem Dedekind- und Python-Kernel; Editor mit Syntax-Highlighting (Einheiten, Ricci-Indizes); Plots-Pane für `plot()`; wissenschaftliche Beispiele als Tabs; Fenster-/Taskleisten-Icon (Windows: .ico für scharfe Darstellung).
 - **Jupyter-Kernel:** Dedekind in Jupyter/Spyder-Konsolen; persistenter Kontext über Zellen.
-- **Beispiele:** Über 40 `.ddk`-Beispiele in `examples/dedekind/`; Batch-Test mit `run_examples.py` (-q, -v, --compile, --filter). **Tests:** `assert(condition, message)`; Mini-Test-Runner `run_tests.py` für `tests/dedekind/*.ddk`.
+- **Beispiele:** Über 45 `.ddk`-Beispiele in `examples/dedekind/`; Batch-Test mit `run_examples.py` (-q, -v, --compile, --filter). **Tests:** `assert(condition, message)`; Mini-Test-Runner `run_tests.py` für `tests/dedekind/*.ddk`.
 - **Plots:** `plot(x, y, title=..., xscale="linear"|"log", yscale="log")`; `scatter(x, y)`; `contour(X, Y, Z, levels=...)`.
 
 ---
