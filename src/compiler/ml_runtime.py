@@ -153,11 +153,19 @@ class Quantity:
             v = self.value * other.value
             u = _unit_mul(self.unit, other.unit)
             return Quantity(v, u)
+        if isinstance(other, torch.Tensor):
+            if self.unit:
+                return NotImplemented
+            return other * self.value
         return NotImplemented
 
     def __rmul__(self, other):
         if isinstance(other, (int, float)):
             return Quantity(other * self.value, self.unit)
+        if isinstance(other, torch.Tensor):
+            if self.unit:
+                return NotImplemented
+            return other * self.value
         return NotImplemented
 
     def __truediv__(self, other):
@@ -1599,6 +1607,142 @@ def pde_maxwell_2d(Ez0, Hx0, Hy0, x, y, t, c_light=1.0, bc="periodic"):
     Hy_sol = sol[:, 2 * n:].reshape(t.numel(), nx, ny)
     return Ez_sol, Hx_sol, Hy_sol
 
+# --- Navier-Stokes 2D (inkompressibel): Chorin-Projektionsmethode ---
+
+def pde_navier_stokes_2d(u0, v0, x, y, t, nu, bc="periodic"):
+    """
+    Differenzierbarer 2D-Navier-Stokes-Solver (inkompressibel): u_t + (u·∇)u = -∇p + ν∇²u, ∇·u = 0.
+    Chorin-Projektionsmethode: 1) Prädiktor (Konvektion + Diffusion), 2) Druck-Poisson (FFT), 3) Projektion.
+    u0, v0: Anfangsgeschwindigkeiten 2D (nx, ny); x, y: Ortsgitter; t: Zeitgitter; nu: kinematische Viskosität.
+    bc: 'periodic' (default; FFT für Druck-Poisson). 'dirichlet' experimentell (Jacobi-Iteration).
+    Rückgabe: (u_sol, v_sol) je (len(t), nx, ny). CFL: dt*max(|u|)/dx < 1 empfohlen.
+    """
+    u0 = _to_tensor(u0).float()
+    v0 = _to_tensor(v0).float().to(u0.device)
+    if u0.dim() == 1 or v0.dim() == 1:
+        raise ValueError("pde_navier_stokes_2d: u0 und v0 müssen 2D-Gitter (nx, ny) sein.")
+    nx, ny = u0.shape[0], u0.shape[1]
+    if v0.shape != (nx, ny):
+        raise ValueError("pde_navier_stokes_2d: u0 und v0 müssen gleiche Form haben.")
+    x = _to_tensor(x).float().flatten().to(u0.device)
+    y = _to_tensor(y).float().flatten().to(u0.device)
+    t = _to_tensor(t).float().flatten().to(u0.device)
+    nu_val = float(_to_tensor(nu).float().item())
+    if x.numel() != nx or y.numel() != ny:
+        raise ValueError("pde_navier_stokes_2d: x/y Länge muss zu u0 passen.")
+    if nx < 3 or ny < 3:
+        raise ValueError("pde_navier_stokes_2d: mindestens 3×3 Gitterpunkte.")
+    dx = float((x[-1] - x[0]).item()) / _builtin_max(nx - 1, 1)
+    dy = float((y[-1] - y[0]).item()) / _builtin_max(ny - 1, 1)
+    if abs(dx) < 1e-14:
+        dx = 1.0
+    if abs(dy) < 1e-14:
+        dy = 1.0
+    dx2, dy2 = dx * dx, dy * dy
+
+    # FFT-Wellenvektoren für periodische Druck-Poisson-Lösung
+    kx = torch.fft.fftfreq(nx, d=dx).to(u0.device)
+    ky = torch.fft.fftfreq(ny, d=dy).to(u0.device)
+    KX = kx.reshape(-1, 1).expand(nx, ny)
+    KY = ky.reshape(1, -1).expand(nx, ny)
+    k_sq = KX * KX + KY * KY
+    k_sq[0, 0] = 1.0  # Vermeide Division durch null; p̂(0,0)=0 wird separat gesetzt
+
+    def _roll(u, dim, shift):
+        if bc == "periodic":
+            return torch.roll(u, shift, dims=dim)
+        if dim == 0:
+            if shift == 1:
+                return torch.cat([u[:1, :], u[:-1, :]], dim=0)
+            return torch.cat([u[1:, :], u[-1:, :]], dim=0)
+        if shift == 1:
+            return torch.cat([u[:, :1], u[:, :-1]], dim=1)
+        return torch.cat([u[:, 1:], u[:, -1:]], dim=1)
+
+    def _convective_upwind(u, v, fld):
+        """(u·∇)fld mit Upwind: u*fld_x + v*fld_y"""
+        fld_left = _roll(fld, 0, 1)
+        fld_right = _roll(fld, 0, -1)
+        fld_bottom = _roll(fld, 1, 1)
+        fld_top = _roll(fld, 1, -1)
+        adv_x = torch.where(u > 0, -u * (fld - fld_left) / dx, -u * (fld_right - fld) / dx)
+        adv_y = torch.where(v > 0, -v * (fld - fld_bottom) / dy, -v * (fld_top - fld) / dy)
+        return adv_x + adv_y
+
+    def _laplacian(u):
+        u_left = _roll(u, 0, 1)
+        u_right = _roll(u, 0, -1)
+        u_bottom = _roll(u, 1, 1)
+        u_top = _roll(u, 1, -1)
+        return (u_left - 2.0 * u + u_right) / dx2 + (u_bottom - 2.0 * u + u_top) / dy2
+
+    def _divergence(u, v):
+        u_left = _roll(u, 0, 1)
+        u_right = _roll(u, 0, -1)
+        v_bottom = _roll(v, 1, 1)
+        v_top = _roll(v, 1, -1)
+        return (u_right - u_left) / (2.0 * dx) + (v_top - v_bottom) / (2.0 * dy)
+
+    def _gradient(p):
+        p_left = _roll(p, 0, 1)
+        p_right = _roll(p, 0, -1)
+        p_bottom = _roll(p, 1, 1)
+        p_top = _roll(p, 1, -1)
+        px = (p_right - p_left) / (2.0 * dx)
+        py = (p_top - p_bottom) / (2.0 * dy)
+        return px, py
+
+    def _solve_pressure_fft(div_u_star, dt_val):
+        """Löst ∇²p = div_u_star/dt per FFT (periodisch)."""
+        rhs = div_u_star / dt_val
+        rhs_hat = torch.fft.fft2(rhs)
+        p_hat = -rhs_hat / k_sq
+        p_hat[0, 0] = 0.0
+        return torch.fft.ifft2(p_hat).real
+
+    nt = t.numel()
+    u_sol = torch.zeros(nt, nx, ny, device=u0.device, dtype=u0.dtype)
+    v_sol = torch.zeros(nt, nx, ny, device=u0.device, dtype=u0.dtype)
+    u_sol[0] = u0
+    v_sol[0] = v0
+    u_cur = u0.clone()
+    v_cur = v0.clone()
+
+    for n in range(nt - 1):
+        dt = float((t[n + 1] - t[n]).item())
+        if dt <= 0:
+            continue
+        # 1) Prädiktor: u* = u - dt*(u·∇)u + dt*ν∇²u
+        conv_u = _convective_upwind(u_cur, v_cur, u_cur)
+        conv_v = _convective_upwind(u_cur, v_cur, v_cur)
+        lap_u = _laplacian(u_cur)
+        lap_v = _laplacian(v_cur)
+        u_star = u_cur + dt * (-conv_u + nu_val * lap_u)
+        v_star = v_cur + dt * (-conv_v + nu_val * lap_v)
+        # 2) Druck-Poisson: ∇²p = ∇·u*/dt
+        if bc == "periodic":
+            div_star = _divergence(u_star, v_star)
+            p = _solve_pressure_fft(div_star, dt)
+        else:
+            # Dirichlet: vereinfachte Jacobi-Iteration (langsamer, aber differenzierbar)
+            div_star = _divergence(u_star, v_star)
+            p = torch.zeros_like(u_cur)
+            for _ in range(50):
+                p_left = _roll(p, 0, 1)
+                p_right = _roll(p, 0, -1)
+                p_bottom = _roll(p, 1, 1)
+                p_top = _roll(p, 1, -1)
+                p_new = 0.25 * (p_left + p_right + p_bottom + p_top - dx2 * div_star / dt)
+                p = p_new
+        # 3) Projektion: u^{n+1} = u* - dt*∇p
+        px, py = _gradient(p)
+        u_cur = u_star - dt * px
+        v_cur = v_star - dt * py
+        u_sol[n + 1] = u_cur
+        v_sol[n + 1] = v_cur
+
+    return u_sol, v_sol
+
 # --- Sparse PDE: 2D Laplacian und Diffusion ---
 
 def sparse_laplacian_2d(N, dx=None):
@@ -1731,6 +1875,45 @@ def Poisson(rate):
     """Poisson(rate). Returns a distribution; samples are integer-valued."""
     rate = _to_tensor(rate).float().clamp(min=1e-6)
     return torch.distributions.Poisson(rate=rate)
+
+def Dirichlet(alpha):
+    """
+    Dirichlet(alpha). Multivariate Verteilung auf dem Simplex; Verallgemeinerung von Beta.
+    alpha: Konzentrationsparameter (1D-Tensor oder Liste), z. B. [1,1,1] für uniform auf 3-Simplex.
+    Stichproben haben Summe 1; für kategoriale Anteile, Topic-Modeling, Bayesian Mixtures.
+    Rückgabe: Verteilung; sample(d) oder sample(d, n); log_prob(d, x).
+    """
+    alpha = _to_tensor(alpha).float().flatten()
+    if alpha.numel() < 2:
+        raise ValueError("Dirichlet: alpha muss mindestens 2 Komponenten haben.")
+    alpha = alpha.clamp(min=1e-6)
+    return torch.distributions.Dirichlet(concentration=alpha)
+
+def dirichlet_function(x):
+    """
+    Dirichlet-Funktion D(x): 1 wenn x rational (mit Nenner ≤ 10000), sonst 0.
+    Theoretisch: D(x)=1 für x∈Q, D(x)=0 für x∉Q; überall unstetig.
+    Numerisch: Heuristik über fractions.Fraction; x gilt als rational, wenn als p/q mit q≤10000 darstellbar (Toleranz 1e-6).
+    x: Skalar oder Tensor (elementweise).
+    """
+    from fractions import Fraction
+    x_t = _to_tensor(x).float()
+    if x_t.dim() == 0:
+        try:
+            f = Fraction(float(x_t.item())).limit_denominator(10000)
+            return 1.0 if abs(float(x_t.item()) - float(f)) < 1e-6 else 0.0
+        except (OverflowError, ValueError):
+            return 0.0
+    out = torch.zeros_like(x_t)
+    flat = x_t.flatten()
+    for i in range(flat.numel()):
+        v = float(flat[i].item())
+        try:
+            f = Fraction(v).limit_denominator(10000)
+            out.flatten()[i] = 1.0 if abs(v - float(f)) < 1e-6 else 0.0
+        except (OverflowError, ValueError):
+            out.flatten()[i] = 0.0
+    return out
 
 def sample(dist, sample_shape=None):
     """Draw sample(s) from distribution. sample_shape: e.g. [] for one sample, [n] for n samples."""
