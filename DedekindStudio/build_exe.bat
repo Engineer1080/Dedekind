@@ -22,7 +22,7 @@ if errorlevel 1 (
 )
 
 echo Baue Dedekind Studio .exe ...
-pyinstaller build_exe.spec
+pyinstaller --noconfirm build_exe.spec
 if errorlevel 1 (
     echo Build fehlgeschlagen.
     pause

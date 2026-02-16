@@ -57,12 +57,24 @@ class ImagePathManager():
 
     def get_image_path(self, name):
         """Get path of the image given its name."""
+        # Fallback: Windows-App-Icon fehlt oft (nur dedekind_app_icon.svg vorhanden)
+        fallbacks = {'dedekind_app_icon_win': 'dedekind_app_icon'}
         try:
             act_image = self.IMG_PATH[name]
             if osp.isfile(act_image):
                 return osp.abspath(act_image)
         except KeyError:
+            pass
+        if name in fallbacks:
+            return self.get_image_path(fallbacks[name])
+        try:
             return osp.abspath(self.IMG_PATH[self.default])
+        except KeyError:
+            # default 'not_found' kann fehlen (z. B. in PyInstaller-Bundle)
+            for fallback_name in ('spyder', 'transparent', 'dedekind_app_icon'):
+                if fallback_name in self.IMG_PATH and osp.isfile(self.IMG_PATH[fallback_name]):
+                    return osp.abspath(self.IMG_PATH[fallback_name])
+            raise KeyError(name)
 
 
 IMAGE_PATH_MANAGER = ImagePathManager()
