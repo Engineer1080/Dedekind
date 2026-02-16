@@ -85,7 +85,7 @@ class DedekindKernel(Kernel):
     implementation = "Dedekind"
     implementation_version = "1.3.1"
     language = "dedekind"
-    language_version = "1.3.0"
+    language_version = "1.3.1"
     language_info = {
         "name": "dedekind",
         "mimetype": "text/x-dedekind",

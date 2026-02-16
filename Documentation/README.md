@@ -14,6 +14,7 @@ This folder contains the **source** and **generated** documentation for the Dede
 | **Underserved_Sciences_Roadmap.md** | Roadmap für Wissenschaften, die von R/Python vernachlässigt werden (Geologie, Werkstoffe, Bauingenieurwesen, Ökonomie, Musik, Lehre) |
 | **Commercialization_Options.md** | Potenzielle Kommerzialisierungsoptionen (Beratung, Support, Lizenzen, SaaS, Förderung, Phasierung, Risiken) |
 | **IDE_Studio_Roadmap.md** | Dedekind in bestehenden IDEs (VS Code, Jupyter) + Dedekind Studio als kommerzielle Wissenschaftler-IDE (Einheiten, Plots, Postgres, LaTeX, lokale KI) |
+| **Build_Dedekind_Studio_Exe.md** | Anleitung: Dedekind Studio als Windows-.exe bauen (PyInstaller) |
 | **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.3.1; Stärken, Lücken, Roadmap) |
 | **Dedekind_Language_Specification_v0.1.pdf** | Legacy PDF (v0.1); for current spec use the Markdown or generate v0.2 PDF below |
 | **Dedekind_Research_Papers_and_Architecture.pdf** | Legacy PDF; for current content use the Markdown or generate PDF below |
