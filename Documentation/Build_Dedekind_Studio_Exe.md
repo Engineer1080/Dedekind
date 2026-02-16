@@ -50,12 +50,22 @@ cd ..\..
 
 ### 3. .exe bauen
 
-Aus dem **DedekindStudio**-Ordner:
+**Wichtig:** PyInstaller muss die Spec-Datei finden. Entweder:
 
 ```batch
 cd DedekindStudio
-pyinstaller build_exe.spec
+pyinstaller --noconfirm build_exe.spec
 ```
+
+oder aus dem Projektroot:
+
+```batch
+pyinstaller --noconfirm DedekindStudio\build_exe.spec
+```
+
+`--noconfirm` überschreibt den Ausgabeordner ohne Nachfrage.
+
+Alternativ aus dem Projektroot: `DedekindStudio\build_exe.bat` starten (wechselt selbst in DedekindStudio).
 
 Das erzeugt den Ordner **`dist/Dedekind Studio/`** mit:
 

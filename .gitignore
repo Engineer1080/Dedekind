@@ -2,13 +2,24 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
 venv/
+venv_build/
 .env
+.venv/
 DedekindStudio/spyder_venv/
+*.egg-info/
+*.egg
+.eggs/
+
+# PyInstaller
+build/
+dist/
+*.manifest
+*.spec.log
 
 # Node.js
 node_modules/
-dist/
 .DS_Store
 
 # IDE
