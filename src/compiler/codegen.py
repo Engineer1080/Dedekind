@@ -55,6 +55,18 @@ _RUNTIME_BUILTIN_NAMES = frozenset({
     'balance_equation',
     'read_file', 'write_file', 'file_exists', 'http_get', 'http_post',
     'json_parse', 'json_stringify', 'sort', 'quicksort', 'plot', 'scatter', 'contour', 'print_latex',
+    'seed', 'data_hash',
+    'DataFrame', 'read_csv', 'write_csv', 'read_parquet', 'write_parquet',
+    'read_hdf5', 'write_hdf5', 'read_netcdf',
+    'benchmark', 'profile', 'time_block', 'BenchmarkResult', 'ProfileResult',
+    'jit',
+    'sde_solve',
+    'least_squares', 'minimize_constrained', 'milp',
+    'mesh_unit_square', 'fem_assemble_stiffness', 'fem_assemble_load', 'fem_poisson_2d',
+    'solve_sym', 'simplify_sym', 'series',
+    'cg', 'gmres', 'bicgstab', 'jacobi_preconditioner', 'ilu_preconditioner',
+    'export_notebook',
+    'print_table',
     'assert', 'diff_sym', 'integrate_sym', 'jacobian', 'hessian',
     # Constants (from ml_runtime)
     'pi', 'e', 'c', 'G', 'h', 'k_B', 'k_e', 'hbar', 'e_charge', 'epsilon_0', 'mu_0',
@@ -164,6 +176,8 @@ class CodeGenerator:
     def __init__(self):
         self.code = []
         self.indent_level = 0
+        self._return_unit_stack = []  # Active function's declared return unit ("" = dimensionless, None = unchecked)
+        self._fn_name_stack = []
 
     def generate(self, node: Node) -> str:
         self.code = []
@@ -287,14 +301,39 @@ class CodeGenerator:
         args_str = ", ".join(node.args)
         self.add_line(f"def {node.name}({args_str}):")
         self.indent_level += 1
-        for stmt in node.body:
-            res = self.visit(stmt)
-            if isinstance(res, str): self.add_line(res)
+        arg_units = getattr(node, "arg_units", None)
+        return_unit = getattr(node, "return_unit", None)
+        if arg_units:
+            for arg_name, unit in zip(node.args, arg_units):
+                if unit:
+                    safe_unit = unit.replace('"', '\\"')
+                    self.add_line(
+                        f'{arg_name} = _check_signature_unit({arg_name}, "{safe_unit}", "{node.name}", "{arg_name}")'
+                    )
+        self._return_unit_stack.append(return_unit)
+        self._fn_name_stack.append(node.name)
+        try:
+            for stmt in node.body:
+                res = self.visit(stmt)
+                if isinstance(res, str): self.add_line(res)
+        finally:
+            self._return_unit_stack.pop()
+            self._fn_name_stack.pop()
         self.indent_level -= 1
         self.add_line("")
 
+    def visit_UseStmt(self, node):
+        return f"# use {node.module} (already inlined at compile time)"
+
     def visit_ReturnStmt(self, node: ReturnStmt):
         val = self.visit_expression(node.value)
+        ret_unit = self._return_unit_stack[-1] if self._return_unit_stack else None
+        if ret_unit is not None:
+            fn_name = self._fn_name_stack[-1] if self._fn_name_stack else ""
+            safe_unit = ret_unit.replace('"', '\\"')
+            safe_fn = fn_name.replace('"', '\\"')
+            self.add_line(f'return _check_return_unit({val}, "{safe_unit}", "{safe_fn}")')
+            return
         self.add_line(f"return {val}")
 
     def visit_Assignment(self, node: Assignment):
@@ -374,6 +413,14 @@ class CodeGenerator:
     def visit_VectorLiteral(self, node: VectorLiteral):
         elements = [self.visit_expression(e) for e in node.elements]
         return f"_to_tensor([{', '.join(elements)}])"
+
+    def visit_DictLiteral(self, node):
+        pairs = []
+        for k, v in zip(node.keys, node.values):
+            ks = self.visit_expression(k)
+            vs = self.visit_expression(v)
+            pairs.append(f"{ks}: {vs}")
+        return "{" + ", ".join(pairs) + "}"
 
     def visit_Identifier(self, node: Identifier):
         if node.name == "true":

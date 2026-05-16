@@ -865,12 +865,15 @@ def arange(start_or_stop, stop=None, step=None):
     arange(n) → [0, 1, 2, ..., n-1]
     arange(start, stop) → [start, start+1, ..., stop-1]
     arange(start, stop, step) → [start, start+step, ...] (stop exklusive)
-    Rückgabe: 1D-Tensor (float32).
+
+    Rückgabe-Dtype: int64 für reine Integer-Aufrufe (geeignet für Indexierung),
+    float32 sobald ein expliziter `step` (auch ganzzahliger) angegeben ist (Konsistenz
+    mit `linspace`). Tensor-Arithmetik promotet bei Mischung mit Floats automatisch.
     """
     if stop is None and step is None:
-        return torch.arange(int(start_or_stop), dtype=torch.float32)
+        return torch.arange(int(start_or_stop), dtype=torch.int64)
     if step is None:
-        return torch.arange(int(start_or_stop), int(stop), dtype=torch.float32)
+        return torch.arange(int(start_or_stop), int(stop), dtype=torch.int64)
     return torch.arange(float(start_or_stop), float(stop), float(step))
 
 
@@ -4964,3 +4967,1542 @@ def contour(X, Y, Z, title=None, xlabel=None, ylabel=None, levels=10):
     if X_t.ndim == 1 and Y_t.ndim == 1:
         X_t, Y_t = np.meshgrid(X_t, Y_t)
     _plot_contour_inner(X_t, Y_t, Z_t, title=title, xlabel=xlabel, ylabel=ylabel, levels=levels)
+
+
+# ============================================================================
+# Reproduzierbarkeit: Seed-Manager + Daten-Hash
+# ============================================================================
+
+def seed(n):
+    """Setzt deterministischen Seed in Python (`random`), NumPy und PyTorch.
+    Verwendung: `seed(42)` ganz am Anfang eines Skripts; Zufallsoperationen werden reproduzierbar."""
+    try:
+        import random as _random
+        _random.seed(int(n))
+    except Exception:
+        pass
+    try:
+        import numpy as _np  # type: ignore[reportMissingImports]
+        _np.random.seed(int(n) & 0xFFFFFFFF)
+    except Exception:
+        pass
+    try:
+        torch.manual_seed(int(n))
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(int(n))
+    except Exception:
+        pass
+    return int(n)
+
+
+def data_hash(x):
+    """Liefert SHA256-Hex-Digest einer Eingabe (Tensor, Liste, Dict, Zahl, String, DataFrame).
+    Nützlich für Reproduzierbarkeits-Protokolle: `print("Input hash:", data_hash(data))`."""
+    import hashlib
+    import json
+    if isinstance(x, DataFrame):
+        payload = json.dumps({"cols": x.columns, "units": x._units, "data": [list(c) for c in x._cols]},
+                             sort_keys=True, default=_json_default).encode("utf-8")
+    elif hasattr(x, "detach") and hasattr(x, "cpu") and hasattr(x, "numpy"):
+        arr = x.detach().cpu().numpy()
+        payload = arr.tobytes() + str(arr.shape).encode("utf-8") + str(arr.dtype).encode("utf-8")
+    elif isinstance(x, (list, tuple, dict)):
+        payload = json.dumps(x, sort_keys=True, default=_json_default).encode("utf-8")
+    elif isinstance(x, (bytes, bytearray)):
+        payload = bytes(x)
+    else:
+        payload = str(x).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _json_default(o):
+    if isinstance(o, Quantity):
+        return {"__quantity__": True, "value": o.value, "unit": o.unit}
+    if hasattr(o, "tolist"):
+        return o.tolist()
+    if hasattr(o, "item"):
+        return o.item()
+    return str(o)
+
+
+# ============================================================================
+# DataFrame + tabular I/O (CSV nativ; Parquet/HDF5/NetCDF optional)
+# ============================================================================
+
+class DataFrame:
+    """Leichte spaltenorientierte Tabelle mit optionalen Einheiten pro Spalte.
+
+    Konstruktion:
+      df = DataFrame({"t": [0.0, 1.0, 2.0], "T": [20.0, 22.0, 25.0]}, units={"t": "s", "T": "K"})
+      df["T"]              -> Liste der Werte
+      df.units["T"]        -> "K"
+      df.rows              -> Iterator über Zeilen (dict)
+      df.column_with_unit("T") -> Liste von Quantity-Werten
+    """
+    def __init__(self, data=None, units=None):
+        if data is None:
+            data = {}
+        def _to_plain_list(seq):
+            # Torch-Tensor: .tolist() liefert Plain-Python-Zahlen.
+            if hasattr(seq, "detach") and hasattr(seq, "cpu") and hasattr(seq, "tolist"):
+                return list(seq.detach().cpu().tolist())
+            out = []
+            for v in seq:
+                if hasattr(v, "item") and not isinstance(v, (str, bytes)):
+                    try:
+                        out.append(v.item())
+                        continue
+                    except Exception:
+                        pass
+                out.append(v)
+            return out
+        if isinstance(data, dict):
+            cols_names = list(data.keys())
+            cols = [_to_plain_list(data[c]) for c in cols_names]
+        elif isinstance(data, (list, tuple)) and data and isinstance(data[0], dict):
+            cols_names = list(data[0].keys())
+            cols = [_to_plain_list([row.get(c) for row in data]) for c in cols_names]
+        else:
+            raise TypeError("DataFrame: data muss dict of lists oder list of dicts sein.")
+        n_rows = _builtin_max([len(c) for c in cols]) if cols else 0
+        for c in cols:
+            if len(c) != n_rows:
+                raise ValueError("DataFrame: alle Spalten müssen gleiche Länge haben.")
+        self.columns = cols_names
+        self._cols = cols
+        self._units = {}
+        if units:
+            for k, v in dict(units).items():
+                if v:
+                    self._units[k] = str(v)
+        self.n_rows = n_rows
+
+    @property
+    def units(self):
+        return dict(self._units)
+
+    @property
+    def shape(self):
+        return (self.n_rows, len(self.columns))
+
+    def __len__(self):
+        return self.n_rows
+
+    def __getitem__(self, key):
+        if key not in self.columns:
+            raise KeyError(f"DataFrame: Spalte '{key}' nicht gefunden. Verfügbar: {self.columns}.")
+        return list(self._cols[self.columns.index(key)])
+
+    def __contains__(self, key):
+        return key in self.columns
+
+    def column_with_unit(self, key):
+        """Spalte als Liste von Quantity-Werten (verwendet self.units[key] falls vorhanden)."""
+        vals = self[key]
+        u = self._units.get(key, "")
+        if not u:
+            return [Quantity(float(v), "") if isinstance(v, (int, float)) else v for v in vals]
+        return [Quantity(float(v), u) if isinstance(v, (int, float)) else v for v in vals]
+
+    @property
+    def rows(self):
+        for i in range(self.n_rows):
+            yield {c: self._cols[j][i] for j, c in enumerate(self.columns)}
+
+    def head(self, n=5):
+        n = int(n)
+        head_cols = {c: self._cols[j][:n] for j, c in enumerate(self.columns)}
+        return DataFrame(head_cols, units=self._units)
+
+    def __repr__(self):
+        # Kompakte Darstellung mit Einheiten in Spaltenüberschriften.
+        if self.n_rows == 0:
+            return f"DataFrame(0 rows, columns={self.columns})"
+        widths = []
+        headers = []
+        for j, c in enumerate(self.columns):
+            label = c if c not in self._units else f"{c} [{self._units[c]}]"
+            headers.append(label)
+            col_strs = [str(v) for v in self._cols[j][:_builtin_min(self.n_rows, 10)]]
+            widths.append(_builtin_max(len(label), *(len(s) for s in col_strs)) if col_strs else len(label))
+        sep = "  "
+        lines = [sep.join(h.ljust(w) for h, w in zip(headers, widths))]
+        lines.append(sep.join("-" * w for w in widths))
+        for i in range(_builtin_min(self.n_rows, 10)):
+            row = [str(self._cols[j][i]).ljust(widths[j]) for j in range(len(self.columns))]
+            lines.append(sep.join(row))
+        if self.n_rows > 10:
+            lines.append(f"... ({self.n_rows} rows total)")
+        return "\n".join(lines)
+
+
+def _csv_parse_unit_in_header(header):
+    """Header 'T [K]' -> ('T', 'K'); 'T' -> ('T', None)."""
+    s = str(header).strip()
+    if s.endswith("]") and "[" in s:
+        idx = s.rfind("[")
+        name = s[:idx].strip()
+        unit = s[idx + 1:-1].strip()
+        if name:
+            return name, (unit or None)
+    return s, None
+
+
+def read_csv(path, units=None, has_header=True):
+    """Liest eine CSV-Datei in eine DataFrame ein.
+    - Header-Zeile darf Einheiten im Format `name [unit]` enthalten; diese werden in `df.units` übernommen.
+    - `units` (optional Dict) überschreibt erkannte Einheiten.
+    - Numerische Werte werden zu float konvertiert (Fallback: String belassen).
+    """
+    import csv
+    p = str(path)
+    with open(p, "r", encoding="utf-8", newline="") as f:
+        reader = csv.reader(f)
+        rows = list(reader)
+    if not rows:
+        return DataFrame({}, units={})
+    detected_units = {}
+    if has_header:
+        raw_header = rows[0]
+        col_names = []
+        for h in raw_header:
+            name, unit = _csv_parse_unit_in_header(h)
+            col_names.append(name)
+            if unit:
+                detected_units[name] = unit
+        body = rows[1:]
+    else:
+        col_names = [f"col{i}" for i in range(len(rows[0]))]
+        body = rows
+    cols = [[] for _ in col_names]
+    for r in body:
+        for j in range(len(col_names)):
+            v = r[j] if j < len(r) else ""
+            try:
+                cols[j].append(float(v))
+            except (TypeError, ValueError):
+                cols[j].append(v)
+    data = {c: cols[j] for j, c in enumerate(col_names)}
+    eff_units = dict(detected_units)
+    if units:
+        for k, v in dict(units).items():
+            if v:
+                eff_units[k] = str(v)
+    return DataFrame(data, units=eff_units)
+
+
+def write_csv(path, df, include_units_in_header=True):
+    """Schreibt eine DataFrame als CSV. Bei `include_units_in_header=True` wird `name [unit]` ausgegeben."""
+    import csv
+    if not isinstance(df, DataFrame):
+        raise TypeError("write_csv: df muss DataFrame sein.")
+    p = str(path)
+    with open(p, "w", encoding="utf-8", newline="") as f:
+        w = csv.writer(f)
+        header = []
+        for c in df.columns:
+            if include_units_in_header and c in df._units:
+                header.append(f"{c} [{df._units[c]}]")
+            else:
+                header.append(c)
+        w.writerow(header)
+        for row in df.rows:
+            w.writerow([row[c] for c in df.columns])
+
+
+def read_parquet(path):
+    """Liest eine Parquet-Datei (benötigt pyarrow). Einheiten werden nicht persistiert; nur Spalten."""
+    try:
+        import pyarrow.parquet as pq  # type: ignore[import-untyped]
+    except ImportError:
+        raise RuntimeError("read_parquet: pyarrow nicht installiert (pip install pyarrow).")
+    table = pq.read_table(str(path))
+    data = {name: table.column(name).to_pylist() for name in table.column_names}
+    return DataFrame(data)
+
+
+def write_parquet(path, df):
+    """Schreibt eine DataFrame als Parquet (benötigt pyarrow)."""
+    try:
+        import pyarrow as pa  # type: ignore[import-untyped]
+        import pyarrow.parquet as pq  # type: ignore[import-untyped]
+    except ImportError:
+        raise RuntimeError("write_parquet: pyarrow nicht installiert (pip install pyarrow).")
+    if not isinstance(df, DataFrame):
+        raise TypeError("write_parquet: df muss DataFrame sein.")
+    table = pa.table({c: df._cols[j] for j, c in enumerate(df.columns)})
+    pq.write_table(table, str(path))
+
+
+def read_hdf5(path, dataset=None):
+    """Liest ein HDF5-Dataset (benötigt h5py). Wenn `dataset=None`: erstes Dataset wird gewählt."""
+    try:
+        import h5py  # type: ignore[import-untyped]
+    except ImportError:
+        raise RuntimeError("read_hdf5: h5py nicht installiert (pip install h5py).")
+    import numpy as _np  # type: ignore[reportMissingImports]
+    with h5py.File(str(path), "r") as f:
+        if dataset is None:
+            keys = list(f.keys())
+            if not keys:
+                raise ValueError("read_hdf5: Datei enthält keine Datasets.")
+            dataset = keys[0]
+        arr = _np.array(f[dataset])
+    return arr
+
+
+def write_hdf5(path, data, dataset="data"):
+    """Schreibt ein Tensor/Array in eine HDF5-Datei (benötigt h5py)."""
+    try:
+        import h5py  # type: ignore[import-untyped]
+    except ImportError:
+        raise RuntimeError("write_hdf5: h5py nicht installiert (pip install h5py).")
+    import numpy as _np  # type: ignore[reportMissingImports]
+    if hasattr(data, "detach"):
+        data = data.detach().cpu().numpy()
+    arr = _np.asarray(data)
+    with h5py.File(str(path), "w") as f:
+        f.create_dataset(str(dataset), data=arr)
+
+
+def read_netcdf(path, variable=None):
+    """Liest eine NetCDF-Variable (benötigt netCDF4). Wenn `variable=None`: erste Variable wird gewählt."""
+    try:
+        import netCDF4  # type: ignore[import-untyped]
+    except ImportError:
+        raise RuntimeError("read_netcdf: netCDF4 nicht installiert (pip install netCDF4).")
+    import numpy as _np  # type: ignore[reportMissingImports]
+    ds = netCDF4.Dataset(str(path), "r")
+    try:
+        if variable is None:
+            names = list(ds.variables.keys())
+            if not names:
+                raise ValueError("read_netcdf: Datei enthält keine Variablen.")
+            variable = names[0]
+        arr = _np.array(ds.variables[variable][:])
+    finally:
+        ds.close()
+    return arr
+
+
+# ============================================================================
+# Einheiten-Annotationen für Funktionssignaturen (`fn f(x: [m]) -> [J]`)
+# ============================================================================
+
+# Abgeleitete SI-Einheiten -> Basisdimensionen (kg, m, s, A, K, mol, cd)
+# Wir tracken nur die 7 SI-Basisdimensionen.
+_DERIVED_UNIT_TO_BASE = {
+    "":     {},
+    "1":    {},
+    "kg":   {"kg": 1},
+    "g":    {"kg": 1},
+    "t":    {"kg": 1},
+    "mg":   {"kg": 1},
+    "m":    {"m": 1},
+    "cm":   {"m": 1},
+    "km":   {"m": 1},
+    "mm":   {"m": 1},
+    "dm":   {"m": 1},
+    "s":    {"s": 1},
+    "min":  {"s": 1},
+    "h":    {"s": 1},
+    "ms":   {"s": 1},
+    "A":    {"A": 1},
+    "mA":   {"A": 1},
+    "K":    {"K": 1},
+    "mK":   {"K": 1},
+    "mol":  {"mol": 1},
+    "mmol": {"mol": 1},
+    "kmol": {"mol": 1},
+    "cd":   {"cd": 1},
+    "mcd":  {"cd": 1},
+    "rad":  {},
+    "deg":  {},
+    # Abgeleitet:
+    "N":   {"kg": 1, "m": 1, "s": -2},
+    "kN":  {"kg": 1, "m": 1, "s": -2},
+    "MN":  {"kg": 1, "m": 1, "s": -2},
+    "Pa":  {"kg": 1, "m": -1, "s": -2},
+    "kPa": {"kg": 1, "m": -1, "s": -2},
+    "MPa": {"kg": 1, "m": -1, "s": -2},
+    "bar": {"kg": 1, "m": -1, "s": -2},
+    "atm": {"kg": 1, "m": -1, "s": -2},
+    "J":   {"kg": 1, "m": 2, "s": -2},
+    "kJ":  {"kg": 1, "m": 2, "s": -2},
+    "MJ":  {"kg": 1, "m": 2, "s": -2},
+    "Wh":  {"kg": 1, "m": 2, "s": -2},
+    "kWh": {"kg": 1, "m": 2, "s": -2},
+    "W":   {"kg": 1, "m": 2, "s": -3},
+    "kW":  {"kg": 1, "m": 2, "s": -3},
+    "MW":  {"kg": 1, "m": 2, "s": -3},
+    "V":   {"kg": 1, "m": 2, "s": -3, "A": -1},
+    "mV":  {"kg": 1, "m": 2, "s": -3, "A": -1},
+    "kV":  {"kg": 1, "m": 2, "s": -3, "A": -1},
+    "Hz":  {"s": -1},
+    "kHz": {"s": -1},
+    "MHz": {"s": -1},
+    "GHz": {"s": -1},
+    "Bq":  {"s": -1},
+    "C":   {"A": 1, "s": 1},
+    "mC":  {"A": 1, "s": 1},
+    "uC":  {"A": 1, "s": 1},
+    "ohm": {"kg": 1, "m": 2, "s": -3, "A": -2},
+    "F":   {"kg": -1, "m": -2, "s": 4, "A": 2},
+    "L":   {"m": 3},
+    "mL":  {"m": 3},
+    "M":   {"mol": 1, "m": -3},  # mol/L = 1000 mol/m³, gleiche Dimension
+    "Gy":  {"m": 2, "s": -2},
+    "Sv":  {"m": 2, "s": -2},
+}
+
+
+def _parse_unit_to_base_dims(unit_str):
+    """Wandelt einen Einheiten-String ('kg*m^2/s^2', '(kg)*(m/s)*(m/s)', 'J', ...) in
+    ein Dict {base_unit: exponent} der 7 SI-Basisdimensionen um.
+
+    Tokenizer-ähnlich: zerlegt nach *, /, ^ und Klammern; jeder atomare Einheiten-Token
+    wird über _DERIVED_UNIT_TO_BASE in Basisdimensionen aufgelöst. Unbekannte Tokens
+    erzeugen None (Vergleich schlägt dann fehl).
+    """
+    s = (unit_str or "").strip()
+    if not s:
+        return {}
+    # Tokenize: Klammern, *, /, ^, atomare Einheiten (Buchstabenfolge), Zahlen (für Exponenten).
+    import re as _re
+    tokens = _re.findall(r"\(|\)|\*|/|\^|-?\d+|[A-Za-z][A-Za-z_]*", s)
+    if not tokens:
+        return {}
+    pos = [0]
+
+    def parse_factor():
+        if pos[0] >= len(tokens):
+            return None
+        t = tokens[pos[0]]
+        if t == "(":
+            pos[0] += 1
+            val = parse_term()
+            if pos[0] < len(tokens) and tokens[pos[0]] == ")":
+                pos[0] += 1
+            return val
+        # Atomare Einheit oder Zahl
+        if t and t[0].isalpha():
+            pos[0] += 1
+            base = _DERIVED_UNIT_TO_BASE.get(t)
+            if base is None:
+                return None
+            # Optional: ^exp
+            if pos[0] < len(tokens) and tokens[pos[0]] == "^":
+                pos[0] += 1
+                if pos[0] < len(tokens):
+                    try:
+                        exp = int(tokens[pos[0]])
+                    except ValueError:
+                        try:
+                            exp = float(tokens[pos[0]])
+                        except ValueError:
+                            return None
+                    pos[0] += 1
+                    return {k: v * exp for k, v in base.items()}
+            return dict(base)
+        # Pure Zahl als Faktor (z.B. konstante 1) -> dimensionslos
+        try:
+            int(t)
+            pos[0] += 1
+            return {}
+        except ValueError:
+            return None
+
+    def parse_term():
+        left = parse_factor()
+        if left is None:
+            return None
+        while pos[0] < len(tokens) and tokens[pos[0]] in ("*", "/"):
+            op = tokens[pos[0]]
+            pos[0] += 1
+            right = parse_factor()
+            if right is None:
+                return None
+            sign = 1 if op == "*" else -1
+            for k, v in right.items():
+                left[k] = left.get(k, 0) + sign * v
+        return left
+
+    result = parse_term()
+    if result is None:
+        return None
+    # Null-Exponenten entfernen
+    return {k: v for k, v in result.items() if v != 0}
+
+
+def _units_dimensionally_equal(u1, u2):
+    """True, wenn u1 und u2 sich auf dieselbe SI-Basisdimension reduzieren (z.B. J == kg*m²/s²)."""
+    d1 = _parse_unit_to_base_dims(u1)
+    d2 = _parse_unit_to_base_dims(u2)
+    if d1 is None or d2 is None:
+        return False
+    return d1 == d2
+
+
+def _coerce_to_expected_unit(value, expected_unit, context_label):
+    """Bringt `value` auf `expected_unit`, wenn dimensional kompatibel.
+
+    Pfade (in Reihenfolge):
+    1) String-Gleichheit (gleiche Einheit) → unverändert
+    2) Gleiche eindeutige Dimension (Länge, Masse, Zeit, …) → numerisch umrechnen
+    3) Gleiche SI-Basisdimensionen (kg·m²/s² == J) → Wert als Quantity in expected_unit übernehmen
+    4) Reine Zahl + expected_unit → mit Einheit wrappen
+    Wirft sonst ValueError.
+    """
+    expected = (expected_unit or "").strip()
+    if isinstance(value, Quantity):
+        if not expected:
+            return value
+        if value.unit == expected:
+            return value
+        dim_have = _get_dimension(value.unit)
+        dim_want = _get_dimension(expected)
+        if dim_have is not None and dim_have == dim_want:
+            v_base = _convert_to_base(value.value, value.unit, dim_have)
+            v_target = _convert_from_base(v_base, expected, dim_want)
+            return Quantity(v_target, expected)
+        n_have = _normalize_unit_for_compare(value.unit)
+        n_want = _normalize_unit_for_compare(expected)
+        if n_have == n_want:
+            return Quantity(value.value, expected)
+        if _units_dimensionally_equal(value.unit, expected):
+            return Quantity(value.value, expected)
+        raise ValueError(
+            f"Einheitenfehler in {context_label}: erwartet [{expected}], erhalten [{value.unit}]."
+        )
+    if isinstance(value, (int, float)):
+        if expected:
+            return Quantity(float(value), expected)
+        return value
+    return value
+
+
+def _check_signature_unit(value, expected_unit, fn_name, arg_name):
+    return _coerce_to_expected_unit(value, expected_unit, f"{fn_name}({arg_name})")
+
+
+def _check_return_unit(value, expected_unit, fn_name):
+    return _coerce_to_expected_unit(value, expected_unit, f"return von {fn_name}")
+
+
+# ============================================================================
+# Unit-aware Plotting: Quantity-Listen erhalten automatisch Achsenbeschriftung "[unit]"
+# ============================================================================
+
+def _strip_unit_from_seq(seq):
+    """Wenn `seq` eine Liste/Tuple von Quantity ist, gib (values_list, unit_str) zurück; sonst (seq, None)."""
+    if isinstance(seq, (list, tuple)) and seq and all(isinstance(v, Quantity) for v in seq):
+        unit = seq[0].unit
+        # Wenn Einheiten in der Liste variieren, lieber neutral lassen.
+        if all(v.unit == unit for v in seq):
+            return [v.value for v in seq], unit
+    if isinstance(seq, Quantity):
+        return seq.value, seq.unit
+    return seq, None
+
+
+def _append_unit_label(label, unit):
+    if not unit:
+        return label
+    if label and "[" not in str(label):
+        return f"{label} [{unit}]"
+    if not label:
+        return f"[{unit}]"
+    return label
+
+
+# Wrap plot/scatter/contour so they detect Quantity inputs.
+_dedekind_plot_inner = plot
+_dedekind_scatter_inner = scatter
+_dedekind_contour_inner = contour
+
+
+def plot(x=None, y=None, title=None, xlabel=None, ylabel=None, xscale="linear", yscale="linear"):
+    """Wie `plot`, aber wenn x/y Listen von Quantity sind, werden Werte extrahiert und Einheiten als Achsenbeschriftung übernommen."""
+    new_x, ux = _strip_unit_from_seq(x) if x is not None else (None, None)
+    new_y, uy = _strip_unit_from_seq(y) if y is not None else (None, None)
+    if y is None and x is not None and ux:
+        # plot(y_quantity_list) — Single-Argument-Variante
+        new_y, uy = new_x, ux
+        new_x, ux = None, None
+    xlabel = _append_unit_label(xlabel, ux)
+    ylabel = _append_unit_label(ylabel, uy)
+    return _dedekind_plot_inner(new_x, new_y, title=title, xlabel=xlabel, ylabel=ylabel,
+                                xscale=xscale, yscale=yscale)
+
+
+def scatter(x=None, y=None, title=None, xlabel=None, ylabel=None):
+    """Wie `scatter`, mit automatischer Einheiten-Beschriftung."""
+    new_x, ux = _strip_unit_from_seq(x) if x is not None else (None, None)
+    new_y, uy = _strip_unit_from_seq(y) if y is not None else (None, None)
+    if y is None and x is not None and ux:
+        new_y, uy = new_x, ux
+        new_x, ux = None, None
+    xlabel = _append_unit_label(xlabel, ux)
+    ylabel = _append_unit_label(ylabel, uy)
+    return _dedekind_scatter_inner(new_x, new_y, title=title, xlabel=xlabel, ylabel=ylabel)
+
+
+def contour(X, Y, Z, title=None, xlabel=None, ylabel=None, levels=10):
+    """Wie `contour`, mit automatischer Einheiten-Beschriftung der Achsen."""
+    new_X, ux = _strip_unit_from_seq(X)
+    new_Y, uy = _strip_unit_from_seq(Y)
+    xlabel = _append_unit_label(xlabel, ux)
+    ylabel = _append_unit_label(ylabel, uy)
+    return _dedekind_contour_inner(new_X, new_Y, Z, title=title, xlabel=xlabel, ylabel=ylabel, levels=levels)
+
+
+# ============================================================================
+# Benchmarking & Profiling: Wandzeit + Speicherprofil als Built-ins
+# ============================================================================
+
+class BenchmarkResult:
+    """Ergebnis von `benchmark(fn, n=...)` mit mean/std/min/max Sekunden und n Wiederholungen."""
+    def __init__(self, label, mean_s, std_s, min_s, max_s, n, last_result=None):
+        self.label = label
+        self.mean_s = float(mean_s)
+        self.std_s = float(std_s)
+        self.min_s = float(min_s)
+        self.max_s = float(max_s)
+        self.n = int(n)
+        self.last_result = last_result
+
+    def __repr__(self):
+        return (f"benchmark({self.label or 'fn'}): mean={self.mean_s*1e3:.3f}ms "
+                f"± {self.std_s*1e3:.3f}ms  min={self.min_s*1e3:.3f}ms  "
+                f"max={self.max_s*1e3:.3f}ms  (n={self.n})")
+
+
+def benchmark(fn, n=10, warmup=2, label=None):
+    """Misst Wandzeit einer Null-Argument-Funktion über n Wiederholungen (default 10, plus warmup-Runs).
+    Verwendung: `r = benchmark(fn() => meine_arbeit(), n=50)`. Achtung: `fn` muss aufrufbar sein
+    (in Dedekind: anonyme Lambda via einer normalen Funktion ohne Argumente)."""
+    import time
+    if not callable(fn):
+        raise TypeError("benchmark: fn muss eine aufrufbare Funktion ohne Argumente sein.")
+    for _ in range(int(warmup)):
+        try: fn()
+        except Exception: pass
+    times = []
+    last = None
+    for _ in range(int(n)):
+        t0 = time.perf_counter()
+        last = fn()
+        t1 = time.perf_counter()
+        times.append(t1 - t0)
+    mean_s = sum(times) / len(times)
+    var = sum((x - mean_s) ** 2 for x in times) / _builtin_max(1, len(times) - 1)
+    std_s = var ** 0.5
+    return BenchmarkResult(label, mean_s, std_s, _builtin_min(times), _builtin_max(times), len(times), last)
+
+
+class ProfileResult:
+    """Ergebnis von `profile(fn)`: Wandzeit, optional Peak-Speicher (Bytes) und Top-Funktionen aus cProfile."""
+    def __init__(self, label, wall_s, peak_bytes, top_funcs, returned):
+        self.label = label
+        self.wall_s = float(wall_s)
+        self.peak_bytes = int(peak_bytes) if peak_bytes is not None else None
+        self.top_funcs = list(top_funcs)
+        self.returned = returned
+
+    def __repr__(self):
+        lines = [f"profile({self.label or 'fn'}): {self.wall_s*1e3:.3f}ms"]
+        if self.peak_bytes is not None:
+            lines.append(f"  peak memory: {self.peak_bytes/1024:.1f} KiB")
+        if self.top_funcs:
+            lines.append("  top calls (cumulative):")
+            for name, n_calls, cum_s in self.top_funcs[:5]:
+                lines.append(f"    {cum_s*1e3:8.3f}ms  {n_calls:6d}x  {name}")
+        return "\n".join(lines)
+
+
+def profile(fn, label=None, top=5):
+    """Profiliert eine Null-Argument-Funktion (Wandzeit + Peak-Speicher per `tracemalloc` + cProfile-Top-Calls)."""
+    import time
+    import tracemalloc
+    import cProfile
+    import pstats
+    if not callable(fn):
+        raise TypeError("profile: fn muss eine aufrufbare Funktion ohne Argumente sein.")
+    tracemalloc.start()
+    pr = cProfile.Profile()
+    t0 = time.perf_counter()
+    pr.enable()
+    try:
+        returned = fn()
+    finally:
+        pr.disable()
+        t1 = time.perf_counter()
+        _curr, peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+    stats = pstats.Stats(pr).sort_stats("cumulative")
+    top_funcs = []
+    for func, (cc, _nc, _tt, ct, _callers) in list(stats.stats.items())[:int(top)]:
+        fname = f"{func[0].rsplit('/', 1)[-1]}:{func[1]}({func[2]})"
+        top_funcs.append((fname, cc, ct))
+    return ProfileResult(label, t1 - t0, peak, top_funcs, returned)
+
+
+def time_block(label, fn):
+    """Misst und gibt Wandzeit einer Null-Argument-Funktion einmal aus; gibt das Ergebnis zurück.
+    Praktisch für Ad-hoc-Messungen: `result = time_block("solve", fn() => ode_solve(...))`."""
+    import time
+    if not callable(fn):
+        raise TypeError("time_block: fn muss eine aufrufbare Funktion ohne Argumente sein.")
+    t0 = time.perf_counter()
+    out = fn()
+    t1 = time.perf_counter()
+    print(f"[time_block] {label}: {(t1 - t0)*1e3:.3f} ms")
+    return out
+
+
+# ============================================================================
+# JIT-Backend: torch.compile-Wrapper als realistischer Schritt Richtung AOT
+# ============================================================================
+
+def jit(fn):
+    """Versucht, `fn` mit `torch.compile` zu beschleunigen (falls verfügbar); fällt sonst auf die
+    Original-Funktion zurück. Realistischer Zwischenschritt Richtung AOT: nutzt TorchInductor als
+    Backend, sodass Dedekind-Code, der zu PyTorch-Operationen transpiliert wird, durch denselben
+    Compiler-Stack läuft wie reines PyTorch-Modell-Code."""
+    if not callable(fn):
+        raise TypeError("jit: fn muss eine aufrufbare Funktion sein.")
+    compiler = getattr(torch, "compile", None)
+    if compiler is None:
+        # PyTorch < 2.0 oder Stub: einfach Original zurückgeben.
+        return fn
+    try:
+        return compiler(fn)
+    except Exception:
+        return fn
+
+
+# ============================================================================
+# Stochastische DGLn (SDEs): Euler-Maruyama und Milstein
+# ============================================================================
+
+def sde_solve(drift, diffusion, y0, t, method="euler_maruyama", seed_value=None):
+    """Löst dY = drift(t, Y) dt + diffusion(t, Y) dW (Itô-Interpretation).
+
+    - `drift(t, y)`, `diffusion(t, y)`: callables, Rückgabe wie y (Skalar/Tensor).
+    - `y0`: Anfangsbedingung; `t`: 1D-Zeitgitter (z. B. `linspace(0, 1, 1001)`).
+    - `method`: `"euler_maruyama"` (default) oder `"milstein"` (1D mit numerischer Ableitung
+      von diffusion bzgl. y; höhere Konvergenzordnung 1.0 statt 0.5).
+    - `seed_value`: optionaler int für deterministische Pfade (sonst aktueller globaler Seed).
+    """
+    y0 = _to_tensor(y0).float()
+    t_grid = _to_tensor(t).float().flatten()
+    if t_grid.numel() < 2:
+        raise ValueError("sde_solve: t braucht mindestens 2 Stützstellen.")
+    if seed_value is not None:
+        torch.manual_seed(int(seed_value))
+    out = [y0]
+    y = y0.clone()
+    is_scalar = (y0.dim() == 0)
+    for i in range(t_grid.numel() - 1):
+        t_cur = t_grid[i]
+        dt = (t_grid[i + 1] - t_grid[i]).item()
+        sqrt_dt = abs(dt) ** 0.5
+        if is_scalar:
+            dW = torch.randn((), dtype=y.dtype, device=y.device) * sqrt_dt
+        else:
+            dW = torch.randn(y.shape, dtype=y.dtype, device=y.device) * sqrt_dt
+        a = drift(t_cur, y)
+        b = diffusion(t_cur, y)
+        a_t = _to_tensor(a).float()
+        b_t = _to_tensor(b).float()
+        if method == "milstein":
+            # 1D-Milstein: Y += a dt + b dW + 0.5 b b' (dW^2 - dt)
+            eps = 1e-4 * (1.0 + float(y.detach().abs().mean().item() if y.numel() > 0 else 1.0))
+            b_plus = _to_tensor(diffusion(t_cur, y + eps)).float()
+            b_minus = _to_tensor(diffusion(t_cur, y - eps)).float()
+            db_dy = (b_plus - b_minus) / (2.0 * eps)
+            y = y + a_t * dt + b_t * dW + 0.5 * b_t * db_dy * (dW * dW - dt)
+        else:
+            y = y + a_t * dt + b_t * dW
+        out.append(y)
+    return torch.stack(out, dim=0)
+
+
+# ============================================================================
+# Erweiterte Optimierung: least_squares, nichtlineare Constraints, MILP
+# ============================================================================
+
+def least_squares(residuals, x0, jacobian=None, bounds=None, method="trf"):
+    """Nichtlineare Kleinste-Quadrate: minimiert ||residuals(x)||² über x.
+
+    - `residuals(x)`: Callable, liefert Residuen-Vektor (Liste/Tensor).
+    - `x0`: Startwerte. `jacobian` optional (Callable, sonst numerisch).
+    - `bounds`: (low, high) oder None (unbeschränkt).
+    - `method`: `"trf"` (Trust-Region Reflective, default), `"lm"` (Levenberg-Marquardt; unbeschränkt),
+      `"dogbox"`.
+    Rückgabe: Dict mit Keys `x`, `cost`, `nfev`, `success`, `message`.
+    """
+    try:
+        from scipy.optimize import least_squares as _ls  # type: ignore[import-untyped]
+    except ImportError:
+        raise RuntimeError("least_squares benötigt scipy.")
+    import numpy as _np  # type: ignore[reportMissingImports]
+    x0_np = _np.asarray(_to_tensor(x0).detach().cpu().numpy(), dtype=float).reshape(-1)
+
+    def _res_wrap(x):
+        r = residuals(x)
+        if hasattr(r, "detach"):
+            r = r.detach().cpu().numpy()
+        return _np.asarray(r, dtype=float).reshape(-1)
+
+    kwargs = {"method": method}
+    if jacobian is not None:
+        def _jac_wrap(x):
+            j = jacobian(x)
+            if hasattr(j, "detach"):
+                j = j.detach().cpu().numpy()
+            return _np.asarray(j, dtype=float)
+        kwargs["jac"] = _jac_wrap
+    else:
+        # PyTorch-Default-dtype ist float32; scipy's Default-Step von ~1.5e-8 für die numerische
+        # Jacobi-Approximation liegt unter float32-Epsilon und liefert dann Null-Gradient.
+        # Wir verwenden einen Schritt von 1e-4, der sowohl float32 als auch float64 stabil ist.
+        kwargs["diff_step"] = 1e-4
+    if bounds is not None:
+        kwargs["bounds"] = bounds
+    res = _ls(_res_wrap, x0_np, **kwargs)
+    return {
+        "x": res.x.tolist(),
+        "cost": float(res.cost),
+        "nfev": int(res.nfev),
+        "success": bool(res.success),
+        "message": str(res.message),
+    }
+
+
+def minimize_constrained(f, x0, constraints=None, bounds=None, method="SLSQP", tol=1e-8):
+    """Nichtlineare Optimierung mit Constraints (SLSQP/trust-constr/COBYLA).
+
+    - `f(x)`: skalare Zielfunktion.
+    - `constraints`: Liste von Dicts `{"type": "eq"|"ineq", "fun": g}` (ineq = g(x) >= 0).
+    - `bounds`: Liste von `(low, high)` pro Variable.
+    - `method`: "SLSQP" (default), "trust-constr", "COBYLA".
+    Rückgabe: Dict mit `x`, `fun`, `success`, `message`, `nit`.
+    """
+    try:
+        from scipy.optimize import minimize as _min  # type: ignore[import-untyped]
+    except ImportError:
+        raise RuntimeError("minimize_constrained benötigt scipy.")
+    import numpy as _np  # type: ignore[reportMissingImports]
+    x0_np = _np.asarray(_to_tensor(x0).detach().cpu().numpy(), dtype=float).reshape(-1)
+
+    def _f_wrap(x):
+        v = f(x)
+        if hasattr(v, "detach"):
+            v = v.detach().cpu().item()
+        return float(v)
+
+    _cons = []
+    if constraints:
+        for c in constraints:
+            ctype = c["type"] if isinstance(c, dict) else c[0]
+            cfun = c["fun"] if isinstance(c, dict) else c[1]
+
+            def _wrap(fun):
+                def inner(x):
+                    v = fun(x)
+                    if hasattr(v, "detach"):
+                        v = v.detach().cpu().numpy()
+                    return _np.asarray(v, dtype=float).reshape(-1)
+                return inner
+            _cons.append({"type": ctype, "fun": _wrap(cfun)})
+
+    kwargs = {"method": method, "tol": tol}
+    if _cons:
+        kwargs["constraints"] = _cons
+    if bounds is not None:
+        kwargs["bounds"] = list(bounds)
+    res = _min(_f_wrap, x0_np, **kwargs)
+    return {
+        "x": res.x.tolist(),
+        "fun": float(res.fun),
+        "success": bool(res.success),
+        "message": str(res.message),
+        "nit": int(getattr(res, "nit", 0)),
+    }
+
+
+def milp(c, A_ub=None, b_ub=None, A_eq=None, b_eq=None, bounds=None, integrality=None):
+    """(Gemischt-)Ganzzahlige lineare Optimierung: min c·x mit A_ub x ≤ b_ub, A_eq x = b_eq.
+
+    - `integrality`: Liste/Vektor mit 0 (kontinuierlich), 1 (Integer), 2 (semicontinuous),
+      3 (semi-integer) pro Variable; None = alles kontinuierlich (entspricht regulärem LP).
+    - `bounds`: Liste von `(low, high)` (None = unbeschränkt).
+    Rückgabe: Dict mit `x`, `fun`, `success`, `message`.
+    """
+    try:
+        from scipy.optimize import milp as _milp, LinearConstraint, Bounds  # type: ignore[import-untyped]
+    except ImportError:
+        raise RuntimeError("milp benötigt scipy>=1.9 (scipy.optimize.milp).")
+    import numpy as _np  # type: ignore[reportMissingImports]
+    c_np = _np.asarray(_to_tensor(c).detach().cpu().numpy(), dtype=float).reshape(-1)
+
+    constraints = []
+    if A_ub is not None and b_ub is not None:
+        A = _np.asarray(_to_tensor(A_ub).detach().cpu().numpy(), dtype=float)
+        b = _np.asarray(_to_tensor(b_ub).detach().cpu().numpy(), dtype=float).reshape(-1)
+        constraints.append(LinearConstraint(A, -_np.inf, b))
+    if A_eq is not None and b_eq is not None:
+        A = _np.asarray(_to_tensor(A_eq).detach().cpu().numpy(), dtype=float)
+        b = _np.asarray(_to_tensor(b_eq).detach().cpu().numpy(), dtype=float).reshape(-1)
+        constraints.append(LinearConstraint(A, b, b))
+
+    n = c_np.size
+    if bounds is not None:
+        lows = _np.array([b[0] if b[0] is not None else -_np.inf for b in bounds], dtype=float)
+        highs = _np.array([b[1] if b[1] is not None else _np.inf for b in bounds], dtype=float)
+        bnds = Bounds(lb=lows, ub=highs)
+    else:
+        bnds = Bounds(lb=_np.full(n, -_np.inf), ub=_np.full(n, _np.inf))
+
+    if integrality is not None:
+        integ = _np.asarray(_to_tensor(integrality).detach().cpu().numpy(), dtype=int).reshape(-1)
+    else:
+        integ = _np.zeros(n, dtype=int)
+
+    res = _milp(c_np, constraints=constraints if constraints else None,
+                bounds=bnds, integrality=integ)
+    return {
+        "x": (res.x.tolist() if res.x is not None else None),
+        "fun": (float(res.fun) if res.fun is not None else None),
+        "success": bool(res.success),
+        "message": str(res.message),
+    }
+
+
+# ============================================================================
+# FEM-Primitiven: Dreiecksgitter + lineare Galerkin-Assemblierung (Poisson 2D)
+# ============================================================================
+
+def mesh_unit_square(n):
+    """Strukturiertes Dreiecksgitter auf [0,1]² mit (n+1)² Knoten und 2·n² Dreiecken.
+
+    Rückgabe Dict mit:
+      - `nodes`: (Nn, 2)-Tensor der Knotenkoordinaten
+      - `elements`: (Ne, 3)-Tensor mit Knotenindizes pro Dreieck
+      - `boundary`: 1D-Tensor mit Indizes der Randknoten
+      - `n`: Original-n
+    """
+    import numpy as _np  # type: ignore[reportMissingImports]
+    n_i = int(n)
+    if n_i < 1:
+        raise ValueError("mesh_unit_square: n muss >= 1 sein.")
+    xs = _np.linspace(0.0, 1.0, n_i + 1)
+    ys = _np.linspace(0.0, 1.0, n_i + 1)
+    nodes = _np.array([[x, y] for y in ys for x in xs], dtype=float)
+    elements = []
+    for j in range(n_i):
+        for i in range(n_i):
+            v0 = j * (n_i + 1) + i
+            v1 = v0 + 1
+            v2 = v0 + (n_i + 1)
+            v3 = v2 + 1
+            elements.append([v0, v1, v3])
+            elements.append([v0, v3, v2])
+    elements = _np.array(elements, dtype=int)
+    boundary = []
+    for k in range(nodes.shape[0]):
+        x, y = nodes[k, 0], nodes[k, 1]
+        if x == 0.0 or x == 1.0 or y == 0.0 or y == 1.0:
+            boundary.append(k)
+    boundary = _np.array(boundary, dtype=int)
+    return {
+        "nodes": torch.from_numpy(nodes).float(),
+        "elements": torch.from_numpy(elements).long(),
+        "boundary": torch.from_numpy(boundary).long(),
+        "n": n_i,
+    }
+
+
+def fem_assemble_stiffness(mesh):
+    """Assembliert die Steifigkeitsmatrix K für ∫∇φ_i·∇φ_j dx auf linearen Dreiecks-Elementen.
+    Rückgabe: dichte (Nn, Nn)-Matrix (für kleine Probleme; für große Meshes sparse_laplacian_2d nutzen)."""
+    import numpy as _np  # type: ignore[reportMissingImports]
+    nodes = mesh["nodes"].detach().cpu().numpy()
+    elements = mesh["elements"].detach().cpu().numpy()
+    Nn = nodes.shape[0]
+    K = _np.zeros((Nn, Nn), dtype=float)
+    for tri in elements:
+        i, j, k = int(tri[0]), int(tri[1]), int(tri[2])
+        xi, yi = nodes[i]
+        xj, yj = nodes[j]
+        xk, yk = nodes[k]
+        # Fläche per Determinante.
+        det = (xj - xi) * (yk - yi) - (xk - xi) * (yj - yi)
+        area = 0.5 * abs(det)
+        if area < 1e-15:
+            continue
+        # Gradienten der Hütchen-Funktionen (lineare Dreiecke).
+        b = _np.array([yj - yk, yk - yi, yi - yj]) / det
+        c = _np.array([xk - xj, xi - xk, xj - xi]) / det
+        Ke = area * (_np.outer(b, b) + _np.outer(c, c))
+        idx = (i, j, k)
+        for a in range(3):
+            for bIdx in range(3):
+                K[idx[a], idx[bIdx]] += Ke[a, bIdx]
+    return torch.from_numpy(K).float()
+
+
+def fem_assemble_load(mesh, f_source):
+    """Assembliert den Lastvektor F_i = ∫ f φ_i dx, mit `f_source(x, y)` Skalar pro Punkt.
+    Verwendet Mittelpunkts-Quadratur pro Dreieck (1 Punkt, Ordnung 2 für linear)."""
+    import numpy as _np  # type: ignore[reportMissingImports]
+    nodes = mesh["nodes"].detach().cpu().numpy()
+    elements = mesh["elements"].detach().cpu().numpy()
+    Nn = nodes.shape[0]
+    F = _np.zeros(Nn, dtype=float)
+    for tri in elements:
+        i, j, k = int(tri[0]), int(tri[1]), int(tri[2])
+        xi, yi = nodes[i]
+        xj, yj = nodes[j]
+        xk, yk = nodes[k]
+        det = (xj - xi) * (yk - yi) - (xk - xi) * (yj - yi)
+        area = 0.5 * abs(det)
+        cx = (xi + xj + xk) / 3.0
+        cy = (yi + yj + yk) / 3.0
+        f_val = float(f_source(cx, cy))
+        contrib = f_val * area / 3.0
+        F[i] += contrib
+        F[j] += contrib
+        F[k] += contrib
+    return torch.from_numpy(F).float()
+
+
+def fem_poisson_2d(mesh, f_source, dirichlet_value=0.0):
+    """Löst -Δu = f auf einem Dreiecksgitter mit homogenen (oder konstanten) Dirichlet-Randwerten.
+    Rückgabe: 1D-Tensor `u` mit Nn Knotenwerten.
+
+    Beispiel:
+      mesh = mesh_unit_square(20)
+      u = fem_poisson_2d(mesh, fn(x, y) => 1.0, dirichlet_value=0.0)
+    """
+    import numpy as _np  # type: ignore[reportMissingImports]
+    K = fem_assemble_stiffness(mesh).detach().cpu().numpy()
+    F = fem_assemble_load(mesh, f_source).detach().cpu().numpy()
+    boundary = mesh["boundary"].detach().cpu().numpy()
+    Nn = K.shape[0]
+    g = float(dirichlet_value)
+    # Dirichlet: setze Knotenwert = g durch Zeilen/Spalten-Substitution.
+    free = _np.setdiff1d(_np.arange(Nn), boundary)
+    u = _np.full(Nn, g, dtype=float)
+    K_ff = K[_np.ix_(free, free)]
+    F_f = F[free] - K[_np.ix_(free, boundary)] @ u[boundary]
+    u_free = _np.linalg.solve(K_ff, F_f)
+    u[free] = u_free
+    return torch.from_numpy(u).float()
+
+
+# ============================================================================
+# Tiefere Symbolik: solve, simplify_sym, series (Taylor-Entwicklung)
+# ============================================================================
+
+def _require_sympy():
+    try:
+        import sympy  # type: ignore[reportMissingImports]
+        return sympy
+    except ImportError:
+        raise ImportError("Symbolische Operation erfordert sympy. Bitte installieren: pip install sympy")
+
+
+def _sympify_expr(sympy_mod, expr_str):
+    """Parst einen Dedekind-typischen Mathe-String mit `^` als Potenz zu einem SymPy-Ausdruck."""
+    s = str(expr_str).replace("^", "**").strip()
+    return sympy_mod.sympify(s)
+
+
+def solve_sym(equation, var):
+    """Löst eine Gleichung symbolisch nach `var` (für numerische LGS: siehe `solve(A, b)`).
+
+    - `equation`: String, entweder `"lhs = rhs"` oder Ausdruck `"f(x)"` (interpretiert als `f(x) = 0`).
+      Mehrere Gleichungen können als Liste übergeben werden, dann zusammen mit Liste von Variablen.
+    - `var`: Variablenname als String, oder Liste von Strings (für Systeme).
+    Rückgabe: Liste von Lösungs-Strings (für eine Variable) bzw. Liste von Dicts (für Systeme).
+
+    Beispiele:
+      solve_sym("x^2 - 4", "x")            -> ["-2", "2"]
+      solve_sym("x^2 + 1", "x")            -> ["-I", "I"]   (komplexe Wurzeln)
+      solve_sym(["x + y - 3", "x - y - 1"], ["x", "y"])  -> [{x: 2, y: 1}]
+    """
+    sp = _require_sympy()
+
+    def _to_eq(e):
+        s = str(e)
+        if "=" in s and "==" not in s:
+            lhs, _, rhs = s.partition("=")
+            return sp.Eq(_sympify_expr(sp, lhs), _sympify_expr(sp, rhs))
+        return _sympify_expr(sp, s)
+
+    if isinstance(equation, (list, tuple)):
+        eqs = [_to_eq(e) for e in equation]
+        if isinstance(var, (list, tuple)):
+            vars_sp = [sp.Symbol(str(v)) for v in var]
+        else:
+            vars_sp = sp.Symbol(str(var))
+        sols = sp.solve(eqs, vars_sp, dict=True)
+        return [{str(k): str(v) for k, v in d.items()} for d in sols]
+
+    eq = _to_eq(equation)
+    var_sp = sp.Symbol(str(var))
+    sols = sp.solve(eq, var_sp)
+    return [str(s) for s in sols]
+
+
+def simplify_sym(expr):
+    """Symbolische Vereinfachung via SymPy (Ausmultiplizieren, Kürzen, Trigonometrie etc.).
+
+    Beispiele:
+      simplify_sym("sin(x)^2 + cos(x)^2")   -> "1"
+      simplify_sym("(x^2 - 1) / (x - 1)")   -> "x + 1"
+      simplify_sym("log(exp(x))")            -> "x"  (nur für reelle x; SymPy ist konservativ)
+    """
+    sp = _require_sympy()
+    s = _sympify_expr(sp, expr)
+    return str(sp.simplify(s))
+
+
+def series(expr, var, x0=0, n=6):
+    """Taylor-Reihenentwicklung von `expr` in `var` um `x0` bis Ordnung `n` (exklusive O-Term).
+
+    Beispiele:
+      series("sin(x)", "x", 0, 8)
+        -> "x - x**3/6 + x**5/120 - x**7/5040"
+      series("exp(x)", "x", 0, 5)
+        -> "1 + x + x**2/2 + x**3/6 + x**4/24"
+    """
+    sp = _require_sympy()
+    e = _sympify_expr(sp, expr)
+    v = sp.Symbol(str(var))
+    s = sp.series(e, v, float(x0), int(n)).removeO()
+    return str(s)
+
+
+# ============================================================================
+# Sparse iterative Solver: cg, gmres, bicgstab + Jacobi-/ILU-Preconditioner
+# ============================================================================
+
+def _to_scipy_sparse(A):
+    """Wandelt Tensor/numpy-Array/CSR-Matrix in scipy.sparse CSR um (float64)."""
+    import numpy as _np  # type: ignore[reportMissingImports]
+    try:
+        import scipy.sparse as _sps  # type: ignore[import-untyped]
+    except ImportError:
+        raise RuntimeError("Sparse-Solver benötigen scipy.")
+    if _sps.issparse(A):
+        return A.tocsr().astype(float)
+    if hasattr(A, "is_sparse") and A.is_sparse:
+        A_dense = A.to_dense().detach().cpu().numpy()
+    elif hasattr(A, "detach"):
+        A_dense = A.detach().cpu().numpy()
+    else:
+        A_dense = _np.asarray(A)
+    return _sps.csr_matrix(_np.asarray(A_dense, dtype=float))
+
+
+def _to_numpy_vector(b):
+    import numpy as _np  # type: ignore[reportMissingImports]
+    if hasattr(b, "detach"):
+        b = b.detach().cpu().numpy()
+    return _np.asarray(b, dtype=float).reshape(-1)
+
+
+def _call_scipy_iterative(method, A_sp, b_np, x0_np, tol, max_iter, M, callback):
+    """Ruft scipy-Krylov-Solver auf; behandelt API-Wechsel `tol` -> `rtol` (scipy >= 1.12)."""
+    try:
+        return method(A_sp, b_np, x0=x0_np, rtol=float(tol),
+                      maxiter=int(max_iter), M=M, callback=callback)
+    except TypeError:
+        # Älteres scipy: nur `tol` verfügbar.
+        return method(A_sp, b_np, x0=x0_np, tol=float(tol),
+                      maxiter=int(max_iter), M=M, callback=callback)
+
+
+def _iterative_solve_dispatch(method_name, A, b, x0, tol, max_iter, preconditioner):
+    """Gemeinsame Aufruf-Mechanik für die drei Krylov-Solver."""
+    try:
+        import scipy.sparse.linalg as _ssl  # type: ignore[import-untyped]
+    except ImportError:
+        raise RuntimeError("Sparse-Solver benötigen scipy.")
+    A_sp = _to_scipy_sparse(A)
+    b_np = _to_numpy_vector(b)
+    x0_np = _to_numpy_vector(x0) if x0 is not None else None
+    M = preconditioner if preconditioner is not None else None
+    method = getattr(_ssl, method_name)
+    counter = [0]
+
+    def _cb(*_a, **_kw):
+        counter[0] += 1
+
+    x, info = _call_scipy_iterative(method, A_sp, b_np, x0_np, tol, max_iter, M, _cb)
+    residual_norm = float(((A_sp @ x) - b_np).__abs__().max())
+    converged = int(info) == 0
+    return {
+        "x": x.tolist(),
+        "converged": converged,
+        "iterations": int(counter[0]),
+        "info": int(info),
+        "residual_inf": residual_norm,
+    }
+
+
+def cg(A, b, x0=None, tol=1e-8, max_iter=1000, preconditioner=None):
+    """Conjugate Gradient für symmetrisch-positiv-definite Systeme A x = b.
+    Rückgabe: Dict mit `x`, `converged`, `iterations`, `info`, `residual_inf`."""
+    return _iterative_solve_dispatch("cg", A, b, x0, tol, max_iter, preconditioner)
+
+
+def gmres(A, b, x0=None, tol=1e-8, max_iter=1000, preconditioner=None):
+    """GMRES (Generalized Minimum Residual) für allgemeine (nicht-symmetrische) Systeme A x = b."""
+    return _iterative_solve_dispatch("gmres", A, b, x0, tol, max_iter, preconditioner)
+
+
+def bicgstab(A, b, x0=None, tol=1e-8, max_iter=1000, preconditioner=None):
+    """BiCGSTAB für allgemeine Systeme A x = b; oft günstiger als GMRES bei großen Matrizen."""
+    return _iterative_solve_dispatch("bicgstab", A, b, x0, tol, max_iter, preconditioner)
+
+
+def jacobi_preconditioner(A):
+    """Diagonaler (Jacobi-)Vorkonditionierer: M^{-1} = diag(1 / a_ii). Beschleunigt cg/gmres/bicgstab
+    typischerweise um den Faktor 2–10×, wenn A diagonal-dominant ist.
+    Rückgabe: scipy.sparse.linalg.LinearOperator, direkt als `preconditioner=` einsetzbar."""
+    try:
+        import scipy.sparse.linalg as _ssl  # type: ignore[import-untyped]
+    except ImportError:
+        raise RuntimeError("jacobi_preconditioner benötigt scipy.")
+    import numpy as _np  # type: ignore[reportMissingImports]
+    A_sp = _to_scipy_sparse(A)
+    diag = _np.asarray(A_sp.diagonal(), dtype=float)
+    diag = _np.where(diag != 0, 1.0 / diag, 1.0)
+    n = A_sp.shape[0]
+    return _ssl.LinearOperator(
+        (n, n),
+        matvec=lambda x: _np.asarray(diag * x, dtype=float),
+        dtype=float,
+    )
+
+
+def ilu_preconditioner(A, drop_tol=1e-4, fill_factor=10):
+    """Incomplete-LU-Vorkonditionierer (spilu). Stärker als Jacobi, besonders für nicht-symmetrische
+    Probleme; `drop_tol` und `fill_factor` steuern Sparsity vs Genauigkeit."""
+    try:
+        import scipy.sparse.linalg as _ssl  # type: ignore[import-untyped]
+    except ImportError:
+        raise RuntimeError("ilu_preconditioner benötigt scipy.")
+    A_sp = _to_scipy_sparse(A).tocsc()
+    ilu = _ssl.spilu(A_sp, drop_tol=float(drop_tol), fill_factor=float(fill_factor))
+    n = A_sp.shape[0]
+    return _ssl.LinearOperator((n, n), matvec=ilu.solve, dtype=float)
+
+
+# ============================================================================
+# Reproducible-Notebook-Export: .ddk -> standalone HTML/Markdown
+# ============================================================================
+
+def _notebook_in_progress_set():
+    """Process-weite Re-Entry-Tracking-Menge. Liegt auf sys, damit sie über exec-Kontexte
+    persistent ist (jeder exec(compile_source(...)) bekommt sonst eine frische ml_runtime-Kopie)."""
+    import sys as _sys
+    key = "_dedekind_notebook_export_in_progress"
+    s = getattr(_sys, key, None)
+    if s is None:
+        s = set()
+        setattr(_sys, key, s)
+    return s
+
+
+def export_notebook(source_path, output_path=None, format="html", title=None,
+                    include_hash=True, capture_plots=True):
+    """Führt eine .ddk-Datei aus und schreibt eine Standalone-Datei (HTML oder Markdown),
+    die Quellcode, Stdout-Ausgabe, Plots (Base64-PNG) und einen SHA-256-Hash des Quelltexts bündelt.
+
+    Parameter:
+      source_path: Pfad zur .ddk-Datei.
+      output_path: Zieldatei (default: `<source>.html` bzw. `.md`).
+      format: "html" oder "md".
+      title: Optionaler Titel; default = Dateiname ohne Endung.
+      include_hash: Fügt SHA-256-Hash des Quelltexts in den Output ein (Reproduzierbarkeit).
+      capture_plots: Sammelt `_dedekind_plots` und bettet sie als Base64-PNG ein.
+
+    Rückgabe: Pfad zur erzeugten Datei.
+    """
+    import os
+    import sys
+    import io
+    import hashlib
+    src_path = os.path.abspath(str(source_path))
+    if not os.path.isfile(src_path):
+        raise FileNotFoundError(f"export_notebook: Datei nicht gefunden: {src_path}")
+    # Re-Entry-Schutz: wenn die Quelldatei sich selbst exportiert, würde sie sich beim Ausführen
+    # endlos wiederaufrufen. Wir markieren den Pfad und liefern beim re-entry einen Stub zurück.
+    in_progress = _notebook_in_progress_set()
+    if src_path in in_progress:
+        return output_path or (os.path.splitext(src_path)[0] +
+                               (".html" if str(format).lower() == "html" else ".md"))
+    in_progress.add(src_path)
+    with open(src_path, "r", encoding="utf-8") as f:
+        source = f.read()
+    fmt = str(format).lower()
+    if fmt not in ("html", "md", "markdown"):
+        raise ValueError("export_notebook: format muss 'html' oder 'md' sein.")
+    if output_path is None:
+        ext = "html" if fmt == "html" else "md"
+        output_path = os.path.splitext(src_path)[0] + f".{ext}"
+    title_str = str(title) if title else os.path.basename(os.path.splitext(src_path)[0])
+    src_hash = hashlib.sha256(source.encode("utf-8")).hexdigest()
+
+    # Quelltext kompilieren und in isoliertem Globals-Dict ausführen; Stdout abfangen.
+    # Wir importieren lokal, um Zirkular-Imports beim Inlinen zu vermeiden.
+    try:
+        from src.compiler.compiler import compile_source  # type: ignore[import-not-found]
+        py_code = compile_source(source, filepath=src_path)
+        old_stdout = sys.stdout
+        captured = io.StringIO()
+        exec_globals = {}
+        try:
+            sys.stdout = captured
+            exec(py_code, exec_globals)
+        finally:
+            sys.stdout = old_stdout
+        stdout_text = captured.getvalue()
+        plots_b64 = []
+        if capture_plots:
+            plots_b64 = list(exec_globals.get("_dedekind_plots", []))
+
+        if fmt == "html":
+            content = _render_notebook_html(title_str, source, stdout_text, plots_b64,
+                                            src_hash if include_hash else None,
+                                            os.path.basename(src_path))
+        else:
+            content = _render_notebook_markdown(title_str, source, stdout_text, plots_b64,
+                                                src_hash if include_hash else None,
+                                                os.path.basename(src_path))
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write(content)
+        return output_path
+    finally:
+        in_progress.discard(src_path)
+
+
+def _render_notebook_html(title, source, stdout_text, plots_b64, src_hash, src_name):
+    import html as _html
+    import datetime
+    parts = [
+        "<!DOCTYPE html>",
+        '<html lang="en">',
+        "<head>",
+        '<meta charset="utf-8">',
+        f"<title>{_html.escape(title)}</title>",
+        "<style>",
+        "body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;"
+        "max-width:900px;margin:2em auto;padding:0 1em;color:#222;}",
+        "h1,h2{border-bottom:1px solid #ddd;padding-bottom:.2em;}",
+        "pre{background:#f6f8fa;padding:1em;border-radius:6px;overflow-x:auto;"
+        "font-family:'SF Mono',Consolas,monospace;font-size:.9em;}",
+        ".meta{color:#666;font-size:.85em;margin:.5em 0;}",
+        ".plot{margin:1em 0;text-align:center;}",
+        ".plot img{max-width:100%;border:1px solid #ddd;border-radius:4px;}",
+        ".hash{font-family:monospace;font-size:.8em;color:#888;"
+        "word-break:break-all;background:#f6f8fa;padding:.3em .5em;border-radius:4px;}",
+        "</style>",
+        "</head>",
+        "<body>",
+        f"<h1>{_html.escape(title)}</h1>",
+        f'<div class="meta">Source: <code>{_html.escape(src_name)}</code> · '
+        f'Generated: {datetime.datetime.now().isoformat(timespec="seconds")}</div>',
+    ]
+    if src_hash:
+        parts.append(f'<div class="meta">SHA-256: <span class="hash">{src_hash}</span></div>')
+    parts.append("<h2>Source</h2>")
+    parts.append(f"<pre><code>{_html.escape(source)}</code></pre>")
+    parts.append("<h2>Output</h2>")
+    parts.append(f"<pre>{_html.escape(stdout_text) if stdout_text else '(no output)'}</pre>")
+    if plots_b64:
+        parts.append(f"<h2>Plots ({len(plots_b64)})</h2>")
+        for i, b64 in enumerate(plots_b64, 1):
+            parts.append(f'<div class="plot"><img alt="Plot {i}" '
+                         f'src="data:image/png;base64,{b64}"></div>')
+    parts.append("</body></html>")
+    return "\n".join(parts) + "\n"
+
+
+def _render_notebook_markdown(title, source, stdout_text, plots_b64, src_hash, src_name):
+    import datetime
+    lines = [
+        f"# {title}",
+        "",
+        f"*Source:* `{src_name}`  ·  *Generated:* {datetime.datetime.now().isoformat(timespec='seconds')}",
+        "",
+    ]
+    if src_hash:
+        lines.append(f"*SHA-256:* `{src_hash}`")
+        lines.append("")
+    lines.append("## Source")
+    lines.append("")
+    lines.append("```")
+    lines.append(source.rstrip())
+    lines.append("```")
+    lines.append("")
+    lines.append("## Output")
+    lines.append("")
+    lines.append("```")
+    lines.append((stdout_text or "(no output)").rstrip())
+    lines.append("```")
+    lines.append("")
+    if plots_b64:
+        lines.append(f"## Plots ({len(plots_b64)})")
+        lines.append("")
+        for i, b64 in enumerate(plots_b64, 1):
+            lines.append(f"![Plot {i}](data:image/png;base64,{b64})")
+            lines.append("")
+    return "\n".join(lines) + "\n"
+
+
+# ============================================================================
+# Paper-Mode-Output: print_table mit LaTeX-Booktabs / Markdown / CSV + ± für UncertainQuantity
+# ============================================================================
+
+def _format_cell_value(v, precision=4):
+    """Formatiert eine Zelle: UncertainQuantity → 'val ± std [unit]', Quantity → 'val [unit]'."""
+    if isinstance(v, UncertainQuantity):
+        unit = f" [{v.unit}]" if getattr(v, "unit", "") else ""
+        return f"{v.value:.{precision}g} ± {v.std:.{precision}g}{unit}"
+    if isinstance(v, Quantity):
+        unit = f" [{v.unit}]" if v.unit else ""
+        return f"{v.value:.{precision}g}{unit}"
+    if isinstance(v, float):
+        return f"{v:.{precision}g}"
+    if hasattr(v, "item") and not isinstance(v, (str, bytes)):
+        try:
+            iv = v.item()
+            return _format_cell_value(iv, precision)
+        except Exception:
+            pass
+    return str(v)
+
+
+def _format_cell_latex(v, precision=4):
+    """Wie _format_cell_value, aber LaTeX-tauglich (`\\pm`, `\\,[\\mathrm{...}]`)."""
+    if isinstance(v, UncertainQuantity):
+        unit = f"\\,[\\mathrm{{{v.unit}}}]" if getattr(v, "unit", "") else ""
+        return f"${v.value:.{precision}g} \\pm {v.std:.{precision}g}{unit}$"
+    if isinstance(v, Quantity):
+        unit = f"\\,[\\mathrm{{{v.unit}}}]" if v.unit else ""
+        return f"${v.value:.{precision}g}{unit}$"
+    if isinstance(v, float):
+        return f"${v:.{precision}g}$"
+    if hasattr(v, "item") and not isinstance(v, (str, bytes)):
+        try:
+            return _format_cell_latex(v.item(), precision)
+        except Exception:
+            pass
+    return str(v)
+
+
+def print_table(rows, headers=None, format="markdown", precision=4, caption=None, label=None):
+    """Erzeugt eine Tabelle in einem von vier Formaten und gibt sie via `print()` aus.
+
+    - `rows`: Liste von Listen/Tupeln *oder* eine `DataFrame`.
+    - `headers`: optional Liste von Spaltennamen (wenn rows kein DataFrame ist).
+    - `format`: `"markdown"` (default), `"latex"` (booktabs), `"csv"`, `"plain"` (ASCII-Tabelle).
+    - `precision`: signifikante Stellen für float/Quantity (default 4).
+    - `caption`, `label`: nur für LaTeX (Tabellen-Caption und `\\label{...}`).
+
+    UncertainQuantity wird automatisch als `val ± std [unit]` formatiert,
+    Quantity als `val [unit]`. Für LaTeX werden ± und Einheiten mathmodisch gesetzt.
+    """
+    if isinstance(rows, DataFrame):
+        df = rows
+        headers = list(df.columns)
+        # Einheiten in Header für Märkdown/Plain/CSV — LaTeX bleibt einheitslos im Header.
+        units_map = dict(df._units)
+        rows = [[df._cols[j][i] for j in range(len(headers))] for i in range(df.n_rows)]
+    else:
+        units_map = {}
+        if headers is None:
+            headers = [f"col{i+1}" for i in range(len(rows[0]) if rows else 0)]
+        else:
+            headers = list(headers)
+    fmt = str(format).lower()
+    if fmt == "latex":
+        out = _table_latex(rows, headers, precision, caption, label)
+    elif fmt == "csv":
+        out = _table_csv(rows, headers, precision, units_map)
+    elif fmt == "plain":
+        out = _table_plain(rows, headers, precision, units_map)
+    else:
+        out = _table_markdown(rows, headers, precision, units_map)
+    print(out)
+    return out
+
+
+def _decorate_header_with_unit(name, units_map):
+    u = units_map.get(name) if units_map else None
+    return f"{name} [{u}]" if u else name
+
+
+def _table_markdown(rows, headers, precision, units_map):
+    hdr = [_decorate_header_with_unit(h, units_map) for h in headers]
+    body = [[_format_cell_value(v, precision) for v in row] for row in rows]
+    widths = [_builtin_max(len(hdr[j]),
+                           *(len(b[j]) for b in body) if body else (len(hdr[j]),))
+              for j in range(len(headers))]
+    lines = []
+    lines.append("| " + " | ".join(hdr[j].ljust(widths[j]) for j in range(len(headers))) + " |")
+    lines.append("|" + "|".join("-" * (widths[j] + 2) for j in range(len(headers))) + "|")
+    for b in body:
+        lines.append("| " + " | ".join(b[j].ljust(widths[j]) for j in range(len(headers))) + " |")
+    return "\n".join(lines)
+
+
+def _table_latex(rows, headers, precision, caption, label):
+    cols = "l" * len(headers)
+    lines = [r"\begin{table}[h]", r"\centering"]
+    if caption:
+        lines.append(r"\caption{" + str(caption) + "}")
+    if label:
+        lines.append(r"\label{" + str(label) + "}")
+    lines.append(r"\begin{tabular}{" + cols + "}")
+    lines.append(r"\toprule")
+    lines.append(" & ".join(str(h) for h in headers) + r" \\")
+    lines.append(r"\midrule")
+    for row in rows:
+        cells = [_format_cell_latex(v, precision) for v in row]
+        lines.append(" & ".join(cells) + r" \\")
+    lines.append(r"\bottomrule")
+    lines.append(r"\end{tabular}")
+    lines.append(r"\end{table}")
+    return "\n".join(lines)
+
+
+def _table_csv(rows, headers, precision, units_map):
+    import csv
+    import io
+    buf = io.StringIO()
+    w = csv.writer(buf)
+    w.writerow([_decorate_header_with_unit(h, units_map) for h in headers])
+    for row in rows:
+        w.writerow([_format_cell_value(v, precision) for v in row])
+    return buf.getvalue().rstrip("\n")
+
+
+def _table_plain(rows, headers, precision, units_map):
+    hdr = [_decorate_header_with_unit(h, units_map) for h in headers]
+    body = [[_format_cell_value(v, precision) for v in row] for row in rows]
+    widths = [_builtin_max(len(hdr[j]),
+                           *(len(b[j]) for b in body) if body else (len(hdr[j]),))
+              for j in range(len(headers))]
+    sep = "  "
+    lines = [sep.join(hdr[j].ljust(widths[j]) for j in range(len(headers)))]
+    lines.append(sep.join("-" * widths[j] for j in range(len(headers))))
+    for b in body:
+        lines.append(sep.join(b[j].ljust(widths[j]) for j in range(len(headers))))
+    return "\n".join(lines)

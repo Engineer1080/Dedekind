@@ -1,0 +1,13 @@
+// Unit-aware Plots: plot()/scatter()/contour() akzeptieren Listen von Quantity
+// und übernehmen die Einheit als Achsenbeschriftung.
+// Smoke-Test: einfacher Aufruf darf nicht crashen.
+
+fn main() {
+    // Liste von Quantity-Werten (jeweils mit Einheit)
+    xs = [0.0[s], 1.0[s], 2.0[s], 3.0[s]]
+    ys = [10.0[m], 12.0[m], 9.0[m], 11.0[m]]
+    plot(xs, ys, title="Distanz vs Zeit")
+    scatter(xs, ys, title="Punkte")
+    print("unit_plot_test OK")
+}
+main()

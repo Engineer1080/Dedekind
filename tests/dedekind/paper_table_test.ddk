@@ -1,0 +1,45 @@
+// Tests für print_table mit verschiedenen Formaten und UncertainQuantity.
+
+fn check_contains(haystack, needle, label) {
+    // Wir nutzen str.find() (Python-passthrough); -1 bedeutet "nicht gefunden".
+    pos = haystack.find(needle)
+    assert(pos >= 0, label)
+}
+
+fn main() {
+    // 1) Einfache Tabelle
+    rows = [[1, 2.5, "x"], [3, 4.5, "y"]]
+    headers = ["a", "b", "c"]
+    md = print_table(rows, headers=headers, format="markdown")
+    check_contains(md, "| a | b   | c |", "Markdown-Header mit a/b/c")
+    check_contains(md, "1 | 2.5 | x", "Erste Zeile")
+
+    // 2) CSV-Format
+    csv = print_table(rows, headers=headers, format="csv")
+    check_contains(csv, "a,b,c", "CSV-Header")
+    check_contains(csv, "1,2.5,x", "CSV-Zeile")
+
+    // 3) LaTeX-Format
+    tex = print_table(rows, headers=headers, format="latex", caption="Demo", label="tab:t")
+    check_contains(tex, r"\begin{tabular}", "LaTeX-tabular")
+    check_contains(tex, r"\toprule", "Booktabs-toprule")
+    check_contains(tex, r"\caption{Demo}", "LaTeX-Caption")
+
+    // 4) UncertainQuantity: ± mit Einheit
+    rows_u = [["U1", uncertain(2.34, 0.05, unit="V")]]
+    md_u = print_table(rows_u, headers=["Messung", "Spannung"], format="markdown")
+    check_contains(md_u, "2.34 ± 0.05 [V]", "Markdown ± mit Einheit")
+
+    tex_u = print_table(rows_u, headers=["Messung", "Spannung"], format="latex")
+    check_contains(tex_u, r"\pm", "LaTeX \pm")
+    check_contains(tex_u, r"\mathrm{V}", "LaTeX-Einheit als mathrm")
+
+    // 5) DataFrame mit Einheiten in Header
+    df = DataFrame({"t": [0.0, 1.0], "T": [20.0, 22.5]}, units={"t": "s", "T": "K"})
+    md_df = print_table(df, format="markdown")
+    check_contains(md_df, "t [s]", "DataFrame-Header trägt Einheit")
+    check_contains(md_df, "T [K]", "DataFrame-Header trägt zweite Einheit")
+
+    print("paper_table_test OK")
+}
+main()

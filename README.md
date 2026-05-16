@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-1.3.1-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-1.6.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -28,6 +28,33 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
+
+### What's New in v1.6.0
+
+- **Tiefere Symbolik:** `solve_sym(equation, var)` löst Gleichungen (auch Systeme mit Listen) symbolisch via SymPy; `"x^2 - 5*x + 6"` → `["2", "3"]`. `simplify_sym(expr)` vereinfacht Ausdrücke (`"sin(x)^2 + cos(x)^2"` → `"1"`). `series(expr, var, x0, n)` liefert Taylor-Entwicklungen. Ergänzt `diff_sym`/`integrate_sym`.
+- **Sparse iterative Solver:** `cg(A, b)`, `gmres(A, b)`, `bicgstab(A, b)` als Krylov-Solver für große (sparse oder dichte) lineare Systeme, mit Iterations-Callback. `jacobi_preconditioner(A)` und `ilu_preconditioner(A)` als `M=`-Argument für 2–10×-Speedup. Dichte Matrix, sparse Tensor und scipy.sparse-Matrizen werden alle akzeptiert (intern auf CSR-float64 normalisiert).
+- **Reproducible-Notebook-Export:** `export_notebook(source_path, output_path, format="html"|"md", title, include_hash=True)` führt eine `.ddk`-Datei aus und bündelt Quellcode, Stdout-Output, alle generierten Plots (Base64-PNG) und SHA-256-Hash zu einer Standalone-Datei. Re-Entry-Guard verhindert Endlosrekursion, wenn die Quelldatei sich selbst exportiert.
+- **Paper-Mode-Tabellen:** `print_table(rows, headers, format="markdown"|"latex"|"csv"|"plain", precision, caption, label)` erzeugt Tabellen in vier Formaten; LaTeX nutzt Booktabs (`\toprule`/`\midrule`/`\bottomrule`). `UncertainQuantity` wird automatisch als `val ± std [unit]` formatiert (in LaTeX: `$val \pm std\,[\mathrm{unit}]$`), `Quantity` als `val [unit]`. Akzeptiert `DataFrame` direkt; Einheiten aus `df.units` landen in Header.
+- Beispiele: `symbolic_solve_series.ddk`, `sparse_iterative_solvers.ddk`, `notebook_export_demo.ddk`, `paper_table_demo.ddk`. Tests: 26/26 grün; alle 82 Beispiele kompilieren.
+
+### What's New in v1.5.0
+
+- **Benchmarking & Profiling als Built-ins:** `benchmark(fn, n=10, warmup=2, label="...")` misst Wandzeit über n Wiederholungen (Mittelwert ± Std, Min/Max); `profile(fn)` liefert zusätzlich Peak-Speicher (`tracemalloc`) und Top-Funktionen (`cProfile`); `time_block(label, fn)` für Ad-hoc-Messungen. Beispiel: `bm = benchmark(work, n=50)`.
+- **JIT-Backend:** `jit(fn)` wrappt eine Funktion mit `torch.compile` (TorchInductor) wenn verfügbar, fällt sonst auf das Original zurück. Realistischer Zwischenschritt Richtung AOT; nutzt denselben Compiler-Stack wie reines PyTorch.
+- **SDE-Solver:** `sde_solve(drift, diffusion, y0, t, method="euler_maruyama"|"milstein", seed_value=None)` für Itô-SDEs `dY = drift(t,Y) dt + diffusion(t,Y) dW`. Euler-Maruyama (Ordnung 0.5) und Milstein (Ordnung 1, mit numerischer Ableitung der Diffusion).
+- **Erweiterte Optimierung:** `least_squares(residuals, x0, jacobian=None, bounds=None, method="trf")` für nichtlineare Kleinste-Quadrate (mit float32-stabiler Default-Schrittweite); `minimize_constrained(f, x0, constraints=[{"type":"ineq","fun":g}], bounds=...)` für SLSQP/trust-constr/COBYLA; `milp(c, A_ub, b_ub, A_eq, b_eq, bounds, integrality)` für (gemischt-)ganzzahlige LPs.
+- **FEM-Primitiven:** `mesh_unit_square(n)` erzeugt strukturiertes Dreiecksgitter mit Knoten/Elementen/Rand; `fem_assemble_stiffness(mesh)`, `fem_assemble_load(mesh, f)` für lineare Galerkin-Assemblierung; `fem_poisson_2d(mesh, f, dirichlet_value=0)` löst -Δu=f mit Dirichlet-Randwert.
+- **`arange` für Indexierung:** `arange(n)` und `arange(start, stop)` liefern jetzt int64 (vorher float32); macht `for i in arange(N) { x[i] = ... }` direkt nutzbar. Float-Schritt-Variante (`arange(0, 10, 0.5)`) bleibt float32. Beispiel: `v1_5_features_showcase.ddk`. Tests: `benchmark_profile_test.ddk`, `jit_test.ddk`, `sde_solve_test.ddk`, `optimization_test.ddk`, `fem_test.ddk`.
+
+### What's New in v1.4.0
+
+- **Modul-System:** `use mymodule` lädt `modules/mymodule.ddk` (oder dieselbe Verzeichnis-Datei) und stellt deren Funktionen/Konstanten zur Verfügung. Beispiel: `use mathlib` → `square`, `cube`, `PHI`. Suchpfade: aktuelles Verzeichnis, `modules/`, `examples/dedekind/`, CWD.
+- **Reproduzierbarkeit:** `seed(n)` setzt deterministischen Seed in `random`, NumPy und PyTorch. `data_hash(x)` liefert SHA-256-Digest beliebiger Eingaben (Tensor, Liste, Dict, DataFrame, Zahl, String) für reproduzierbare Pipelines.
+- **DataFrames + tabular I/O:** Leichte spaltenorientierte `DataFrame`-Klasse mit Einheiten pro Spalte; `read_csv(path)` parst Header der Form `name [unit]` automatisch; `write_csv(path, df)`. Optional: `read_parquet`/`write_parquet` (pyarrow), `read_hdf5`/`write_hdf5` (h5py), `read_netcdf` (netCDF4).
+- **Unit-aware Plots:** `plot()`, `scatter()`, `contour()` erkennen Listen von `Quantity`-Werten, extrahieren Zahlenwerte und ergänzen Einheiten automatisch in den Achsenbeschriftungen (`Zeit [s]`, `Temperatur [K]`).
+- **`@units`-Signaturen:** Funktionen können Argument- und Return-Einheiten deklarieren: `fn kinetic_energy(m: [kg], v: [m/s]) -> [J] { ... }`. Eingaben werden automatisch in die deklarierte Einheit umgerechnet (z. B. `2000[g]` → `2[kg]`); Return-Wert wird dimensional geprüft (z. B. `kg*m²/s² == J`).
+- **Dict-Literale:** `{"key": value, "k2": v2}` als Ausdruck (z. B. für `DataFrame`-Konstruktion oder `json_stringify`).
+- Beispiel: `v1_4_features_showcase.ddk`. Tests: `use_module_test.ddk`, `seed_reproducibility_test.ddk`, `dataframe_csv_test.ddk`, `signature_units_test.ddk`, `unit_plot_test.ddk`.
 
 ### What's New in v1.3.1
 

@@ -1,0 +1,22 @@
+// Seed-Manager: zwei Aufrufe mit gleichem Seed müssen identische Zufallszahlen liefern.
+
+fn run() {
+    seed(123)
+    a = sample(Normal(0.0, 1.0))
+    seed(123)
+    b = sample(Normal(0.0, 1.0))
+    diff = abs(a - b)
+    assert(diff < 1e-9, "Seed 123 reproduziert: a und b identisch")
+}
+
+fn hash_consistency() {
+    h1 = data_hash([1, 2, 3])
+    h2 = data_hash([1, 2, 3])
+    h3 = data_hash([1, 2, 4])
+    assert(h1 == h2, "data_hash deterministisch")
+    assert(h1 != h3, "data_hash unterscheidet verschiedene Inputs")
+}
+
+run()
+hash_consistency()
+print("seed_reproducibility_test OK")
