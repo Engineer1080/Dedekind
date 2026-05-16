@@ -15,7 +15,7 @@ This folder contains the **source** and **generated** documentation for the Dede
 | **Commercialization_Options.md** | Potenzielle Kommerzialisierungsoptionen (Beratung, Support, Lizenzen, SaaS, Förderung, Phasierung, Risiken) |
 | **IDE_Studio_Roadmap.md** | Dedekind in bestehenden IDEs (VS Code, Jupyter) + Dedekind Studio als kommerzielle Wissenschaftler-IDE (Einheiten, Plots, Postgres, LaTeX, lokale KI) |
 | **Build_Dedekind_Studio_Exe.md** | Anleitung: Dedekind Studio als Windows-.exe bauen (PyInstaller) |
-| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.3.1; Stärken, Lücken, Roadmap) |
+| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.4.0; Stärken, Lücken, Roadmap) |
 | **Dedekind_Language_Specification_v0.1.pdf** | Legacy PDF (v0.1); for current spec use the Markdown or generate v0.2 PDF below |
 | **Dedekind_Research_Papers_and_Architecture.pdf** | Legacy PDF; for current content use the Markdown or generate PDF below |
 
@@ -41,6 +41,10 @@ pandoc Dedekind_Research_and_Architecture.md -o Dedekind_Research_and_Architectu
 - **Online**: Paste the Markdown into a service that converts Markdown to PDF (e.g. markdown-to-pdf converters).
 - **Typora / other editors**: Open the `.md` file and export to PDF from the application.
 
+
+## What changed in v1.4.0 (documented here)
+
+- **Version 1.4.0**: **Modul-System:** `use mymodule` lädt `modules/mymodule.ddk` (Suchpfade: aktuelles Verzeichnis, `modules/`, `examples/dedekind/`, CWD); neuer AST-Knoten `UseStmt`; Zyklus- und Doppellade-Schutz. **Reproduzierbarkeit:** `seed(n)` setzt deterministischen Seed in `random`, NumPy und PyTorch in einem Aufruf; `data_hash(x)` liefert SHA-256-Digest für Tensor, Liste, Dict, DataFrame, Zahl, String. **DataFrames + tabular I/O:** Leichte spaltenorientierte `DataFrame`-Klasse mit Einheiten pro Spalte (`units={"T": "K"}`); `read_csv(path)` parst Header-Format `name [unit]` automatisch; `write_csv(path, df)` emittiert sie wieder. Optional: `read_parquet`/`write_parquet` (pyarrow), `read_hdf5`/`write_hdf5` (h5py), `read_netcdf` (netCDF4). **Unit-aware Plots:** `plot`, `scatter`, `contour` erkennen Listen von `Quantity`-Werten, extrahieren die Zahlenwerte und ergänzen Einheiten automatisch in den Achsenbeschriftungen (z. B. „Zeit [s]", „Temperatur [K]"). **`@units`-Signaturen:** Funktionsdeklarationen erlauben Argument- und Return-Einheiten: `fn kinetic_energy(m: [kg], v: [m/s]) -> [J] { ... }`. Argumente werden in die deklarierte Einheit umgerechnet (`2000[g]` → `2[kg]`); Return-Werte werden dimensional geprüft. Neuer SI-Basisdimensionen-Analyzer erkennt `kg*m^2/s^2 == J`, `Pa == kg/(m*s^2)`, usw. **Dict-Literale:** `{"k": v, "k2": v2}` als Ausdruck (für `DataFrame`-Konstruktion, JSON-Erzeugung). **Lexer:** Neue Tokens `COLON` (`:`), `RETURNS` (`->`) und Keyword `use`. Beispiel: `v1_4_features_showcase.ddk`. Tests: `use_module_test.ddk`, `seed_reproducibility_test.ddk`, `dataframe_csv_test.ddk`, `signature_units_test.ddk`, `unit_plot_test.ddk` (17/17 grün; alle 76 bestehenden Beispiele kompilieren weiter).
 
 ## What changed in v1.3.1 (documented here)
 
