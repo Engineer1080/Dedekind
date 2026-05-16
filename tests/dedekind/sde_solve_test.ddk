@@ -1,0 +1,29 @@
+// SDE-Solver: geometrische Brownsche Bewegung dY = mu Y dt + sigma Y dW.
+// Mittelwert der Endwerte sollte ungefähr Y0 * exp(mu * T) sein.
+
+fn drift(t, y) {
+    return 0.1 * y
+}
+
+fn diffusion(t, y) {
+    return 0.2 * y
+}
+
+fn main() {
+    t = linspace(0.0, 1.0, 201)
+    // Mehrere Pfade als Tensor (M Pfade in einem Batch)
+    Y0 = random_vector(50) * 0.0 + 1.0  // 50 Pfade, alle starten bei 1
+    Y = sde_solve(drift, diffusion, Y0, t, method="euler_maruyama", seed_value=7)
+    YT = Y[200]
+    m = mean(YT)
+    expected = exp(0.1)  // E[Y(1)] = Y0 * exp(mu * T)
+    // Mit 50 Pfaden und sigma=0.2 ist ±0.15 ein großzügiger Korridor.
+    assert(abs(m - expected) < 0.15, "Mittelwert nahe E[Y(T)] = exp(0.1)")
+
+    // Milstein sollte bei gleicher Brownschen Bewegung ähnliche Werte liefern.
+    Y_m = sde_solve(drift, diffusion, Y0, t, method="milstein", seed_value=7)
+    mm = mean(Y_m[200])
+    assert(abs(m - mm) < 0.3, "Milstein nahe Euler-Maruyama bei gleichem Seed")
+    print("sde_solve_test OK")
+}
+main()

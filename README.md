@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-1.4.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-1.5.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -28,6 +28,15 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
+
+### What's New in v1.5.0
+
+- **Benchmarking & Profiling als Built-ins:** `benchmark(fn, n=10, warmup=2, label="...")` misst Wandzeit über n Wiederholungen (Mittelwert ± Std, Min/Max); `profile(fn)` liefert zusätzlich Peak-Speicher (`tracemalloc`) und Top-Funktionen (`cProfile`); `time_block(label, fn)` für Ad-hoc-Messungen. Beispiel: `bm = benchmark(work, n=50)`.
+- **JIT-Backend:** `jit(fn)` wrappt eine Funktion mit `torch.compile` (TorchInductor) wenn verfügbar, fällt sonst auf das Original zurück. Realistischer Zwischenschritt Richtung AOT; nutzt denselben Compiler-Stack wie reines PyTorch.
+- **SDE-Solver:** `sde_solve(drift, diffusion, y0, t, method="euler_maruyama"|"milstein", seed_value=None)` für Itô-SDEs `dY = drift(t,Y) dt + diffusion(t,Y) dW`. Euler-Maruyama (Ordnung 0.5) und Milstein (Ordnung 1, mit numerischer Ableitung der Diffusion).
+- **Erweiterte Optimierung:** `least_squares(residuals, x0, jacobian=None, bounds=None, method="trf")` für nichtlineare Kleinste-Quadrate (mit float32-stabiler Default-Schrittweite); `minimize_constrained(f, x0, constraints=[{"type":"ineq","fun":g}], bounds=...)` für SLSQP/trust-constr/COBYLA; `milp(c, A_ub, b_ub, A_eq, b_eq, bounds, integrality)` für (gemischt-)ganzzahlige LPs.
+- **FEM-Primitiven:** `mesh_unit_square(n)` erzeugt strukturiertes Dreiecksgitter mit Knoten/Elementen/Rand; `fem_assemble_stiffness(mesh)`, `fem_assemble_load(mesh, f)` für lineare Galerkin-Assemblierung; `fem_poisson_2d(mesh, f, dirichlet_value=0)` löst -Δu=f mit Dirichlet-Randwert.
+- **`arange` für Indexierung:** `arange(n)` und `arange(start, stop)` liefern jetzt int64 (vorher float32); macht `for i in arange(N) { x[i] = ... }` direkt nutzbar. Float-Schritt-Variante (`arange(0, 10, 0.5)`) bleibt float32. Beispiel: `v1_5_features_showcase.ddk`. Tests: `benchmark_profile_test.ddk`, `jit_test.ddk`, `sde_solve_test.ddk`, `optimization_test.ddk`, `fem_test.ddk`.
 
 ### What's New in v1.4.0
 

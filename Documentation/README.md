@@ -15,7 +15,7 @@ This folder contains the **source** and **generated** documentation for the Dede
 | **Commercialization_Options.md** | Potenzielle Kommerzialisierungsoptionen (Beratung, Support, Lizenzen, SaaS, Förderung, Phasierung, Risiken) |
 | **IDE_Studio_Roadmap.md** | Dedekind in bestehenden IDEs (VS Code, Jupyter) + Dedekind Studio als kommerzielle Wissenschaftler-IDE (Einheiten, Plots, Postgres, LaTeX, lokale KI) |
 | **Build_Dedekind_Studio_Exe.md** | Anleitung: Dedekind Studio als Windows-.exe bauen (PyInstaller) |
-| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.4.0; Stärken, Lücken, Roadmap) |
+| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.5.0; Stärken, Lücken, Roadmap) |
 | **Dedekind_Language_Specification_v0.1.pdf** | Legacy PDF (v0.1); for current spec use the Markdown or generate v0.2 PDF below |
 | **Dedekind_Research_Papers_and_Architecture.pdf** | Legacy PDF; for current content use the Markdown or generate PDF below |
 
@@ -41,6 +41,10 @@ pandoc Dedekind_Research_and_Architecture.md -o Dedekind_Research_and_Architectu
 - **Online**: Paste the Markdown into a service that converts Markdown to PDF (e.g. markdown-to-pdf converters).
 - **Typora / other editors**: Open the `.md` file and export to PDF from the application.
 
+
+## What changed in v1.5.0 (documented here)
+
+- **Version 1.5.0**: **Benchmarking & Profiling:** `benchmark(fn, n=10, warmup=2, label="...")` misst Wandzeit (mean/std/min/max) über mehrere Wiederholungen (`BenchmarkResult`); `profile(fn)` ergänzt Peak-Speicher (`tracemalloc`) und Top-Funktionen (`cProfile`, `ProfileResult`); `time_block(label, fn)` für einmalige Ad-hoc-Messungen mit Print. **JIT-Backend:** `jit(fn)` wrappt mit `torch.compile` (TorchInductor) wenn verfügbar; Fallback auf Original. Realistischer Zwischenschritt Richtung AOT — Dedekind-Code, der zu PyTorch-Operationen transpiliert wird, durchläuft denselben Compiler-Stack wie reines PyTorch-Modell-Code. **SDE-Solver:** `sde_solve(drift, diffusion, y0, t, method="euler_maruyama"|"milstein", seed_value=None)` für Itô-stochastische DGLn `dY = drift(t,Y) dt + diffusion(t,Y) dW`; Euler-Maruyama (Ordnung 0.5) als Default, Milstein (Ordnung 1.0) mit numerischer ∂diffusion/∂y; optional deterministische Pfade per `seed_value`. **Erweiterte Optimierung:** `least_squares(residuals, x0, jacobian=None, bounds=None, method="trf"|"lm"|"dogbox")` für nichtlineare Kleinste-Quadrate (mit float32-stabiler numerischer Jacobi-Approximation, `diff_step=1e-4`); `minimize_constrained(f, x0, constraints=[{"type":"eq"|"ineq","fun":g}], bounds=...)` für SLSQP/trust-constr/COBYLA mit nichtlinearen Gleichheits- und Ungleichungs-Restriktionen; `milp(c, A_ub, b_ub, A_eq, b_eq, bounds, integrality)` für (gemischt-)ganzzahlige lineare Programme via `scipy.optimize.milp` (HiGHS-Backend). **FEM-Primitiven:** `mesh_unit_square(n)` erzeugt strukturiertes 2·n²-Dreiecksgitter auf [0,1]² mit (n+1)² Knoten plus Randindizes; `fem_assemble_stiffness(mesh)` baut die ∫∇φ_i·∇φ_j-Steifigkeitsmatrix für lineare Lagrange-Dreiecke; `fem_assemble_load(mesh, f_source)` assembliert den Lastvektor per Mittelpunkts-Quadratur; `fem_poisson_2d(mesh, f, dirichlet_value=0)` löst -Δu=f mit homogenen/konstanten Dirichlet-Randwerten. **`arange`-Dtype:** `arange(n)` und `arange(start, stop)` liefern jetzt int64-Tensoren (vorher float32), sodass `for i in arange(N) { x[i] = ... }` direkt indexierbar ist; explizite Step-Variante (`arange(0, 10, 0.5)`) bleibt float32. Beispiel: `v1_5_features_showcase.ddk`. Tests: `benchmark_profile_test.ddk`, `jit_test.ddk`, `sde_solve_test.ddk`, `optimization_test.ddk`, `fem_test.ddk` (22/22 grün; alle 77 bestehenden Beispiele kompilieren weiter).
 
 ## What changed in v1.4.0 (documented here)
 

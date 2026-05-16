@@ -1,0 +1,29 @@
+// FEM: -Δu = 1 auf Einheitsquadrat mit u=0 am Rand.
+// Maximum der analytischen Lösung in der Mitte ist ungefähr 0.073671.
+
+fn source(x, y) {
+    return 1.0
+}
+
+fn main() {
+    mesh = mesh_unit_square(16)
+    nodes = mesh["nodes"]
+    elements = mesh["elements"]
+    boundary = mesh["boundary"]
+    // Gitter: 17x17 = 289 Knoten, 2*16*16 = 512 Dreiecke.
+    assert(nodes.shape[0] == 289, "289 Knoten")
+    assert(elements.shape[0] == 512, "512 Dreiecke")
+
+    u = fem_poisson_2d(mesh, source, dirichlet_value=0.0)
+    u_max = max(u)
+    // Analytischer Referenzwert für -Δu = 1, u|∂Ω = 0 auf [0,1]^2: ~0.073671 in der Mitte.
+    assert(u_max > 0.06 and u_max < 0.085, "u_max nahe 0.0737")
+
+    // Rand muss exakt 0 sein.
+    for k in arange(0, boundary.shape[0]) {
+        idx = boundary[k]
+        assert(abs(u[idx]) < 1e-9, "u am Rand = 0")
+    }
+    print("fem_test OK")
+}
+main()

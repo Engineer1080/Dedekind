@@ -1,0 +1,90 @@
+// v1.5 Features-Showcase: Benchmarking/Profiling, JIT, SDEs, Optimierung, FEM.
+
+fn hot_loop() {
+    s = 0.0
+    for k in arange(0, 500) {
+        s = s + sqrt(k + 1.0)
+    }
+    return s
+}
+
+fn drift(t, y) {
+    return 0.05 * y
+}
+
+fn diffusion(t, y) {
+    return 0.2 * y
+}
+
+fn residuals(x) {
+    // Modell: y = a * exp(-b * t)
+    t = [0.0, 1.0, 2.0, 3.0]
+    y = [2.0, 1.21306132, 0.73575888, 0.44626032]
+    return x[0] * exp(-x[1] * t) - y
+}
+
+fn objective(x) {
+    return (x[0] - 1.0) * (x[0] - 1.0) + (x[1] - 2.0) * (x[1] - 2.0)
+}
+
+fn source(x, y) {
+    return 1.0
+}
+
+fn main() {
+    print("--- v1.5 Showcase ---")
+
+    // 1) Benchmarking / Profiling
+    bm = benchmark(hot_loop, n=10, warmup=2, label="sum_sqrt")
+    print(bm)
+    pr = profile(hot_loop, label="sum_sqrt")
+    print(pr)
+
+    // 2) JIT (torch.compile wenn verfügbar, sonst Identity)
+    // (Variable nicht `fast` nennen — `fast` ist intern Modifier-Alias für compile_model.)
+    jit_loop = jit(hot_loop)
+    print("jit result =")
+    print(jit_loop())
+
+    // 3) SDE: Geometrische Brownsche Bewegung
+    t = linspace(0.0, 1.0, 201)
+    Y0 = random_vector(20) * 0.0 + 1.0
+    Y = sde_solve(drift, diffusion, Y0, t, method="milstein", seed_value=42)
+    print("E[Y(1)] empirisch =")
+    print(mean(Y[200]))
+    print("E[Y(1)] analytisch (exp(mu*T)) =")
+    print(exp(0.05))
+
+    // 4) Nichtlineare Kleinste-Quadrate
+    lsq = least_squares(residuals, [1.0, 1.0])
+    print("Fit a, b =")
+    print(lsq["x"])
+
+    // 5) Constrained Optimization
+    cons = [{"type": "ineq", "fun": fn_geq}]
+    minc = minimize_constrained(objective, [0.0, 0.0])
+    print("argmin (x-1)^2 + (y-2)^2 =")
+    print(minc["x"])
+
+    // 6) MILP: max 3x + 5y s.t. x + y <= 4, x,y in Z, [0,4] x [0,3]
+    sol = milp([-3.0, -5.0], A_ub=[[1.0, 1.0]], b_ub=[4.0],
+               bounds=[[0.0, 4.0], [0.0, 3.0]], integrality=[1, 1])
+    print("MILP-Lösung:")
+    print(sol["x"])
+    print("MILP-Wert (max) =")
+    print(-sol["fun"])
+
+    // 7) FEM: -Δu = 1 auf Einheitsquadrat, u|∂Ω = 0
+    mesh = mesh_unit_square(20)
+    u = fem_poisson_2d(mesh, source, dirichlet_value=0.0)
+    print("FEM: u_max ≈ 0.0737 (analytisch); berechnet =")
+    print(max(u))
+
+    print("v1.5 Showcase OK")
+}
+
+fn fn_geq(x) {
+    return [0.0]  // kein wirksames Constraint, nur als Beispiel-Signatur
+}
+
+main()
