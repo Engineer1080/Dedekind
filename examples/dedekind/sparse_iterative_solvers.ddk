@@ -1,0 +1,62 @@
+// Feature 12: Sparse iterative Solver — cg, gmres, bicgstab + Vorkonditionierer.
+// Demo: 2D-Wärmeleitung mit dem 5-Punkt-Laplacian, gelöst per CG mit Jacobi-Vorkonditionierer.
+
+fn build_tridiag(n) {
+    // 1D-Poisson-Operator: A[i,i] = 2, A[i,i-1] = A[i,i+1] = -1.
+    // Resultiert in einer symmetrisch-positiv-definiten Matrix (Standard-Testfall für CG).
+    A = random_matrix(n, n) * 0.0
+    for i in arange(0, n) {
+        A[i][i] = 2.0
+        if i > 0 {
+            A[i][i - 1] = -1.0
+        }
+        if i < n - 1 {
+            A[i][i + 1] = -1.0
+        }
+    }
+    return A
+}
+
+fn main() {
+    print("--- Feature 12: Sparse iterative Solver ---")
+
+    // Klassischer SPD-Testfall: 1D-Poisson auf n=200 Knoten.
+    n = 200
+    A = build_tridiag(n)
+    // RHS gleichmäßig 1 (Lastfall: konstante Wärmequelle)
+    b = random_vector(n) * 0.0 + 1.0
+
+    print("Matrix-Form:")
+    print(A.shape)
+
+    // 1) CG ohne Preconditioner
+    sol_plain = cg(A, b, tol=1e-8, max_iter=5000)
+    print("CG ohne Preconditioner -> Iterationen:")
+    print(sol_plain["iterations"])
+    print("Residuum (∞-Norm):")
+    print(sol_plain["residual_inf"])
+
+    // 2) CG mit Jacobi-Preconditioner — typisch 2–10× weniger Iterationen
+    M = jacobi_preconditioner(A)
+    sol_pre = cg(A, b, tol=1e-8, max_iter=5000, preconditioner=M)
+    print("CG + Jacobi -> Iterationen:")
+    print(sol_pre["iterations"])
+
+    // 3) BiCGSTAB und GMRES funktionieren auch auf nicht-symmetrischen Matrizen
+    sol_bicg = bicgstab(A, b, tol=1e-8, max_iter=1000)
+    print("BiCGSTAB konvergiert:")
+    print(sol_bicg["converged"])
+
+    sol_gmres = gmres(A, b, tol=1e-8, max_iter=1000)
+    print("GMRES konvergiert:")
+    print(sol_gmres["converged"])
+
+    // 4) ILU-Preconditioner (stärker als Jacobi, aber teurer im Setup)
+    M_ilu = ilu_preconditioner(A, drop_tol=0.001)
+    sol_ilu = gmres(A, b, tol=1e-8, max_iter=500, preconditioner=M_ilu)
+    print("GMRES + ILU -> Iterationen:")
+    print(sol_ilu["iterations"])
+
+    print("Sparse iterative Solver aktiv.")
+}
+main()

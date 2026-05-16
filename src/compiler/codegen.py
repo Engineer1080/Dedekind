@@ -63,6 +63,10 @@ _RUNTIME_BUILTIN_NAMES = frozenset({
     'sde_solve',
     'least_squares', 'minimize_constrained', 'milp',
     'mesh_unit_square', 'fem_assemble_stiffness', 'fem_assemble_load', 'fem_poisson_2d',
+    'solve_sym', 'simplify_sym', 'series',
+    'cg', 'gmres', 'bicgstab', 'jacobi_preconditioner', 'ilu_preconditioner',
+    'export_notebook',
+    'print_table',
     'assert', 'diff_sym', 'integrate_sym', 'jacobian', 'hessian',
     # Constants (from ml_runtime)
     'pi', 'e', 'c', 'G', 'h', 'k_B', 'k_e', 'hbar', 'e_charge', 'epsilon_0', 'mu_0',

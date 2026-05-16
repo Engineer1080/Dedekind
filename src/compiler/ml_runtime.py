@@ -6000,3 +6000,509 @@ def fem_poisson_2d(mesh, f_source, dirichlet_value=0.0):
     u_free = _np.linalg.solve(K_ff, F_f)
     u[free] = u_free
     return torch.from_numpy(u).float()
+
+
+# ============================================================================
+# Tiefere Symbolik: solve, simplify_sym, series (Taylor-Entwicklung)
+# ============================================================================
+
+def _require_sympy():
+    try:
+        import sympy  # type: ignore[reportMissingImports]
+        return sympy
+    except ImportError:
+        raise ImportError("Symbolische Operation erfordert sympy. Bitte installieren: pip install sympy")
+
+
+def _sympify_expr(sympy_mod, expr_str):
+    """Parst einen Dedekind-typischen Mathe-String mit `^` als Potenz zu einem SymPy-Ausdruck."""
+    s = str(expr_str).replace("^", "**").strip()
+    return sympy_mod.sympify(s)
+
+
+def solve_sym(equation, var):
+    """Löst eine Gleichung symbolisch nach `var` (für numerische LGS: siehe `solve(A, b)`).
+
+    - `equation`: String, entweder `"lhs = rhs"` oder Ausdruck `"f(x)"` (interpretiert als `f(x) = 0`).
+      Mehrere Gleichungen können als Liste übergeben werden, dann zusammen mit Liste von Variablen.
+    - `var`: Variablenname als String, oder Liste von Strings (für Systeme).
+    Rückgabe: Liste von Lösungs-Strings (für eine Variable) bzw. Liste von Dicts (für Systeme).
+
+    Beispiele:
+      solve_sym("x^2 - 4", "x")            -> ["-2", "2"]
+      solve_sym("x^2 + 1", "x")            -> ["-I", "I"]   (komplexe Wurzeln)
+      solve_sym(["x + y - 3", "x - y - 1"], ["x", "y"])  -> [{x: 2, y: 1}]
+    """
+    sp = _require_sympy()
+
+    def _to_eq(e):
+        s = str(e)
+        if "=" in s and "==" not in s:
+            lhs, _, rhs = s.partition("=")
+            return sp.Eq(_sympify_expr(sp, lhs), _sympify_expr(sp, rhs))
+        return _sympify_expr(sp, s)
+
+    if isinstance(equation, (list, tuple)):
+        eqs = [_to_eq(e) for e in equation]
+        if isinstance(var, (list, tuple)):
+            vars_sp = [sp.Symbol(str(v)) for v in var]
+        else:
+            vars_sp = sp.Symbol(str(var))
+        sols = sp.solve(eqs, vars_sp, dict=True)
+        return [{str(k): str(v) for k, v in d.items()} for d in sols]
+
+    eq = _to_eq(equation)
+    var_sp = sp.Symbol(str(var))
+    sols = sp.solve(eq, var_sp)
+    return [str(s) for s in sols]
+
+
+def simplify_sym(expr):
+    """Symbolische Vereinfachung via SymPy (Ausmultiplizieren, Kürzen, Trigonometrie etc.).
+
+    Beispiele:
+      simplify_sym("sin(x)^2 + cos(x)^2")   -> "1"
+      simplify_sym("(x^2 - 1) / (x - 1)")   -> "x + 1"
+      simplify_sym("log(exp(x))")            -> "x"  (nur für reelle x; SymPy ist konservativ)
+    """
+    sp = _require_sympy()
+    s = _sympify_expr(sp, expr)
+    return str(sp.simplify(s))
+
+
+def series(expr, var, x0=0, n=6):
+    """Taylor-Reihenentwicklung von `expr` in `var` um `x0` bis Ordnung `n` (exklusive O-Term).
+
+    Beispiele:
+      series("sin(x)", "x", 0, 8)
+        -> "x - x**3/6 + x**5/120 - x**7/5040"
+      series("exp(x)", "x", 0, 5)
+        -> "1 + x + x**2/2 + x**3/6 + x**4/24"
+    """
+    sp = _require_sympy()
+    e = _sympify_expr(sp, expr)
+    v = sp.Symbol(str(var))
+    s = sp.series(e, v, float(x0), int(n)).removeO()
+    return str(s)
+
+
+# ============================================================================
+# Sparse iterative Solver: cg, gmres, bicgstab + Jacobi-/ILU-Preconditioner
+# ============================================================================
+
+def _to_scipy_sparse(A):
+    """Wandelt Tensor/numpy-Array/CSR-Matrix in scipy.sparse CSR um (float64)."""
+    import numpy as _np  # type: ignore[reportMissingImports]
+    try:
+        import scipy.sparse as _sps  # type: ignore[import-untyped]
+    except ImportError:
+        raise RuntimeError("Sparse-Solver benötigen scipy.")
+    if _sps.issparse(A):
+        return A.tocsr().astype(float)
+    if hasattr(A, "is_sparse") and A.is_sparse:
+        A_dense = A.to_dense().detach().cpu().numpy()
+    elif hasattr(A, "detach"):
+        A_dense = A.detach().cpu().numpy()
+    else:
+        A_dense = _np.asarray(A)
+    return _sps.csr_matrix(_np.asarray(A_dense, dtype=float))
+
+
+def _to_numpy_vector(b):
+    import numpy as _np  # type: ignore[reportMissingImports]
+    if hasattr(b, "detach"):
+        b = b.detach().cpu().numpy()
+    return _np.asarray(b, dtype=float).reshape(-1)
+
+
+def _call_scipy_iterative(method, A_sp, b_np, x0_np, tol, max_iter, M, callback):
+    """Ruft scipy-Krylov-Solver auf; behandelt API-Wechsel `tol` -> `rtol` (scipy >= 1.12)."""
+    try:
+        return method(A_sp, b_np, x0=x0_np, rtol=float(tol),
+                      maxiter=int(max_iter), M=M, callback=callback)
+    except TypeError:
+        # Älteres scipy: nur `tol` verfügbar.
+        return method(A_sp, b_np, x0=x0_np, tol=float(tol),
+                      maxiter=int(max_iter), M=M, callback=callback)
+
+
+def _iterative_solve_dispatch(method_name, A, b, x0, tol, max_iter, preconditioner):
+    """Gemeinsame Aufruf-Mechanik für die drei Krylov-Solver."""
+    try:
+        import scipy.sparse.linalg as _ssl  # type: ignore[import-untyped]
+    except ImportError:
+        raise RuntimeError("Sparse-Solver benötigen scipy.")
+    A_sp = _to_scipy_sparse(A)
+    b_np = _to_numpy_vector(b)
+    x0_np = _to_numpy_vector(x0) if x0 is not None else None
+    M = preconditioner if preconditioner is not None else None
+    method = getattr(_ssl, method_name)
+    counter = [0]
+
+    def _cb(*_a, **_kw):
+        counter[0] += 1
+
+    x, info = _call_scipy_iterative(method, A_sp, b_np, x0_np, tol, max_iter, M, _cb)
+    residual_norm = float(((A_sp @ x) - b_np).__abs__().max())
+    converged = int(info) == 0
+    return {
+        "x": x.tolist(),
+        "converged": converged,
+        "iterations": int(counter[0]),
+        "info": int(info),
+        "residual_inf": residual_norm,
+    }
+
+
+def cg(A, b, x0=None, tol=1e-8, max_iter=1000, preconditioner=None):
+    """Conjugate Gradient für symmetrisch-positiv-definite Systeme A x = b.
+    Rückgabe: Dict mit `x`, `converged`, `iterations`, `info`, `residual_inf`."""
+    return _iterative_solve_dispatch("cg", A, b, x0, tol, max_iter, preconditioner)
+
+
+def gmres(A, b, x0=None, tol=1e-8, max_iter=1000, preconditioner=None):
+    """GMRES (Generalized Minimum Residual) für allgemeine (nicht-symmetrische) Systeme A x = b."""
+    return _iterative_solve_dispatch("gmres", A, b, x0, tol, max_iter, preconditioner)
+
+
+def bicgstab(A, b, x0=None, tol=1e-8, max_iter=1000, preconditioner=None):
+    """BiCGSTAB für allgemeine Systeme A x = b; oft günstiger als GMRES bei großen Matrizen."""
+    return _iterative_solve_dispatch("bicgstab", A, b, x0, tol, max_iter, preconditioner)
+
+
+def jacobi_preconditioner(A):
+    """Diagonaler (Jacobi-)Vorkonditionierer: M^{-1} = diag(1 / a_ii). Beschleunigt cg/gmres/bicgstab
+    typischerweise um den Faktor 2–10×, wenn A diagonal-dominant ist.
+    Rückgabe: scipy.sparse.linalg.LinearOperator, direkt als `preconditioner=` einsetzbar."""
+    try:
+        import scipy.sparse.linalg as _ssl  # type: ignore[import-untyped]
+    except ImportError:
+        raise RuntimeError("jacobi_preconditioner benötigt scipy.")
+    import numpy as _np  # type: ignore[reportMissingImports]
+    A_sp = _to_scipy_sparse(A)
+    diag = _np.asarray(A_sp.diagonal(), dtype=float)
+    diag = _np.where(diag != 0, 1.0 / diag, 1.0)
+    n = A_sp.shape[0]
+    return _ssl.LinearOperator(
+        (n, n),
+        matvec=lambda x: _np.asarray(diag * x, dtype=float),
+        dtype=float,
+    )
+
+
+def ilu_preconditioner(A, drop_tol=1e-4, fill_factor=10):
+    """Incomplete-LU-Vorkonditionierer (spilu). Stärker als Jacobi, besonders für nicht-symmetrische
+    Probleme; `drop_tol` und `fill_factor` steuern Sparsity vs Genauigkeit."""
+    try:
+        import scipy.sparse.linalg as _ssl  # type: ignore[import-untyped]
+    except ImportError:
+        raise RuntimeError("ilu_preconditioner benötigt scipy.")
+    A_sp = _to_scipy_sparse(A).tocsc()
+    ilu = _ssl.spilu(A_sp, drop_tol=float(drop_tol), fill_factor=float(fill_factor))
+    n = A_sp.shape[0]
+    return _ssl.LinearOperator((n, n), matvec=ilu.solve, dtype=float)
+
+
+# ============================================================================
+# Reproducible-Notebook-Export: .ddk -> standalone HTML/Markdown
+# ============================================================================
+
+def _notebook_in_progress_set():
+    """Process-weite Re-Entry-Tracking-Menge. Liegt auf sys, damit sie über exec-Kontexte
+    persistent ist (jeder exec(compile_source(...)) bekommt sonst eine frische ml_runtime-Kopie)."""
+    import sys as _sys
+    key = "_dedekind_notebook_export_in_progress"
+    s = getattr(_sys, key, None)
+    if s is None:
+        s = set()
+        setattr(_sys, key, s)
+    return s
+
+
+def export_notebook(source_path, output_path=None, format="html", title=None,
+                    include_hash=True, capture_plots=True):
+    """Führt eine .ddk-Datei aus und schreibt eine Standalone-Datei (HTML oder Markdown),
+    die Quellcode, Stdout-Ausgabe, Plots (Base64-PNG) und einen SHA-256-Hash des Quelltexts bündelt.
+
+    Parameter:
+      source_path: Pfad zur .ddk-Datei.
+      output_path: Zieldatei (default: `<source>.html` bzw. `.md`).
+      format: "html" oder "md".
+      title: Optionaler Titel; default = Dateiname ohne Endung.
+      include_hash: Fügt SHA-256-Hash des Quelltexts in den Output ein (Reproduzierbarkeit).
+      capture_plots: Sammelt `_dedekind_plots` und bettet sie als Base64-PNG ein.
+
+    Rückgabe: Pfad zur erzeugten Datei.
+    """
+    import os
+    import sys
+    import io
+    import hashlib
+    src_path = os.path.abspath(str(source_path))
+    if not os.path.isfile(src_path):
+        raise FileNotFoundError(f"export_notebook: Datei nicht gefunden: {src_path}")
+    # Re-Entry-Schutz: wenn die Quelldatei sich selbst exportiert, würde sie sich beim Ausführen
+    # endlos wiederaufrufen. Wir markieren den Pfad und liefern beim re-entry einen Stub zurück.
+    in_progress = _notebook_in_progress_set()
+    if src_path in in_progress:
+        return output_path or (os.path.splitext(src_path)[0] +
+                               (".html" if str(format).lower() == "html" else ".md"))
+    in_progress.add(src_path)
+    with open(src_path, "r", encoding="utf-8") as f:
+        source = f.read()
+    fmt = str(format).lower()
+    if fmt not in ("html", "md", "markdown"):
+        raise ValueError("export_notebook: format muss 'html' oder 'md' sein.")
+    if output_path is None:
+        ext = "html" if fmt == "html" else "md"
+        output_path = os.path.splitext(src_path)[0] + f".{ext}"
+    title_str = str(title) if title else os.path.basename(os.path.splitext(src_path)[0])
+    src_hash = hashlib.sha256(source.encode("utf-8")).hexdigest()
+
+    # Quelltext kompilieren und in isoliertem Globals-Dict ausführen; Stdout abfangen.
+    # Wir importieren lokal, um Zirkular-Imports beim Inlinen zu vermeiden.
+    try:
+        from src.compiler.compiler import compile_source  # type: ignore[import-not-found]
+        py_code = compile_source(source, filepath=src_path)
+        old_stdout = sys.stdout
+        captured = io.StringIO()
+        exec_globals = {}
+        try:
+            sys.stdout = captured
+            exec(py_code, exec_globals)
+        finally:
+            sys.stdout = old_stdout
+        stdout_text = captured.getvalue()
+        plots_b64 = []
+        if capture_plots:
+            plots_b64 = list(exec_globals.get("_dedekind_plots", []))
+
+        if fmt == "html":
+            content = _render_notebook_html(title_str, source, stdout_text, plots_b64,
+                                            src_hash if include_hash else None,
+                                            os.path.basename(src_path))
+        else:
+            content = _render_notebook_markdown(title_str, source, stdout_text, plots_b64,
+                                                src_hash if include_hash else None,
+                                                os.path.basename(src_path))
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write(content)
+        return output_path
+    finally:
+        in_progress.discard(src_path)
+
+
+def _render_notebook_html(title, source, stdout_text, plots_b64, src_hash, src_name):
+    import html as _html
+    import datetime
+    parts = [
+        "<!DOCTYPE html>",
+        '<html lang="en">',
+        "<head>",
+        '<meta charset="utf-8">',
+        f"<title>{_html.escape(title)}</title>",
+        "<style>",
+        "body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;"
+        "max-width:900px;margin:2em auto;padding:0 1em;color:#222;}",
+        "h1,h2{border-bottom:1px solid #ddd;padding-bottom:.2em;}",
+        "pre{background:#f6f8fa;padding:1em;border-radius:6px;overflow-x:auto;"
+        "font-family:'SF Mono',Consolas,monospace;font-size:.9em;}",
+        ".meta{color:#666;font-size:.85em;margin:.5em 0;}",
+        ".plot{margin:1em 0;text-align:center;}",
+        ".plot img{max-width:100%;border:1px solid #ddd;border-radius:4px;}",
+        ".hash{font-family:monospace;font-size:.8em;color:#888;"
+        "word-break:break-all;background:#f6f8fa;padding:.3em .5em;border-radius:4px;}",
+        "</style>",
+        "</head>",
+        "<body>",
+        f"<h1>{_html.escape(title)}</h1>",
+        f'<div class="meta">Source: <code>{_html.escape(src_name)}</code> · '
+        f'Generated: {datetime.datetime.now().isoformat(timespec="seconds")}</div>',
+    ]
+    if src_hash:
+        parts.append(f'<div class="meta">SHA-256: <span class="hash">{src_hash}</span></div>')
+    parts.append("<h2>Source</h2>")
+    parts.append(f"<pre><code>{_html.escape(source)}</code></pre>")
+    parts.append("<h2>Output</h2>")
+    parts.append(f"<pre>{_html.escape(stdout_text) if stdout_text else '(no output)'}</pre>")
+    if plots_b64:
+        parts.append(f"<h2>Plots ({len(plots_b64)})</h2>")
+        for i, b64 in enumerate(plots_b64, 1):
+            parts.append(f'<div class="plot"><img alt="Plot {i}" '
+                         f'src="data:image/png;base64,{b64}"></div>')
+    parts.append("</body></html>")
+    return "\n".join(parts) + "\n"
+
+
+def _render_notebook_markdown(title, source, stdout_text, plots_b64, src_hash, src_name):
+    import datetime
+    lines = [
+        f"# {title}",
+        "",
+        f"*Source:* `{src_name}`  ·  *Generated:* {datetime.datetime.now().isoformat(timespec='seconds')}",
+        "",
+    ]
+    if src_hash:
+        lines.append(f"*SHA-256:* `{src_hash}`")
+        lines.append("")
+    lines.append("## Source")
+    lines.append("")
+    lines.append("```")
+    lines.append(source.rstrip())
+    lines.append("```")
+    lines.append("")
+    lines.append("## Output")
+    lines.append("")
+    lines.append("```")
+    lines.append((stdout_text or "(no output)").rstrip())
+    lines.append("```")
+    lines.append("")
+    if plots_b64:
+        lines.append(f"## Plots ({len(plots_b64)})")
+        lines.append("")
+        for i, b64 in enumerate(plots_b64, 1):
+            lines.append(f"![Plot {i}](data:image/png;base64,{b64})")
+            lines.append("")
+    return "\n".join(lines) + "\n"
+
+
+# ============================================================================
+# Paper-Mode-Output: print_table mit LaTeX-Booktabs / Markdown / CSV + ± für UncertainQuantity
+# ============================================================================
+
+def _format_cell_value(v, precision=4):
+    """Formatiert eine Zelle: UncertainQuantity → 'val ± std [unit]', Quantity → 'val [unit]'."""
+    if isinstance(v, UncertainQuantity):
+        unit = f" [{v.unit}]" if getattr(v, "unit", "") else ""
+        return f"{v.value:.{precision}g} ± {v.std:.{precision}g}{unit}"
+    if isinstance(v, Quantity):
+        unit = f" [{v.unit}]" if v.unit else ""
+        return f"{v.value:.{precision}g}{unit}"
+    if isinstance(v, float):
+        return f"{v:.{precision}g}"
+    if hasattr(v, "item") and not isinstance(v, (str, bytes)):
+        try:
+            iv = v.item()
+            return _format_cell_value(iv, precision)
+        except Exception:
+            pass
+    return str(v)
+
+
+def _format_cell_latex(v, precision=4):
+    """Wie _format_cell_value, aber LaTeX-tauglich (`\\pm`, `\\,[\\mathrm{...}]`)."""
+    if isinstance(v, UncertainQuantity):
+        unit = f"\\,[\\mathrm{{{v.unit}}}]" if getattr(v, "unit", "") else ""
+        return f"${v.value:.{precision}g} \\pm {v.std:.{precision}g}{unit}$"
+    if isinstance(v, Quantity):
+        unit = f"\\,[\\mathrm{{{v.unit}}}]" if v.unit else ""
+        return f"${v.value:.{precision}g}{unit}$"
+    if isinstance(v, float):
+        return f"${v:.{precision}g}$"
+    if hasattr(v, "item") and not isinstance(v, (str, bytes)):
+        try:
+            return _format_cell_latex(v.item(), precision)
+        except Exception:
+            pass
+    return str(v)
+
+
+def print_table(rows, headers=None, format="markdown", precision=4, caption=None, label=None):
+    """Erzeugt eine Tabelle in einem von vier Formaten und gibt sie via `print()` aus.
+
+    - `rows`: Liste von Listen/Tupeln *oder* eine `DataFrame`.
+    - `headers`: optional Liste von Spaltennamen (wenn rows kein DataFrame ist).
+    - `format`: `"markdown"` (default), `"latex"` (booktabs), `"csv"`, `"plain"` (ASCII-Tabelle).
+    - `precision`: signifikante Stellen für float/Quantity (default 4).
+    - `caption`, `label`: nur für LaTeX (Tabellen-Caption und `\\label{...}`).
+
+    UncertainQuantity wird automatisch als `val ± std [unit]` formatiert,
+    Quantity als `val [unit]`. Für LaTeX werden ± und Einheiten mathmodisch gesetzt.
+    """
+    if isinstance(rows, DataFrame):
+        df = rows
+        headers = list(df.columns)
+        # Einheiten in Header für Märkdown/Plain/CSV — LaTeX bleibt einheitslos im Header.
+        units_map = dict(df._units)
+        rows = [[df._cols[j][i] for j in range(len(headers))] for i in range(df.n_rows)]
+    else:
+        units_map = {}
+        if headers is None:
+            headers = [f"col{i+1}" for i in range(len(rows[0]) if rows else 0)]
+        else:
+            headers = list(headers)
+    fmt = str(format).lower()
+    if fmt == "latex":
+        out = _table_latex(rows, headers, precision, caption, label)
+    elif fmt == "csv":
+        out = _table_csv(rows, headers, precision, units_map)
+    elif fmt == "plain":
+        out = _table_plain(rows, headers, precision, units_map)
+    else:
+        out = _table_markdown(rows, headers, precision, units_map)
+    print(out)
+    return out
+
+
+def _decorate_header_with_unit(name, units_map):
+    u = units_map.get(name) if units_map else None
+    return f"{name} [{u}]" if u else name
+
+
+def _table_markdown(rows, headers, precision, units_map):
+    hdr = [_decorate_header_with_unit(h, units_map) for h in headers]
+    body = [[_format_cell_value(v, precision) for v in row] for row in rows]
+    widths = [_builtin_max(len(hdr[j]),
+                           *(len(b[j]) for b in body) if body else (len(hdr[j]),))
+              for j in range(len(headers))]
+    lines = []
+    lines.append("| " + " | ".join(hdr[j].ljust(widths[j]) for j in range(len(headers))) + " |")
+    lines.append("|" + "|".join("-" * (widths[j] + 2) for j in range(len(headers))) + "|")
+    for b in body:
+        lines.append("| " + " | ".join(b[j].ljust(widths[j]) for j in range(len(headers))) + " |")
+    return "\n".join(lines)
+
+
+def _table_latex(rows, headers, precision, caption, label):
+    cols = "l" * len(headers)
+    lines = [r"\begin{table}[h]", r"\centering"]
+    if caption:
+        lines.append(r"\caption{" + str(caption) + "}")
+    if label:
+        lines.append(r"\label{" + str(label) + "}")
+    lines.append(r"\begin{tabular}{" + cols + "}")
+    lines.append(r"\toprule")
+    lines.append(" & ".join(str(h) for h in headers) + r" \\")
+    lines.append(r"\midrule")
+    for row in rows:
+        cells = [_format_cell_latex(v, precision) for v in row]
+        lines.append(" & ".join(cells) + r" \\")
+    lines.append(r"\bottomrule")
+    lines.append(r"\end{tabular}")
+    lines.append(r"\end{table}")
+    return "\n".join(lines)
+
+
+def _table_csv(rows, headers, precision, units_map):
+    import csv
+    import io
+    buf = io.StringIO()
+    w = csv.writer(buf)
+    w.writerow([_decorate_header_with_unit(h, units_map) for h in headers])
+    for row in rows:
+        w.writerow([_format_cell_value(v, precision) for v in row])
+    return buf.getvalue().rstrip("\n")
+
+
+def _table_plain(rows, headers, precision, units_map):
+    hdr = [_decorate_header_with_unit(h, units_map) for h in headers]
+    body = [[_format_cell_value(v, precision) for v in row] for row in rows]
+    widths = [_builtin_max(len(hdr[j]),
+                           *(len(b[j]) for b in body) if body else (len(hdr[j]),))
+              for j in range(len(headers))]
+    sep = "  "
+    lines = [sep.join(hdr[j].ljust(widths[j]) for j in range(len(headers)))]
+    lines.append(sep.join("-" * widths[j] for j in range(len(headers))))
+    for b in body:
+        lines.append(sep.join(b[j].ljust(widths[j]) for j in range(len(headers))))
+    return "\n".join(lines)

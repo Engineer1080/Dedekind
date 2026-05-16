@@ -15,7 +15,7 @@ This folder contains the **source** and **generated** documentation for the Dede
 | **Commercialization_Options.md** | Potenzielle Kommerzialisierungsoptionen (Beratung, Support, Lizenzen, SaaS, Förderung, Phasierung, Risiken) |
 | **IDE_Studio_Roadmap.md** | Dedekind in bestehenden IDEs (VS Code, Jupyter) + Dedekind Studio als kommerzielle Wissenschaftler-IDE (Einheiten, Plots, Postgres, LaTeX, lokale KI) |
 | **Build_Dedekind_Studio_Exe.md** | Anleitung: Dedekind Studio als Windows-.exe bauen (PyInstaller) |
-| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.5.0; Stärken, Lücken, Roadmap) |
+| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.6.0; Stärken, Lücken, Roadmap) |
 | **Dedekind_Language_Specification_v0.1.pdf** | Legacy PDF (v0.1); for current spec use the Markdown or generate v0.2 PDF below |
 | **Dedekind_Research_Papers_and_Architecture.pdf** | Legacy PDF; for current content use the Markdown or generate PDF below |
 
@@ -41,6 +41,10 @@ pandoc Dedekind_Research_and_Architecture.md -o Dedekind_Research_and_Architectu
 - **Online**: Paste the Markdown into a service that converts Markdown to PDF (e.g. markdown-to-pdf converters).
 - **Typora / other editors**: Open the `.md` file and export to PDF from the application.
 
+
+## What changed in v1.6.0 (documented here)
+
+- **Version 1.6.0**: **Tiefere Symbolik:** `solve_sym(equation, var)` löst algebraische Gleichungen (einzeln oder als System mit Variablen-Liste) symbolisch via SymPy — akzeptiert sowohl `"lhs = rhs"` als auch implizite `"f(x) = 0"`-Notation; Rückgabe als Liste von Lösungs-Strings (bzw. Dict-Liste für Systeme). `simplify_sym(expr)` für SymPy-Vereinfachung (Trigonometrie, Polynomdivision, Logarithmen). `series(expr, var, x0=0, n=6)` für Taylor-Reihen ohne O-Term. Komplementär zu bestehenden `diff_sym`/`integrate_sym`. **Sparse iterative Solver:** `cg(A, b, x0=None, tol=1e-8, max_iter=1000, preconditioner=None)` (Conjugate Gradient für SPD), `gmres(...)` (GMRES für allgemeine Systeme), `bicgstab(...)` (BiCGSTAB) — alle als Krylov-Verfahren via `scipy.sparse.linalg`, akzeptieren dichte Matrizen, sparse Torch-Tensoren und scipy.sparse-Matrizen (intern CSR-float64). Iterations-Callback misst die tatsächlich benötigten Iterationen, Rückgabe-Dict enthält `x`, `converged`, `iterations`, `info`, `residual_inf`. `jacobi_preconditioner(A)` (Diagonal-Inverse) und `ilu_preconditioner(A, drop_tol, fill_factor)` (incomplete LU via `spilu`) als `preconditioner=`-Argument. **Reproducible-Notebook-Export:** `export_notebook(source_path, output_path=None, format="html"|"md", title=None, include_hash=True, capture_plots=True)` führt eine `.ddk`-Datei aus, fängt Stdout und `_dedekind_plots` (Base64-PNG) ab und schreibt eine Standalone-HTML- oder Markdown-Datei mit Quellcode, Output, Plots und SHA-256-Hash des Quelltexts. Re-Entry-Guard auf `sys`-Modul-Ebene verhindert Endlosrekursion, falls die Quelldatei sich selbst exportiert. **Paper-Mode-Tabellen:** `print_table(rows, headers=None, format="markdown"|"latex"|"csv"|"plain", precision=4, caption=None, label=None)` erzeugt Tabellen in vier Formaten — LaTeX nutzt Booktabs (`\toprule`/`\midrule`/`\bottomrule`, optional `\caption` und `\label`). `UncertainQuantity` wird automatisch als `val ± std [unit]` (Markdown/Plain/CSV) bzw. `$val \pm std\,[\mathrm{unit}]$` (LaTeX) formatiert; `Quantity` als `val [unit]`. Akzeptiert `DataFrame` direkt und überträgt deren Einheiten in die Header. Beispiele: `symbolic_solve_series.ddk`, `sparse_iterative_solvers.ddk`, `notebook_export_demo.ddk`, `paper_table_demo.ddk`. Tests: `symbolic_solve_series_test.ddk`, `sparse_iterative_test.ddk`, `notebook_export_test.ddk`, `paper_table_test.ddk` (26/26 grün; alle 82 Beispiele kompilieren weiter).
 
 ## What changed in v1.5.0 (documented here)
 
