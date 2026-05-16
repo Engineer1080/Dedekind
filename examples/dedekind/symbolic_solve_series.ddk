@@ -1,0 +1,49 @@
+// Feature 11: Tiefere Symbolik — solve_sym, simplify_sym, series.
+// Ergänzt das bestehende diff_sym / integrate_sym.
+
+fn main() {
+    print("--- Feature 11: Symbolische Mathematik (vertieft) ---")
+
+    // 1) Algebraische Gleichungen lösen
+    sols = solve_sym("x^2 - 5*x + 6", "x")
+    print("x^2 - 5x + 6 = 0  -> ")
+    print(sols)    // ["2", "3"]
+
+    quad = solve_sym("a*x^2 + b*x + c = 0", "x")
+    print("Allgemeine quadratische Formel:")
+    print(quad)
+
+    // 2) Komplexe Wurzeln
+    img = solve_sym("x^2 + 1", "x")
+    print("x^2 + 1 = 0  -> ")
+    print(img)     // ["-I", "I"]
+
+    // 3) Gleichungssystem
+    sys_sol = solve_sym(["x + y = 5", "x - y = 1"], ["x", "y"])
+    print("Lineares 2x2-System x+y=5, x-y=1:")
+    print(sys_sol)
+
+    // 4) Vereinfachung
+    s1 = simplify_sym("sin(x)^2 + cos(x)^2")
+    s2 = simplify_sym("(x^2 - 1) / (x - 1)")
+    print("sin^2 + cos^2 =")
+    print(s1)
+    print("(x^2-1)/(x-1) =")
+    print(s2)
+
+    // 5) Taylor-Reihen
+    sin_series = series("sin(x)", "x", 0, 8)
+    exp_series = series("exp(x)", "x", 0, 5)
+    print("Taylor sin(x) um 0, Ordnung 8:")
+    print(sin_series)
+    print("Taylor exp(x) um 0, Ordnung 5:")
+    print(exp_series)
+
+    // 6) Reihenentwicklung um anderen Punkt
+    log_series = series("log(x)", "x", 1, 5)
+    print("Taylor log(x) um 1:")
+    print(log_series)
+
+    print("Symbolische Mathematik aktiv.")
+}
+main()

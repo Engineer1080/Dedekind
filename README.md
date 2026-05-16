@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-1.5.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-1.6.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -28,6 +28,14 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
+
+### What's New in v1.6.0
+
+- **Tiefere Symbolik:** `solve_sym(equation, var)` löst Gleichungen (auch Systeme mit Listen) symbolisch via SymPy; `"x^2 - 5*x + 6"` → `["2", "3"]`. `simplify_sym(expr)` vereinfacht Ausdrücke (`"sin(x)^2 + cos(x)^2"` → `"1"`). `series(expr, var, x0, n)` liefert Taylor-Entwicklungen. Ergänzt `diff_sym`/`integrate_sym`.
+- **Sparse iterative Solver:** `cg(A, b)`, `gmres(A, b)`, `bicgstab(A, b)` als Krylov-Solver für große (sparse oder dichte) lineare Systeme, mit Iterations-Callback. `jacobi_preconditioner(A)` und `ilu_preconditioner(A)` als `M=`-Argument für 2–10×-Speedup. Dichte Matrix, sparse Tensor und scipy.sparse-Matrizen werden alle akzeptiert (intern auf CSR-float64 normalisiert).
+- **Reproducible-Notebook-Export:** `export_notebook(source_path, output_path, format="html"|"md", title, include_hash=True)` führt eine `.ddk`-Datei aus und bündelt Quellcode, Stdout-Output, alle generierten Plots (Base64-PNG) und SHA-256-Hash zu einer Standalone-Datei. Re-Entry-Guard verhindert Endlosrekursion, wenn die Quelldatei sich selbst exportiert.
+- **Paper-Mode-Tabellen:** `print_table(rows, headers, format="markdown"|"latex"|"csv"|"plain", precision, caption, label)` erzeugt Tabellen in vier Formaten; LaTeX nutzt Booktabs (`\toprule`/`\midrule`/`\bottomrule`). `UncertainQuantity` wird automatisch als `val ± std [unit]` formatiert (in LaTeX: `$val \pm std\,[\mathrm{unit}]$`), `Quantity` als `val [unit]`. Akzeptiert `DataFrame` direkt; Einheiten aus `df.units` landen in Header.
+- Beispiele: `symbolic_solve_series.ddk`, `sparse_iterative_solvers.ddk`, `notebook_export_demo.ddk`, `paper_table_demo.ddk`. Tests: 26/26 grün; alle 82 Beispiele kompilieren.
 
 ### What's New in v1.5.0
 

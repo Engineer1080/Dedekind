@@ -1,0 +1,37 @@
+// Feature 13: Notebook-Export — bündelt Code, Output, Plots und SHA-256 in HTML/Markdown.
+//
+// Diese Demo erzeugt eine kleine Mess-Reihe, plottet sie, schreibt das ganze .ddk-Skript
+// als reproduzierbares HTML-Notebook und parallel als Markdown.
+
+fn main() {
+    print("--- Feature 13: Notebook-Export ---")
+
+    // Beispiel-Analyse: gedämpfter Oszillator (analytische Lösung sampeln)
+    t = linspace(0.0, 10.0, 201)
+    omega = 2.0
+    gamma = 0.2
+    x = exp(-gamma * t) * cos(omega * t)
+    plot(t, x, title="Gedämpfter Oszillator", xlabel="t [s]", ylabel="x(t)")
+
+    // Mini-Auswertung
+    print("Maximalwert |x(t)|:")
+    print(max(abs(x)))
+
+    // Datenhash (Reproduzierbarkeit)
+    print("Daten-Hash (SHA-256):")
+    print(data_hash(x))
+
+    // Export der .ddk-Datei selbst als Standalone-HTML- und Markdown-Notebook.
+    src = "examples/dedekind/notebook_export_demo.ddk"
+    html_path = export_notebook(src, output_path="/tmp/notebook_export_demo.html", format="html",
+                                title="Gedämpfter Oszillator – Mess-Notizen")
+    md_path = export_notebook(src, output_path="/tmp/notebook_export_demo.md", format="md",
+                              title="Gedämpfter Oszillator – Mess-Notizen")
+    print("HTML-Notebook geschrieben:")
+    print(html_path)
+    print("Markdown-Notebook geschrieben:")
+    print(md_path)
+
+    print("Notebook-Export aktiv.")
+}
+main()

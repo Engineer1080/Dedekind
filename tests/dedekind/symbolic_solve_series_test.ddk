@@ -1,0 +1,32 @@
+// Tests für solve_sym, simplify_sym und series.
+
+fn main() {
+    // solve_sym: Wurzeln einer quadratischen Gleichung
+    sols = solve_sym("x^2 - 5*x + 6", "x")
+    assert(len(sols) == 2, "zwei Wurzeln erwartet")
+    assert(sols[0] == "2", "erste Wurzel = 2")
+    assert(sols[1] == "3", "zweite Wurzel = 3")
+
+    // solve_sym mit explizitem "="
+    one = solve_sym("x + 7 = 10", "x")
+    assert(one[0] == "3", "Linear: x = 3")
+
+    // System
+    syst = solve_sym(["x + y = 5", "x - y = 1"], ["x", "y"])
+    assert(syst[0]["x"] == "3", "System: x = 3")
+    assert(syst[0]["y"] == "2", "System: y = 2")
+
+    // simplify_sym
+    s = simplify_sym("sin(x)^2 + cos(x)^2")
+    assert(s == "1", "Pythagoras")
+
+    s2 = simplify_sym("(x^2 - 1) / (x - 1)")
+    assert(s2 == "x + 1", "Polynomdivision")
+
+    // Taylor-Reihe (SymPy gibt sin(x) bis Ordnung 6 als x - x**3/6 + x**5/120 zurück)
+    sin5 = series("sin(x)", "x", 0, 6)
+    assert(sin5 == "x**5/120 - x**3/6 + x", "sin-Taylor-Reihe (umgekehrte Term-Reihenfolge)")
+
+    print("symbolic_solve_series_test OK")
+}
+main()

@@ -101,4 +101,4 @@ Dein Freund:
 
 ---
 
-*Stand: v1.5.0*
+*Stand: v1.6.0*

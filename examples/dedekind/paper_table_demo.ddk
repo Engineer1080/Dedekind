@@ -1,0 +1,50 @@
+// Feature 14: Paper-Mode-Tabellen — print_table mit LaTeX/Markdown/CSV/Plain
+// und automatischer ±-Notation für UncertainQuantity.
+
+fn main() {
+    print("--- Feature 14: Paper-Mode-Tabellen ---")
+
+    // 1) Mess-Reihe als DataFrame mit Einheiten
+    df = DataFrame({
+        "t":  [0.0, 1.0, 2.0, 3.0, 4.0],
+        "T":  [20.1, 22.3, 24.6, 27.0, 29.1],
+        "p":  [1013.2, 1012.8, 1011.9, 1011.4, 1010.7]
+    }, units={"t": "s", "T": "C", "p": "hPa"})
+
+    print("Markdown (für GitHub-Issues, Notion):")
+    print_table(df, format="markdown")
+    print("")
+
+    print("Plain ASCII (für Konsolen-Ausgaben):")
+    print_table(df, format="plain")
+    print("")
+
+    print("CSV (z. B. zum Weiterverarbeiten):")
+    print_table(df, format="csv")
+    print("")
+
+    print("LaTeX (Booktabs, direkt einfügbar in Papers):")
+    print_table(df, format="latex",
+                caption="Temperaturmessung über 4 s, mit Luftdruck.",
+                label="tab:messung")
+    print("")
+
+    // 2) UncertainQuantity: automatische "val ± std [unit]"-Notation
+    rows = [
+        ["a", uncertain(2.34, 0.05, unit="V")],
+        ["b", uncertain(1.78, 0.12, unit="V")],
+        ["c", uncertain(0.98, 0.03, unit="V")]
+    ]
+    headers = ["Messung", "Spannung"]
+    print("Tabellen mit Unsicherheit (Markdown):")
+    print_table(rows, headers=headers, format="markdown")
+    print("")
+
+    print("Dieselbe Tabelle als LaTeX (für Manuskript):")
+    print_table(rows, headers=headers, format="latex",
+                caption="Spannungsmessungen mit 1σ-Unsicherheit.",
+                label="tab:spannung")
+
+    print("Paper-Tabellen aktiv.")
+}
+main()
