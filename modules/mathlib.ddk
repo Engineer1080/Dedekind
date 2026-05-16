@@ -1,0 +1,11 @@
+// Beispiel-Modul: wird per `use mathlib` in andere .ddk-Dateien eingebunden.
+
+fn square(x) {
+    return x * x
+}
+
+fn cube(x) {
+    return x * x * x
+}
+
+PHI = (1 + sqrt(5)) / 2

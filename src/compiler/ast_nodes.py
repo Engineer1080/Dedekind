@@ -34,6 +34,14 @@ class FunctionDef(Node):
     name: str
     args: List[str]
     body: List[Node]
+    arg_units: Optional[List[Optional[str]]] = None  # Per-arg unit annotations ([m], [kg], …); None per slot = not annotated
+    return_unit: Optional[str] = None  # Return unit annotation
+
+
+@dataclass
+class UseStmt(Node):
+    """Modul-/Import-Anweisung: `use mathlib` lädt mathlib.ddk in den aktuellen Kompilier-Pass."""
+    module: str
 
 @dataclass
 class ReturnStmt(Node):
@@ -86,6 +94,12 @@ class QuaternionLiteral(Node):
 @dataclass
 class VectorLiteral(Node):
     elements: List[Node]
+
+@dataclass
+class DictLiteral(Node):
+    """Dict-Literal: {"key": value, "k2": v2} — wird zur Python-dict transpiliert."""
+    keys: List[Node]
+    values: List[Node]
 
 @dataclass
 class Lambda(Node):

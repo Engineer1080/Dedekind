@@ -1,11 +1,62 @@
 import sys
 import os
-from typing import Optional
+from typing import Optional, List
 from .lexer import Lexer
 from .parser import Parser
 from .codegen import CodeGenerator
 from .latex_export import program_to_latex
-from .ast_nodes import CompileError
+from .ast_nodes import CompileError, Program, UseStmt
+
+
+def _module_search_paths(filepath: Optional[str]) -> List[str]:
+    """Suchpfade für `use mymod` (in dieser Reihenfolge): aktuelles Verzeichnis,
+    Projekt-Modulordner `modules/`, examples/dedekind/."""
+    paths = []
+    if filepath:
+        paths.append(os.path.dirname(os.path.abspath(filepath)))
+    here = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(os.path.dirname(here))
+    paths.append(os.path.join(project_root, "modules"))
+    paths.append(os.path.join(project_root, "examples", "dedekind"))
+    paths.append(os.getcwd())
+    return paths
+
+
+def _resolve_module(name: str, search_paths: List[str], visiting_line: Optional[int]) -> str:
+    for p in search_paths:
+        candidate = os.path.join(p, f"{name}.ddk")
+        if os.path.isfile(candidate):
+            return candidate
+    raise CompileError(
+        f"Modul '{name}' nicht gefunden. Gesucht: {', '.join(p for p in search_paths)}.",
+        line=visiting_line,
+    )
+
+
+def _expand_uses(ast: Program, filepath: Optional[str], loaded: set) -> Program:
+    """Ersetzt UseStmt-Knoten durch die Top-Level-Statements der referenzierten Module."""
+    new_stmts = []
+    search_paths = _module_search_paths(filepath)
+    for stmt in ast.statements:
+        if isinstance(stmt, UseStmt):
+            if stmt.module in loaded:
+                continue  # zyklisch oder doppelt: ignorieren
+            mod_path = _resolve_module(stmt.module, search_paths, getattr(stmt, "line", None))
+            loaded.add(stmt.module)
+            try:
+                with open(mod_path, "r", encoding="utf-8") as f:
+                    mod_source = f.read()
+            except OSError as e:
+                raise CompileError(f"Modul '{stmt.module}' lesen fehlgeschlagen: {e}",
+                                   line=getattr(stmt, "line", None), filepath=filepath)
+            mod_tokens = Lexer(mod_source).tokenize()
+            mod_ast = Parser(mod_tokens).parse()
+            mod_ast = _expand_uses(mod_ast, mod_path, loaded)
+            new_stmts.extend(mod_ast.statements)
+        else:
+            new_stmts.append(stmt)
+    return Program(new_stmts)
+
 
 def compile_source(source_code: str, filepath: Optional[str] = None, check_units: bool = True) -> str:
     try:
@@ -13,6 +64,7 @@ def compile_source(source_code: str, filepath: Optional[str] = None, check_units
         tokens = lexer.tokenize()
         parser = Parser(tokens)
         ast = parser.parse()
+        ast = _expand_uses(ast, filepath, loaded=set())
         from .simplify import simplify_program
         ast = simplify_program(ast)
         if check_units:

@@ -33,6 +33,7 @@ class Lexer:
             ('RAWSTRING', r'r"[^"]*"'),          # Raw string (r"...") – Backslashes bleiben erhalten
             ('STRING',   r'"[^"]*"'),           # String literal
             ('MODIFIER', r'\.(gpu|cpu|single)'), # Modifiers .gpu, .cpu, .single
+            ('RETURNS',  r'->'),                # Return-type arrow (must come BEFORE MINUS)
             ('ARROW',    r'=>'),                # Arrow operator
             ('EQ',       r'=='),                # Equal
             ('NEQ',      r'!='),                # Not equal (MUST come before FACTORIAL)
@@ -44,6 +45,7 @@ class Lexer:
             ('GT',       r'>'),                 # Greater than
             ('PLUS',     r'\+'),                # Add
             ('MINUS',    r'-'),                 # Subtract
+            ('COLON',    r':'),                 # Colon (function arg units, type annotations)
             ('MUL',      r'\*'),                # Multiply
             ('AT',       r'@'),                 # Matrix multiplication (A @ B)
             ('COMMENT',  r'//.*'),              # Comments
@@ -89,7 +91,7 @@ class Lexer:
                 )
             else:
                 keywords = {'fn', 'return', 'if', 'else', 'while', 'for', 'in', 'grad', 'einsum',
-                           'and', 'or', 'not', 'xor', 'nand', 'nor', 'xnor'}
+                           'and', 'or', 'not', 'xor', 'nand', 'nor', 'xnor', 'use'}
                 if kind == 'ID' and value in keywords:
                     kind = value.upper()
                 # RAWSTRING: Token-Wert = Inhalt ohne r" und "
