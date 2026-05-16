@@ -1,0 +1,52 @@
+// v1.4 Features-Showcase: Module, Seed, DataFrame+CSV, Unit-aware Plots, @units-Signaturen
+
+use mathlib  // lädt modules/mathlib.ddk -> square, cube, PHI
+
+fn kinetic_energy(m: [kg], v: [m/s]) -> [J] {
+    // Compile-Zeit-Annotation: m in kg, v in m/s; Rückgabe in J.
+    // Bei 2000[g] wird automatisch zu 2[kg] umgerechnet.
+    return 0.5 * m * v * v
+}
+
+fn main() {
+    print("--- v1.4 Showcase ---")
+
+    // Reproduzierbarkeit
+    seed(42)
+    s1 = sample(Normal(0.0, 1.0))
+    seed(42)
+    s2 = sample(Normal(0.0, 1.0))
+    print("Reproduzierbar:")
+    print(s1 == s2)
+
+    // Module
+    print("square(7) =")
+    print(square(7))
+    print("PHI =")
+    print(PHI)
+
+    // @units-Signatur mit automatischer Einheiten-Umrechnung
+    E1 = kinetic_energy(2.0[kg], 3.0[m/s])
+    E2 = kinetic_energy(2000.0[g], 3.0[m/s])
+    print("E(2 kg, 3 m/s) =")
+    print(E1)
+    print("E(2000 g, 3 m/s) (auto-umgerechnet) =")
+    print(E2)
+
+    // DataFrame mit Einheiten + CSV-Roundtrip
+    df = DataFrame({"t": [0.0, 1.0, 2.0, 3.0], "T": [20.0, 21.5, 23.0, 25.0]},
+                   units={"t": "s", "T": "K"})
+    write_csv("/tmp/temp_messung.csv", df)
+    df2 = read_csv("/tmp/temp_messung.csv")
+    print("CSV-Header trägt Einheiten:")
+    print(df2)
+    print("Datenintegritäts-Hash:")
+    print(data_hash(df2))
+
+    // Unit-aware Plot: Achsenlabels werden automatisch aus Quantity-Listen abgeleitet
+    xs = [0.0[s], 1.0[s], 2.0[s], 3.0[s]]
+    ys = [20.0[K], 21.5[K], 23.0[K], 25.0[K]]
+    plot(xs, ys, title="Temperaturverlauf", xlabel="Zeit", ylabel="Temperatur")
+    print("Plot mit automatischen Einheiten-Achsen erstellt.")
+}
+main()

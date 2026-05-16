@@ -75,6 +75,8 @@ class SimplifyVisitor:
             name=node.name,
             args=node.args,
             body=[self.visit(s) for s in node.body],
+            arg_units=getattr(node, "arg_units", None),
+            return_unit=getattr(node, "return_unit", None),
             line=node.line,
         )
 
@@ -184,6 +186,14 @@ class SimplifyVisitor:
 
     def visit_VectorLiteral(self, node):
         return VectorLiteral(elements=[self.visit(e) for e in node.elements], line=node.line)
+
+    def visit_DictLiteral(self, node):
+        from .ast_nodes import DictLiteral
+        return DictLiteral(
+            keys=[self.visit(k) for k in node.keys],
+            values=[self.visit(v) for v in node.values],
+            line=node.line,
+        )
 
     def visit_Lambda(self, node):
         return Lambda(arg=node.arg, body=self.visit(node.body), line=node.line)

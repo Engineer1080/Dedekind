@@ -175,8 +175,21 @@ def _check_expr(node: Node, filepath: Optional[str]) -> None:
             _check_expr(e, filepath)
         return
     if isinstance(node, FunctionDef):
-        for stmt in node.body:
-            _check_stmt(stmt, filepath)
+        arg_units = getattr(node, "arg_units", None)
+        if arg_units:
+            saved = dict(KNOWN_UNITS)
+            try:
+                for arg_name, u in zip(node.args, arg_units):
+                    if u is not None:
+                        KNOWN_UNITS[arg_name] = u
+                for stmt in node.body:
+                    _check_stmt(stmt, filepath)
+            finally:
+                KNOWN_UNITS.clear()
+                KNOWN_UNITS.update(saved)
+        else:
+            for stmt in node.body:
+                _check_stmt(stmt, filepath)
         return
 
 

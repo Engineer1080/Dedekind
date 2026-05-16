@@ -80,6 +80,8 @@ class Parser:
 
         if token.type == 'FN':
             return self.parse_function_def()
+        elif token.type == 'USE':
+            return self.parse_use_stmt()
         elif token.type == 'RETURN':
             start_line = token.line
             self.consume('RETURN')
@@ -146,24 +148,120 @@ class Parser:
         node.line = start_line
         return node
 
+    def _parse_unit_bracket(self):
+        """Liest `[m/s]` und gibt 'm/s' zurück. Vorbedingung: aktuelles Token = LBRACKET."""
+        self.consume('LBRACKET')
+        parts = []
+        while self.peek() and self.peek().type != 'RBRACKET':
+            t = self.consume()
+            if t.type == 'ID':
+                parts.append(t.value)
+            elif t.type == 'NUMBER':
+                parts.append(str(t.value))
+            elif t.type == 'MUL':
+                parts.append('*')
+            elif t.type == 'DIV':
+                parts.append('/')
+            elif t.type == 'CARET' and self.peek() and self.peek().type == 'NUMBER':
+                parts.append('^')
+                parts.append(self.consume().value)
+            elif t.type == 'MINUS':
+                parts.append('-')
+            else:
+                break
+        self.consume('RBRACKET')
+        return ''.join(parts)
+
+    def parse_use_stmt(self):
+        start_line = self.peek().line
+        self.consume('USE')
+        name_tok = self.consume('ID')
+        node = UseStmt(name_tok.value)
+        node.line = start_line
+        return node
+
     def parse_function_def(self):
         start_line = self.peek().line
         self.consume('FN')
         name = self.consume('ID').value
         self.consume('LPAREN')
         args = []
+        arg_units = []
+        has_units = False
         if self.peek().type != 'RPAREN':
             args.append(self.consume('ID').value)
+            u = None
+            if self.peek() and self.peek().type == 'COLON':
+                self.consume('COLON')
+                self.consume('LBRACKET')
+                # Re-feed: parse_unit_bracket expects LBRACKET token still there;
+                # we already consumed it, so parse inline mirror.
+                parts = []
+                while self.peek() and self.peek().type != 'RBRACKET':
+                    t = self.consume()
+                    if t.type == 'ID': parts.append(t.value)
+                    elif t.type == 'NUMBER': parts.append(str(t.value))
+                    elif t.type == 'MUL': parts.append('*')
+                    elif t.type == 'DIV': parts.append('/')
+                    elif t.type == 'CARET' and self.peek() and self.peek().type == 'NUMBER':
+                        parts.append('^'); parts.append(self.consume().value)
+                    elif t.type == 'MINUS': parts.append('-')
+                    else: break
+                self.consume('RBRACKET')
+                u = ''.join(parts)
+                has_units = True
+            arg_units.append(u)
             while self.peek().type == 'COMMA':
                 self.consume('COMMA')
                 args.append(self.consume('ID').value)
+                u = None
+                if self.peek() and self.peek().type == 'COLON':
+                    self.consume('COLON')
+                    self.consume('LBRACKET')
+                    parts = []
+                    while self.peek() and self.peek().type != 'RBRACKET':
+                        t = self.consume()
+                        if t.type == 'ID': parts.append(t.value)
+                        elif t.type == 'NUMBER': parts.append(str(t.value))
+                        elif t.type == 'MUL': parts.append('*')
+                        elif t.type == 'DIV': parts.append('/')
+                        elif t.type == 'CARET' and self.peek() and self.peek().type == 'NUMBER':
+                            parts.append('^'); parts.append(self.consume().value)
+                        elif t.type == 'MINUS': parts.append('-')
+                        else: break
+                    self.consume('RBRACKET')
+                    u = ''.join(parts)
+                    has_units = True
+                arg_units.append(u)
         self.consume('RPAREN')
+        return_unit = None
+        if self.peek() and self.peek().type == 'RETURNS':
+            self.consume('RETURNS')
+            self.consume('LBRACKET')
+            parts = []
+            while self.peek() and self.peek().type != 'RBRACKET':
+                t = self.consume()
+                if t.type == 'ID': parts.append(t.value)
+                elif t.type == 'NUMBER': parts.append(str(t.value))
+                elif t.type == 'MUL': parts.append('*')
+                elif t.type == 'DIV': parts.append('/')
+                elif t.type == 'CARET' and self.peek() and self.peek().type == 'NUMBER':
+                    parts.append('^'); parts.append(self.consume().value)
+                elif t.type == 'MINUS': parts.append('-')
+                else: break
+            self.consume('RBRACKET')
+            return_unit = ''.join(parts)
+            has_units = True
         self.consume('LBRACE')
         body = []
         while self.peek().type != 'RBRACE':
             body.append(self.parse_statement())
         self.consume('RBRACE')
-        node = FunctionDef(name, args, body)
+        node = FunctionDef(
+            name, args, body,
+            arg_units=arg_units if has_units else None,
+            return_unit=return_unit,
+        )
         node.line = start_line
         return node
 
@@ -327,6 +425,25 @@ class Parser:
                     elements.append(self.parse_expression())
             self.consume('RBRACKET')
             node = VectorLiteral(elements)
+            node.line = line_at
+        elif token.type == 'LBRACE':
+            # Dict-Literal: { "k": v, "k2": v2 } oder { id: v, ... }
+            self.consume('LBRACE')
+            keys = []
+            values = []
+            if self.peek() and self.peek().type != 'RBRACE':
+                while True:
+                    k = self.parse_expression()
+                    self.consume('COLON')
+                    v = self.parse_expression()
+                    keys.append(k)
+                    values.append(v)
+                    if self.peek() and self.peek().type == 'COMMA':
+                        self.consume('COMMA')
+                    else:
+                        break
+            self.consume('RBRACE')
+            node = DictLiteral(keys, values)
             node.line = line_at
         elif token.type == 'LPAREN':
             self.consume('LPAREN')

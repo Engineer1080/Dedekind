@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-1.3.1-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-1.4.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -28,6 +28,16 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
+
+### What's New in v1.4.0
+
+- **Modul-System:** `use mymodule` lädt `modules/mymodule.ddk` (oder dieselbe Verzeichnis-Datei) und stellt deren Funktionen/Konstanten zur Verfügung. Beispiel: `use mathlib` → `square`, `cube`, `PHI`. Suchpfade: aktuelles Verzeichnis, `modules/`, `examples/dedekind/`, CWD.
+- **Reproduzierbarkeit:** `seed(n)` setzt deterministischen Seed in `random`, NumPy und PyTorch. `data_hash(x)` liefert SHA-256-Digest beliebiger Eingaben (Tensor, Liste, Dict, DataFrame, Zahl, String) für reproduzierbare Pipelines.
+- **DataFrames + tabular I/O:** Leichte spaltenorientierte `DataFrame`-Klasse mit Einheiten pro Spalte; `read_csv(path)` parst Header der Form `name [unit]` automatisch; `write_csv(path, df)`. Optional: `read_parquet`/`write_parquet` (pyarrow), `read_hdf5`/`write_hdf5` (h5py), `read_netcdf` (netCDF4).
+- **Unit-aware Plots:** `plot()`, `scatter()`, `contour()` erkennen Listen von `Quantity`-Werten, extrahieren Zahlenwerte und ergänzen Einheiten automatisch in den Achsenbeschriftungen (`Zeit [s]`, `Temperatur [K]`).
+- **`@units`-Signaturen:** Funktionen können Argument- und Return-Einheiten deklarieren: `fn kinetic_energy(m: [kg], v: [m/s]) -> [J] { ... }`. Eingaben werden automatisch in die deklarierte Einheit umgerechnet (z. B. `2000[g]` → `2[kg]`); Return-Wert wird dimensional geprüft (z. B. `kg*m²/s² == J`).
+- **Dict-Literale:** `{"key": value, "k2": v2}` als Ausdruck (z. B. für `DataFrame`-Konstruktion oder `json_stringify`).
+- Beispiel: `v1_4_features_showcase.ddk`. Tests: `use_module_test.ddk`, `seed_reproducibility_test.ddk`, `dataframe_csv_test.ddk`, `signature_units_test.ddk`, `unit_plot_test.ddk`.
 
 ### What's New in v1.3.1
 
