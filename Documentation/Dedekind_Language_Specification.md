@@ -2,7 +2,7 @@
 
 **Language Specification v0.2**  
 Mario Michael Heinrich · github.com/Engineer1080  
-Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit), v0.9.6 (Math-Funktionen), v0.9.7 (Chemie/Biologie: mol, L, M, ppm), v0.9.8 (Convenience, Elemente, Datei-I/O, Netzwerk, JSON), v1.0.0 (Release), v1.0.1–v1.0.6 (Patch), v1.2.6 (Winkel rad/deg, deg_to_rad, rad_to_deg), v1.2.7 (Dirichlet-Verteilung, dirichlet_function), v1.2.8 (Dedekind-Schnitte, Dedekind-Ringe, Riemann-Zeta, Riemann-Summen), v1.2.9 (Betragsstriche, Rotationskörper, logische Operatoren), v1.3.0 (integrate_sym, Lagrange/Hamilton, Lotka-Volterra, chemisches Gleichgewicht), v1.3.1 (Medizin, Pharmakologie, Epidemiologie), v1.4.0 (Modul-System `use`, Seed/data_hash, DataFrame+CSV/Parquet/HDF5/NetCDF, Unit-aware Plots, `@units`-Signaturen mit `fn f(x: [m]) -> [J]`, Dict-Literale), v1.5.0 (benchmark/profile/time_block, jit (torch.compile), sde_solve (Euler-Maruyama, Milstein), least_squares, minimize_constrained, milp, FEM-Primitiven mesh_unit_square/fem_assemble_*/fem_poisson_2d, `arange` int64), v1.6.0 (solve_sym/simplify_sym/series, cg/gmres/bicgstab + jacobi_/ilu_preconditioner, export_notebook (HTML/MD), print_table (markdown/latex/csv/plain) mit UncertainQuantity-±), v1.7.0 (Standardbibliothek-Module physics/stats/chemistry/biology/math/ml via `use`, benutzerdefinierte Einheiten `unit NAME = FAKTOR[basis]` mit Verkettung & Compile-Zeit-Registrierung, Quantity-Vergleichsoperatoren `<` `<=` `>` `>=` `==` `!=` mit Auto-Konvertierung), v1.8.0 (Source-Mapping fuer Runtime-Fehler — Tracebacks zeigen `.ddk`-Zeilen + Code-Auszug; `pyimport <mod[.sub]> [as alias]` als Fluchtluke in PyPI; `dedekind_exec` Helper in `compiler.py`), v1.8.1 (Purity-Check: `print`/`plot`/`write_file`/`http_*`/I/O-Built-ins in `jit`/`grad`/`fit`/`metropolis`/`hmc`/`sde_solve`-Argumenten werden zur Compile-Zeit transitiv erkannt und blockiert; Opt-Out via `--no-purity-check`), v1.9.0 (Shape-Annotationen `Scalar`/`Vector[n]`/`Matrix[m,n]`/`Tensor[...]` mit symbolischen Dimensionen, gebunden und konsistenzgeprueft pro Call; `unwrap(x)` strippt Quantity/UncertainQuantity-Wrapper fuer Hot-Path-Performance)
+Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit), v0.9.6 (Math-Funktionen), v0.9.7 (Chemie/Biologie: mol, L, M, ppm), v0.9.8 (Convenience, Elemente, Datei-I/O, Netzwerk, JSON), v1.0.0 (Release), v1.0.1–v1.0.6 (Patch), v1.2.6 (Winkel rad/deg, deg_to_rad, rad_to_deg), v1.2.7 (Dirichlet-Verteilung, dirichlet_function), v1.2.8 (Dedekind-Schnitte, Dedekind-Ringe, Riemann-Zeta, Riemann-Summen), v1.2.9 (Betragsstriche, Rotationskörper, logische Operatoren), v1.3.0 (integrate_sym, Lagrange/Hamilton, Lotka-Volterra, chemisches Gleichgewicht), v1.3.1 (Medizin, Pharmakologie, Epidemiologie), v1.4.0 (Modul-System `use`, Seed/data_hash, DataFrame+CSV/Parquet/HDF5/NetCDF, Unit-aware Plots, `@units`-Signaturen mit `fn f(x: [m]) -> [J]`, Dict-Literale), v1.5.0 (benchmark/profile/time_block, jit (torch.compile), sde_solve (Euler-Maruyama, Milstein), least_squares, minimize_constrained, milp, FEM-Primitiven mesh_unit_square/fem_assemble_*/fem_poisson_2d, `arange` int64), v1.6.0 (solve_sym/simplify_sym/series, cg/gmres/bicgstab + jacobi_/ilu_preconditioner, export_notebook (HTML/MD), print_table (markdown/latex/csv/plain) mit UncertainQuantity-±), v1.7.0 (Standardbibliothek-Module physics/stats/chemistry/biology/math/ml via `use`, benutzerdefinierte Einheiten `unit NAME = FAKTOR[basis]` mit Verkettung & Compile-Zeit-Registrierung, Quantity-Vergleichsoperatoren `<` `<=` `>` `>=` `==` `!=` mit Auto-Konvertierung), v1.8.0 (Source-Mapping fuer Runtime-Fehler — Tracebacks zeigen `.ddk`-Zeilen + Code-Auszug; `pyimport <mod[.sub]> [as alias]` als Fluchtluke in PyPI; `dedekind_exec` Helper in `compiler.py`), v1.8.1 (Purity-Check: `print`/`plot`/`write_file`/`http_*`/I/O-Built-ins in `jit`/`grad`/`fit`/`metropolis`/`hmc`/`sde_solve`-Argumenten werden zur Compile-Zeit transitiv erkannt und blockiert; Opt-Out via `--no-purity-check`), v1.9.0 (Shape-Annotationen `Scalar`/`Vector[n]`/`Matrix[m,n]`/`Tensor[...]` mit symbolischen Dimensionen, gebunden und konsistenzgeprueft pro Call; `unwrap(x)` strippt Quantity/UncertainQuantity-Wrapper fuer Hot-Path-Performance), v1.10.0 (PINN-Primitive `partial(u, x, order=n)` fuer ∂u/∂x via Autograd, ergaenzend zu `grad(fn, x)`; `fit()`-Hardening fuer PINN-Data-Listen mit gemischten Shapes und Collocation-grad-Reset)
 
 ---
 
@@ -458,6 +458,62 @@ Behavior of `unwrap`:
 Rationale: the compile-time units checker has already validated dimensions; at runtime the wrapper adds overhead — invisible for a handful of calls, but significant in MCMC chains with 10 000+ samples or in `torch.compile`-d graphs where Python objects force graph breaks. Calling `unwrap()` at function entry gives the compiler clean Python floats / numpy arrays to optimize.
 
 Examples: `examples/dedekind/shape_annotations_demo.ddk`, `examples/dedekind/quantity_stripping_demo.ddk`. Tests: `tests/dedekind/shape_annotations_test.ddk`, `tests/dedekind/quantity_stripping_test.ddk`.
+
+### 15.16 Physics-Informed Neural Networks (v1.10)
+
+PINNs train a neural network so that its output respects a differential equation in addition to (or instead of) data. Dedekind exposes the one primitive that was missing for this workflow:
+
+```
+partial(u, x, order=1)
+```
+
+Computes ∂u/∂x via `torch.autograd.grad`, where `u` is an already-evaluated tensor and `x` is a leaf tensor with `requires_grad=True` (typically via `.with_grad()`). Complementary to `grad(fn, x)`, which differentiates a *function* at a point.
+
+Typical PINN pattern:
+
+```dedekind
+fn mlp_eval(params, x) {
+    W1 = params.narrow(0, 0, 10).reshape(1, 10)
+    b1 = params.narrow(0, 10, 10)
+    W2 = params.narrow(0, 20, 10).reshape(10, 1)
+    b2 = params.narrow(0, 30, 1)
+    h = tanh(x @ W1 + b1)
+    return h @ W2 + b2
+}
+
+fn pinn_loss(params, data) {
+    x_bc = data[0]; u_bc = data[1]; x_coll = data[2]
+    u_pred_bc = mlp_eval(params, x_bc)
+    diff_bc = u_pred_bc - u_bc
+    bc_loss = (diff_bc * diff_bc).sum()
+
+    u_coll = mlp_eval(params, x_coll)
+    u_x = partial(u_coll, x_coll)           // first-order: y'
+    u_xx = partial(u_coll, x_coll, order=2) // second-order: y''
+    residual = u_x + u_coll                  // example: y' + y = 0
+    phys_loss = (residual * residual).mean()
+    return bc_loss + phys_loss
+}
+
+x_coll = linspace(0.0, 1.0, 20).reshape(-1, 1).with_grad()
+params_opt = fit(pinn_loss, random_vector(31) * 0.1, [x_bc, u_bc, x_coll],
+                 method="gd", lr=0.02, steps=2000)
+```
+
+This trains a network to satisfy `y' + y = 0` with `y(0) = 1` — pure physics, no solution data. The analytical answer `exp(-x)` is matched to ~1% accuracy in 2000 steps with a single 10-neuron hidden layer.
+
+Supporting infrastructure added in v1.10:
+
+- `_to_tensor` now tolerates `torch.stack` failures on mixed-shape tensor lists (PINN `data=[x_data, u_data, x_coll]` has different shapes per element); returns the list unchanged in that case.
+- `fit()` zeroes `.grad` on every `requires_grad` tensor in `data` between training steps, preventing memory accumulation on collocation tensors over long PINN runs.
+
+What v1.10 **deliberately does not provide** (Stage 3 of the PINN roadmap, future releases):
+
+- No `.with_physics_loss(pde_fn)` modifier. PINN loss balancing (NTK-based, self-adaptive) is an active research field; a naive built-in would over-promise.
+- No automatic collocation sampling. Users choose `linspace`, `random_vector`, or Latin-hypercube; this is problem-specific.
+- No spectral-bias-mitigation (SIREN, Fourier features). Important for high-frequency PDEs; can be implemented manually in `mlp_eval`.
+
+Examples: `examples/dedekind/pinn_ode_demo.ddk` (`y' + y = 0`), `examples/dedekind/pinn_oscillator_demo.ddk` (`u'' + u = 0` on [0, π/2], demonstrates `order=2`). Test: `tests/dedekind/partial_test.ddk`.
 
 ---
 

@@ -746,7 +746,12 @@ def _to_tensor(data):
             except (TypeError, ValueError, RuntimeError):
                 return data
         if converted and len(converted) == len(data):
-            return torch.stack(converted)
+            try:
+                return torch.stack(converted)
+            except (TypeError, ValueError, RuntimeError):
+                # Tensoren mit unterschiedlichen Shapes: Liste unveraendert zurueck
+                # (relevant fuer PINN-fit-Calls mit gemischten Daten/Collocation-Tensoren).
+                return data
         return data
     try:
         return torch.as_tensor(data, dtype=torch.float32)
@@ -3799,10 +3804,22 @@ def fit(loss_fn, params_init, data, method="gd", lr=0.01, steps=500):
         return hmc(log_prior, log_likelihood, data_t, params.detach(), steps, step_size=lr, num_leapfrog=10)
 
     # Gradient Descent
+    # Sammele alle requires_grad-Tensoren aus `data` (z. B. PINN-Collocation-Punkte),
+    # damit deren .grad pro Schritt zurueckgesetzt wird (sonst Speicher-Leak).
+    aux_grad_tensors = []
+    if isinstance(data_t, (list, tuple)):
+        for item in data_t:
+            if isinstance(item, torch.Tensor) and item.requires_grad:
+                aux_grad_tensors.append(item)
+    elif isinstance(data_t, torch.Tensor) and data_t.requires_grad and data_t is not params:
+        aux_grad_tensors.append(data_t)
     for _ in range(steps):
         loss = loss_fn(params, data_t)
         if params.grad is not None:
             params.grad.zero_()
+        for aux in aux_grad_tensors:
+            if aux.grad is not None:
+                aux.grad.zero_()
         loss.backward()
         with torch.no_grad():
             params.sub_(lr * params.grad)
@@ -5687,6 +5704,50 @@ def _check_return_shape(value, expected_dims, fn_name, shape_env):
                     f"hier {got}."
                 )
     return value
+
+
+# ----- PINN primitive (v1.10): Ableitung von Netz-Output nach Netz-Input -------
+def partial(u, x, order=1):
+    """Berechnet partielle Ableitung(en) von `u` nach `x` via Autograd.
+
+    Anders als `grad(fn, x)` (das eine Funktion an einer Stelle differenziert)
+    arbeitet `partial` mit BEREITS BERECHNETEN Tensoren: `u = net(x)` wurde
+    ausgewertet, `x` traegt `requires_grad=True`. Liefert ∂u/∂x.
+
+    - `u`: torch.Tensor (Skalar oder beliebige Form); wird ggf. summiert fuer
+       skalare Backward-Aggregation, sodass der Gradient elementweise ∂u_i/∂x bleibt.
+    - `x`: Leaf-Tensor mit requires_grad=True (typisch via `.with_grad()`).
+    - `order`: Ableitungsordnung (1, 2, ...). Rekursive Anwendung.
+
+    Beispiel — Heat-Equation Residuum:
+        x = linspace(0, 1, 100).reshape(-1, 1).with_grad()
+        u = net(x)
+        u_x  = partial(u, x)
+        u_xx = partial(u, x, order=2)
+        residual = u_t - alpha * u_xx
+    """
+    if not isinstance(u, torch.Tensor):
+        raise TypeError(f"partial: u muss torch.Tensor sein, bekam {type(u).__name__}.")
+    if not isinstance(x, torch.Tensor):
+        raise TypeError(f"partial: x muss torch.Tensor sein, bekam {type(x).__name__}.")
+    if not x.requires_grad:
+        raise ValueError(
+            "partial: x.requires_grad ist False. Markiere den Eingabe-Tensor mit "
+            "`.with_grad()` (z. B. `x = linspace(0,1,N).reshape(-1,1).with_grad()`)."
+        )
+    cur = u
+    for _ in range(int(order)):
+        target = cur if cur.dim() == 0 else cur.sum()
+        grads = torch.autograd.grad(
+            target, x, create_graph=True, retain_graph=True, allow_unused=False
+        )[0]
+        if grads is None:
+            raise ValueError(
+                "partial: Ableitung ist None. `u` haengt vermutlich nicht von `x` ab "
+                "(z. B. Konstante uebergeben, oder Vorwaerts-Pass hat den Graph verloren)."
+            )
+        cur = grads
+    return cur
 
 
 # ----- Quantity stripping helpers (v1.9) ---------------------------------------

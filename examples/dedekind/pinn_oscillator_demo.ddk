@@ -1,0 +1,82 @@
+// pinn_oscillator_demo.ddk — PINN fuer harmonischen Oszillator (2. Ordnung).
+//
+// Problem: u''(x) + u(x) = 0  mit  u(0) = 1, u'(0) = 0.
+// Analytische Loesung: u(x) = cos(x).
+//
+// Demonstriert `partial(u, x, order=2)`: zweite Ableitung des Netz-Outputs nach
+// dem Netz-Input — der Schluessel, der Dedekind als Physics-Informed-NN-Framework
+// von reinem PyTorch abhebt.
+//
+// HINWEIS: PINNs konvergieren nur mit sorgfaeltig abgestimmten Hyperparametern.
+// Wir loesen hier bewusst nur das Intervall [0, pi/2] (eine Viertelperiode):
+// cos faellt monoton von 1 auf 0, gut darstellbar von einem kleinen MLP. Auf
+// [0, 2pi] braeuchte man ein deutlich groesseres Netz, Fourier-Features oder
+// adaptive Loss-Gewichtung (Forschungsthema — siehe Stage 3 der PINN-Roadmap).
+
+// MLP: x ∈ R → u ∈ R, 1 Hidden-Layer mit 20 Tanh-Neuronen.
+// Pack: W1(1,20)=20, b1=20, W2(20,1)=20, b2=1  →  61 Parameter
+fn mlp_eval(params, x) {
+    W1 = params.narrow(0, 0, 20).reshape(1, 20)
+    b1 = params.narrow(0, 20, 20)
+    W2 = params.narrow(0, 40, 20).reshape(20, 1)
+    b2 = params.narrow(0, 60, 1)
+    h = tanh(x @ W1 + b1)
+    return h @ W2 + b2
+}
+
+fn pinn_loss(params, data) {
+    x_bc = data[0]      // shape (1,1), x=0
+    u_bc = data[1]      // shape (1,1), u(0)=1
+    x_bc_d = data[2]    // shape (1,1), x=0 mit .with_grad() fuer u'(0)
+    x_coll = data[3]    // shape (N,1) mit .with_grad()
+
+    // 1) u(0) = 1
+    u_pred_bc = mlp_eval(params, x_bc)
+    diff_bc = u_pred_bc - u_bc
+    bc_loss = (diff_bc * diff_bc).sum()
+
+    // 2) u'(0) = 0
+    u_pred_bcd = mlp_eval(params, x_bc_d)
+    u_x_at0 = partial(u_pred_bcd, x_bc_d)
+    bcd_loss = (u_x_at0 * u_x_at0).sum()
+
+    // 3) ODE-Residuum: u'' + u = 0
+    u_coll = mlp_eval(params, x_coll)
+    u_xx = partial(u_coll, x_coll, order=2)
+    residual = u_xx + u_coll
+    phys_loss = (residual * residual).mean()
+
+    return 10.0 * bc_loss + 10.0 * bcd_loss + phys_loss
+}
+
+fn main() {
+    print("=== PINN: u'' + u = 0,  u(0)=1, u'(0)=0   (v1.10) ===")
+    seed(7)
+
+    // Randbedingungen
+    x_bc   = linspace(0.0, 0.0, 1).reshape(-1, 1)   // shape (1,1): nur x=0
+    u_bc   = linspace(1.0, 1.0, 1).reshape(-1, 1)   // shape (1,1): u=1
+    x_bc_d = linspace(0.0, 0.0, 1).reshape(-1, 1).with_grad()
+
+    // Collocation-Punkte im Intervall [0, pi/2]
+    x_coll = linspace(0.0, 1.5708, 40).reshape(-1, 1).with_grad()
+
+    // Training
+    params_init = random_vector(61) * 0.1
+    print("Training (5000 Schritte)...")
+    params_opt = fit(pinn_loss, params_init, [x_bc, u_bc, x_bc_d, x_coll],
+                     method="gd", lr=0.01, steps=5000)
+
+    // Vergleich an 5 Punkten in [0, pi/2]
+    x_test = linspace(0.0, 1.5708, 5).reshape(-1, 1)
+    u_pred = mlp_eval(params_opt, x_test)
+    print("")
+    print("Vergleich (PINN vs. analytisch cos(x)):")
+    print("  x=0      :  PINN=" + str(u_pred[0]) + "   exact=1.0")
+    print("  x=pi/8   :  PINN=" + str(u_pred[1]) + "   exact=" + str(cos(0.3927)))
+    print("  x=pi/4   :  PINN=" + str(u_pred[2]) + "   exact=" + str(cos(0.7854)))
+    print("  x=3pi/8  :  PINN=" + str(u_pred[3]) + "   exact=" + str(cos(1.1781)))
+    print("  x=pi/2   :  PINN=" + str(u_pred[4]) + "   exact=" + str(cos(1.5708)))
+}
+
+main()

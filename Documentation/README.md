@@ -15,7 +15,7 @@ This folder contains the **source** and **generated** documentation for the Dede
 | **Commercialization_Options.md** | Potenzielle Kommerzialisierungsoptionen (Beratung, Support, Lizenzen, SaaS, Förderung, Phasierung, Risiken) |
 | **IDE_Studio_Roadmap.md** | Dedekind in bestehenden IDEs (VS Code, Jupyter) + Dedekind Studio als kommerzielle Wissenschaftler-IDE (Einheiten, Plots, Postgres, LaTeX, lokale KI) |
 | **Build_Dedekind_Studio_Exe.md** | Anleitung: Dedekind Studio als Windows-.exe bauen (PyInstaller) |
-| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.9.0; Stärken, Lücken, Roadmap) |
+| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.10.0; Stärken, Lücken, Roadmap) |
 | **Dedekind_Language_Specification_v0.1.pdf** | Legacy PDF (v0.1); for current spec use the Markdown or generate v0.2 PDF below |
 | **Dedekind_Research_Papers_and_Architecture.pdf** | Legacy PDF; for current content use the Markdown or generate PDF below |
 
@@ -41,6 +41,10 @@ pandoc Dedekind_Research_and_Architecture.md -o Dedekind_Research_and_Architectu
 - **Online**: Paste the Markdown into a service that converts Markdown to PDF (e.g. markdown-to-pdf converters).
 - **Typora / other editors**: Open the `.md` file and export to PDF from the application.
 
+
+## What changed in v1.10.0 (documented here)
+
+- **Version 1.10.0**: **`partial(u, x, order=n)` — Physics-Informed Neural Networks (Stage 1 + 2 der PINN-Roadmap).** Neue Runtime-Built-in differenziert einen bereits berechneten Tensor (z. B. Netz-Output) nach einem Leaf-Tensor (z. B. Collocation-Punkten) via `torch.autograd.grad(u.sum(), x, create_graph=True, retain_graph=True)[0]`. Komplementaer zum existierenden `grad(fn, x)` (das eine *Funktion* differenziert). Higher-order (`order=2`, `order=3`, ...) durch rekursive Anwendung. Erforderlich: `x` muss `requires_grad=True` haben — typischerweise via `.with_grad()`-Modifier. Diese Primitive ist der eine Baustein, der Dedekind als PINN-Framework freischaltet: PDE-Residuen wie `u_t - alpha*u_xx`, `u_x + u`, `u_xx + omega^2*u` lassen sich nun direkt in der Loss-Funktion ausdruecken und ueber `fit()` mit Gradient-Descent optimieren. **`_to_tensor`-Bugfix:** Catch fuer `torch.stack(converted)` mit unterschiedlich geformten Tensoren — PINN-fit-Calls uebergeben in `data` typischerweise heterogene Daten/Collocation-Listen (`[x_data, u_data, x_coll_with_grad]`), die jetzt korrekt als Python-Liste durchgereicht werden statt eine RuntimeError zu werfen. **`fit()`-PINN-Hardening:** Pro Schritt werden die `.grad`-Akkumulatoren aller `requires_grad`-Tensoren in `data` (typisch: Collocation-Punkte) zurueckgesetzt, sonst leckt Speicher in langen Trainings. Zwei Beispiele: `pinn_ode_demo.ddk` (1. Ordnung y' + y = 0, lernt exp(-x) auf [0,1] mit ~1% Fehler in 2000 Schritten ohne Loesungs-Daten — nur ODE + Anfangswert), `pinn_oscillator_demo.ddk` (2. Ordnung u'' + u = 0 auf [0, pi/2], demonstriert `partial(..., order=2)`, ~1% Fehler in 5000 Schritten). Beide Demos transparent zu PINN-Limitationen: auf groesseren Intervallen oder hochfrequenten Loesungen scheitern naive Single-MLP-PINNs — Stage 3 der Roadmap (NTK-Loss-Balancierung, Fourier-Features, adaptives Sampling) liefert v1.11+. Test: `partial_test.ddk` (17 Asserts gegen analytische Ableitungen von x^2, sin, x^3-4x, mehrdim. Eingang); 36/36 Tests gruen, 91/91 Beispiele kompilieren.
 
 ## What changed in v1.9.0 (documented here)
 

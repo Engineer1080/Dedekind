@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-1.9.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-1.10.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -28,6 +28,16 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
+
+### What's New in v1.10.0
+
+- **`partial(u, x, order=n)` — Physics-Informed Neural Networks (PINNs):** Neue Built-in fuer die Ableitung von Netz-Outputs nach Netz-Inputs via Autograd. Anders als das bestehende `grad(fn, x)` (das eine *Funktion* an einer Stelle differenziert) arbeitet `partial` mit bereits berechneten Tensoren: `u = net(x)` wird ausgewertet, dann `du_dx = partial(u, x)`. Damit lassen sich PDE-Residuen (u_t - α·u_xx, u_x + u, ...) direkt in der Loss-Funktion ausdruecken. Funktioniert mit `create_graph=True` und `retain_graph=True`, sodass `fit()` ueber das Residuum optimieren kann — das ist genau der Mechanismus, der Forschern in PyTorch sonst wochenlange Custom-Loop-Implementierung kostet.
+- **`fit()`-Patch fuer PINNs:** `_to_tensor` faengt nun gemischte Tensor-Listen ab (PINN-Daten + Collocation-Tensoren mit unterschiedlichen Shapes); `fit()` zeroed pro Schritt die `.grad`-Akkumulatoren aller `requires_grad`-Tensoren in `data` (verhindert Speicher-Leak bei langen MCMC/PINN-Trainings).
+- **Zwei PINN-Beispiele:**
+  - `pinn_ode_demo.ddk` — 1. Ordnung ODE `y' + y = 0, y(0)=1`. PINN lernt exp(-x) in 2000 Schritten mit ~1% Fehler ohne je einen Loesungswert zu sehen.
+  - `pinn_oscillator_demo.ddk` — 2. Ordnung ODE `u'' + u = 0, u(0)=1, u'(0)=0` auf [0, π/2]. Demonstriert `partial(u, x, order=2)`. Fehler < 1% in 5000 Schritten.
+- **Beide Beispiele transparent zu Hyperparameter-Limits:** Auf groesseren Intervallen oder mit groesseren Frequenzen scheitern naive PINNs — das ist Stage 3 der Roadmap (NTK-basierte Loss-Balancierung, adaptives Sampling, Fourier-Features), nicht v1.10. Wir liefern bewusst kein „magisches" `.with_physics_loss(pde)`, das bei Forschern Erwartungen weckt, die wir nicht halten koennen.
+- Test: `partial_test.ddk` (17 Asserts: x², sin, kubisch, 2-D-Eingang); 36/36 Tests gruen, 91/91 Beispiele kompilieren.
 
 ### What's New in v1.9.0
 
