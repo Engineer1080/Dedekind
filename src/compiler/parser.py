@@ -82,6 +82,11 @@ class Parser:
             return self.parse_function_def()
         elif token.type == 'USE':
             return self.parse_use_stmt()
+        elif token.type == 'ID' and token.value == 'unit' \
+                and self.peek(1) and self.peek(1).type == 'ID' \
+                and self.peek(2) and self.peek(2).type == 'ASSIGN':
+            # Soft-Keyword `unit`: nur als Statement-Anfang `unit NAME = ...` interpretiert.
+            return self.parse_unit_def()
         elif token.type == 'RETURN':
             start_line = token.line
             self.consume('RETURN')
@@ -177,6 +182,42 @@ class Parser:
         self.consume('USE')
         name_tok = self.consume('ID')
         node = UseStmt(name_tok.value)
+        node.line = start_line
+        return node
+
+    def parse_unit_def(self):
+        """`unit NAME = NUMBER[base_unit]` — registriert eine neue Einheit (Längen-, Massen-, Drucksymbol …)."""
+        start_line = self.peek().line
+        self.consume('ID')  # 'unit' (soft keyword)
+        name_tok = self.consume('ID')
+        self.consume('ASSIGN')
+        # Vorzeichen optional
+        sign = 1.0
+        if self.peek() and self.peek().type == 'MINUS':
+            self.consume('MINUS')
+            sign = -1.0
+        elif self.peek() and self.peek().type == 'PLUS':
+            self.consume('PLUS')
+        num_tok = self.consume('NUMBER')
+        try:
+            factor = sign * float(num_tok.value)
+        except ValueError:
+            raise CompileError(
+                f"Ungültige Zahl für `unit {name_tok.value}`: {num_tok.value!r}.",
+                line=start_line,
+            )
+        if not self.peek() or self.peek().type != 'LBRACKET':
+            raise CompileError(
+                f"`unit {name_tok.value}` braucht eine Basiseinheit in Klammern, z. B. `unit Foot = 0.3048[m]`.",
+                line=start_line,
+            )
+        base_unit = self._parse_unit_bracket()
+        if not base_unit:
+            raise CompileError(
+                f"`unit {name_tok.value}`: Basiseinheit darf nicht leer sein.",
+                line=start_line,
+            )
+        node = UnitDef(name=name_tok.value, factor=factor, base_unit=base_unit)
         node.line = start_line
         return node
 

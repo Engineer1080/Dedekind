@@ -1,0 +1,44 @@
+// Tests für modules/chemistry.ddk
+use chemistry
+
+fn approx(a, b, tol) {
+    d = a - b
+    if d < 0 { d = -d }
+    return d < tol
+}
+
+fn main() {
+    // pH aus [H+] = 1e-3 ⇒ pH = 3
+    assert(approx(pH_from_concentration(1e-3), 3.0, 1e-6), "pH")
+
+    // Henderson-Hasselbalch: bei gleicher Konz. ⇒ pH = pKa
+    assert(approx(henderson_hasselbalch(4.76, 0.1, 0.1), 4.76, 1e-6), "HH bei [A-]=[HA]")
+
+    // Verdünnung c1*v1 = c2*v2
+    v2 = dilution_volume(1.0, 0.025, 0.1)
+    assert(approx(v2, 0.25, 1e-9), "Verduennung")
+
+    // Molarität
+    assert(approx(molarity(0.5, 2.0), 0.25, 1e-9), "Molaritaet")
+
+    // Boyle: p1*v1=p2*v2 -> halber Druck = doppeltes Volumen
+    v_new = boyle_volume(2.0, 0.5, 1.0)
+    assert(approx(v_new, 1.0, 1e-9), "Boyle")
+
+    // Charles: V/T konstant
+    v_t = charles_volume(1.0, 300.0, 600.0)
+    assert(approx(v_t, 2.0, 1e-9), "Charles")
+
+    // half-life 1. Ordnung: t = ln(2)/k
+    t = half_life_first_order(0.5)
+    assert(approx(t, 1.3862944, 1e-6), "half-life 1. Ordnung")
+
+    // ka <-> pka invers
+    Ka = ka_from_pka(4.76)
+    pKa = pka_from_ka(Ka)
+    assert(approx(pKa, 4.76, 1e-6), "ka<->pka invers")
+
+    print("stdlib_chemistry_test: alle 8 Asserts bestanden")
+}
+
+main()

@@ -1,0 +1,107 @@
+// modules/ml.ddk — Dedekind-Standardbibliothek: ML-Convenience.
+// Aktivierung: `use ml`
+//
+// Ergänzt Sequential/Dense/compile_model um häufige Aktivierungen,
+// Loss-Funktionen und Metriken — keine Black-Box-Modelle.
+
+// --- Aktivierungen -----------------------------------------------------------
+
+fn leaky_relu(x, alpha) {
+    if x >= 0 { return x }
+    return alpha * x
+}
+
+fn elu(x, alpha) {
+    if x >= 0 { return x }
+    return alpha * (exp(x) - 1.0)
+}
+
+fn swish(x) {
+    return x / (1.0 + exp(-x))
+}
+
+fn gelu_approx(x) {
+    // GELU-Approximation (Tanh-Form)
+    return 0.5 * x * (1.0 + tanh(0.7978845608 * (x + 0.044715 * x * x * x)))
+}
+
+// --- Loss-Funktionen ---------------------------------------------------------
+
+fn mse_loss(y_true, y_pred) {
+    n = len(y_true)
+    s = 0.0
+    for i in arange(n) {
+        d = y_true[i] - y_pred[i]
+        s = s + d * d
+    }
+    return s / n
+}
+
+fn mae_loss(y_true, y_pred) {
+    n = len(y_true)
+    s = 0.0
+    for i in arange(n) {
+        d = y_true[i] - y_pred[i]
+        if d < 0 { d = -d }
+        s = s + d
+    }
+    return s / n
+}
+
+fn binary_crossentropy(y_true, y_pred, eps) {
+    // -[y*log(p) + (1-y)*log(1-p)], mit Clipping
+    n = len(y_true)
+    s = 0.0
+    for i in arange(n) {
+        p = y_pred[i]
+        if p < eps { p = eps }
+        if p > 1.0 - eps { p = 1.0 - eps }
+        y = y_true[i]
+        s = s - (y * log(p) + (1.0 - y) * log(1.0 - p))
+    }
+    return s / n
+}
+
+// --- Metriken (Klassifikation) -----------------------------------------------
+
+fn accuracy(y_true, y_pred) {
+    n = len(y_true)
+    correct = 0
+    for i in arange(n) {
+        if y_true[i] == y_pred[i] { correct = correct + 1 }
+    }
+    return correct / n
+}
+
+fn precision_binary(y_true, y_pred) {
+    n = len(y_true)
+    tp = 0
+    fp = 0
+    for i in arange(n) {
+        if y_pred[i] == 1 {
+            if y_true[i] == 1 { tp = tp + 1 } else { fp = fp + 1 }
+        }
+    }
+    if tp + fp == 0 { return 0.0 }
+    return tp / (tp + fp)
+}
+
+fn recall_binary(y_true, y_pred) {
+    n = len(y_true)
+    tp = 0
+    fn_count = 0
+    for i in arange(n) {
+        if y_true[i] == 1 {
+            if y_pred[i] == 1 { tp = tp + 1 } else { fn_count = fn_count + 1 }
+        }
+    }
+    if tp + fn_count == 0 { return 0.0 }
+    return tp / (tp + fn_count)
+}
+
+fn f1_score(y_true, y_pred) {
+    p = precision_binary(y_true, y_pred)
+    r = recall_binary(y_true, y_pred)
+    if p + r == 0 { return 0.0 }
+    return 2.0 * p * r / (p + r)
+}

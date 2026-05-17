@@ -1,0 +1,109 @@
+// modules/math.ddk — Dedekind-Standardbibliothek: Mathematik-Convenience.
+// Aktivierung: `use math`
+//
+// Ergänzt die eingebauten Funktionen (sin, cos, exp, integrate, ...) um
+// häufig wiederkehrende Zahlentheorie- und Folgen-Helfer.
+
+// --- Konstanten ohne Einheit -------------------------------------------------
+
+PHI = (1.0 + sqrt(5.0)) / 2.0    // Goldener Schnitt
+TAU = 2.0 * pi                   // 1 Umlauf
+
+// --- Folgen ------------------------------------------------------------------
+
+fn fibonacci(n) {
+    // n-te Fibonacci-Zahl (n >= 0)
+    if n < 2 { return n }
+    a = 0
+    b = 1
+    i = 2
+    while i <= n {
+        c = a + b
+        a = b
+        b = c
+        i = i + 1
+    }
+    return b
+}
+
+fn harmonic_sum(n) {
+    // H_n = 1 + 1/2 + ... + 1/n
+    s = 0.0
+    i = 1
+    while i <= n {
+        s = s + 1.0 / i
+        i = i + 1
+    }
+    return s
+}
+
+fn geometric_sum(a, r, n) {
+    // a + a*r + a*r^2 + ... + a*r^(n-1)
+    if r == 1.0 { return a * n }
+    return a * (1.0 - pow(r, n)) / (1.0 - r)
+}
+
+// --- Zahlentheorie-Quickwins -------------------------------------------------
+
+fn lcm(a, b) {
+    return a * b / gcd(a, b)
+}
+
+fn is_perfect_square(n) {
+    r = floor(sqrt(n))
+    return r * r == n
+}
+
+fn digital_root(n) {
+    // 1+2+...+Stellen, wiederholt bis einstellig (für n >= 0)
+    x = n
+    while x >= 10 {
+        s = 0
+        while x > 0 {
+            digit = mod(x, 10)
+            s = s + digit
+            x = (x - digit) / 10
+        }
+        x = s
+    }
+    return x
+}
+
+// --- Geometrie & Trigonometrie ----------------------------------------------
+
+fn circle_area(r) { return pi * r * r }
+fn circle_circumference(r) { return 2.0 * pi * r }
+fn sphere_volume(r) { return (4.0 / 3.0) * pi * r * r * r }
+fn sphere_surface(r) { return 4.0 * pi * r * r }
+fn cylinder_volume(r, h) { return pi * r * r * h }
+fn cone_volume(r, h) { return pi * r * r * h / 3.0 }
+
+fn hypotenuse(a, b) {
+    return sqrt(a * a + b * b)
+}
+
+fn law_of_cosines_c(a, b, gamma_rad) {
+    // c^2 = a^2 + b^2 - 2ab*cos(gamma)
+    return sqrt(a * a + b * b - 2.0 * a * b * cos(gamma_rad))
+}
+
+// --- Numerische Hilfen -------------------------------------------------------
+
+fn lerp(a, b, t) {
+    // lineare Interpolation
+    return a + (b - a) * t
+}
+
+fn clamp_scalar(x, lo, hi) {
+    if x < lo { return lo }
+    if x > hi { return hi }
+    return x
+}
+
+fn sigmoid(x) {
+    return 1.0 / (1.0 + exp(-x))
+}
+
+fn softplus(x) {
+    return log(1.0 + exp(x))
+}

@@ -6,10 +6,10 @@ from typing import Optional, Dict, Any
 from .ast_nodes import (
     Node, Program, BinaryOp, Literal, Quantity, Identifier,
     Call, MemberAccess, ReturnStmt, Assignment, ItemAssignment, FunctionDef,
-    IfStmt, WhileStmt, ForStmt, VectorLiteral, Subscript,
+    IfStmt, WhileStmt, ForStmt, VectorLiteral, Subscript, UnitDef,
     CompileError,
 )
-from .ml_runtime import ADDITIVE_DIMENSION_UNIT_SETS
+from .ml_runtime import ADDITIVE_DIMENSION_UNIT_SETS, _register_user_unit
 
 # Bekannte Konstanten und ihre Einheiten (wie in ml_runtime)
 KNOWN_UNITS: Dict[str, str] = {
@@ -196,6 +196,8 @@ def _check_expr(node: Node, filepath: Optional[str]) -> None:
 def _check_stmt(stmt: Node, filepath: Optional[str]) -> None:
     if stmt is None:
         return
+    if isinstance(stmt, UnitDef):
+        return  # bereits in check_units() vorab registriert
     if isinstance(stmt, (ReturnStmt, Assignment, ItemAssignment)):
         _check_expr(getattr(stmt, "value", None), filepath)
         return
@@ -211,5 +213,16 @@ def check_units(ast: Program, filepath: Optional[str] = None) -> None:
     zwei Größen mit unterschiedlichen Einheiten verwendet werden (soweit zur
     Compile-Zeit bekannt).
     """
+    # Pre-Pass: alle UnitDef-Statements registrieren, damit Checker neue Units kennt
+    for stmt in ast.statements:
+        if isinstance(stmt, UnitDef):
+            try:
+                _register_user_unit(stmt.name, stmt.factor, stmt.base_unit)
+            except Exception as e:
+                raise CompileError(
+                    f"Einheit registrieren fehlgeschlagen: {e}",
+                    line=getattr(stmt, "line", None),
+                    filepath=filepath,
+                )
     for stmt in ast.statements:
         _check_stmt(stmt, filepath)

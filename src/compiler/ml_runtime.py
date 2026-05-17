@@ -42,8 +42,50 @@ DIMENSION_TO_BASE = {
     # Winkel (SI-Ergänzung: rad; deg = pi/180 rad)
     "angle": ("rad", {"rad": 1.0, "deg": 0.017453292519943295}),  # 1 deg = pi/180 rad
 }
-# Für Units-Checker: Liste der Einheitenmengen pro Dimension
+# Für Units-Checker: Liste der Einheitenmengen pro Dimension (in-place gepflegt, damit
+# user-definierte Einheiten via _register_user_unit() vom Checker erkannt werden).
 ADDITIVE_DIMENSION_UNIT_SETS = [frozenset(tab.keys()) for _b, tab in DIMENSION_TO_BASE.values()]
+
+
+def _rebuild_additive_unit_sets():
+    """Aktualisiert ADDITIVE_DIMENSION_UNIT_SETS in-place nach Änderungen an DIMENSION_TO_BASE."""
+    ADDITIVE_DIMENSION_UNIT_SETS.clear()
+    for _b, tab in DIMENSION_TO_BASE.values():
+        ADDITIVE_DIMENSION_UNIT_SETS.append(frozenset(tab.keys()))
+
+
+def _register_user_unit(name, factor, base_unit):
+    """Registriert eine benutzerdefinierte Einheit: 1 NAME = factor * base_unit.
+
+    Beispiele:
+        _register_user_unit("Foot", 0.3048, "m")     # 1 Foot = 0.3048 m  (length)
+        _register_user_unit("Mile", 1609.34, "m")    # 1 Mile = 1609.34 m  (length)
+        _register_user_unit("Darcy", 9.869233e-13, "m^2")  # permeability
+        _register_user_unit("MilliFoot", 0.001, "Foot")    # chaining wird aufgelöst
+
+    base_unit muss bereits in irgendeiner Dimensionstabelle vorkommen (Basis oder Alias).
+    """
+    name = str(name).strip()
+    base_unit = str(base_unit).strip()
+    factor = float(factor)
+    if not name:
+        raise ValueError("unit-Name darf nicht leer sein.")
+    # Dimension der base_unit suchen und Kettenauflösung durchführen
+    target_dim = None
+    base_factor = 1.0
+    for dim, (_b, tab) in DIMENSION_TO_BASE.items():
+        if base_unit in tab:
+            target_dim = dim
+            base_factor = tab[base_unit]
+            break
+    if target_dim is None:
+        raise ValueError(
+            f"`unit {name} = ...[{base_unit}]`: Basiseinheit '{base_unit}' ist keiner bekannten Dimension "
+            f"zugeordnet (Länge, Masse, Zeit, Druck, Energie, ...). Bitte alias zu einer bestehenden Einheit."
+        )
+    DIMENSION_TO_BASE[target_dim][1][name] = factor * base_factor
+    _rebuild_additive_unit_sets()
+    return name
 
 
 def _get_dimension(unit):
@@ -192,6 +234,59 @@ class Quantity:
             return str(self.value)
         display_unit = _unit_simplify(self.unit)
         return f"{self.value}[{display_unit}]"
+
+    def _cmp_value(self, other):
+        """Liefert (self_val, other_val) für Vergleich. Konvertiert Einheiten, wenn möglich."""
+        if isinstance(other, Quantity):
+            dim_s = _get_dimension(self.unit)
+            dim_o = _get_dimension(other.unit)
+            if dim_s is not None and dim_s == dim_o:
+                return _convert_to_base(self.value, self.unit, dim_s), \
+                       _convert_to_base(other.value, other.unit, dim_o)
+            if _normalize_unit_for_compare(self.unit) == _normalize_unit_for_compare(other.unit):
+                return self.value, other.value
+            raise ValueError(
+                f"Vergleich nicht möglich: [{self.unit}] vs [{other.unit}] (unterschiedliche Dimension)."
+            )
+        if isinstance(other, (int, float)):
+            return self.value, float(other)
+        return self.value, other
+
+    def __lt__(self, other):
+        a, b = self._cmp_value(other)
+        return a < b
+
+    def __le__(self, other):
+        a, b = self._cmp_value(other)
+        return a <= b
+
+    def __gt__(self, other):
+        a, b = self._cmp_value(other)
+        return a > b
+
+    def __ge__(self, other):
+        a, b = self._cmp_value(other)
+        return a >= b
+
+    def __eq__(self, other):
+        if isinstance(other, Quantity):
+            try:
+                a, b = self._cmp_value(other)
+                return a == b
+            except ValueError:
+                return False
+        if isinstance(other, (int, float)):
+            return self.value == float(other)
+        return NotImplemented
+
+    def __ne__(self, other):
+        eq = self.__eq__(other)
+        if eq is NotImplemented:
+            return NotImplemented
+        return not eq
+
+    def __hash__(self):
+        return hash((self.value, _normalize_unit_for_compare(self.unit)))
 
 def _unit_mul(u1, u2):
     if not u1: return u2

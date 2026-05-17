@@ -43,6 +43,15 @@ class UseStmt(Node):
     """Modul-/Import-Anweisung: `use mathlib` lädt mathlib.ddk in den aktuellen Kompilier-Pass."""
     module: str
 
+
+@dataclass
+class UnitDef(Node):
+    """Benutzerdefinierte Einheit: `unit Foot = 0.3048[m]` registriert Foot als Längeneinheit
+    mit Umrechnungsfaktor 0.3048 zur Basis. base_unit muss bereits einer bekannten Dimension angehören."""
+    name: str
+    factor: float
+    base_unit: str
+
 @dataclass
 class ReturnStmt(Node):
     value: Node

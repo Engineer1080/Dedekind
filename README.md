@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-1.6.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-1.7.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -28,6 +28,19 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
+
+### What's New in v1.7.0
+
+- **Standardbibliothek aus echten Modulen:** Sechs kuratierte `.ddk`-Module unter `modules/` ergänzen die globalen Built-ins um Convenience-Funktionen. **Wichtig:** Alle bestehenden Built-ins (`sin`, `ode_solve`, `michaelis_menten`, `pi`, `c`, ...) bleiben **weiterhin global** verfügbar – `use` ist rein additiv und macht weder Imports verpflichtend noch verschwindet etwas hinter Namespaces.
+  - `use physics` — `kinetic_energy`, `pendulum_period`, `escape_velocity`, `orbital_period`, `relativistic_gamma`, `coulomb_force`, `ideal_gas_pressure`, `rms_speed`, `blackbody_radiance`, `doppler_classical`, … (+ dimensionslose Numerik-Konstanten `C_NUM`, `G_NUM`, `K_B_NUM`, `R_GAS_NUM`, `SIGMA_SB_NUM`)
+  - `use stats` — `z_score`, `cohens_d`, `pooled_std`, `hedges_g`, `glass_delta`, `r_squared`, `mse`/`rmse`/`mae`, `standard_error_mean`, `ci_normal_mean`, `ci_proportion`, `coefficient_of_variation`, `standardize`
+  - `use chemistry` — `pH_from_concentration`, `henderson_hasselbalch`, `ka_from_pka`, `dilution_volume`, `boyle_volume`, `charles_volume`, `combined_gas_law_v2`, `van_der_waals_pressure`, `nernst_potential`, `faraday_mass`, `half_life_first_order`/`half_life_second_order`
+  - `use biology` — `exponential_growth`, `doubling_time`, `gompertz_growth`, `von_bertalanffy`, `kleibers_law`, `allometric_scaling`, `bmr_harris_benedict`, `bmi`, `hardy_weinberg_freq`, `mutation_drift_balance`, `r_naught_sir`, `herd_immunity_threshold`
+  - `use math` — `PHI`, `TAU`, `fibonacci`, `harmonic_sum`, `geometric_sum`, `lcm`, `is_perfect_square`, `digital_root`, `circle_area`, `sphere_volume`, `hypotenuse`, `law_of_cosines_c`, `lerp`, `clamp_scalar`, `sigmoid`, `softplus`
+  - `use ml` — `leaky_relu`, `elu`, `swish`, `gelu_approx`, `mse_loss`, `mae_loss`, `binary_crossentropy`, `accuracy`, `precision_binary`, `recall_binary`, `f1_score`
+- **Benutzerdefinierte Einheiten:** `unit NAME = FAKTOR[basis]` registriert eine neue Einheit zur Compile- und Laufzeit. Beispiele: `unit Foot = 0.3048[m]`, `unit Mile = 1609.344[m]`, `unit eV = 1.602176634e-19[J]`, `unit kcal = 4184.0[J]`. Verkettung erlaubt (`unit MicroInch = 1e-6[Inch]`), wird transitiv aufgelöst. Built-in und User-Units mischen sich mit automatischer Umrechnung (`1[Mile] + 1500[m]` ergibt `1.93[Mile]`). `unit` ist ein **Soft-Keyword** – bestehender Code mit `q.unit`, `unit="V"`-Kwarg etc. bleibt unverändert gültig.
+- **Quantity-Vergleichsoperatoren:** `Quantity` unterstützt jetzt `<`, `<=`, `>`, `>=`, `==`, `!=` mit automatischer Einheiten-Konvertierung bei gleicher Dimension. `10[cm] < 1[m]` → `True`. Macht Quantity-Werte in `if`/`while`-Bedingungen direkt nutzbar.
+- Beispiele: `stdlib_modules_demo.ddk` (alle 6 Module), `user_defined_units.ddk` (Foot, Mile, AU, ly, Bohr, eV, kcal, uDarcy). Tests: `stdlib_physics_test.ddk`, `stdlib_stats_test.ddk`, `stdlib_chemistry_test.ddk`, `stdlib_biology_math_ml_test.ddk`, `user_defined_units_test.ddk` (31/31 grün; alle 84 Beispiele kompilieren).
 
 ### What's New in v1.6.0
 

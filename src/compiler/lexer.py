@@ -92,6 +92,8 @@ class Lexer:
             else:
                 keywords = {'fn', 'return', 'if', 'else', 'while', 'for', 'in', 'grad', 'einsum',
                            'and', 'or', 'not', 'xor', 'nand', 'nor', 'xnor', 'use'}
+                # 'unit' ist ein Soft-Keyword: nur am Statement-Anfang als UNIT erkannt,
+                # damit bestehender Code mit `q.unit`, `unit="V"` weiter funktioniert.
                 if kind == 'ID' and value in keywords:
                     kind = value.upper()
                 # RAWSTRING: Token-Wert = Inhalt ohne r" und "

@@ -1,0 +1,101 @@
+// modules/biology.ddk — Dedekind-Standardbibliothek: Biologie-Convenience.
+// Aktivierung: `use biology`
+//
+// Ergänzt die eingebauten Modelle (logistic, michaelis_menten, sir_model,
+// lotka_volterra, hill_equation, one_compartment_pk) um Wachstumsraten,
+// Allometrie und Genetik-Quickwins.
+
+// --- Wachstum ----------------------------------------------------------------
+
+fn exponential_growth(N0, r, t) {
+    // N(t) = N0 * exp(r*t)
+    return N0 * exp(r * t)
+}
+
+fn doubling_time(r) {
+    // t_d = ln(2) / r
+    return log(2.0) / r
+}
+
+fn growth_rate_from_doubling(t_double) {
+    return log(2.0) / t_double
+}
+
+fn gompertz_growth(N0, K, b, t) {
+    // N(t) = K * exp(ln(N0/K) * exp(-b*t))
+    return K * exp(log(N0 / K) * exp(-b * t))
+}
+
+fn von_bertalanffy(L_inf, L0, k, t) {
+    // L(t) = L_inf - (L_inf - L0) * exp(-k*t)
+    return L_inf - (L_inf - L0) * exp(-k * t)
+}
+
+// --- Populationsdynamik ------------------------------------------------------
+
+fn population_change_logistic(N, r, K) {
+    // dN/dt = r*N*(1 - N/K)
+    return r * N * (1.0 - N / K)
+}
+
+fn carrying_capacity(N1, N2, r, dt) {
+    // grobe Schätzung aus zwei aufeinanderfolgenden Messungen
+    growth = (N2 - N1) / dt
+    return N1 / (1.0 - growth / (r * N1))
+}
+
+// --- Allometrie & Physiologie ------------------------------------------------
+
+fn kleibers_law(mass_kg) {
+    // metabolische Rate (Watt) ≈ 3.4 * m^0.75
+    return 3.4 * mass_kg ^ 0.75
+}
+
+fn allometric_scaling(a, b, mass) {
+    // generelles Potenzgesetz y = a * m^b
+    return a * pow(mass, b)
+}
+
+fn bmr_harris_benedict(weight_kg, height_cm, age_years, is_male) {
+    // Grundumsatz (kcal/Tag) - vereinfachte Harris-Benedict
+    if is_male {
+        return 66.5 + 13.75 * weight_kg + 5.0 * height_cm - 6.75 * age_years
+    } else {
+        return 655.1 + 9.56 * weight_kg + 1.85 * height_cm - 4.68 * age_years
+    }
+}
+
+fn bmi(weight_kg, height_m) {
+    return weight_kg / (height_m * height_m)
+}
+
+// --- Genetik & Evolution -----------------------------------------------------
+
+fn hardy_weinberg_freq(p) {
+    // gibt [p^2, 2*p*q, q^2] zurück (AA, Aa, aa)
+    q = 1.0 - p
+    return [p * p, 2.0 * p * q, q * q]
+}
+
+fn fitness_selection_coefficient(w_a, w_b) {
+    // s = 1 - w_b/w_a
+    return 1.0 - w_b / w_a
+}
+
+fn mutation_drift_balance(mu, N) {
+    // erwartete Heterozygotie unter Mutation-Drift: H = 4*N*mu / (1 + 4*N*mu)
+    x = 4.0 * N * mu
+    return x / (1.0 + x)
+}
+
+// --- Epidemiologie -----------------------------------------------------------
+
+fn r_naught_sir(beta, gamma) {
+    // R_0 = beta / gamma
+    return beta / gamma
+}
+
+fn herd_immunity_threshold(R0) {
+    // p_c = 1 - 1/R0
+    return 1.0 - 1.0 / R0
+}

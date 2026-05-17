@@ -2,7 +2,7 @@
 
 **Language Specification v0.2**  
 Mario Michael Heinrich · github.com/Engineer1080  
-Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit), v0.9.6 (Math-Funktionen), v0.9.7 (Chemie/Biologie: mol, L, M, ppm), v0.9.8 (Convenience, Elemente, Datei-I/O, Netzwerk, JSON), v1.0.0 (Release), v1.0.1–v1.0.6 (Patch), v1.2.6 (Winkel rad/deg, deg_to_rad, rad_to_deg), v1.2.7 (Dirichlet-Verteilung, dirichlet_function), v1.2.8 (Dedekind-Schnitte, Dedekind-Ringe, Riemann-Zeta, Riemann-Summen), v1.2.9 (Betragsstriche, Rotationskörper, logische Operatoren), v1.3.0 (integrate_sym, Lagrange/Hamilton, Lotka-Volterra, chemisches Gleichgewicht), v1.3.1 (Medizin, Pharmakologie, Epidemiologie), v1.4.0 (Modul-System `use`, Seed/data_hash, DataFrame+CSV/Parquet/HDF5/NetCDF, Unit-aware Plots, `@units`-Signaturen mit `fn f(x: [m]) -> [J]`, Dict-Literale), v1.5.0 (benchmark/profile/time_block, jit (torch.compile), sde_solve (Euler-Maruyama, Milstein), least_squares, minimize_constrained, milp, FEM-Primitiven mesh_unit_square/fem_assemble_*/fem_poisson_2d, `arange` int64), v1.6.0 (solve_sym/simplify_sym/series, cg/gmres/bicgstab + jacobi_/ilu_preconditioner, export_notebook (HTML/MD), print_table (markdown/latex/csv/plain) mit UncertainQuantity-±)
+Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit), v0.9.6 (Math-Funktionen), v0.9.7 (Chemie/Biologie: mol, L, M, ppm), v0.9.8 (Convenience, Elemente, Datei-I/O, Netzwerk, JSON), v1.0.0 (Release), v1.0.1–v1.0.6 (Patch), v1.2.6 (Winkel rad/deg, deg_to_rad, rad_to_deg), v1.2.7 (Dirichlet-Verteilung, dirichlet_function), v1.2.8 (Dedekind-Schnitte, Dedekind-Ringe, Riemann-Zeta, Riemann-Summen), v1.2.9 (Betragsstriche, Rotationskörper, logische Operatoren), v1.3.0 (integrate_sym, Lagrange/Hamilton, Lotka-Volterra, chemisches Gleichgewicht), v1.3.1 (Medizin, Pharmakologie, Epidemiologie), v1.4.0 (Modul-System `use`, Seed/data_hash, DataFrame+CSV/Parquet/HDF5/NetCDF, Unit-aware Plots, `@units`-Signaturen mit `fn f(x: [m]) -> [J]`, Dict-Literale), v1.5.0 (benchmark/profile/time_block, jit (torch.compile), sde_solve (Euler-Maruyama, Milstein), least_squares, minimize_constrained, milp, FEM-Primitiven mesh_unit_square/fem_assemble_*/fem_poisson_2d, `arange` int64), v1.6.0 (solve_sym/simplify_sym/series, cg/gmres/bicgstab + jacobi_/ilu_preconditioner, export_notebook (HTML/MD), print_table (markdown/latex/csv/plain) mit UncertainQuantity-±), v1.7.0 (Standardbibliothek-Module physics/stats/chemistry/biology/math/ml via `use`, benutzerdefinierte Einheiten `unit NAME = FAKTOR[basis]` mit Verkettung & Compile-Zeit-Registrierung, Quantity-Vergleichsoperatoren `<` `<=` `>` `>=` `==` `!=` mit Auto-Konvertierung)
 
 ---
 
@@ -292,6 +292,40 @@ Examples: \(\int_0^1 x^2\,dx = 1/3\), \(\int_0^\pi \sin(x)\,dx = 2\); see `examp
 
 - **`fit(loss_fn, params_init, data, method="gd"|"mcmc", lr=0.01, steps=500)`**: Minimizes `loss_fn(params, data)` with respect to `params`. `params_init` is the initial parameter tensor (or list); `data` is passed to `loss_fn`. With `method="gd"` (default), gradient descent is used (in-place updates); with `method="mcmc"`, Metropolis-Hastings is used (returns posterior samples). Returns the optimal parameters (tensor) for GD, or samples tensor for MCMC.
 - Example: linear regression \(y = a\,x + b\); see `examples/dedekind/curve_fitting.ddk`.
+
+### 15.12 Standard Library Modules and User-Defined Units (v1.7)
+
+**Standard library modules** live in `modules/` as plain `.ddk` files and are loaded with `use NAME`. Built-ins (`sin`, `pi`, `ode_solve`, `michaelis_menten`, `c`, `R_gas`, …) remain globally available without any import; modules are strictly additive.
+
+- **`use physics`** — `kinetic_energy`, `momentum`, `pendulum_period`, `spring_period`, `newton_gravity`, `escape_velocity`, `orbital_period`, `relativistic_gamma`/`relativistic_energy`, `coulomb_force`, `capacitor_energy`, `ohms_law_voltage`, `ideal_gas_pressure`/`ideal_gas_volume`, `rms_speed`, `blackbody_radiance`, `wave_speed`, `doppler_classical`, plus dimensionless numeric constants `C_NUM`, `G_NUM`, `K_B_NUM`, `HBAR_NUM`, `K_E_NUM`, `R_GAS_NUM`, `SIGMA_SB_NUM`.
+- **`use stats`** — `z_score`, `cohens_d`, `pooled_std`, `hedges_g`, `glass_delta`, `standard_error_mean`, `ci_normal_mean`, `ci_proportion`, `r_squared`, `mse`/`rmse`/`mae`, `coefficient_of_variation`, `standardize`, `relative_error`.
+- **`use chemistry`** — `pH_from_concentration`, `pOH_from_concentration`, `henderson_hasselbalch`, `ka_from_pka`/`pka_from_ka`, `dilution_volume`, `molarity`, `molality`, `mass_fraction`, `boyle_volume`, `charles_volume`, `gay_lussac_pressure`, `combined_gas_law_v2`, `van_der_waals_pressure`, `nernst_potential`/`nernst_potential_25C`, `faraday_mass`, `half_life_first_order`/`half_life_second_order`; dimensionless `R_GAS_NUM`, `F_FARADAY_NUM`.
+- **`use biology`** — `exponential_growth`, `doubling_time`, `growth_rate_from_doubling`, `gompertz_growth`, `von_bertalanffy`, `population_change_logistic`, `carrying_capacity`, `kleibers_law`, `allometric_scaling`, `bmr_harris_benedict`, `bmi`, `hardy_weinberg_freq`, `fitness_selection_coefficient`, `mutation_drift_balance`, `r_naught_sir`, `herd_immunity_threshold`.
+- **`use math`** — constants `PHI`, `TAU`; sequences `fibonacci`, `harmonic_sum`, `geometric_sum`; number theory `lcm`, `is_perfect_square`, `digital_root`; geometry `circle_area`, `circle_circumference`, `sphere_volume`, `sphere_surface`, `cylinder_volume`, `cone_volume`, `hypotenuse`, `law_of_cosines_c`; helpers `lerp`, `clamp_scalar`, `sigmoid`, `softplus`.
+- **`use ml`** — activations `leaky_relu`, `elu`, `swish`, `gelu_approx`; losses `mse_loss`, `mae_loss`, `binary_crossentropy`; metrics `accuracy`, `precision_binary`, `recall_binary`, `f1_score`.
+
+**User-defined units** are declared at top level with the `unit` keyword (a *soft* keyword — `q.unit` member access and `unit="V"` kwargs remain valid):
+
+```dedekind
+unit Foot      = 0.3048[m]
+unit Mile      = 1609.344[m]
+unit eV        = 1.602176634e-19[J]
+unit kcal      = 1000.0[calorie]      // chaining: calorie must be declared first
+unit Bohr      = 5.29177210903e-11[m]
+unit Darcy     = 9.869233e-13[m^2]    // permeability
+```
+
+Rules:
+
+- The base unit (right-hand side bracket) must already be known to Dedekind: either an SI/derived base unit or a previously-declared user unit.
+- The unit is registered in `DIMENSION_TO_BASE` under the dimension that owns the base unit. `Foot`, `Mile` join `length`; `eV`, `calorie`, `kcal` join `energy`; `Darcy` joins `permeability`.
+- Arithmetic with built-in units in the same dimension is automatic: `1[Mile] + 1500[m]` ⇒ `1.93[Mile]` (result follows left-hand unit).
+- Chains (`unit MicroInch = 1e-6[Inch]`) are resolved transitively, so the factor stored is `1e-6 * 0.0254` against the SI base `m`.
+- Pre-pass in `check_units()` registers all `UnitDef` statements before any expression check; `_rebuild_additive_unit_sets()` mutates the shared `ADDITIVE_DIMENSION_UNIT_SETS` list in-place so the compile-time checker and the runtime stay consistent.
+
+**Quantity comparison operators** (v1.7): `Quantity` supports `<`, `<=`, `>`, `>=`, `==`, `!=`, `__hash__`. Same-dimension operands (e.g. `cm` vs `m`) are converted to the dimension's base unit before comparison; mixed dimensions raise `ValueError`. Enables `if pressure < 1[atm] { ... }`.
+
+Examples: `examples/dedekind/stdlib_modules_demo.ddk`, `examples/dedekind/user_defined_units.ddk`. Tests: `tests/dedekind/user_defined_units_test.ddk`, `tests/dedekind/stdlib_{physics,stats,chemistry,biology_math_ml}_test.ddk`.
 
 ---
 
