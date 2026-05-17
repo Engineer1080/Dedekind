@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-1.10.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-1.11.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -28,6 +28,20 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
+
+### What's New in v1.11.0
+
+- **`graph_laplacian(adj, normalized=False)` — Spektrale Graph-Methoden:** Neue Built-in fuer die diskrete Laplace-Matrix eines Graphen. Akzeptiert dichte Matrizen, sparse `torch.Tensor` und verschachtelte Listen als Adjazenz; gibt sparse zurueck wenn die Eingabe sparse ist, sonst dicht.
+  - **Kombinatorisch** (Default): `L = D - A`  (Zeilensummen = 0, alle Eigenwerte >= 0).
+  - **Normalisiert symmetrisch**: `L_sym = I - D^{-1/2} A D^{-1/2}`  (Eigenwerte in `[0, 2]`).
+  - Direkt einsetzbar in `cg`, `gmres`, `bicgstab` und `eigh` aus den vorhandenen v1.6-Solvern — kein zusaetzliches Framework noetig.
+- **Demo `graph_spectral_demo.ddk`:** zwei klassische Anwendungen auf einem 8-Knoten-Zwei-Cluster-Graphen:
+  - **Heat-Diffusion** ueber implizites Euler-Verfahren: `cg(I + dt*L, u_prev)`. Zeigt deutlich asymmetrische Diffusion ueber die schmale Brueckenkante.
+  - **Spektrale Partitionierung** via Fiedler-Vektor (zweitkleinster Eigenwert): trennt die zwei Cluster sauber an der Bruecke (Vorzeichen-Aufteilung).
+- **Bewusst NICHT geliefert** (Stufe 2+3 der Graph-Roadmap):
+  - Kein `Graph[N, E]`-Shape-Typ. Kommt in v1.12 als Wrapper um `torch_geometric.data` mit Unit-Annotationen — das ist der echte USP gegenueber PyG.
+  - Kein natives Message-Passing. Anti-Muster: ein halb-fertiges PyG-Rebuild waere schlechter als `pyimport torch_geometric`. Wenn nativ, dann mit dem ganzen Forschungs-Budget (Stufe 3, mehrere Wochen).
+- Test: `graph_laplacian_test.ddk` (Pfad-Graph, Zwei-Cluster, normalisierte Variante, Fiedler-Partitionierung). 37/37 Tests gruen, 92/92 Beispiele kompilieren.
 
 ### What's New in v1.10.0
 

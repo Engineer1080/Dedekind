@@ -1,0 +1,77 @@
+// Tests fuer graph_laplacian(adj, normalized) — kombinatorisch und symmetrisch.
+
+fn approx(a, b, tol) {
+    d = a - b
+    if d < 0 { d = -d }
+    return d < tol
+}
+
+fn main() {
+    // --- Test 1: Pfad-Graph 0-1-2-3 ----------------------------------------
+    // deg = [1, 2, 2, 1]; L = D - A
+    A_path = [
+        [0.0, 1.0, 0.0, 0.0],
+        [1.0, 0.0, 1.0, 0.0],
+        [0.0, 1.0, 0.0, 1.0],
+        [0.0, 0.0, 1.0, 0.0]
+    ]
+    L = graph_laplacian(A_path)
+    assert(approx(L[0][0].item(),  1.0, 1e-9), "L[0][0] = deg(0) = 1")
+    assert(approx(L[1][1].item(),  2.0, 1e-9), "L[1][1] = deg(1) = 2")
+    assert(approx(L[2][2].item(),  2.0, 1e-9), "L[2][2] = deg(2) = 2")
+    assert(approx(L[3][3].item(),  1.0, 1e-9), "L[3][3] = deg(3) = 1")
+    assert(approx(L[0][1].item(), -1.0, 1e-9), "L[0][1] = -A[0][1] = -1")
+    assert(approx(L[1][2].item(), -1.0, 1e-9), "L[1][2] = -A[1][2] = -1")
+    assert(approx(L[0][2].item(),  0.0, 1e-9), "L[0][2] = 0 (kein Edge)")
+
+    // Zeilensummen = 0 (charakteristische Eigenschaft des Laplacians)
+    row0_sum = L[0][0] + L[0][1] + L[0][2] + L[0][3]
+    row1_sum = L[1][0] + L[1][1] + L[1][2] + L[1][3]
+    assert(approx(row0_sum.item(), 0.0, 1e-9), "Zeilensumme L[0] = 0")
+    assert(approx(row1_sum.item(), 0.0, 1e-9), "Zeilensumme L[1] = 0")
+
+    // L ist positiv semi-definit (alle Eigenwerte >= 0)
+    res_eig = eigh(L)
+    eigvals = res_eig[0]
+    assert(eigvals[0].item() > -1e-6, "L psd: smallest eigval >= 0")
+
+    // --- Test 2: Normalisierter Laplacian L_sym = I - D^{-1/2} A D^{-1/2} ---
+    L_sym = graph_laplacian(A_path, normalized=true)
+    assert(approx(L_sym[0][0].item(), 1.0, 1e-6), "L_sym Diagonale = 1")
+    assert(approx(L_sym[1][1].item(), 1.0, 1e-6), "L_sym Diagonale = 1")
+    // L_sym[0][1] = -1/sqrt(deg[0]*deg[1]) = -1/sqrt(1*2) = -0.7071
+    assert(approx(L_sym[0][1].item(), -0.7071067, 1e-5), "L_sym[0][1] = -1/sqrt(1*2)")
+    // L_sym[1][2] = -1/sqrt(2*2) = -0.5 (float32 precision ~3e-8)
+    assert(approx(L_sym[1][2].item(), -0.5, 1e-5), "L_sym[1][2] = -1/sqrt(2*2)")
+
+    // Normalisierter Laplacian hat Eigenwerte in [0, 2]
+    res_eig2 = eigh(L_sym)
+    eig2 = res_eig2[0]
+    assert(eig2[0].item() > -1e-6, "L_sym smallest eigval >= 0")
+    assert(eig2[3].item() < 2.0 + 1e-6, "L_sym largest eigval <= 2")
+
+    // --- Test 3: Zwei-Cluster-Graph — Fiedler-Vektor trennt die Cluster ----
+    // 6-Knoten: Cluster {0,1,2}-Triangle, Cluster {3,4,5}-Triangle, Bruecke 2-3
+    A2 = [
+        [0.0, 1.0, 1.0, 0.0, 0.0, 0.0],
+        [1.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+        [1.0, 1.0, 0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0, 1.0, 1.0],
+        [0.0, 0.0, 0.0, 1.0, 0.0, 1.0],
+        [0.0, 0.0, 0.0, 1.0, 1.0, 0.0]
+    ]
+    L2 = graph_laplacian(A2)
+    res2 = eigh(L2)
+    eigv2 = res2[1]   // Spalten
+    fied = eigv2.narrow(1, 1, 1).reshape(-1)
+    // Cluster 1 (Knoten 0,1,2) sollte einheitliches Vorzeichen haben, Cluster 2 das andere
+    assert(fied[0].item() * fied[1].item() > 0, "Cluster1 Knoten 0,1 gleiches Vz")
+    assert(fied[0].item() * fied[2].item() > 0, "Cluster1 Knoten 0,2 gleiches Vz")
+    assert(fied[3].item() * fied[4].item() > 0, "Cluster2 Knoten 3,4 gleiches Vz")
+    assert(fied[3].item() * fied[5].item() > 0, "Cluster2 Knoten 3,5 gleiches Vz")
+    assert(fied[0].item() * fied[3].item() < 0, "Cluster1 vs Cluster2 entgegengesetzte Vz")
+
+    print("graph_laplacian_test: alle Asserts bestanden")
+}
+
+main()

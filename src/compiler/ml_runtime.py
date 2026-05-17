@@ -5706,6 +5706,69 @@ def _check_return_shape(value, expected_dims, fn_name, shape_env):
     return value
 
 
+# ----- Graph-Laplacian (v1.11): Spektrale Graph-Methoden -----------------------
+def _graph_laplacian_sparse(adj_sp, normalized):
+    """Sparse-Implementierung. Liefert COO-Tensor."""
+    adj_sp = adj_sp.coalesce()
+    N = adj_sp.shape[0]
+    idx = adj_sp.indices()
+    vals = adj_sp.values().float()
+    deg = torch.zeros(N, dtype=vals.dtype, device=vals.device)
+    deg.scatter_add_(0, idx[0], vals)
+    if normalized:
+        d_inv_sqrt = torch.where(deg > 0, deg.clamp(min=1e-12).pow(-0.5),
+                                  torch.zeros_like(deg))
+        scaled_off = -vals * d_inv_sqrt[idx[0]] * d_inv_sqrt[idx[1]]
+        diag_idx = torch.arange(N, device=vals.device)
+        diag_v = (deg > 0).to(vals.dtype)
+        all_i = torch.cat([idx[0], diag_idx])
+        all_j = torch.cat([idx[1], diag_idx])
+        all_v = torch.cat([scaled_off, diag_v])
+    else:
+        diag_idx = torch.arange(N, device=vals.device)
+        all_i = torch.cat([diag_idx, idx[0]])
+        all_j = torch.cat([diag_idx, idx[1]])
+        all_v = torch.cat([deg, -vals])
+    return torch.sparse_coo_tensor(torch.stack([all_i, all_j]), all_v, (N, N)).coalesce()
+
+
+def graph_laplacian(adj, normalized=False):
+    """Berechnet den Graph-Laplacian fuer eine Adjazenzmatrix.
+
+    Kombinatorisch (Default):  L = D - A
+        L[i,i] =  deg(i)
+        L[i,j] = -A[i,j]   (i != j)
+
+    Normalisiert (symmetrisch): L_sym = I - D^{-1/2} A D^{-1/2}
+        Eigenwerte in [0, 2]; nuetzlich fuer spektrale Verfahren auf Graphen
+        unterschiedlicher Dichte.
+
+    Eingabe `adj`: dichte (N,N)-Matrix, sparse torch.Tensor, oder geschachtelte
+    Liste. Quadratisch, nicht-negative Eintraege; bei ungerichteten Graphen
+    symmetrisch. Ausgabe ist sparse, wenn `adj` sparse ist, sonst dicht — direkt
+    einsetzbar in `cg`, `gmres`, `bicgstab` (Heat-Diffusion, Eigenvektoren, etc.).
+    """
+    if hasattr(adj, "is_sparse") and adj.is_sparse:
+        return _graph_laplacian_sparse(adj, normalized)
+    adj_t = _to_tensor(adj)
+    if not isinstance(adj_t, torch.Tensor):
+        raise TypeError(f"graph_laplacian: Eingabe muss tensor-artig sein, erhielt {type(adj).__name__}.")
+    adj_t = adj_t.float()
+    if adj_t.dim() != 2 or adj_t.shape[0] != adj_t.shape[1]:
+        raise ValueError(
+            f"graph_laplacian: Adjazenz muss quadratisch (N,N) sein, "
+            f"erhalten {tuple(adj_t.shape)}."
+        )
+    deg = adj_t.sum(dim=1)
+    if normalized:
+        d_inv_sqrt = torch.where(deg > 0, deg.clamp(min=1e-12).pow(-0.5),
+                                  torch.zeros_like(deg))
+        scaled = d_inv_sqrt.unsqueeze(1) * adj_t * d_inv_sqrt.unsqueeze(0)
+        eye = torch.eye(adj_t.shape[0], dtype=adj_t.dtype, device=adj_t.device)
+        return eye - scaled
+    return torch.diag(deg) - adj_t
+
+
 # ----- PINN primitive (v1.10): Ableitung von Netz-Output nach Netz-Input -------
 def partial(u, x, order=1):
     """Berechnet partielle Ableitung(en) von `u` nach `x` via Autograd.

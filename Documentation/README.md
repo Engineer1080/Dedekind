@@ -15,7 +15,7 @@ This folder contains the **source** and **generated** documentation for the Dede
 | **Commercialization_Options.md** | Potenzielle Kommerzialisierungsoptionen (Beratung, Support, Lizenzen, SaaS, Förderung, Phasierung, Risiken) |
 | **IDE_Studio_Roadmap.md** | Dedekind in bestehenden IDEs (VS Code, Jupyter) + Dedekind Studio als kommerzielle Wissenschaftler-IDE (Einheiten, Plots, Postgres, LaTeX, lokale KI) |
 | **Build_Dedekind_Studio_Exe.md** | Anleitung: Dedekind Studio als Windows-.exe bauen (PyInstaller) |
-| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.10.0; Stärken, Lücken, Roadmap) |
+| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.11.0; Stärken, Lücken, Roadmap) |
 | **Dedekind_Language_Specification_v0.1.pdf** | Legacy PDF (v0.1); for current spec use the Markdown or generate v0.2 PDF below |
 | **Dedekind_Research_Papers_and_Architecture.pdf** | Legacy PDF; for current content use the Markdown or generate PDF below |
 
@@ -41,6 +41,10 @@ pandoc Dedekind_Research_and_Architecture.md -o Dedekind_Research_and_Architectu
 - **Online**: Paste the Markdown into a service that converts Markdown to PDF (e.g. markdown-to-pdf converters).
 - **Typora / other editors**: Open the `.md` file and export to PDF from the application.
 
+
+## What changed in v1.11.0 (documented here)
+
+- **Version 1.11.0**: **`graph_laplacian(adj, normalized=False)` — Spektrale Graph-Methoden (Stufe 1 der Graph-Roadmap).** Neue Runtime-Built-in fuer die diskrete Laplace-Matrix eines Graphen. Akzeptiert dichte Tensoren, sparse `torch.Tensor` (COO) und verschachtelte Listen; gibt sparse zurueck wenn Eingabe sparse, sonst dicht. Zwei Modi: kombinatorisch `L = D - A` (Default; Zeilensummen 0, psd) und normalisiert symmetrisch `L_sym = I - D^{-1/2} A D^{-1/2}` (Eigenwerte in `[0, 2]`). Direkt einsetzbar in `cg`, `gmres`, `bicgstab` (v1.6) und `eigh` — keine zusaetzlichen Pakete erforderlich. Implementierung in `src/compiler/ml_runtime.py`: dichte Variante via `torch.diag(deg) - adj` bzw. `I - d_inv_sqrt @ adj @ d_inv_sqrt`; sparse Variante baut COO-Indices durch Konkatenation der negierten Off-Diagonal- und Diagonal-Eintraege, dann `coalesce()`. Numerische Stabilitaet: `deg.clamp(min=1e-12)` vor `pow(-0.5)`, plus `where(deg > 0, ..., 0)` fuer isolierte Knoten. Demonstriert in `graph_spectral_demo.ddk` an einem 8-Knoten-Zwei-Cluster-Graphen (zwei Triangles ueber eine einzige Brueckenkante): (1) Heat-Diffusion via implizites Euler `cg(I + dt*L, u_prev)` — Cluster mit Startknoten erwaermt sich zu ~0.18 pro Knoten, Cluster auf der anderen Seite der Bruecke nur zu ~0.06, klar asymmetrisch. (2) Spektrale Partitionierung via Fiedler-Vektor (zweitkleinster Eigenwert von L): Vorzeichen trennt die Cluster sauber an der Bruecke. Test `graph_laplacian_test.ddk` verifiziert: Diagonaleintraege gleich Grad, Zeilensummen Null, PSD-Eigenwerte, normalisierte Variante mit Diagonal-1 und Off-Diagonal `-1/sqrt(deg_i*deg_j)`, Fiedler-Partitionierung eines 6-Knoten-Zwei-Cluster-Graphen (Vorzeichen-Test ueber 5 Knoten-Paare). **Bewusst NICHT geliefert** (Stufen 2+3 der Graph-Roadmap, kommende Versionen): kein `Graph[N, E]`-Shape-Typ (v1.12 als Wrapper um `torch_geometric.data` mit Unit-Annotationen — das ist der eigentliche USP), kein natives Message-Passing (Anti-Muster: ein halb-fertiges PyG-Rebuild waere schlechter als die `pyimport torch_geometric`-Loesung; nativ nur mit mehrwoechigem Forschungs-Budget). 37/37 Tests gruen, 92/92 Beispiele kompilieren.
 
 ## What changed in v1.10.0 (documented here)
 
