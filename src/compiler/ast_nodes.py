@@ -52,6 +52,14 @@ class UnitDef(Node):
     factor: float
     base_unit: str
 
+
+@dataclass
+class PyImport(Node):
+    """Importiert ein Python-Modul aus dem PyPI-Ökosystem: `pyimport scipy.special as ss`.
+    Erzeugt im generierten Code ein `import MODULE as ALIAS`."""
+    module: str
+    alias: str
+
 @dataclass
 class ReturnStmt(Node):
     value: Node

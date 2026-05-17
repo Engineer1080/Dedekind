@@ -262,6 +262,7 @@ class CodeGenerator:
 
     def visit_Program(self, node: Program):
         for stmt in node.statements:
+            self._emit_ddk_marker(stmt)
             res = self.visit(stmt)
             if isinstance(res, str):
                 self.add_line(res)
@@ -271,6 +272,7 @@ class CodeGenerator:
         self.add_line(f"if {cond}:")
         self.indent_level += 1
         for stmt in node.then_branch:
+            self._emit_ddk_marker(stmt)
             res = self.visit(stmt)
             if isinstance(res, str): self.add_line(res)
         self.indent_level -= 1
@@ -278,6 +280,7 @@ class CodeGenerator:
             self.add_line("else:")
             self.indent_level += 1
             for stmt in node.else_branch:
+                self._emit_ddk_marker(stmt)
                 res = self.visit(stmt)
                 if isinstance(res, str): self.add_line(res)
             self.indent_level -= 1
@@ -287,6 +290,7 @@ class CodeGenerator:
         self.add_line(f"while {cond}:")
         self.indent_level += 1
         for stmt in node.body:
+            self._emit_ddk_marker(stmt)
             res = self.visit(stmt)
             if isinstance(res, str): self.add_line(res)
         self.indent_level -= 1
@@ -296,6 +300,7 @@ class CodeGenerator:
         self.add_line(f"for {node.variable} in {collection}:")
         self.indent_level += 1
         for stmt in node.body:
+            self._emit_ddk_marker(stmt)
             res = self.visit(stmt)
             if isinstance(res, str): self.add_line(res)
         self.indent_level -= 1
@@ -317,6 +322,7 @@ class CodeGenerator:
         self._fn_name_stack.append(node.name)
         try:
             for stmt in node.body:
+                self._emit_ddk_marker(stmt)
                 res = self.visit(stmt)
                 if isinstance(res, str): self.add_line(res)
         finally:
@@ -332,6 +338,18 @@ class CodeGenerator:
         safe_name = node.name.replace('"', '\\"')
         safe_base = node.base_unit.replace('"', '\\"')
         return f'_register_user_unit("{safe_name}", {node.factor!r}, "{safe_base}")'
+
+    def visit_PyImport(self, node):
+        # Emittiert ein echtes Python-Import-Statement, damit Forscher PyPI direkt nutzen können.
+        # Beispiel: `pyimport scipy.special as ss` -> `import scipy.special as ss`.
+        return f"import {node.module} as {node.alias}"
+
+    def _emit_ddk_marker(self, node):
+        """Schreibt `# ddk:<line>` vor jedes Statement, sofern Zeilenangabe vorhanden.
+        Wird vom Runtime-Fehler-Translator gelesen, um Tracebacks auf die .ddk-Quelle zurückzumappen."""
+        ln = getattr(node, "line", None)
+        if isinstance(ln, int):
+            self.add_line(f"# ddk:{ln}")
 
     def visit_ReturnStmt(self, node: ReturnStmt):
         val = self.visit_expression(node.value)

@@ -2,7 +2,7 @@
 
 **Language Specification v0.2**  
 Mario Michael Heinrich · github.com/Engineer1080  
-Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit), v0.9.6 (Math-Funktionen), v0.9.7 (Chemie/Biologie: mol, L, M, ppm), v0.9.8 (Convenience, Elemente, Datei-I/O, Netzwerk, JSON), v1.0.0 (Release), v1.0.1–v1.0.6 (Patch), v1.2.6 (Winkel rad/deg, deg_to_rad, rad_to_deg), v1.2.7 (Dirichlet-Verteilung, dirichlet_function), v1.2.8 (Dedekind-Schnitte, Dedekind-Ringe, Riemann-Zeta, Riemann-Summen), v1.2.9 (Betragsstriche, Rotationskörper, logische Operatoren), v1.3.0 (integrate_sym, Lagrange/Hamilton, Lotka-Volterra, chemisches Gleichgewicht), v1.3.1 (Medizin, Pharmakologie, Epidemiologie), v1.4.0 (Modul-System `use`, Seed/data_hash, DataFrame+CSV/Parquet/HDF5/NetCDF, Unit-aware Plots, `@units`-Signaturen mit `fn f(x: [m]) -> [J]`, Dict-Literale), v1.5.0 (benchmark/profile/time_block, jit (torch.compile), sde_solve (Euler-Maruyama, Milstein), least_squares, minimize_constrained, milp, FEM-Primitiven mesh_unit_square/fem_assemble_*/fem_poisson_2d, `arange` int64), v1.6.0 (solve_sym/simplify_sym/series, cg/gmres/bicgstab + jacobi_/ilu_preconditioner, export_notebook (HTML/MD), print_table (markdown/latex/csv/plain) mit UncertainQuantity-±), v1.7.0 (Standardbibliothek-Module physics/stats/chemistry/biology/math/ml via `use`, benutzerdefinierte Einheiten `unit NAME = FAKTOR[basis]` mit Verkettung & Compile-Zeit-Registrierung, Quantity-Vergleichsoperatoren `<` `<=` `>` `>=` `==` `!=` mit Auto-Konvertierung)
+Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit), v0.9.6 (Math-Funktionen), v0.9.7 (Chemie/Biologie: mol, L, M, ppm), v0.9.8 (Convenience, Elemente, Datei-I/O, Netzwerk, JSON), v1.0.0 (Release), v1.0.1–v1.0.6 (Patch), v1.2.6 (Winkel rad/deg, deg_to_rad, rad_to_deg), v1.2.7 (Dirichlet-Verteilung, dirichlet_function), v1.2.8 (Dedekind-Schnitte, Dedekind-Ringe, Riemann-Zeta, Riemann-Summen), v1.2.9 (Betragsstriche, Rotationskörper, logische Operatoren), v1.3.0 (integrate_sym, Lagrange/Hamilton, Lotka-Volterra, chemisches Gleichgewicht), v1.3.1 (Medizin, Pharmakologie, Epidemiologie), v1.4.0 (Modul-System `use`, Seed/data_hash, DataFrame+CSV/Parquet/HDF5/NetCDF, Unit-aware Plots, `@units`-Signaturen mit `fn f(x: [m]) -> [J]`, Dict-Literale), v1.5.0 (benchmark/profile/time_block, jit (torch.compile), sde_solve (Euler-Maruyama, Milstein), least_squares, minimize_constrained, milp, FEM-Primitiven mesh_unit_square/fem_assemble_*/fem_poisson_2d, `arange` int64), v1.6.0 (solve_sym/simplify_sym/series, cg/gmres/bicgstab + jacobi_/ilu_preconditioner, export_notebook (HTML/MD), print_table (markdown/latex/csv/plain) mit UncertainQuantity-±), v1.7.0 (Standardbibliothek-Module physics/stats/chemistry/biology/math/ml via `use`, benutzerdefinierte Einheiten `unit NAME = FAKTOR[basis]` mit Verkettung & Compile-Zeit-Registrierung, Quantity-Vergleichsoperatoren `<` `<=` `>` `>=` `==` `!=` mit Auto-Konvertierung), v1.8.0 (Source-Mapping fuer Runtime-Fehler — Tracebacks zeigen `.ddk`-Zeilen + Code-Auszug; `pyimport <mod[.sub]> [as alias]` als Fluchtluke in PyPI; `dedekind_exec` Helper in `compiler.py`)
 
 ---
 
@@ -326,6 +326,41 @@ Rules:
 **Quantity comparison operators** (v1.7): `Quantity` supports `<`, `<=`, `>`, `>=`, `==`, `!=`, `__hash__`. Same-dimension operands (e.g. `cm` vs `m`) are converted to the dimension's base unit before comparison; mixed dimensions raise `ValueError`. Enables `if pressure < 1[atm] { ... }`.
 
 Examples: `examples/dedekind/stdlib_modules_demo.ddk`, `examples/dedekind/user_defined_units.ddk`. Tests: `tests/dedekind/user_defined_units_test.ddk`, `tests/dedekind/stdlib_{physics,stats,chemistry,biology_math_ml}_test.ddk`.
+
+### 15.13 Python Interop and Source-Mapped Tracebacks (v1.8)
+
+**`pyimport`** — direct access to the PyPI ecosystem. Syntax:
+
+```dedekind
+pyimport scipy.special as sp
+pyimport numpy as np
+pyimport math                  // alias defaults to "math"
+pyimport scipy.stats as st
+```
+
+The codegen emits `import MODULE as ALIAS` at the statement position; values are accessed as `alias.name(...)` and mix freely with Dedekind built-ins. `pyimport` is a *soft* keyword (only recognized at statement start; existing identifiers named `pyimport` remain valid). No dimension/shape inference is applied to returned values — the caller is responsible for unit consistency.
+
+**Source-mapped runtime tracebacks** — every runtime exception originating from generated Python code is rewritten so the traceback points to the original `.ddk` file and line, including a snippet of the user's source. Example:
+
+```
+Traceback (most recent call last):
+  File "demo.ddk", line 16, in <module>
+    main()
+  File "demo.ddk", line 12, in main
+    s = outer(data)
+  File "demo.ddk", line 7, in inner
+    return arr[0] + arr[1] + arr[99]
+IndexError: index 99 is out of bounds for dimension 0 with size 3
+```
+
+Implementation:
+
+- The codegen writes `# ddk:<line>` markers before every statement (top-level, `if`/`else`, `while`, `for`, function body).
+- `dedekind_exec(generated_code, ddk_file, exec_globals, ddk_source)` in `src/compiler/compiler.py` compiles with a virtual filename, runs the code, and on any `BaseException` rewrites `exc.args` to a translated multi-line traceback before re-raising the *original* exception type. So `except AssertionError`, `except ValueError`, `except IndexError` etc. continue to work — only the user-visible message is enriched.
+- Frames inside the inlined runtime are shown as `<dedekind-runtime>` (so users see the call chain but not the implementation noise); frames from external libraries (scipy, torch) keep their real filenames.
+- Used by `run_tests.py`, `run_examples.py`, `python -m compiler` and the Jupyter kernel.
+
+Examples: `examples/dedekind/pyimport_demo.ddk`, `examples/dedekind/source_mapping_demo.ddk`. Test: `tests/dedekind/pyimport_test.ddk`.
 
 ---
 

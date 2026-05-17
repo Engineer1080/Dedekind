@@ -4368,8 +4368,18 @@ def _dedekind_assert(condition, message=None):
     assert(condition) oder assert(condition, "Fehlermeldung").
     """
     val = condition
-    if hasattr(val, "item"):
-        val = val.item() if val.numel() == 1 else bool(val.all().item())
+    # torch.Tensor: numel()-Abfrage erlaubt Reduktion via .all() bei Multi-Element-Tensor
+    if hasattr(val, "numel") and callable(getattr(val, "numel", None)):
+        try:
+            val = val.item() if val.numel() == 1 else bool(val.all().item())
+        except Exception:
+            val = bool(val)
+    elif hasattr(val, "item") and callable(getattr(val, "item", None)):
+        # numpy-Skalar oder andere 0-d-Arrays
+        try:
+            val = val.item()
+        except Exception:
+            val = bool(val)
     elif hasattr(val, "__len__") and len(val) == 1:
         val = val[0]
     if not bool(val):

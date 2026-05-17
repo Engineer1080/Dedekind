@@ -15,7 +15,7 @@ This folder contains the **source** and **generated** documentation for the Dede
 | **Commercialization_Options.md** | Potenzielle Kommerzialisierungsoptionen (Beratung, Support, Lizenzen, SaaS, Förderung, Phasierung, Risiken) |
 | **IDE_Studio_Roadmap.md** | Dedekind in bestehenden IDEs (VS Code, Jupyter) + Dedekind Studio als kommerzielle Wissenschaftler-IDE (Einheiten, Plots, Postgres, LaTeX, lokale KI) |
 | **Build_Dedekind_Studio_Exe.md** | Anleitung: Dedekind Studio als Windows-.exe bauen (PyInstaller) |
-| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.7.0; Stärken, Lücken, Roadmap) |
+| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.8.0; Stärken, Lücken, Roadmap) |
 | **Dedekind_Language_Specification_v0.1.pdf** | Legacy PDF (v0.1); for current spec use the Markdown or generate v0.2 PDF below |
 | **Dedekind_Research_Papers_and_Architecture.pdf** | Legacy PDF; for current content use the Markdown or generate PDF below |
 
@@ -41,6 +41,10 @@ pandoc Dedekind_Research_and_Architecture.md -o Dedekind_Research_and_Architectu
 - **Online**: Paste the Markdown into a service that converts Markdown to PDF (e.g. markdown-to-pdf converters).
 - **Typora / other editors**: Open the `.md` file and export to PDF from the application.
 
+
+## What changed in v1.8.0 (documented here)
+
+- **Version 1.8.0**: **Source-Mapping fuer Runtime-Fehler:** Compiler emittiert `# ddk:<line>` Marker vor jedem Statement (top-level, if/else, while, for, fn-body) im generierten Python. Neuer Helper `dedekind_exec(generated_code, ddk_file, exec_globals, ddk_source)` in `src/compiler/compiler.py` kompiliert mit virtuellem Filename, fängt jede Exception ab und ersetzt `exc.args` durch einen Traceback, der nur User-Frames in die `.ddk`-Datei mit echter Zeilennummer + Quellcode-Auszug ueberträgt (Wrapper-Frames in `dedekind_exec` werden uebersprungen; Runtime-Frames erscheinen als `<dedekind-runtime>`). Der Exception-Typ bleibt erhalten — `except AssertionError`, `except IndexError`, `except ValueError` etc. funktionieren weiter wie zuvor, nur die Nachricht ist mit Datei und Zeile angereichert. Integriert in `run_tests.py`, `run_examples.py`, `compiler.py` CLI und `dedekind_jupyter_kernel/kernel.py`. **`pyimport` (Python-Fluchtluke):** Neue Top-Level-Syntax `pyimport scipy.special as sp` (bzw. `pyimport math` mit Auto-Alias = letztes Segment des Modulpfads). Soft-Keyword wie `unit` — bestehender Code mit `pyimport` als Identifier bleibt gueltig. Neuer AST-Knoten `PyImport(module, alias)`; Codegen emittiert `import MODULE as ALIAS` an der Stelle des Statements. Aufrufer schreiben `alias.name(...)` (`sp.gamma(5.0)`, `np.mean(arr)`); funktioniert ueber bestehende `MemberAccess`/`Call`-Codegen-Pfade. Damit ist jedes PyPI-Paket (`scipy`, `numpy`, `rdkit`, `astropy`, `qiskit`, `polars`, ...) sofort verfuegbar, ohne dass Dedekind eigene Wrapper braucht. **`_dedekind_assert`-Fix:** Korrekte Behandlung von numpy-Skalaren — vorher `AttributeError: 'numpy.bool' object has no attribute 'numel'`; jetzt cascading try: `.numel()` (torch) → `.item()` (numpy) → `bool()` (Python). Beispiele: `pyimport_demo.ddk`, `source_mapping_demo.ddk`. Tests: `pyimport_test.ddk` (32/32 gruen; alle 86 Beispiele kompilieren).
 
 ## What changed in v1.7.0 (documented here)
 

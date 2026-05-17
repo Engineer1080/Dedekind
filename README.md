@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-1.7.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-1.8.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -28,6 +28,31 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
+
+### What's New in v1.8.0
+
+- **Source-Mapping fuer Runtime-Fehler:** Wenn der generierte Python-Code (oder eine darunter liegende NumPy/SciPy/Torch-Funktion) zur Laufzeit eine Exception wirft, zeigt der Traceback nun direkt die Original-Zeilen aus der `.ddk`-Datei inkl. Code-Auszug:
+  ```
+  Traceback (most recent call last):
+    File "demo.ddk", line 16, in <module>
+      main()
+    File "demo.ddk", line 12, in main
+      s = outer(data)
+    File "demo.ddk", line 7, in inner
+      return arr[0] + arr[1] + arr[99]
+  IndexError: index 99 is out of bounds for dimension 0 with size 3
+  ```
+  Implementiert via `# ddk:<line>`-Marker im generierten Code + neuer Helper `dedekind_exec(generated_code, ddk_file, ddk_source)` in `src/compiler/compiler.py`. Der Exception-Typ bleibt erhalten (`except AssertionError:` etc. funktioniert weiter), nur die Nachricht wird mit dem zurueckgemappten Traceback ersetzt. Frames innerhalb der inlinierten Runtime werden als `<dedekind-runtime>` markiert; externe Library-Frames (scipy, torch) zeigen weiterhin ihre echten Pfade fuer Stack-Analyse. Genutzt in `run_tests.py`, `run_examples.py`, `compiler.py` CLI und dem Jupyter-Kernel.
+- **`pyimport` — Python-Fluchtluke ins PyPI-Oekosystem:** Neue Top-Level-Syntax `pyimport scipy.special as sp` (oder `pyimport math` mit Auto-Alias = letztes Segment). Beliebige Python-Module sind als `alias.name(...)` aufrufbar, mischen sich mit Dedekind-Built-ins. Beispiel:
+  ```dedekind
+  pyimport scipy.stats as st
+  pyimport numpy as np
+  p = st.norm.cdf(1.96)
+  arr_mean = np.mean(np.array([1.0, 2.0, 3.0]))
+  ```
+  `pyimport` ist Soft-Keyword (bestehender Code mit `pyimport` als Variablenname bleibt gueltig). Codegen emittiert `import MODULE as ALIAS` an der Stelle des Statements. Damit ist Dedekind ab v1.8 nicht mehr „walled garden": jedes PyPI-Paket (`rdkit`, `astropy`, `qiskit`, `polars`, ...) ist sofort verfuegbar.
+- **`_dedekind_assert`-Fix:** Korrekte Behandlung von numpy-Skalaren (`numpy.bool_`, `numpy.float64`). Vorher kollidierte der Tensor-Check (`numel()`) mit numpy-Werten aus `pyimport`-Aufrufen.
+- Beispiele: `pyimport_demo.ddk`, `source_mapping_demo.ddk`. Tests: `pyimport_test.ddk` (32/32 gruen; alle 86 Beispiele kompilieren).
 
 ### What's New in v1.7.0
 

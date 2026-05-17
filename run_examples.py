@@ -46,7 +46,7 @@ def main():
     if SRC_DIR not in sys.path:
         sys.path.insert(0, SRC_DIR)
     try:
-        from compiler.compiler import compile_source
+        from compiler.compiler import compile_source, dedekind_exec
     except ImportError as e:
         print(f"Fehler: Compiler nicht gefunden. Bitte aus Projektroot ausführen: {e}")
         sys.exit(1)
@@ -84,7 +84,7 @@ def main():
         try:
             sys.stdout = out
             exec_globals = {}
-            exec(python_code, exec_globals)
+            dedekind_exec(python_code, ddk_file=filepath, exec_globals=exec_globals, ddk_source=source)
             output = out.getvalue()
             results.append((filename, True, None))
             if args.verbose:

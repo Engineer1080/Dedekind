@@ -1,6 +1,9 @@
 import sys
 import os
-from typing import Optional, List
+import re
+import traceback as _tb
+import linecache
+from typing import Optional, List, Tuple
 from .lexer import Lexer
 from .parser import Parser
 from .codegen import CodeGenerator
@@ -79,6 +82,113 @@ def compile_source(source_code: str, filepath: Optional[str] = None, check_units
         raise
 
 
+_DDK_MARKER_RE = re.compile(r"^\s*# ddk:(\d+)\s*$")
+
+
+def _build_line_map(generated_code: str) -> dict:
+    """Liest `# ddk:<line>` Marker und liefert {generated_line_idx_1based: ddk_line}."""
+    mapping = {}
+    last_ddk = None
+    for idx, line in enumerate(generated_code.splitlines(), start=1):
+        m = _DDK_MARKER_RE.match(line)
+        if m:
+            last_ddk = int(m.group(1))
+            continue
+        if last_ddk is not None:
+            mapping[idx] = last_ddk
+    return mapping
+
+
+def _make_virtual_filename(ddk_file: Optional[str]) -> str:
+    if not ddk_file:
+        return "<dedekind>"
+    base = os.path.basename(ddk_file)
+    return f"<dedekind:{base}>"
+
+
+def _register_source_for_traceback(virtual_filename: str, generated_code: str) -> None:
+    """Damit Python traceback Quelle anzeigen kann (intern, nur für Debug)."""
+    src_lines = generated_code.splitlines(keepends=True)
+    linecache.cache[virtual_filename] = (len(generated_code), None, src_lines, virtual_filename)
+
+
+def format_dedekind_traceback(exc: BaseException, generated_code: str,
+                              ddk_file: Optional[str], ddk_source: Optional[str] = None) -> str:
+    """Rendert einen Traceback so, dass Zeilen im generierten Code auf die ursprüngliche
+    .ddk-Datei zurückgemappt werden. Frames innerhalb der inlinierten Runtime werden als
+    `<runtime>` markiert; die letzte erreichbare User-Zeile steht oben."""
+    virtual = _make_virtual_filename(ddk_file)
+    line_map = _build_line_map(generated_code)
+    ddk_lines = ddk_source.splitlines() if ddk_source else None
+    if ddk_lines is None and ddk_file and os.path.isfile(ddk_file):
+        try:
+            with open(ddk_file, "r", encoding="utf-8") as f:
+                ddk_lines = f.read().splitlines()
+        except OSError:
+            ddk_lines = None
+
+    out_lines = ["Traceback (most recent call last):"]
+    tb = exc.__traceback__
+    # Skip frames that belong to the dedekind_exec wrapper itself (start of trace).
+    this_file = os.path.abspath(__file__)
+    while tb is not None and os.path.abspath(tb.tb_frame.f_code.co_filename) == this_file:
+        tb = tb.tb_next
+    while tb is not None:
+        frame = tb.tb_frame
+        code = frame.f_code
+        filename = code.co_filename
+        lineno = tb.tb_lineno
+        if filename == virtual:
+            ddk_line = line_map.get(lineno)
+            if ddk_line is not None:
+                src_excerpt = ddk_lines[ddk_line - 1].strip() if ddk_lines and 0 < ddk_line <= len(ddk_lines) else ""
+                out_lines.append(
+                    f'  File "{ddk_file or virtual}", line {ddk_line}, in {code.co_name}'
+                )
+                if src_excerpt:
+                    out_lines.append(f"    {src_excerpt}")
+            else:
+                # Frame liegt vor dem ersten User-Statement: gehört zur inlined Runtime
+                out_lines.append(
+                    f'  File "<dedekind-runtime>", line {lineno}, in {code.co_name}  (internal)'
+                )
+        else:
+            # Externes Modul (scipy, torch, ...): unveränderter Frame
+            out_lines.append(f'  File "{filename}", line {lineno}, in {code.co_name}')
+        tb = tb.tb_next
+
+    out_lines.append(f"{type(exc).__name__}: {exc}")
+    return "\n".join(out_lines)
+
+
+def dedekind_exec(generated_code: str, ddk_file: Optional[str] = None,
+                  exec_globals: Optional[dict] = None,
+                  ddk_source: Optional[str] = None) -> dict:
+    """Kompiliert + executet generierten Python-Code, fängt Runtime-Fehler ab und re-raises
+    den **Original-Exception-Typ** mit auf die .ddk-Quelle zurückgemappter Nachricht.
+
+    `except AssertionError`/`except ValueError` etc. funktioniert weiter wie bisher; nur
+    `str(e)` ist nun mit Dateipfad und Zeilennummer aus der .ddk-Datei angereichert. Der
+    ursprüngliche Traceback bleibt erhalten und wird über die Exception-Args ergänzt.
+    """
+    if exec_globals is None:
+        exec_globals = {}
+    virtual = _make_virtual_filename(ddk_file)
+    _register_source_for_traceback(virtual, generated_code)
+    try:
+        code_obj = compile(generated_code, virtual, "exec")
+        exec(code_obj, exec_globals)
+    except BaseException as exc:
+        translated = format_dedekind_traceback(exc, generated_code, ddk_file, ddk_source)
+        # Original-Typ behalten, Nachricht durch übersetzten Traceback ersetzen.
+        try:
+            exc.args = (translated,)
+        except Exception:
+            pass
+        raise
+    return exec_globals
+
+
 def export_to_latex(source_code: str) -> str:
     """
     Dedekind-Quelltext parsen und alle Formeln/Ausdrücke als LaTeX zurückgeben.
@@ -122,7 +232,7 @@ def main():
 
         print(f"Compiling {filepath}...")
         python_code = compile_source(source, filepath=filepath, check_units=check_units)
-        
+
         # Output generated code
         print("-" * 20)
         print("Generated Python Code:")
@@ -131,18 +241,16 @@ def main():
         print("-" * 20)
         print("Executing Code:")
         print("-" * 20)
-        
-        # Execute
-        exec_globals = {}
-        exec(python_code, exec_globals)
-        
+
+        # Execute mit auf .ddk-Quelle gemappten Tracebacks
+        dedekind_exec(python_code, ddk_file=filepath, ddk_source=source)
+
     except CompileError as e:
         print(f"Compiler-Fehler: {e}")
         sys.exit(1)
     except Exception as e:
-        print(f"Compilation/Execution Error: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"Runtime-Fehler (zurueckgemappt auf .ddk):\n{e}")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

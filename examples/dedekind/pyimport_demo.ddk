@@ -1,0 +1,42 @@
+// pyimport_demo.ddk — Direkter Zugriff auf PyPI-Bibliotheken via `pyimport`.
+//
+// Syntax:  pyimport <modul[.untermodul]> [as <alias>]
+// Erzeugt im generierten Code ein `import ... as ...`. Werte aus dem importierten Modul
+// werden ueber `alias.name(...)` aufgerufen. Falls kein Alias angegeben wird, wird der
+// letzte Teil des Modulpfads als Alias verwendet (`pyimport math` → `math.pi`).
+
+pyimport scipy.special as sp
+pyimport scipy.stats as st
+pyimport numpy as np
+pyimport math
+
+fn main() {
+    print("=== pyimport-Demo (v1.8) ===")
+
+    // 1) scipy.special: Spezialfunktionen
+    g5 = sp.gamma(5.0)              // gamma(5) = 4! = 24
+    print("gamma(5) = " + str(g5))
+
+    erfc_2 = sp.erfc(2.0)
+    print("erfc(2) = " + str(erfc_2))
+
+    // 2) scipy.stats: Normalverteilung CDF
+    p = st.norm.cdf(1.96)
+    print("Phi(1.96) = " + str(p))
+
+    // 3) numpy: Aggregationen ueber Listen
+    arr = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
+    print("np.mean = " + str(np.mean(arr)))
+    print("np.std  = " + str(np.std(arr)))
+
+    // 4) Python-stdlib math (ohne Alias)
+    print("math.pi   = " + str(math.pi))
+    print("math.tau  = " + str(math.tau))
+    print("math.log2(1024) = " + str(math.log2(1024.0)))
+
+    // 5) Mischbarkeit: numpy-Ergebnis in Dedekind-Built-in einspeisen
+    avg = np.mean(arr)
+    print("doppelter mean = " + str(2.0 * avg))
+}
+
+main()

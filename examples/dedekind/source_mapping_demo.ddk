@@ -1,0 +1,37 @@
+// source_mapping_demo.ddk — Demonstriert Source-Mapping fuer Runtime-Fehler.
+//
+// Dieses Beispiel laeuft GANZ DURCH (kein Crash). Wer einen Runtime-Fehler simulieren
+// moechte, kann unten die auskommentierten Zeilen aktivieren. Dedekind faengt den
+// Fehler ab und liefert einen Traceback, der direkt auf die `.ddk`-Datei und die
+// fehlerhafte Zeile zeigt — statt auf den generierten Python-Zwischencode.
+//
+// Beispiel-Traceback (so wuerde es aussehen):
+//
+//   Traceback (most recent call last):
+//     File "examples/dedekind/source_mapping_demo.ddk", line 23, in <module>
+//       main()
+//     File "examples/dedekind/source_mapping_demo.ddk", line 18, in main
+//       y = x[10]
+//   IndexError: index 10 is out of bounds for dimension 0 with size 3
+
+fn risky(x) {
+    // Diese Zeile wuerde bei aktivem `x[10]` einen IndexError werfen,
+    // der direkt zurueck auf diese .ddk-Zeile gemappt wird.
+    return x[0] + x[1]
+}
+
+fn main() {
+    print("=== Source-Mapping-Demo (v1.8) ===")
+    arr = [10.0, 20.0, 30.0]
+    s = risky(arr)
+    print("sum first two = " + str(s))
+
+    // Aktivieren fuer Fehler-Demo:
+    // y = arr[42]                // → IndexError mit .ddk-Zeilennummer
+    // z = 1.0 / 0.0              // → ZeroDivisionError mit .ddk-Zeile
+    // bad = "hello" + 5          // → TypeError mit .ddk-Zeile
+
+    print("alles ok")
+}
+
+main()

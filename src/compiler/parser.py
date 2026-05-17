@@ -87,6 +87,10 @@ class Parser:
                 and self.peek(2) and self.peek(2).type == 'ASSIGN':
             # Soft-Keyword `unit`: nur als Statement-Anfang `unit NAME = ...` interpretiert.
             return self.parse_unit_def()
+        elif token.type == 'ID' and token.value == 'pyimport' \
+                and self.peek(1) and self.peek(1).type == 'ID':
+            # Soft-Keyword `pyimport`: nur am Statement-Anfang `pyimport mod[.sub] [as alias]`.
+            return self.parse_pyimport_stmt()
         elif token.type == 'RETURN':
             start_line = token.line
             self.consume('RETURN')
@@ -182,6 +186,25 @@ class Parser:
         self.consume('USE')
         name_tok = self.consume('ID')
         node = UseStmt(name_tok.value)
+        node.line = start_line
+        return node
+
+    def parse_pyimport_stmt(self):
+        """`pyimport scipy.special as ss` oder `pyimport numpy` (alias = letztes Segment)."""
+        start_line = self.peek().line
+        self.consume('ID')  # 'pyimport' (soft keyword)
+        parts = [self.consume('ID').value]
+        while self.peek() and self.peek().type == 'DOT' \
+                and self.peek(1) and self.peek(1).type == 'ID':
+            self.consume('DOT')
+            parts.append(self.consume('ID').value)
+        module = ".".join(parts)
+        alias = parts[-1]
+        if self.peek() and self.peek().type == 'ID' and self.peek().value == 'as':
+            self.consume('ID')
+            alias_tok = self.consume('ID')
+            alias = alias_tok.value
+        node = PyImport(module=module, alias=alias)
         node.line = start_line
         return node
 
