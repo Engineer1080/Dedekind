@@ -1,0 +1,87 @@
+// purity_check_demo.ddk — Demonstriert den Purity-Check (v1.8).
+//
+// Funktionen, die an pure Kontexte uebergeben werden (jit, grad, fit,
+// metropolis, hmc, sde_solve), duerfen keine I/O-/Konsolen-Built-ins
+// aufrufen: print, plot, write_file, http_get/post, read_file, ...
+//
+// Diese Datei zeigt ZULAESSIGE Verwendung. Die unten auskommentierten
+// Beispiele wuerden den Compile-Check zum Fehler bringen.
+
+// --- OK: reine Loss-Funktion fuer fit() ---
+fn pure_loss(params, data) {
+    x = data[0]
+    y = data[1]
+    a = params[0]
+    b = params[1]
+    y_pred = a * x + b
+    diff = y_pred - y
+    return (diff * diff).sum()
+}
+
+// --- OK: reine drift/diffusion fuer sde_solve() ---
+fn pure_drift(t, y) {
+    return 0.05 * y
+}
+
+fn pure_diffusion(t, y) {
+    return 0.2 * y
+}
+
+// --- OK: reine Funktion fuer jit() ---
+fn hot_kernel(x) {
+    return x * x + 2.0 * x + 1.0
+}
+
+// --- OK: transitiv reine Hilfsfunktion ---
+fn pure_helper(z) {
+    return sqrt(z + 1.0)
+}
+
+fn drift_with_helper(t, y) {
+    // Verwendet pure_helper — bleibt insgesamt rein
+    return pure_helper(y) * 0.01
+}
+
+fn main() {
+    print("=== Purity-Check OK-Cases ===")
+
+    // 1) fit() mit reiner Loss
+    x = [1.0, 2.0, 3.0, 4.0]
+    y = [3.1, 5.2, 7.0, 9.1]
+    params_opt = fit(pure_loss, [1.0, 1.0], [x, y], method="gd", lr=0.01, steps=200)
+    print("fit ergibt: " + str(params_opt))
+
+    // 2) sde_solve() mit reinem drift/diffusion
+    t = linspace(0.0, 1.0, 21)
+    Y = sde_solve(pure_drift, pure_diffusion, 1.0, t, method="euler_maruyama", seed_value=7)
+    print("SDE Endwert: " + str(Y[20]))
+
+    // 3) sde_solve mit transitiv-reinem drift
+    Y2 = sde_solve(drift_with_helper, pure_diffusion, 1.0, t, method="euler_maruyama", seed_value=7)
+    print("SDE2 Endwert: " + str(Y2[20]))
+
+    // 4) jit() mit reiner Funktion
+    jit_kernel = jit(hot_kernel)
+    print("jit-Ergebnis: " + str(jit_kernel(3.0)))
+
+    print("Alle Aufrufe waren pur — Check passiert.")
+}
+
+main()
+
+// --- VERBOTENE Beispiele (kommentiert: wuerden CompileError ausloesen) ---
+//
+// fn bad_loss(params, data) {
+//     print("debug")                      // <- I/O im pure-context
+//     return params[0] * params[0]
+// }
+// // CompileError: "Funktion 'bad_loss' wird an 'fit(...)' uebergeben,
+// //                ruft aber 'print()' ... in Zeile 2 in 'bad_loss'."
+//
+// fn impure_helper(x) { write_file("log.txt", str(x)) return x }
+// fn drift_bad(t, y) { return impure_helper(y) }
+// // CompileError (transitiv): "Funktion 'drift_bad' wird an 'sde_solve(...)' uebergeben,
+// //                            ruft aber 'write_file()' ... in 'impure_helper'."
+//
+// Override-Ausweg fuer Spezialfaelle:
+//     python -m src.compiler.compiler myfile.ddk --no-purity-check

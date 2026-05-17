@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-1.8.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-1.8.1-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -28,6 +28,15 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
+
+### What's New in v1.8.1
+
+- **Purity-Check fuer pure-context-Aufrufe:** Neuer Compile-Zeit-Pass `purity_check.py`. Funktionen, die an `jit(fn)`, `grad(fn, x)`, `fit(loss, ...)`, `metropolis(log_prior, log_likelihood, ...)`, `hmc(...)` oder `sde_solve(drift, diffusion, ...)` uebergeben werden, duerfen **keine I/O-/Konsolen-Built-ins** mehr aufrufen — sonst `CompileError` mit Datei + Zeile.
+- Blockierte Built-ins (transitive Erkennung): `print`, `plot`, `scatter`, `contour`, `print_latex`, `print_table`, `write_file`, `read_file`, `file_exists`, `http_get`, `http_post`, `read_csv`/`write_csv`, `read_parquet`/`write_parquet`, `read_hdf5`/`write_hdf5`, `read_netcdf`, `export_notebook`.
+- Transitive Aufloesung: ruft `loss` eine Hilfsfunktion `helper` auf und `helper` ruft `print`, wird der gesamte Pfad gemeldet (`"... ruft 'print()' ... in 'helper'"`).
+- Opt-Out: `compile_source(..., check_purity=False)` bzw. CLI `python -m compiler datei.ddk --no-purity-check`.
+- Verhindert eine ganze Bug-Klasse: stille `torch.compile`-Graph-Breaks, Tape-Recording-Anomalien in Autograd, mehrfache Datei-Writes in MCMC-Loops mit 10 000 Samples.
+- Beispiel: `purity_check_demo.ddk`. Test: `purity_check_test.ddk` (33/33 gruen).
 
 ### What's New in v1.8.0
 

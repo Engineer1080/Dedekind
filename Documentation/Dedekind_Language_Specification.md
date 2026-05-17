@@ -2,7 +2,7 @@
 
 **Language Specification v0.2**  
 Mario Michael Heinrich · github.com/Engineer1080  
-Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit), v0.9.6 (Math-Funktionen), v0.9.7 (Chemie/Biologie: mol, L, M, ppm), v0.9.8 (Convenience, Elemente, Datei-I/O, Netzwerk, JSON), v1.0.0 (Release), v1.0.1–v1.0.6 (Patch), v1.2.6 (Winkel rad/deg, deg_to_rad, rad_to_deg), v1.2.7 (Dirichlet-Verteilung, dirichlet_function), v1.2.8 (Dedekind-Schnitte, Dedekind-Ringe, Riemann-Zeta, Riemann-Summen), v1.2.9 (Betragsstriche, Rotationskörper, logische Operatoren), v1.3.0 (integrate_sym, Lagrange/Hamilton, Lotka-Volterra, chemisches Gleichgewicht), v1.3.1 (Medizin, Pharmakologie, Epidemiologie), v1.4.0 (Modul-System `use`, Seed/data_hash, DataFrame+CSV/Parquet/HDF5/NetCDF, Unit-aware Plots, `@units`-Signaturen mit `fn f(x: [m]) -> [J]`, Dict-Literale), v1.5.0 (benchmark/profile/time_block, jit (torch.compile), sde_solve (Euler-Maruyama, Milstein), least_squares, minimize_constrained, milp, FEM-Primitiven mesh_unit_square/fem_assemble_*/fem_poisson_2d, `arange` int64), v1.6.0 (solve_sym/simplify_sym/series, cg/gmres/bicgstab + jacobi_/ilu_preconditioner, export_notebook (HTML/MD), print_table (markdown/latex/csv/plain) mit UncertainQuantity-±), v1.7.0 (Standardbibliothek-Module physics/stats/chemistry/biology/math/ml via `use`, benutzerdefinierte Einheiten `unit NAME = FAKTOR[basis]` mit Verkettung & Compile-Zeit-Registrierung, Quantity-Vergleichsoperatoren `<` `<=` `>` `>=` `==` `!=` mit Auto-Konvertierung), v1.8.0 (Source-Mapping fuer Runtime-Fehler — Tracebacks zeigen `.ddk`-Zeilen + Code-Auszug; `pyimport <mod[.sub]> [as alias]` als Fluchtluke in PyPI; `dedekind_exec` Helper in `compiler.py`)
+Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit), v0.9.6 (Math-Funktionen), v0.9.7 (Chemie/Biologie: mol, L, M, ppm), v0.9.8 (Convenience, Elemente, Datei-I/O, Netzwerk, JSON), v1.0.0 (Release), v1.0.1–v1.0.6 (Patch), v1.2.6 (Winkel rad/deg, deg_to_rad, rad_to_deg), v1.2.7 (Dirichlet-Verteilung, dirichlet_function), v1.2.8 (Dedekind-Schnitte, Dedekind-Ringe, Riemann-Zeta, Riemann-Summen), v1.2.9 (Betragsstriche, Rotationskörper, logische Operatoren), v1.3.0 (integrate_sym, Lagrange/Hamilton, Lotka-Volterra, chemisches Gleichgewicht), v1.3.1 (Medizin, Pharmakologie, Epidemiologie), v1.4.0 (Modul-System `use`, Seed/data_hash, DataFrame+CSV/Parquet/HDF5/NetCDF, Unit-aware Plots, `@units`-Signaturen mit `fn f(x: [m]) -> [J]`, Dict-Literale), v1.5.0 (benchmark/profile/time_block, jit (torch.compile), sde_solve (Euler-Maruyama, Milstein), least_squares, minimize_constrained, milp, FEM-Primitiven mesh_unit_square/fem_assemble_*/fem_poisson_2d, `arange` int64), v1.6.0 (solve_sym/simplify_sym/series, cg/gmres/bicgstab + jacobi_/ilu_preconditioner, export_notebook (HTML/MD), print_table (markdown/latex/csv/plain) mit UncertainQuantity-±), v1.7.0 (Standardbibliothek-Module physics/stats/chemistry/biology/math/ml via `use`, benutzerdefinierte Einheiten `unit NAME = FAKTOR[basis]` mit Verkettung & Compile-Zeit-Registrierung, Quantity-Vergleichsoperatoren `<` `<=` `>` `>=` `==` `!=` mit Auto-Konvertierung), v1.8.0 (Source-Mapping fuer Runtime-Fehler — Tracebacks zeigen `.ddk`-Zeilen + Code-Auszug; `pyimport <mod[.sub]> [as alias]` als Fluchtluke in PyPI; `dedekind_exec` Helper in `compiler.py`), v1.8.1 (Purity-Check: `print`/`plot`/`write_file`/`http_*`/I/O-Built-ins in `jit`/`grad`/`fit`/`metropolis`/`hmc`/`sde_solve`-Argumenten werden zur Compile-Zeit transitiv erkannt und blockiert; Opt-Out via `--no-purity-check`)
 
 ---
 
@@ -361,6 +361,39 @@ Implementation:
 - Used by `run_tests.py`, `run_examples.py`, `python -m compiler` and the Jupyter kernel.
 
 Examples: `examples/dedekind/pyimport_demo.ddk`, `examples/dedekind/source_mapping_demo.ddk`. Test: `tests/dedekind/pyimport_test.ddk`.
+
+### 15.14 Purity Check for Pure-Context Calls (v1.8.1)
+
+A new compile-time pass `src/compiler/purity_check.py` rejects programs that pass impure functions into contexts that require purity. Concretely, the first (or first two) argument(s) of these built-ins must be pure:
+
+| Built-in | Pure args | Reason |
+|----------|-----------|--------|
+| `jit(fn)` | `fn` | `torch.compile` traces a graph; side effects cause graph breaks |
+| `grad(fn, x)` | `fn` | Autograd tape; side effects are recorded but not differentiable |
+| `fit(loss_fn, ...)` | `loss_fn` | Called many times per training step |
+| `metropolis(log_prior, log_likelihood, ...)` | both | Called thousands of times per chain |
+| `hmc(log_prior, log_likelihood, ...)` | both | Same |
+| `sde_solve(drift, diffusion, ...)` | both | Called at every Euler-Maruyama / Milstein step |
+
+A function is *impure* if its body — transitively through any helper function it calls — invokes any of these built-ins:
+
+```
+print, plot, scatter, contour, print_latex, print_table,
+write_file, read_file, file_exists,
+http_get, http_post,
+read_csv, write_csv, read_parquet, write_parquet,
+read_hdf5, write_hdf5, read_netcdf,
+export_notebook
+```
+
+The check is transitive via a function table: if `loss` calls `helper` and `helper` calls `print`, the error reports `"... ruft 'print()' ... in 'helper'"`. Cycle protection via a `visited` set. Calls via `pyimport`ed modules (e.g. `np.savetxt(...)`) are not analyzed — the caller is responsible.
+
+Opt-out for special cases (debug builds, code migration):
+
+- API: `compile_source(source, check_purity=False)`
+- CLI: `python -m compiler datei.ddk --no-purity-check`
+
+Example: `examples/dedekind/purity_check_demo.ddk`. Test: `tests/dedekind/purity_check_test.ddk`.
 
 ---
 

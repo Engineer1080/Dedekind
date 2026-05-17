@@ -15,7 +15,7 @@ This folder contains the **source** and **generated** documentation for the Dede
 | **Commercialization_Options.md** | Potenzielle Kommerzialisierungsoptionen (Beratung, Support, Lizenzen, SaaS, Förderung, Phasierung, Risiken) |
 | **IDE_Studio_Roadmap.md** | Dedekind in bestehenden IDEs (VS Code, Jupyter) + Dedekind Studio als kommerzielle Wissenschaftler-IDE (Einheiten, Plots, Postgres, LaTeX, lokale KI) |
 | **Build_Dedekind_Studio_Exe.md** | Anleitung: Dedekind Studio als Windows-.exe bauen (PyInstaller) |
-| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.8.0; Stärken, Lücken, Roadmap) |
+| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.8.1; Stärken, Lücken, Roadmap) |
 | **Dedekind_Language_Specification_v0.1.pdf** | Legacy PDF (v0.1); for current spec use the Markdown or generate v0.2 PDF below |
 | **Dedekind_Research_Papers_and_Architecture.pdf** | Legacy PDF; for current content use the Markdown or generate PDF below |
 
@@ -41,6 +41,10 @@ pandoc Dedekind_Research_and_Architecture.md -o Dedekind_Research_and_Architectu
 - **Online**: Paste the Markdown into a service that converts Markdown to PDF (e.g. markdown-to-pdf converters).
 - **Typora / other editors**: Open the `.md` file and export to PDF from the application.
 
+
+## What changed in v1.8.1 (documented here)
+
+- **Version 1.8.1**: **Purity-Check fuer pure-context-Aufrufe.** Neuer Compile-Zeit-Pass `src/compiler/purity_check.py` mit `check_purity(ast, filepath)`. Erkennt Funktionen, die an `jit(fn)`, `grad(fn, x)`, `fit(loss_fn, ...)`, `metropolis(log_prior, log_likelihood, ...)`, `hmc(...)` oder `sde_solve(drift, diffusion, ...)` uebergeben werden, und wirft `CompileError` mit Zeile, sobald diese Funktion (transitiv durch Hilfsfunktionen) eine der folgenden I/O-/Konsolen-Built-ins aufruft: `print`, `plot`, `scatter`, `contour`, `print_latex`, `print_table`, `write_file`, `read_file`, `file_exists`, `http_get`, `http_post`, `read_csv`/`write_csv`, `read_parquet`/`write_parquet`, `read_hdf5`/`write_hdf5`, `read_netcdf`, `export_notebook`. Verhindert eine ganze Bug-Klasse: stille `torch.compile`-Graph-Breaks im JIT-Pfad, Side-Effects in Autograd-Tapes (die `grad()` falsch zurueckgeben), und versehentliche 10 000-fache Datei-Writes in MCMC-Sample-Loops. Erkennung ist transitiv via Funktionstabelle — ruft `loss` eine Helper-Funktion auf und Helper ruft `print`, wird der gesamte Pfad gemeldet (`"... ruft 'print()' ... in 'helper'"`). Zyklus-Schutz via `visited`-Set. `pyimport`-Aufrufe sind explizit ausgenommen (Compiler kann externe Module nicht analysieren). Opt-Out: `compile_source(source, check_purity=False)` bzw. CLI `python -m compiler datei.ddk --no-purity-check` fuer Spezialfaelle wie Debug-Builds oder Migration bestehenden Codes. Integriert in compiler.py main pipeline nach Simplify- und Units-Check. Beispiel: `purity_check_demo.ddk` (zeigt zulaessige + auskommentierte verbotene Faelle inkl. transitiver). Test: `purity_check_test.ddk` (3 Asserts ueber fit/sde_solve/jit; alle 33/33 Tests gruen, 87/87 Beispiele kompilieren weiter).
 
 ## What changed in v1.8.0 (documented here)
 

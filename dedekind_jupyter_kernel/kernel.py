@@ -83,15 +83,15 @@ def _latex_to_unicode(s):
 
 class DedekindKernel(Kernel):
     implementation = "Dedekind"
-    implementation_version = "1.8.0"
+    implementation_version = "1.8.1"
     language = "dedekind"
-    language_version = "1.8.0"
+    language_version = "1.8.1"
     language_info = {
         "name": "dedekind",
         "mimetype": "text/x-dedekind",
         "file_extension": ".ddk",
     }
-    banner = "Dedekind Kernel – compile and run Dedekind code (Dedekind Language v1.8.0)"
+    banner = "Dedekind Kernel – compile and run Dedekind code (Dedekind Language v1.8.1)"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

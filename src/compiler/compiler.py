@@ -61,7 +61,8 @@ def _expand_uses(ast: Program, filepath: Optional[str], loaded: set) -> Program:
     return Program(new_stmts)
 
 
-def compile_source(source_code: str, filepath: Optional[str] = None, check_units: bool = True) -> str:
+def compile_source(source_code: str, filepath: Optional[str] = None,
+                   check_units: bool = True, check_purity: bool = True) -> str:
     try:
         lexer = Lexer(source_code)
         tokens = lexer.tokenize()
@@ -73,6 +74,9 @@ def compile_source(source_code: str, filepath: Optional[str] = None, check_units
         if check_units:
             from .units_checker import check_units as run_units_check
             run_units_check(ast, filepath=filepath)
+        if check_purity:
+            from .purity_check import check_purity as run_purity_check
+            run_purity_check(ast, filepath=filepath)
         codegen = CodeGenerator()
         python_code = codegen.generate(ast)
         return python_code
@@ -206,13 +210,14 @@ def main():
         print("Usage: python compiler.py <source_file> [--latex]")
         return
 
-    args = [a for a in sys.argv[1:] if a != "--no-units-check"]
+    args = [a for a in sys.argv[1:] if a not in ("--no-units-check", "--no-purity-check")]
     check_units = "--no-units-check" not in sys.argv[1:]
+    check_purity = "--no-purity-check" not in sys.argv[1:]
     export_latex = "--latex" in args
     if export_latex:
         args = [a for a in args if a != "--latex"]
     if not args:
-        print("Usage: python compiler.py <source_file> [--latex] [--no-units-check]")
+        print("Usage: python compiler.py <source_file> [--latex] [--no-units-check] [--no-purity-check]")
         return
 
     filepath = args[0]
@@ -231,7 +236,8 @@ def main():
             return
 
         print(f"Compiling {filepath}...")
-        python_code = compile_source(source, filepath=filepath, check_units=check_units)
+        python_code = compile_source(source, filepath=filepath,
+                                     check_units=check_units, check_purity=check_purity)
 
         # Output generated code
         print("-" * 20)
