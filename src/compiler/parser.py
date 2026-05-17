@@ -244,7 +244,7 @@ class Parser:
         node.line = start_line
         return node
 
-    _SHAPE_TYPES = {'scalar', 'vector', 'matrix', 'tensor'}
+    _SHAPE_TYPES = {'scalar', 'vector', 'matrix', 'tensor', 'graph'}
 
     def _parse_unit_bracket_inline(self):
         """Liest die Innenseite eines bereits konsumierten LBRACKET (für Einheits-Annotation)."""
@@ -263,13 +263,13 @@ class Parser:
         return ''.join(parts)
 
     def _parse_shape_annotation(self):
-        """Parst `Scalar`, `Vector[N]`, `Matrix[M,N]`, `Tensor[d1,d2,...]`.
+        """Parst `Scalar`, `Vector[N]`, `Matrix[M,N]`, `Tensor[d1,...]`, `Graph[N,E]`.
         Dimensionen sind Integer-Literale oder Identifier (symbolisch, Caller-bound).
-        Liefert eine Liste der Dimensionen (für Scalar leer)."""
+        Liefert ein Tuple (kind, dims) — kind ∈ {scalar,vector,matrix,tensor,graph}."""
         name_tok = self.consume('ID')
         name = name_tok.value.lower()
         if name == 'scalar':
-            return []
+            return ('scalar', [])
         if not self.peek() or self.peek().type != 'LBRACKET':
             raise CompileError(
                 f"Shape-Annotation '{name_tok.value}' braucht Dimensionen in [...] "
@@ -305,7 +305,12 @@ class Parser:
                 f"Matrix[...] erwartet genau 2 Dimensionen, bekam {len(dims)}.",
                 line=name_tok.line,
             )
-        return dims
+        if name == 'graph' and len(dims) != 2:
+            raise CompileError(
+                f"Graph[...] erwartet genau 2 Dimensionen (N_nodes, E_edges), bekam {len(dims)}.",
+                line=name_tok.line,
+            )
+        return (name, dims)
 
     def _parse_signature_annotation(self):
         """Nach `:` oder `->`: parst Unit ([m]) ODER Shape (Vector[N]).

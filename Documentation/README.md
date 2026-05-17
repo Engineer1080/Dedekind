@@ -15,7 +15,7 @@ This folder contains the **source** and **generated** documentation for the Dede
 | **Commercialization_Options.md** | Potenzielle Kommerzialisierungsoptionen (Beratung, Support, Lizenzen, SaaS, Förderung, Phasierung, Risiken) |
 | **IDE_Studio_Roadmap.md** | Dedekind in bestehenden IDEs (VS Code, Jupyter) + Dedekind Studio als kommerzielle Wissenschaftler-IDE (Einheiten, Plots, Postgres, LaTeX, lokale KI) |
 | **Build_Dedekind_Studio_Exe.md** | Anleitung: Dedekind Studio als Windows-.exe bauen (PyInstaller) |
-| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.11.0; Stärken, Lücken, Roadmap) |
+| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.12.0; Stärken, Lücken, Roadmap) |
 | **Dedekind_Language_Specification_v0.1.pdf** | Legacy PDF (v0.1); for current spec use the Markdown or generate v0.2 PDF below |
 | **Dedekind_Research_Papers_and_Architecture.pdf** | Legacy PDF; for current content use the Markdown or generate PDF below |
 
@@ -41,6 +41,10 @@ pandoc Dedekind_Research_and_Architecture.md -o Dedekind_Research_and_Architectu
 - **Online**: Paste the Markdown into a service that converts Markdown to PDF (e.g. markdown-to-pdf converters).
 - **Typora / other editors**: Open the `.md` file and export to PDF from the application.
 
+
+## What changed in v1.12.0 (documented here)
+
+- **Version 1.12.0**: **`Graph[N, E]` als Shape-Annotation (Stufe 2 der Graph-Roadmap).** Erweitert das in v1.9 eingefuehrte Shape-Annotations-System um einen Graph-Typ, der zur Laufzeit verifiziert, dass das uebergebene Objekt `num_nodes`/`num_edges`-Attribute hat (typisch `torch_geometric.data.Data`). Implementierung: Parser-`_SHAPE_TYPES` um `'graph'` erweitert; `_parse_shape_annotation` liefert jetzt ein `(kind, dims)`-Tupel statt einer reinen Liste — backward-kompatibel via Codegen-Dispatch. Neuer Runtime-Helper `_check_graph_shape(value, expected_dims, fn_name, arg_name, shape_env)` (plus `_check_return_graph_shape` fuer Return-Werte) zieht (`num_nodes`, `num_edges`) via PyG-API oder Fallback auf `x.shape[0]`/`edge_index.shape[1]`. Symbolische Dimensionen werden im selben `_shape_env` wie Tensor-Dims gebunden — zwei Graphen mit `Graph[N, ...]` und `Graph[N, ...]` muessen die gleiche Knotenzahl haben (cross-graph constraint). Kombinierbar mit Unit-Annotationen auf anderen Argumenten/Return: `fn molecular_mass(g: Graph[N, E]) -> [g/mol]` liefert einen Quantity-Return mit dimensionalem Sicherheits-Check. Zwei Demos zeigen die USP-Kombination Dedekind + PyG: `gnn_molecule_demo.ddk` (H2O-Molekuel mit `atomic_mass: [g/mol]` Knoten-Features, GCNConv aus `pyimport torch_geometric.nn`) und `gnn_materials_demo.ddk` (4-Atom-FCC-Einheitszelle mit `bond_length: [pm]` und `bond_energy: [eV]`, GraphConv). Test `graph_shape_test.ddk` validiert Knoten-/Kanten-Counts und cross-graph-Konsistenz symbolischer Dimensionen. **Bewusst NICHT geliefert** (Stufe 3 = mehrwoechiger Forschungs-Sprint): kein natives Message-Passing-Built-in — `pyimport torch_geometric` bleibt fuer produktive GNN-Workflows die ehrliche Antwort, weil PyG 30+ Conv-Varianten, Pooling-Strategien und Benchmark-Datasets mitbringt, die wir nicht in vertretbarer Zeit replizieren koennen. Dedekinds Beitrag in v1.12 ist die Annotations- und Unit-Schicht ueber PyG — der eigentliche USP. 38/38 Tests gruen, 94/94 Beispiele kompilieren.
 
 ## What changed in v1.11.0 (documented here)
 

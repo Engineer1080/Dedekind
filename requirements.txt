@@ -10,3 +10,7 @@ sympy>=1.10
 
 # Dedekind Jupyter Kernel (für Spyder / Jupyter / Dedekind Studio)
 ipykernel>=6.0
+
+# Optional: GNN-Beispiele (gnn_molecule_demo.ddk, gnn_materials_demo.ddk, graph_shape_test.ddk).
+# Andere Dedekind-Features funktionieren auch ohne torch_geometric.
+torch_geometric>=2.7

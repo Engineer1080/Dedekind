@@ -5813,6 +5813,80 @@ def partial(u, x, order=1):
     return cur
 
 
+# ----- Graph shape annotations (v1.12) -----------------------------------------
+def _graph_dims(value):
+    """Liefert (num_nodes, num_edges) fuer torch_geometric.data.Data oder
+    aehnliche Objekte. None wenn nicht ermittelbar."""
+    if hasattr(value, "num_nodes") and hasattr(value, "num_edges"):
+        try:
+            return int(value.num_nodes), int(value.num_edges)
+        except Exception:
+            pass
+    # Fallback: x.shape[0] / edge_index.shape[1]
+    n_nodes = None
+    n_edges = None
+    if hasattr(value, "x") and value.x is not None and hasattr(value.x, "shape"):
+        try:
+            n_nodes = int(value.x.shape[0])
+        except Exception:
+            pass
+    if hasattr(value, "edge_index") and value.edge_index is not None and hasattr(value.edge_index, "shape"):
+        try:
+            n_edges = int(value.edge_index.shape[1])
+        except Exception:
+            pass
+    if n_nodes is not None and n_edges is not None:
+        return n_nodes, n_edges
+    return None
+
+
+def _check_graph_dims_against_env(actual, expected_dims, fn_name, arg_name, shape_env, where):
+    """Pruefe (N_nodes, N_edges)-Tupel gegen erwartete Dimensionen mit Symbol-Bindung."""
+    labels = ("Knoten", "Kanten")
+    for i, (want, got, label) in enumerate(zip(expected_dims, actual, labels)):
+        if isinstance(want, int):
+            if want != got:
+                raise ValueError(
+                    f"Graph-Shape-Mismatch in {where} {fn_name}({arg_name}): "
+                    f"{label}-Anzahl erwartet {want}, erhalten {got}."
+                )
+        else:
+            bound = shape_env.get(want)
+            if bound is None:
+                shape_env[want] = got
+            elif bound != got:
+                raise ValueError(
+                    f"Symbolische Graph-Dimension '{want}' in {where} {fn_name}({arg_name}): "
+                    f"bereits als {bound} gebunden, hier {got} ({label})."
+                )
+
+
+def _check_graph_shape(value, expected_dims, fn_name, arg_name, shape_env):
+    """Validiert, dass `value` ein torch_geometric.data.Data-aehnliches Objekt mit den
+    deklarierten (N_nodes, N_edges)-Dimensionen ist. Symbolische Dimensionen werden
+    in `shape_env` gebunden bzw. konsistent gehalten."""
+    actual = _graph_dims(value)
+    if actual is None:
+        raise ValueError(
+            f"Graph-Shape-Check in {fn_name}({arg_name}): erwarte ein Graph-Objekt "
+            f"mit num_nodes/num_edges-Attributen (z. B. torch_geometric.data.Data), "
+            f"erhalten {type(value).__name__}."
+        )
+    _check_graph_dims_against_env(actual, expected_dims, fn_name, arg_name, shape_env, "Argument")
+    return value
+
+
+def _check_return_graph_shape(value, expected_dims, fn_name, shape_env):
+    actual = _graph_dims(value)
+    if actual is None:
+        raise ValueError(
+            f"Graph-Return-Shape-Check in {fn_name}: erwarte ein Graph-Objekt, "
+            f"erhalten {type(value).__name__}."
+        )
+    _check_graph_dims_against_env(actual, expected_dims, fn_name, "return", shape_env, "Return")
+    return value
+
+
 # ----- Quantity stripping helpers (v1.9) ---------------------------------------
 def unwrap(x):
     """Entfernt Einheit/Wrapper und liefert den nackten numerischen Wert (float/int/Tensor).

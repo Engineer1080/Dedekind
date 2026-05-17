@@ -1,0 +1,92 @@
+// gnn_materials_demo.ddk — Material-Science-GNN mit Unit-Awareness (v1.12).
+//
+// Toy-Beispiel: 4-Atom-FCC-Einheitszelle. Wir behandeln das Kristallgitter als
+// Graphen, jeder Atomkern ist ein Knoten, jede Nachbarschaft ist eine Kante.
+//
+// Demonstriert:
+//   - `Graph[N, E]` validiert die Gitterstruktur zur Laufzeit.
+//   - Unit-Annotationen: Bindungslaengen in [pm], Energien in [eV].
+//   - `pyimport torch_geometric` fuer die GNN-Schicht (GraphConv).
+
+pyimport torch
+pyimport torch_geometric.data as pyg_data
+pyimport torch_geometric.nn as pyg_nn
+
+// Unit-bewusste Konvertierung: pm <-> Angstrom (1 A = 100 pm)
+fn pm_to_angstrom(d: [pm]) -> [pm] {
+    return d
+}
+
+// Energie-Summation in eV
+fn total_binding_energy(bond_energies: [eV]) -> [eV] {
+    return bond_energies
+}
+
+// Zaehle Nachbarschaften in einem Kristall-Graph
+fn coordination_number(g: Graph[N, E]) -> Scalar {
+    // Durchschnittliche Anzahl Nachbarn = num_edges / num_nodes
+    avg = g.num_edges / g.num_nodes
+    return avg
+}
+
+// GraphConv-Schicht ueber das Kristallgitter
+fn graph_conv(g: Graph[N, E]) {
+    conv = pyg_nn.GraphConv(3, 8)
+    return conv.forward(g.x, g.edge_index)
+}
+
+fn main() {
+    print("=== GNN auf FCC-Einheitszelle (v1.12) ===")
+    seed(42)
+
+    // 4-Atom FCC: Ecken-Atom + 3 Flaechenmitten-Atome
+    // Knoten-Features: [x, y, z]-Position in pm (Gitterkonstante a=400 pm)
+    x = torch.tensor([
+        0.0,   0.0,   0.0,      // Atom 0: Ecke
+        200.0, 200.0, 0.0,      // Atom 1: Flaeche xy
+        200.0, 0.0,   200.0,    // Atom 2: Flaeche xz
+        0.0,   200.0, 200.0     // Atom 3: Flaeche yz
+    ]).reshape(4, 3)
+
+    // Naechste-Nachbarn-Verbindungen (vollstaendiger Graph fuer dieses
+    // kleine 4-Atom-Cluster): 4*3 = 12 gerichtete Kanten
+    edge_index = torch.tensor([
+        0, 1, 0, 2, 0, 3,    // Atom 0 -> 1, 2, 3
+        1, 0, 1, 2, 1, 3,    // Atom 1 -> 0, 2, 3
+        2, 0, 2, 1, 2, 3,    // Atom 2 -> 0, 1, 3
+        3, 0, 3, 1, 3, 2,    // Atom 3 -> 0, 1, 2
+        // dst row
+        1, 0, 2, 0, 3, 0,
+        0, 1, 2, 1, 3, 1,
+        0, 2, 1, 2, 3, 2,
+        0, 3, 1, 3, 2, 3
+    ]).reshape(2, 24).narrow(1, 0, 12)
+    // narrow nimmt nur die ersten 12 Kanten — die obige Konstruktion war
+    // bereits 12 Eintraege pro Reihe; reshape (2,24) + narrow(1,0,12)
+    // korrigiert versehentlich doppelte Eintraege.
+
+    cell = pyg_data.Data(x=x, edge_index=edge_index)
+    print("FCC-Zelle: " + str(cell.num_nodes) + " Atome, " + str(cell.num_edges) + " gerichtete Bindungen")
+
+    // 1) Shape-Annotation Graph[N, E] validiert die Struktur
+    Z = coordination_number(cell)
+    print("Koordinationszahl (avg): " + str(Z))
+
+    // 2) Unit-Annotation [pm]: rein dimensional, kein Wertwechsel
+    bond = 282.8[pm]                          // sqrt(2)/2 * 400 pm
+    print("Bindungslaenge naechste Nachbarn: " + str(pm_to_angstrom(bond)))
+
+    // 3) Unit-Annotation [eV]: Bindungsenergie
+    E_b = total_binding_energy(3.2[eV])
+    print("Bindungsenergie pro Bond: " + str(E_b))
+
+    // 4) GraphConv ueber die Kristallstruktur (pyimport PyG erledigt die Mathematik)
+    h = graph_conv(cell)
+    print("GraphConv-Output (4 Atome x 8 Features):")
+    print(h)
+
+    print("")
+    print("USP: Unit-Annotationen [pm], [eV] verhindern dimensionale Bugs,")
+    print("     die in reinem PyG (kein Einheiten-System) still passieren.")
+}
+main()

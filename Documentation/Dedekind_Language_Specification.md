@@ -2,7 +2,7 @@
 
 **Language Specification v0.2**  
 Mario Michael Heinrich · github.com/Engineer1080  
-Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit), v0.9.6 (Math-Funktionen), v0.9.7 (Chemie/Biologie: mol, L, M, ppm), v0.9.8 (Convenience, Elemente, Datei-I/O, Netzwerk, JSON), v1.0.0 (Release), v1.0.1–v1.0.6 (Patch), v1.2.6 (Winkel rad/deg, deg_to_rad, rad_to_deg), v1.2.7 (Dirichlet-Verteilung, dirichlet_function), v1.2.8 (Dedekind-Schnitte, Dedekind-Ringe, Riemann-Zeta, Riemann-Summen), v1.2.9 (Betragsstriche, Rotationskörper, logische Operatoren), v1.3.0 (integrate_sym, Lagrange/Hamilton, Lotka-Volterra, chemisches Gleichgewicht), v1.3.1 (Medizin, Pharmakologie, Epidemiologie), v1.4.0 (Modul-System `use`, Seed/data_hash, DataFrame+CSV/Parquet/HDF5/NetCDF, Unit-aware Plots, `@units`-Signaturen mit `fn f(x: [m]) -> [J]`, Dict-Literale), v1.5.0 (benchmark/profile/time_block, jit (torch.compile), sde_solve (Euler-Maruyama, Milstein), least_squares, minimize_constrained, milp, FEM-Primitiven mesh_unit_square/fem_assemble_*/fem_poisson_2d, `arange` int64), v1.6.0 (solve_sym/simplify_sym/series, cg/gmres/bicgstab + jacobi_/ilu_preconditioner, export_notebook (HTML/MD), print_table (markdown/latex/csv/plain) mit UncertainQuantity-±), v1.7.0 (Standardbibliothek-Module physics/stats/chemistry/biology/math/ml via `use`, benutzerdefinierte Einheiten `unit NAME = FAKTOR[basis]` mit Verkettung & Compile-Zeit-Registrierung, Quantity-Vergleichsoperatoren `<` `<=` `>` `>=` `==` `!=` mit Auto-Konvertierung), v1.8.0 (Source-Mapping fuer Runtime-Fehler — Tracebacks zeigen `.ddk`-Zeilen + Code-Auszug; `pyimport <mod[.sub]> [as alias]` als Fluchtluke in PyPI; `dedekind_exec` Helper in `compiler.py`), v1.8.1 (Purity-Check: `print`/`plot`/`write_file`/`http_*`/I/O-Built-ins in `jit`/`grad`/`fit`/`metropolis`/`hmc`/`sde_solve`-Argumenten werden zur Compile-Zeit transitiv erkannt und blockiert; Opt-Out via `--no-purity-check`), v1.9.0 (Shape-Annotationen `Scalar`/`Vector[n]`/`Matrix[m,n]`/`Tensor[...]` mit symbolischen Dimensionen, gebunden und konsistenzgeprueft pro Call; `unwrap(x)` strippt Quantity/UncertainQuantity-Wrapper fuer Hot-Path-Performance), v1.10.0 (PINN-Primitive `partial(u, x, order=n)` fuer ∂u/∂x via Autograd, ergaenzend zu `grad(fn, x)`; `fit()`-Hardening fuer PINN-Data-Listen mit gemischten Shapes und Collocation-grad-Reset), v1.11.0 (`graph_laplacian(adj, normalized=False)` fuer kombinatorische und normalisierte Laplace-Matrix; dichte/sparse Eingabe, direkt einsetzbar in cg/gmres/bicgstab/eigh)
+Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit), v0.9.6 (Math-Funktionen), v0.9.7 (Chemie/Biologie: mol, L, M, ppm), v0.9.8 (Convenience, Elemente, Datei-I/O, Netzwerk, JSON), v1.0.0 (Release), v1.0.1–v1.0.6 (Patch), v1.2.6 (Winkel rad/deg, deg_to_rad, rad_to_deg), v1.2.7 (Dirichlet-Verteilung, dirichlet_function), v1.2.8 (Dedekind-Schnitte, Dedekind-Ringe, Riemann-Zeta, Riemann-Summen), v1.2.9 (Betragsstriche, Rotationskörper, logische Operatoren), v1.3.0 (integrate_sym, Lagrange/Hamilton, Lotka-Volterra, chemisches Gleichgewicht), v1.3.1 (Medizin, Pharmakologie, Epidemiologie), v1.4.0 (Modul-System `use`, Seed/data_hash, DataFrame+CSV/Parquet/HDF5/NetCDF, Unit-aware Plots, `@units`-Signaturen mit `fn f(x: [m]) -> [J]`, Dict-Literale), v1.5.0 (benchmark/profile/time_block, jit (torch.compile), sde_solve (Euler-Maruyama, Milstein), least_squares, minimize_constrained, milp, FEM-Primitiven mesh_unit_square/fem_assemble_*/fem_poisson_2d, `arange` int64), v1.6.0 (solve_sym/simplify_sym/series, cg/gmres/bicgstab + jacobi_/ilu_preconditioner, export_notebook (HTML/MD), print_table (markdown/latex/csv/plain) mit UncertainQuantity-±), v1.7.0 (Standardbibliothek-Module physics/stats/chemistry/biology/math/ml via `use`, benutzerdefinierte Einheiten `unit NAME = FAKTOR[basis]` mit Verkettung & Compile-Zeit-Registrierung, Quantity-Vergleichsoperatoren `<` `<=` `>` `>=` `==` `!=` mit Auto-Konvertierung), v1.8.0 (Source-Mapping fuer Runtime-Fehler — Tracebacks zeigen `.ddk`-Zeilen + Code-Auszug; `pyimport <mod[.sub]> [as alias]` als Fluchtluke in PyPI; `dedekind_exec` Helper in `compiler.py`), v1.8.1 (Purity-Check: `print`/`plot`/`write_file`/`http_*`/I/O-Built-ins in `jit`/`grad`/`fit`/`metropolis`/`hmc`/`sde_solve`-Argumenten werden zur Compile-Zeit transitiv erkannt und blockiert; Opt-Out via `--no-purity-check`), v1.9.0 (Shape-Annotationen `Scalar`/`Vector[n]`/`Matrix[m,n]`/`Tensor[...]` mit symbolischen Dimensionen, gebunden und konsistenzgeprueft pro Call; `unwrap(x)` strippt Quantity/UncertainQuantity-Wrapper fuer Hot-Path-Performance), v1.10.0 (PINN-Primitive `partial(u, x, order=n)` fuer ∂u/∂x via Autograd, ergaenzend zu `grad(fn, x)`; `fit()`-Hardening fuer PINN-Data-Listen mit gemischten Shapes und Collocation-grad-Reset), v1.11.0 (`graph_laplacian(adj, normalized=False)` fuer kombinatorische und normalisierte Laplace-Matrix; dichte/sparse Eingabe, direkt einsetzbar in cg/gmres/bicgstab/eigh), v1.12.0 (`Graph[N, E]` als Shape-Annotation fuer torch_geometric.data.Data-aehnliche Objekte; symbolische Knoten/Kanten-Konsistenz; kombinierbar mit Unit-Annotationen auf anderen Argumenten)
 
 ---
 
@@ -555,10 +555,56 @@ fiedler = eigvecs.narrow(1, 1, 1).reshape(-1)
 
 Example: `examples/dedekind/graph_spectral_demo.ddk` (two-cluster graph with bridge edge, demonstrates both heat diffusion asymmetry and Fiedler partitioning). Test: `tests/dedekind/graph_laplacian_test.ddk`.
 
-**What v1.11 deliberately does not provide** (Stage 2+3 of the graph roadmap):
+### 15.18 Graph Shape Annotations for GNNs (v1.12)
 
-- No `Graph[N, E]` shape type. Coming in v1.12 as a unit-aware wrapper around `torch_geometric.data` — that's the real differentiator vs. plain PyG (edge weights with `[eV]`, node features with `[g/mol]`).
-- No native message passing. The honest answer is `pyimport torch_geometric` for production GNN workflows; a native message-passing primitive only makes sense with a multi-week research budget for spectral-bias-mitigation and GPU optimization.
+Extends the v1.9 shape-annotation system with a new `Graph[N, E]` type that wraps `torch_geometric.data.Data`-like objects:
+
+```dedekind
+pyimport torch_geometric.data as pyg_data
+pyimport torch_geometric.nn as pyg_nn
+
+fn coordination(g: Graph[N, E]) -> Scalar {
+    return g.num_edges / g.num_nodes
+}
+
+fn pair_match(g1: Graph[N, E1], g2: Graph[N, E2]) -> Scalar {
+    // beide Graphen muessen die gleiche Knotenzahl N haben
+    return g1.num_nodes + g2.num_nodes
+}
+
+fn gcn_forward(g: Graph[N, E]) {
+    conv = pyg_nn.GCNConv(1, 4)
+    return conv.forward(g.x, g.edge_index)
+}
+```
+
+Implementation:
+
+- Parser: `Graph[N, E]` is added to `_SHAPE_TYPES`. `_parse_shape_annotation` returns `(kind, dims)` tuples; the codegen dispatches `_check_shape` (tensor kinds) vs. `_check_graph_shape` (graph kind).
+- Runtime `_check_graph_shape(value, expected_dims, fn_name, arg_name, shape_env)`: reads `(num_nodes, num_edges)` via `value.num_nodes`/`value.num_edges` (PyG API) with a fallback to `value.x.shape[0]`/`value.edge_index.shape[1]`. Both dims must be `int` or symbolic. Symbolic dims bind into the same `_shape_env` as tensor dims, so a function can require multiple graphs to share a node-count.
+- Validates at call time and at return; mismatch raises `ValueError` with source-mapped traceback (v1.8 infrastructure).
+
+**The USP vs. plain PyG**: combinable with unit annotations on other arguments and return types:
+
+```dedekind
+fn molecular_mass(g: Graph[N, E]) -> [g/mol] {
+    raw = g.x.sum().item()
+    return Quantity(raw, "g/mol")
+}
+
+fn add_mass(m1: [g/mol], m2: [g/mol]) -> [g/mol] {
+    return m1 + m2
+}
+```
+
+PyTorch Geometric has no concept of physical units; mixing `eV` and `kcal/mol` on edge weights is a silent bug there. Dedekind catches it at compile time (via the existing units checker) and at runtime (via the Quantity arithmetic).
+
+What v1.12 **deliberately does not provide** (Stage 3 of the graph roadmap):
+
+- No native message-passing primitive. PyG covers 30+ Conv variants (GCN, GAT, GIN, SAGE, MPNN, EGNN, SchNet, DimeNet, …), three pooling strategies, and dozens of benchmark datasets — a multi-week reimplementation budget for a worse result. `pyimport torch_geometric.nn` is the honest answer for production GNN workflows.
+- Dedekind's contribution to v1.12 is the annotation and unit layer **over** PyG, not a replacement.
+
+Examples: `examples/dedekind/gnn_molecule_demo.ddk` (drug discovery: water molecule with atomic masses in `[g/mol]`, GCNConv), `examples/dedekind/gnn_materials_demo.ddk` (materials: 4-atom FCC unit cell with bond lengths in `[pm]` and binding energy in `[eV]`, GraphConv). Test: `tests/dedekind/graph_shape_test.ddk`.
 
 ---
 

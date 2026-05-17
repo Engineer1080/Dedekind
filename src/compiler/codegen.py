@@ -326,10 +326,13 @@ class CodeGenerator:
             self.add_line("_shape_env = {}")
         if arg_shapes:
             for arg_name, shape in zip(node.args, arg_shapes):
-                if shape is not None:
-                    self.add_line(
-                        f'_check_shape({arg_name}, {shape!r}, "{node.name}", "{arg_name}", _shape_env)'
-                    )
+                if shape is None:
+                    continue
+                kind, dims = shape if isinstance(shape, tuple) else ('tensor', shape)
+                check_fn = '_check_graph_shape' if kind == 'graph' else '_check_shape'
+                self.add_line(
+                    f'{check_fn}({arg_name}, {dims!r}, "{node.name}", "{arg_name}", _shape_env)'
+                )
         self._return_unit_stack.append(return_unit)
         self._return_shape_stack.append(return_shape)
         self._fn_name_stack.append(node.name)
@@ -376,7 +379,9 @@ class CodeGenerator:
             safe_unit = ret_unit.replace('"', '\\"')
             val = f'_check_return_unit({val}, "{safe_unit}", "{safe_fn}")'
         if ret_shape is not None:
-            val = f'_check_return_shape({val}, {ret_shape!r}, "{safe_fn}", _shape_env)'
+            kind, dims = ret_shape if isinstance(ret_shape, tuple) else ('tensor', ret_shape)
+            check_fn = '_check_return_graph_shape' if kind == 'graph' else '_check_return_shape'
+            val = f'{check_fn}({val}, {dims!r}, "{safe_fn}", _shape_env)'
         self.add_line(f"return {val}")
 
     def visit_Assignment(self, node: Assignment):

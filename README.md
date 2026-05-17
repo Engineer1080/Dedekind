@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-1.11.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-1.12.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -28,6 +28,26 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
+
+### What's New in v1.12.0
+
+- **`Graph[N, E]` als Shape-Annotation:** Funktionssignaturen erkennen jetzt einen Graph-Typ ueber den bereits in v1.9 etablierten Annotations-Mechanismus:
+  ```dedekind
+  pyimport torch_geometric.data as pyg_data
+  fn coordination(g: Graph[N, E]) -> Scalar { return g.num_edges / g.num_nodes }
+  fn pair_match(g1: Graph[N, E1], g2: Graph[N, E2]) -> Scalar { ... }
+  ```
+  Validiert zur Laufzeit, dass das uebergebene Objekt `num_nodes`/`num_edges`-Attribute hat (typisch `torch_geometric.data.Data`) und dass die Dimensionen passen. Symbolische Dimensionen werden gebunden und konsistent gehalten — zwei Graphen mit `Graph[N, ...]` und `Graph[N, ...]` muessen die gleiche Knotenzahl haben.
+- **Kombinierbar mit Unit-Annotationen:** Knoten-Features in `[g/mol]`, Kanten-Energien in `[eV]`, Bindungslaengen in `[pm]` — die dimensionale Sicherheit, die `torch_geometric` strukturell nicht hat. Beispiel:
+  ```dedekind
+  fn molecular_mass(g: Graph[N, E]) -> [g/mol] { ... }
+  fn add_mass(m1: [g/mol], m2: [g/mol]) -> [g/mol] { ... }
+  ```
+- **Zwei GNN-Demos via `pyimport torch_geometric`:**
+  - `gnn_molecule_demo.ddk` — Wirkstoffdomaene: H2O-Molekuel mit atomarer Masse in `[g/mol]` auf Knoten, GCNConv-Forward.
+  - `gnn_materials_demo.ddk` — Materialdomaene: 4-Atom-FCC-Einheitszelle mit Bindungslaengen in `[pm]` und Bindungsenergien in `[eV]`, GraphConv.
+- **Bewusst NICHT geliefert** (Stufe 3 der Graph-Roadmap): Kein natives Message-Passing. Die ehrliche Antwort fuer produktive GNNs bleibt `pyimport torch_geometric` — dort sind 30+ Conv-Varianten, Pooling-Strategien und Benchmark-Datasets. Dedekinds Rolle: Unit-Awareness, Shape-Annotation, Source-Mapping ueber den PyG-Aufruf legen.
+- Test: `graph_shape_test.ddk` (5 Asserts: Knoten-/Kanten-Counts, symbolische N-Konsistenz ueber zwei Graphen). 38/38 Tests gruen, 94/94 Beispiele kompilieren.
 
 ### What's New in v1.11.0
 
