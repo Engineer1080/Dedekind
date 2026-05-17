@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-1.8.1-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-1.9.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -28,6 +28,29 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
+
+### What's New in v1.9.0
+
+- **Shape-Annotationen fuer Tensoren:** Funktionssignaturen erlauben jetzt explizite Tensor-Shapes — als statische Garantie fuer Forschungs-Code, der sonst still unter Broadcasting leidet:
+  ```dedekind
+  fn dot_product(a: Vector[3], b: Vector[3]) -> Scalar { ... }
+  fn matvec(M: Matrix[2, 3], v: Vector[3]) -> Vector[2] { ... }
+  fn weighted_dot(x: Vector[N], w: Vector[N]) -> Scalar { ... }  // symbolisches N
+  fn forward(x: Tensor[batch, 28, 28]) -> Tensor[batch, 10] { ... }
+  ```
+  Vier Typkonstruktoren: `Scalar` (0-D), `Vector[n]` (1-D), `Matrix[m, n]` (2-D), `Tensor[d1, d2, ...]` (N-D). Dimensionen sind Integer-Literale **oder** Identifier (symbolisch, an den Caller gebunden). Symbolische Dims werden beim ersten Auftreten gebunden und auf Konsistenz geprueft — `weighted_dot(Vector[3], Vector[2])` wirft `ValueError: Symbolische Shape-Dimension 'N' in weighted_dot(w): bereits als 3 gebunden, hier 2.` Funktioniert auf Listen, Tuples und `torch.Tensor`. Return-Shape wird automatisch nach jeder `return`-Anweisung geprueft. Erkennt fehlerhafte Broadcasts und Form-Mismatches, die in reinem NumPy/PyTorch still falsche Ergebnisse produzieren.
+- **`unwrap(x)` — Quantity-Stripping fuer Hot-Paths:** Neue Built-in entfernt Einheits-Wrapper am Eingang von pure-context-Funktionen, damit `jit`/`grad`/`fit`/`metropolis`/`hmc`/`sde_solve` mit nackten Floats arbeiten koennen:
+  ```dedekind
+  fn pure_loss(params, data) {
+      a = unwrap(params[0])   // Quantity(2.0, "m") -> 2.0
+      b = unwrap(params[1])
+      x = unwrap(data[0])
+      diff = a * x + b - unwrap(data[1])
+      return diff * diff
+  }
+  ```
+  Verarbeitet `Quantity`, `UncertainQuantity` (std verworfen), 0-d `torch.Tensor` (via `.item()`), Listen/Tuples (elementweise) und beliebige andere Werte (passthrough). Die Compile-Zeit-Einheitenpruefung hat die Dimensionen bereits validiert; zur Laufzeit erzeugt der nackte Float keinen Wrapper-Overhead — wichtig bei 10 000+ Iterationen in MCMC-Loops oder JIT-kompilierten Graphen, wo `torch.compile` Python-Objekte als Graph-Break behandelt.
+- Beispiele: `shape_annotations_demo.ddk`, `quantity_stripping_demo.ddk`. Tests: `shape_annotations_test.ddk`, `quantity_stripping_test.ddk` (35/35 gruen; alle 89 Beispiele kompilieren).
 
 ### What's New in v1.8.1
 

@@ -15,7 +15,7 @@ This folder contains the **source** and **generated** documentation for the Dede
 | **Commercialization_Options.md** | Potenzielle Kommerzialisierungsoptionen (Beratung, Support, Lizenzen, SaaS, Förderung, Phasierung, Risiken) |
 | **IDE_Studio_Roadmap.md** | Dedekind in bestehenden IDEs (VS Code, Jupyter) + Dedekind Studio als kommerzielle Wissenschaftler-IDE (Einheiten, Plots, Postgres, LaTeX, lokale KI) |
 | **Build_Dedekind_Studio_Exe.md** | Anleitung: Dedekind Studio als Windows-.exe bauen (PyInstaller) |
-| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.8.1; Stärken, Lücken, Roadmap) |
+| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.9.0; Stärken, Lücken, Roadmap) |
 | **Dedekind_Language_Specification_v0.1.pdf** | Legacy PDF (v0.1); for current spec use the Markdown or generate v0.2 PDF below |
 | **Dedekind_Research_Papers_and_Architecture.pdf** | Legacy PDF; for current content use the Markdown or generate PDF below |
 
@@ -41,6 +41,10 @@ pandoc Dedekind_Research_and_Architecture.md -o Dedekind_Research_and_Architectu
 - **Online**: Paste the Markdown into a service that converts Markdown to PDF (e.g. markdown-to-pdf converters).
 - **Typora / other editors**: Open the `.md` file and export to PDF from the application.
 
+
+## What changed in v1.9.0 (documented here)
+
+- **Version 1.9.0**: **Shape-Annotationen fuer Tensoren.** Neue Syntax `fn f(arg: TYPE) -> TYPE` mit vier Typkonstruktoren: `Scalar` (0-D), `Vector[n]` (1-D), `Matrix[m, n]` (2-D), `Tensor[d1, d2, ...]` (N-D). Dimensionen sind Integer-Literale **oder** Identifier (symbolisch, an den Caller gebunden). Symbolische Dims werden beim ersten Auftreten in `_shape_env` gebunden und auf Konsistenz geprueft — `weighted_dot(Vector[N], Vector[N])` mit `weighted_dot([1,2,3], [4,5])` wirft `ValueError: Symbolische Shape-Dimension 'N' in weighted_dot(w): bereits als 3 gebunden, hier 2.` Parser: refaktoriertes `_parse_signature_annotation()` dispatcht `[unit]` vs. `Scalar/Vector/Matrix/Tensor`-Annotation; FunctionDef-AST-Knoten um `arg_shapes`/`return_shape`-Felder erweitert. Runtime: `_check_shape(value, expected_dims, fn_name, arg_name, shape_env)` und `_check_return_shape(...)` mit `_shape_of(value)` (unterstuetzt `torch.Tensor`, Listen, Tuples, Skalare). Codegen: am Funktionsentry wird `_shape_env = {}` gesetzt, fuer jedes annotierte Argument ein `_check_shape`-Aufruf emittiert; jeder `return` wird mit `_check_return_shape(...)` umhuellt. Beide laufen *nach* einem etwaigen Unit-Check (`_check_signature_unit`), damit erst die Einheit konvertiert und dann die Form geprueft wird. Catches Broadcasting-Bugs und Form-Mismatches, die in NumPy/PyTorch still falsche Ergebnisse liefern. **Quantity-Stripping in Hot Paths.** Neue Built-in `unwrap(x)` entfernt Einheits-Wrapper am Eingang von pure-context-Funktionen, damit `jit`/`grad`/`fit`/`metropolis`/`hmc`/`sde_solve` mit nackten Floats arbeiten. Verarbeitet `Quantity` (-> value), `UncertainQuantity` (-> value, std verworfen), 0-d `torch.Tensor` (via `.item()`), Listen/Tuples (elementweise rekursiv) und beliebige andere Werte (passthrough). Die Compile-Zeit-Einheitenpruefung hat die Dimensionen bereits validiert; zur Laufzeit erzeugt der nackte Float keinen Wrapper-Overhead — wichtig bei 10 000+ Iterationen in MCMC-Loops oder JIT-kompilierten Graphen, wo `torch.compile` Python-Objekte als Graph-Break behandelt. Beispiele: `shape_annotations_demo.ddk` (inkl. Negativ-Faelle als Kommentar), `quantity_stripping_demo.ddk` (Loss-Funktion mit jit). Tests: `shape_annotations_test.ddk` (6 Asserts: Vector[3], Matrix[2,3], symbolisches N), `quantity_stripping_test.ddk` (7 Asserts: Quantity-, Liste-, jit-Pfad). 35/35 Tests gruen; alle 89 Beispiele kompilieren.
 
 ## What changed in v1.8.1 (documented here)
 

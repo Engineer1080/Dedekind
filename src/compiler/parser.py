@@ -244,6 +244,83 @@ class Parser:
         node.line = start_line
         return node
 
+    _SHAPE_TYPES = {'scalar', 'vector', 'matrix', 'tensor'}
+
+    def _parse_unit_bracket_inline(self):
+        """Liest die Innenseite eines bereits konsumierten LBRACKET (für Einheits-Annotation)."""
+        parts = []
+        while self.peek() and self.peek().type != 'RBRACKET':
+            t = self.consume()
+            if t.type == 'ID': parts.append(t.value)
+            elif t.type == 'NUMBER': parts.append(str(t.value))
+            elif t.type == 'MUL': parts.append('*')
+            elif t.type == 'DIV': parts.append('/')
+            elif t.type == 'CARET' and self.peek() and self.peek().type == 'NUMBER':
+                parts.append('^'); parts.append(self.consume().value)
+            elif t.type == 'MINUS': parts.append('-')
+            else: break
+        self.consume('RBRACKET')
+        return ''.join(parts)
+
+    def _parse_shape_annotation(self):
+        """Parst `Scalar`, `Vector[N]`, `Matrix[M,N]`, `Tensor[d1,d2,...]`.
+        Dimensionen sind Integer-Literale oder Identifier (symbolisch, Caller-bound).
+        Liefert eine Liste der Dimensionen (für Scalar leer)."""
+        name_tok = self.consume('ID')
+        name = name_tok.value.lower()
+        if name == 'scalar':
+            return []
+        if not self.peek() or self.peek().type != 'LBRACKET':
+            raise CompileError(
+                f"Shape-Annotation '{name_tok.value}' braucht Dimensionen in [...] "
+                f"(z. B. {name_tok.value}[N]).",
+                line=name_tok.line,
+            )
+        self.consume('LBRACKET')
+        dims = []
+        while self.peek() and self.peek().type != 'RBRACKET':
+            t = self.consume()
+            if t.type == 'NUMBER':
+                try:
+                    dims.append(int(t.value))
+                except ValueError:
+                    raise CompileError(
+                        f"Shape-Dimension muss ganzzahlig oder symbolisch sein, bekam {t.value!r}.",
+                        line=t.line,
+                    )
+            elif t.type == 'ID':
+                dims.append(t.value)
+            elif t.type == 'COMMA':
+                continue
+            else:
+                break
+        self.consume('RBRACKET')
+        if name == 'vector' and len(dims) != 1:
+            raise CompileError(
+                f"Vector[...] erwartet genau 1 Dimension, bekam {len(dims)}.",
+                line=name_tok.line,
+            )
+        if name == 'matrix' and len(dims) != 2:
+            raise CompileError(
+                f"Matrix[...] erwartet genau 2 Dimensionen, bekam {len(dims)}.",
+                line=name_tok.line,
+            )
+        return dims
+
+    def _parse_signature_annotation(self):
+        """Nach `:` oder `->`: parst Unit ([m]) ODER Shape (Vector[N]).
+        Liefert (unit_str_or_None, shape_list_or_None) — genau eine Komponente ist non-None."""
+        tok = self.peek()
+        if tok and tok.type == 'LBRACKET':
+            self.consume('LBRACKET')
+            return self._parse_unit_bracket_inline(), None
+        if tok and tok.type == 'ID' and tok.value.lower() in self._SHAPE_TYPES:
+            return None, self._parse_shape_annotation()
+        raise CompileError(
+            f"Ungueltige Signatur-Annotation: erwartete `[unit]` oder `Scalar`/`Vector[N]`/`Matrix[M,N]`/`Tensor[...]`.",
+            line=tok.line if tok else None,
+        )
+
     def parse_function_def(self):
         start_line = self.peek().line
         self.consume('FN')
@@ -251,71 +328,34 @@ class Parser:
         self.consume('LPAREN')
         args = []
         arg_units = []
-        has_units = False
+        arg_shapes = []
+        has_annotations = False
         if self.peek().type != 'RPAREN':
             args.append(self.consume('ID').value)
-            u = None
+            u, sh = None, None
             if self.peek() and self.peek().type == 'COLON':
                 self.consume('COLON')
-                self.consume('LBRACKET')
-                # Re-feed: parse_unit_bracket expects LBRACKET token still there;
-                # we already consumed it, so parse inline mirror.
-                parts = []
-                while self.peek() and self.peek().type != 'RBRACKET':
-                    t = self.consume()
-                    if t.type == 'ID': parts.append(t.value)
-                    elif t.type == 'NUMBER': parts.append(str(t.value))
-                    elif t.type == 'MUL': parts.append('*')
-                    elif t.type == 'DIV': parts.append('/')
-                    elif t.type == 'CARET' and self.peek() and self.peek().type == 'NUMBER':
-                        parts.append('^'); parts.append(self.consume().value)
-                    elif t.type == 'MINUS': parts.append('-')
-                    else: break
-                self.consume('RBRACKET')
-                u = ''.join(parts)
-                has_units = True
+                u, sh = self._parse_signature_annotation()
+                has_annotations = True
             arg_units.append(u)
+            arg_shapes.append(sh)
             while self.peek().type == 'COMMA':
                 self.consume('COMMA')
                 args.append(self.consume('ID').value)
-                u = None
+                u, sh = None, None
                 if self.peek() and self.peek().type == 'COLON':
                     self.consume('COLON')
-                    self.consume('LBRACKET')
-                    parts = []
-                    while self.peek() and self.peek().type != 'RBRACKET':
-                        t = self.consume()
-                        if t.type == 'ID': parts.append(t.value)
-                        elif t.type == 'NUMBER': parts.append(str(t.value))
-                        elif t.type == 'MUL': parts.append('*')
-                        elif t.type == 'DIV': parts.append('/')
-                        elif t.type == 'CARET' and self.peek() and self.peek().type == 'NUMBER':
-                            parts.append('^'); parts.append(self.consume().value)
-                        elif t.type == 'MINUS': parts.append('-')
-                        else: break
-                    self.consume('RBRACKET')
-                    u = ''.join(parts)
-                    has_units = True
+                    u, sh = self._parse_signature_annotation()
+                    has_annotations = True
                 arg_units.append(u)
+                arg_shapes.append(sh)
         self.consume('RPAREN')
         return_unit = None
+        return_shape = None
         if self.peek() and self.peek().type == 'RETURNS':
             self.consume('RETURNS')
-            self.consume('LBRACKET')
-            parts = []
-            while self.peek() and self.peek().type != 'RBRACKET':
-                t = self.consume()
-                if t.type == 'ID': parts.append(t.value)
-                elif t.type == 'NUMBER': parts.append(str(t.value))
-                elif t.type == 'MUL': parts.append('*')
-                elif t.type == 'DIV': parts.append('/')
-                elif t.type == 'CARET' and self.peek() and self.peek().type == 'NUMBER':
-                    parts.append('^'); parts.append(self.consume().value)
-                elif t.type == 'MINUS': parts.append('-')
-                else: break
-            self.consume('RBRACKET')
-            return_unit = ''.join(parts)
-            has_units = True
+            return_unit, return_shape = self._parse_signature_annotation()
+            has_annotations = True
         self.consume('LBRACE')
         body = []
         while self.peek().type != 'RBRACE':
@@ -323,8 +363,10 @@ class Parser:
         self.consume('RBRACE')
         node = FunctionDef(
             name, args, body,
-            arg_units=arg_units if has_units else None,
+            arg_units=arg_units if has_annotations and any(u is not None for u in arg_units) else None,
             return_unit=return_unit,
+            arg_shapes=arg_shapes if has_annotations and any(s is not None for s in arg_shapes) else None,
+            return_shape=return_shape,
         )
         node.line = start_line
         return node

@@ -5594,6 +5594,127 @@ def _check_return_unit(value, expected_unit, fn_name):
     return _coerce_to_expected_unit(value, expected_unit, f"return von {fn_name}")
 
 
+# ----- Shape annotations (v1.9) ------------------------------------------------
+def _shape_of(value):
+    """Liefert die Shape eines Wertes als Tupel von ints. Skalar -> (), unbekannt -> None."""
+    if isinstance(value, (int, float, bool)):
+        return ()
+    if isinstance(value, Quantity):
+        return ()
+    if hasattr(value, "shape"):
+        try:
+            sh = tuple(int(d) for d in value.shape)
+            return sh
+        except Exception:
+            pass
+    if isinstance(value, (list, tuple)):
+        if len(value) == 0:
+            return (0,)
+        first_sub = _shape_of(value[0])
+        if first_sub is None:
+            return (len(value),)
+        # Konsistenz aller Elemente (sonst unregelmäßig -> nur erste Dimension)
+        for item in value[1:]:
+            if _shape_of(item) != first_sub:
+                return (len(value),)
+        return (len(value),) + first_sub
+    return None
+
+
+def _format_shape(dims):
+    """Liefert eine kompakte String-Darstellung einer Shape-Liste/Tupel."""
+    parts = [str(d) for d in dims]
+    return "[" + ", ".join(parts) + "]"
+
+
+def _check_shape(value, expected_dims, fn_name, arg_name, shape_env):
+    """Prueft, dass `value` die deklarierte Shape `expected_dims` hat.
+    Symbolische Dimensionen (Strings) werden in `shape_env` gebunden bzw. verglichen.
+    Wirft ValueError bei Mismatch. Liefert `value` unveraendert zurueck (passthrough)."""
+    actual = _shape_of(value)
+    if actual is None:
+        # Shape nicht ermittelbar (z. B. generischer Iterator) - skip
+        return value
+    if len(actual) != len(expected_dims):
+        raise ValueError(
+            f"Shape-Mismatch in {fn_name}({arg_name}): erwartet {_format_shape(expected_dims)} "
+            f"({len(expected_dims)}-D), erhalten {_format_shape(actual)} ({len(actual)}-D)."
+        )
+    for i, (want, got) in enumerate(zip(expected_dims, actual)):
+        if isinstance(want, int):
+            if want != got:
+                raise ValueError(
+                    f"Shape-Mismatch in {fn_name}({arg_name}): Dimension {i} erwartet {want}, "
+                    f"erhalten {got}. Volle Shape: erwartet {_format_shape(expected_dims)}, "
+                    f"erhalten {_format_shape(actual)}."
+                )
+        else:
+            # Symbolische Dimension: erste Begegnung bindet, danach Konsistenz pruefen
+            bound = shape_env.get(want)
+            if bound is None:
+                shape_env[want] = got
+            elif bound != got:
+                raise ValueError(
+                    f"Symbolische Shape-Dimension '{want}' in {fn_name}({arg_name}): bereits "
+                    f"als {bound} gebunden, hier {got}. Volle Shape: erwartet "
+                    f"{_format_shape(expected_dims)}, erhalten {_format_shape(actual)}."
+                )
+    return value
+
+
+def _check_return_shape(value, expected_dims, fn_name, shape_env):
+    actual = _shape_of(value)
+    if actual is None:
+        return value
+    if len(actual) != len(expected_dims):
+        raise ValueError(
+            f"Return-Shape-Mismatch in {fn_name}: erwartet {_format_shape(expected_dims)}, "
+            f"erhalten {_format_shape(actual)}."
+        )
+    for i, (want, got) in enumerate(zip(expected_dims, actual)):
+        if isinstance(want, int):
+            if want != got:
+                raise ValueError(
+                    f"Return-Shape-Mismatch in {fn_name}: Dim {i} erwartet {want}, erhalten {got}."
+                )
+        else:
+            bound = shape_env.get(want)
+            if bound is None:
+                shape_env[want] = got
+            elif bound != got:
+                raise ValueError(
+                    f"Symbolische Return-Dimension '{want}' in {fn_name}: bereits {bound}, "
+                    f"hier {got}."
+                )
+    return value
+
+
+# ----- Quantity stripping helpers (v1.9) ---------------------------------------
+def unwrap(x):
+    """Entfernt Einheit/Wrapper und liefert den nackten numerischen Wert (float/int/Tensor).
+    - Quantity(value, unit)  -> value (float)
+    - UncertainQuantity      -> value (float; std wird verworfen)
+    - 0-d torch.Tensor       -> .item()
+    - Liste/Tuple            -> elementweise unwrap
+    Sonst: passthrough.
+    Wirft NICHTS; sicher in jeder Hot-Loop-Position aufrufbar.
+    Nutzung: ersten Schritt einer per-jit/grad/fit-gerufenen Funktion, um Quantity-Overhead
+    zu vermeiden — die Compile-Zeit-Einheitenpruefung hat die Dimensionen bereits validiert."""
+    if isinstance(x, Quantity):
+        return x.value
+    if 'UncertainQuantity' in globals() and isinstance(x, globals()['UncertainQuantity']):
+        return x.value
+    if hasattr(x, "shape") and hasattr(x, "numel"):
+        try:
+            if x.numel() == 1:
+                return x.item()
+        except Exception:
+            pass
+    if isinstance(x, (list, tuple)):
+        return type(x)(unwrap(item) for item in x)
+    return x
+
+
 # ============================================================================
 # Unit-aware Plotting: Quantity-Listen erhalten automatisch Achsenbeschriftung "[unit]"
 # ============================================================================

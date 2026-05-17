@@ -2,7 +2,7 @@
 
 **Language Specification v0.2**  
 Mario Michael Heinrich · github.com/Engineer1080  
-Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit), v0.9.6 (Math-Funktionen), v0.9.7 (Chemie/Biologie: mol, L, M, ppm), v0.9.8 (Convenience, Elemente, Datei-I/O, Netzwerk, JSON), v1.0.0 (Release), v1.0.1–v1.0.6 (Patch), v1.2.6 (Winkel rad/deg, deg_to_rad, rad_to_deg), v1.2.7 (Dirichlet-Verteilung, dirichlet_function), v1.2.8 (Dedekind-Schnitte, Dedekind-Ringe, Riemann-Zeta, Riemann-Summen), v1.2.9 (Betragsstriche, Rotationskörper, logische Operatoren), v1.3.0 (integrate_sym, Lagrange/Hamilton, Lotka-Volterra, chemisches Gleichgewicht), v1.3.1 (Medizin, Pharmakologie, Epidemiologie), v1.4.0 (Modul-System `use`, Seed/data_hash, DataFrame+CSV/Parquet/HDF5/NetCDF, Unit-aware Plots, `@units`-Signaturen mit `fn f(x: [m]) -> [J]`, Dict-Literale), v1.5.0 (benchmark/profile/time_block, jit (torch.compile), sde_solve (Euler-Maruyama, Milstein), least_squares, minimize_constrained, milp, FEM-Primitiven mesh_unit_square/fem_assemble_*/fem_poisson_2d, `arange` int64), v1.6.0 (solve_sym/simplify_sym/series, cg/gmres/bicgstab + jacobi_/ilu_preconditioner, export_notebook (HTML/MD), print_table (markdown/latex/csv/plain) mit UncertainQuantity-±), v1.7.0 (Standardbibliothek-Module physics/stats/chemistry/biology/math/ml via `use`, benutzerdefinierte Einheiten `unit NAME = FAKTOR[basis]` mit Verkettung & Compile-Zeit-Registrierung, Quantity-Vergleichsoperatoren `<` `<=` `>` `>=` `==` `!=` mit Auto-Konvertierung), v1.8.0 (Source-Mapping fuer Runtime-Fehler — Tracebacks zeigen `.ddk`-Zeilen + Code-Auszug; `pyimport <mod[.sub]> [as alias]` als Fluchtluke in PyPI; `dedekind_exec` Helper in `compiler.py`), v1.8.1 (Purity-Check: `print`/`plot`/`write_file`/`http_*`/I/O-Built-ins in `jit`/`grad`/`fit`/`metropolis`/`hmc`/`sde_solve`-Argumenten werden zur Compile-Zeit transitiv erkannt und blockiert; Opt-Out via `--no-purity-check`)
+Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit), v0.9.6 (Math-Funktionen), v0.9.7 (Chemie/Biologie: mol, L, M, ppm), v0.9.8 (Convenience, Elemente, Datei-I/O, Netzwerk, JSON), v1.0.0 (Release), v1.0.1–v1.0.6 (Patch), v1.2.6 (Winkel rad/deg, deg_to_rad, rad_to_deg), v1.2.7 (Dirichlet-Verteilung, dirichlet_function), v1.2.8 (Dedekind-Schnitte, Dedekind-Ringe, Riemann-Zeta, Riemann-Summen), v1.2.9 (Betragsstriche, Rotationskörper, logische Operatoren), v1.3.0 (integrate_sym, Lagrange/Hamilton, Lotka-Volterra, chemisches Gleichgewicht), v1.3.1 (Medizin, Pharmakologie, Epidemiologie), v1.4.0 (Modul-System `use`, Seed/data_hash, DataFrame+CSV/Parquet/HDF5/NetCDF, Unit-aware Plots, `@units`-Signaturen mit `fn f(x: [m]) -> [J]`, Dict-Literale), v1.5.0 (benchmark/profile/time_block, jit (torch.compile), sde_solve (Euler-Maruyama, Milstein), least_squares, minimize_constrained, milp, FEM-Primitiven mesh_unit_square/fem_assemble_*/fem_poisson_2d, `arange` int64), v1.6.0 (solve_sym/simplify_sym/series, cg/gmres/bicgstab + jacobi_/ilu_preconditioner, export_notebook (HTML/MD), print_table (markdown/latex/csv/plain) mit UncertainQuantity-±), v1.7.0 (Standardbibliothek-Module physics/stats/chemistry/biology/math/ml via `use`, benutzerdefinierte Einheiten `unit NAME = FAKTOR[basis]` mit Verkettung & Compile-Zeit-Registrierung, Quantity-Vergleichsoperatoren `<` `<=` `>` `>=` `==` `!=` mit Auto-Konvertierung), v1.8.0 (Source-Mapping fuer Runtime-Fehler — Tracebacks zeigen `.ddk`-Zeilen + Code-Auszug; `pyimport <mod[.sub]> [as alias]` als Fluchtluke in PyPI; `dedekind_exec` Helper in `compiler.py`), v1.8.1 (Purity-Check: `print`/`plot`/`write_file`/`http_*`/I/O-Built-ins in `jit`/`grad`/`fit`/`metropolis`/`hmc`/`sde_solve`-Argumenten werden zur Compile-Zeit transitiv erkannt und blockiert; Opt-Out via `--no-purity-check`), v1.9.0 (Shape-Annotationen `Scalar`/`Vector[n]`/`Matrix[m,n]`/`Tensor[...]` mit symbolischen Dimensionen, gebunden und konsistenzgeprueft pro Call; `unwrap(x)` strippt Quantity/UncertainQuantity-Wrapper fuer Hot-Path-Performance)
 
 ---
 
@@ -394,6 +394,70 @@ Opt-out for special cases (debug builds, code migration):
 - CLI: `python -m compiler datei.ddk --no-purity-check`
 
 Example: `examples/dedekind/purity_check_demo.ddk`. Test: `tests/dedekind/purity_check_test.ddk`.
+
+### 15.15 Shape Annotations and Quantity Stripping (v1.9)
+
+**Shape annotations** declare tensor ranks and dimensions in function signatures, catching broadcasting bugs and shape mismatches that silently produce wrong results in plain NumPy/PyTorch:
+
+```dedekind
+fn dot_product(a: Vector[3], b: Vector[3]) -> Scalar { ... }
+fn matvec(M: Matrix[2, 3], v: Vector[3]) -> Vector[2] { ... }
+fn weighted_dot(x: Vector[N], w: Vector[N]) -> Scalar { ... }
+fn forward(x: Tensor[batch, 28, 28]) -> Tensor[batch, 10] { ... }
+```
+
+Four type constructors:
+
+| Type | Rank | Example |
+|------|------|---------|
+| `Scalar` | 0-D | `Scalar` |
+| `Vector[n]` | 1-D | `Vector[3]`, `Vector[N]` |
+| `Matrix[m, n]` | 2-D | `Matrix[2, 3]`, `Matrix[M, N]` |
+| `Tensor[d1, d2, ...]` | N-D | `Tensor[batch, 28, 28]` |
+
+Dimensions are either integer literals (`3`) or identifiers (`N`, `batch`). Identifiers are **symbolic dimensions** bound at call time: the first argument using `N` sets the value, subsequent arguments with the same `N` must match. Mismatch raises `ValueError` with the `.ddk` file and line (via the source-mapped traceback infrastructure from v1.8).
+
+Implementation:
+
+- Parser extends `_parse_signature_annotation()` to dispatch between `[unit]` (existing) and shape (new) annotations after `:` or `->`.
+- AST: `FunctionDef` gains `arg_shapes: Optional[List[Optional[List]]]` and `return_shape: Optional[List]` fields. Each shape is a list mixing `int` (literal dim) and `str` (symbolic dim).
+- Codegen emits at function entry:
+  ```python
+  _shape_env = {}
+  _check_shape(arg1, [3], "fn", "arg1", _shape_env)
+  _check_shape(arg2, ['N', 2], "fn", "arg2", _shape_env)
+  ```
+  and wraps each `return val` as `return _check_return_shape(val, [...], "fn", _shape_env)`.
+- Runtime `_check_shape` calls `_shape_of(value)` which works on `torch.Tensor` (`.shape`), Python lists/tuples (recursive consistency check), and scalars (`()`); returns `None` for unrecognized types (no check).
+- Unit annotations and shape annotations can be combined: unit-coercion runs first, then shape validation.
+
+**Quantity stripping** for hot paths — new built-in `unwrap(x)` that strips unit/uncertainty wrappers, returning raw values:
+
+```dedekind
+fn pure_loss(params, data) {
+    a = unwrap(params[0])   // Quantity(2.0, "m") -> 2.0
+    b = unwrap(params[1])
+    x = unwrap(data[0])
+    y = unwrap(data[1])
+    diff = a * x + b - y    // all-float arithmetic
+    return diff * diff
+}
+fast_loss = jit(pure_loss)
+```
+
+Behavior of `unwrap`:
+
+| Input | Output |
+|-------|--------|
+| `Quantity(value, unit)` | `value` (float) |
+| `UncertainQuantity(value, std, unit)` | `value` (std discarded) |
+| 0-D `torch.Tensor` | `.item()` |
+| `list`/`tuple` | element-wise `unwrap` (recursive) |
+| anything else | passthrough |
+
+Rationale: the compile-time units checker has already validated dimensions; at runtime the wrapper adds overhead — invisible for a handful of calls, but significant in MCMC chains with 10 000+ samples or in `torch.compile`-d graphs where Python objects force graph breaks. Calling `unwrap()` at function entry gives the compiler clean Python floats / numpy arrays to optimize.
+
+Examples: `examples/dedekind/shape_annotations_demo.ddk`, `examples/dedekind/quantity_stripping_demo.ddk`. Tests: `tests/dedekind/shape_annotations_test.ddk`, `tests/dedekind/quantity_stripping_test.ddk`.
 
 ---
 

@@ -68,7 +68,7 @@ _RUNTIME_BUILTIN_NAMES = frozenset({
     'export_notebook',
     'print_table',
     'assert', 'diff_sym', 'integrate_sym', 'jacobian', 'hessian',
-    '_register_user_unit',
+    '_register_user_unit', 'unwrap',
     # Constants (from ml_runtime)
     'pi', 'e', 'c', 'G', 'h', 'k_B', 'k_e', 'hbar', 'e_charge', 'epsilon_0', 'mu_0',
     'm_e', 'm_p', 'N_A', 'R_gas', 'alpha', 'sigma_SB', 'F_faraday',
@@ -180,6 +180,7 @@ class CodeGenerator:
         self.code = []
         self.indent_level = 0
         self._return_unit_stack = []  # Active function's declared return unit ("" = dimensionless, None = unchecked)
+        self._return_shape_stack = []  # Active function's declared return shape (list of int|str) or None
         self._fn_name_stack = []
 
     def generate(self, node: Node) -> str:
@@ -311,6 +312,8 @@ class CodeGenerator:
         self.indent_level += 1
         arg_units = getattr(node, "arg_units", None)
         return_unit = getattr(node, "return_unit", None)
+        arg_shapes = getattr(node, "arg_shapes", None)
+        return_shape = getattr(node, "return_shape", None)
         if arg_units:
             for arg_name, unit in zip(node.args, arg_units):
                 if unit:
@@ -318,7 +321,17 @@ class CodeGenerator:
                     self.add_line(
                         f'{arg_name} = _check_signature_unit({arg_name}, "{safe_unit}", "{node.name}", "{arg_name}")'
                     )
+        # Shape-Checks: lokales shape_env fuer symbolische Dimensionen
+        if arg_shapes is not None or return_shape is not None:
+            self.add_line("_shape_env = {}")
+        if arg_shapes:
+            for arg_name, shape in zip(node.args, arg_shapes):
+                if shape is not None:
+                    self.add_line(
+                        f'_check_shape({arg_name}, {shape!r}, "{node.name}", "{arg_name}", _shape_env)'
+                    )
         self._return_unit_stack.append(return_unit)
+        self._return_shape_stack.append(return_shape)
         self._fn_name_stack.append(node.name)
         try:
             for stmt in node.body:
@@ -327,6 +340,7 @@ class CodeGenerator:
                 if isinstance(res, str): self.add_line(res)
         finally:
             self._return_unit_stack.pop()
+            self._return_shape_stack.pop()
             self._fn_name_stack.pop()
         self.indent_level -= 1
         self.add_line("")
@@ -354,12 +368,15 @@ class CodeGenerator:
     def visit_ReturnStmt(self, node: ReturnStmt):
         val = self.visit_expression(node.value)
         ret_unit = self._return_unit_stack[-1] if self._return_unit_stack else None
+        ret_shape = self._return_shape_stack[-1] if self._return_shape_stack else None
+        fn_name = self._fn_name_stack[-1] if self._fn_name_stack else ""
+        safe_fn = fn_name.replace('"', '\\"')
+        # Reihenfolge: erst Unit-Konvertierung, dann Shape-Check (Shape wirkt auf umgerechneten Wert).
         if ret_unit is not None:
-            fn_name = self._fn_name_stack[-1] if self._fn_name_stack else ""
             safe_unit = ret_unit.replace('"', '\\"')
-            safe_fn = fn_name.replace('"', '\\"')
-            self.add_line(f'return _check_return_unit({val}, "{safe_unit}", "{safe_fn}")')
-            return
+            val = f'_check_return_unit({val}, "{safe_unit}", "{safe_fn}")'
+        if ret_shape is not None:
+            val = f'_check_return_shape({val}, {ret_shape!r}, "{safe_fn}", _shape_env)'
         self.add_line(f"return {val}")
 
     def visit_Assignment(self, node: Assignment):

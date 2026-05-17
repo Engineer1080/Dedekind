@@ -1,0 +1,51 @@
+// Positiv-Test fuer Shape-Annotationen.
+// Negative Faelle (Mismatch) sind in den Demo-Files dokumentiert, koennen aber von
+// Dedekind selbst nicht in try/except gefangen werden.
+
+fn approx(a, b, tol) {
+    d = a - b
+    if d < 0 { d = -d }
+    return d < tol
+}
+
+fn dot3(a: Vector[3], b: Vector[3]) -> Scalar {
+    return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]
+}
+
+fn matvec_2x3(M: Matrix[2, 3], v: Vector[3]) -> Vector[2] {
+    return [
+        M[0][0]*v[0] + M[0][1]*v[1] + M[0][2]*v[2],
+        M[1][0]*v[0] + M[1][1]*v[1] + M[1][2]*v[2]
+    ]
+}
+
+fn first_two(xs: Vector[N]) -> Vector[2] {
+    return [xs[0], xs[1]]
+}
+
+// Konsistenz zweier symbolischer Dims
+fn weighted_dot(x: Vector[N], w: Vector[N]) -> Scalar {
+    return x[0]*w[0] + x[1]*w[1] + x[2]*w[2]
+}
+
+fn main() {
+    // 1*4 + 2*5 + 3*6 = 32
+    assert(approx(dot3([1.0, 2.0, 3.0], [4.0, 5.0, 6.0]), 32.0, 1e-9), "Vector[3] dot")
+
+    // Matrix[2,3] * Vector[3] -> Vector[2]
+    out = matvec_2x3([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]], [7.0, 8.0, 9.0])
+    assert(approx(out[0], 7.0, 1e-9), "matvec row0")
+    assert(approx(out[1], 8.0, 1e-9), "matvec row1")
+
+    // Symbolische Dim N: arbitrary length, bindet sich vom Eingang
+    first = first_two([10.0, 20.0, 30.0, 40.0, 50.0])
+    assert(approx(first[0], 10.0, 1e-9), "first[0]")
+    assert(approx(first[1], 20.0, 1e-9), "first[1]")
+
+    // Zwei Args mit demselben N (konsistent)
+    wd = weighted_dot([1.0, 2.0, 3.0], [0.1, 0.2, 0.3])
+    assert(approx(wd, 0.1 + 0.4 + 0.9, 1e-6), "weighted dot N=3")
+
+    print("shape_annotations_test: 6 Asserts bestanden")
+}
+main()

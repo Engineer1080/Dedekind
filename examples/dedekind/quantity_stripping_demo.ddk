@@ -1,0 +1,63 @@
+// quantity_stripping_demo.ddk — `unwrap(x)` entfernt Quantity-Wrapper
+// in performance-kritischen Pfaden.
+//
+// Hintergrund: Skalare Quantity-Objekte tragen Einheits-Metadaten mit.
+// Bei wenigen Aufrufen vernachlässigbar; in JIT/Autograd/MCMC-Loops mit
+// 10 000+ Iterationen wird der Wrapper-Overhead sichtbar — und
+// `torch.compile` mag keine Python-Objekte im Hot Path.
+//
+// Die Compile-Zeit-Einheitenprüfung hat die Dimensionen längst validiert;
+// zur Laufzeit reicht der nackte Float. `unwrap(x)`:
+//
+//   - Quantity(value, "J")  ->  value (float)
+//   - UncertainQuantity     ->  value (std verworfen)
+//   - 0-d torch.Tensor      ->  .item()
+//   - Liste/Tuple           ->  elementweise
+//   - sonst                 ->  passthrough
+
+fn pure_loss(params, data) {
+    // Ersten Schritt: alle Eingaben strippen
+    a = unwrap(params[0])
+    b = unwrap(params[1])
+    x = unwrap(data[0])
+    y = unwrap(data[1])
+
+    // Ab hier nur noch Float-Arithmetik — kein Quantity-Wrap-/Unwrap-Overhead
+    diff = a * x + b - y
+    return diff * diff
+}
+
+fn drift_pure(t, y) {
+    yv = unwrap(y)
+    return 0.05 * yv
+}
+
+fn diff_pure(t, y) {
+    yv = unwrap(y)
+    return 0.2 * yv
+}
+
+fn main() {
+    print("=== Quantity Stripping (v1.9) ===")
+
+    // 1) Einzel-unwrap
+    qE = 5.0[J]
+    print("Quantity vor unwrap: " + str(qE))
+    print("unwrap(5[J])       = " + str(unwrap(qE)))
+
+    // 2) Liste mit gemischten Einheiten -> Liste von Floats
+    qs = [1.0[m], 2.0[m], 3.0[m]]
+    print("unwrap([1m,2m,3m]) = " + str(unwrap(qs)))
+
+    // 3) Loss-Funktion mit Quantity-Eingaben — innerhalb der Funktion alles Float
+    params = [2.0[m], 0.5[m]]    // Parameter mit Einheit (z. B. aus Messung)
+    data   = [1.5, 4.5]          // raw data
+    L = pure_loss(params, data)
+    print("loss          = " + str(L))   // raw float, kein Quantity-Wrap
+
+    // 4) Nutzung in jit/sde_solve/fit — gleiche Funktion, keine Anpassung noetig
+    fast_loss = jit(pure_loss)
+    L2 = fast_loss(params, data)
+    print("jit(loss)     = " + str(L2))
+}
+main()

@@ -36,6 +36,8 @@ class FunctionDef(Node):
     body: List[Node]
     arg_units: Optional[List[Optional[str]]] = None  # Per-arg unit annotations ([m], [kg], …); None per slot = not annotated
     return_unit: Optional[str] = None  # Return unit annotation
+    arg_shapes: Optional[List[Optional[List]]] = None  # Per-arg shape annotations (Vector[2], Tensor[batch,N]); None per slot = not annotated
+    return_shape: Optional[List] = None  # Return shape annotation
 
 
 @dataclass
