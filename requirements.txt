@@ -22,3 +22,7 @@ openmm>=8.0
 # Optional: Labeled Tensors (labeled_tensors_demo.ddk, labeled_tensors_test.ddk).
 # Wird nur fuer labeled_tensor() / LabeledTensor[...]-Annotation benoetigt.
 xarray>=2024.0
+
+# Optional: Cheminformatik (bioinformatics_demo.ddk, bioinformatics_test.ddk).
+# Wird nur fuer smiles_descriptors() / lipinski_rule_of_five() benoetigt.
+rdkit>=2024.0

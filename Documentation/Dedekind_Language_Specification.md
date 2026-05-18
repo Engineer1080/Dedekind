@@ -2,7 +2,7 @@
 
 **Language Specification v0.2**  
 Mario Michael Heinrich · github.com/Engineer1080  
-Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit), v0.9.6 (Math-Funktionen), v0.9.7 (Chemie/Biologie: mol, L, M, ppm), v0.9.8 (Convenience, Elemente, Datei-I/O, Netzwerk, JSON), v1.0.0 (Release), v1.0.1–v1.0.6 (Patch), v1.2.6 (Winkel rad/deg, deg_to_rad, rad_to_deg), v1.2.7 (Dirichlet-Verteilung, dirichlet_function), v1.2.8 (Dedekind-Schnitte, Dedekind-Ringe, Riemann-Zeta, Riemann-Summen), v1.2.9 (Betragsstriche, Rotationskörper, logische Operatoren), v1.3.0 (integrate_sym, Lagrange/Hamilton, Lotka-Volterra, chemisches Gleichgewicht), v1.3.1 (Medizin, Pharmakologie, Epidemiologie), v1.4.0 (Modul-System `use`, Seed/data_hash, DataFrame+CSV/Parquet/HDF5/NetCDF, Unit-aware Plots, `@units`-Signaturen mit `fn f(x: [m]) -> [J]`, Dict-Literale), v1.5.0 (benchmark/profile/time_block, jit (torch.compile), sde_solve (Euler-Maruyama, Milstein), least_squares, minimize_constrained, milp, FEM-Primitiven mesh_unit_square/fem_assemble_*/fem_poisson_2d, `arange` int64), v1.6.0 (solve_sym/simplify_sym/series, cg/gmres/bicgstab + jacobi_/ilu_preconditioner, export_notebook (HTML/MD), print_table (markdown/latex/csv/plain) mit UncertainQuantity-±), v1.7.0 (Standardbibliothek-Module physics/stats/chemistry/biology/math/ml via `use`, benutzerdefinierte Einheiten `unit NAME = FAKTOR[basis]` mit Verkettung & Compile-Zeit-Registrierung, Quantity-Vergleichsoperatoren `<` `<=` `>` `>=` `==` `!=` mit Auto-Konvertierung), v1.8.0 (Source-Mapping fuer Runtime-Fehler — Tracebacks zeigen `.ddk`-Zeilen + Code-Auszug; `pyimport <mod[.sub]> [as alias]` als Fluchtluke in PyPI; `dedekind_exec` Helper in `compiler.py`), v1.8.1 (Purity-Check: `print`/`plot`/`write_file`/`http_*`/I/O-Built-ins in `jit`/`grad`/`fit`/`metropolis`/`hmc`/`sde_solve`-Argumenten werden zur Compile-Zeit transitiv erkannt und blockiert; Opt-Out via `--no-purity-check`), v1.9.0 (Shape-Annotationen `Scalar`/`Vector[n]`/`Matrix[m,n]`/`Tensor[...]` mit symbolischen Dimensionen, gebunden und konsistenzgeprueft pro Call; `unwrap(x)` strippt Quantity/UncertainQuantity-Wrapper fuer Hot-Path-Performance), v1.10.0 (PINN-Primitive `partial(u, x, order=n)` fuer ∂u/∂x via Autograd, ergaenzend zu `grad(fn, x)`; `fit()`-Hardening fuer PINN-Data-Listen mit gemischten Shapes und Collocation-grad-Reset), v1.11.0 (`graph_laplacian(adj, normalized=False)` fuer kombinatorische und normalisierte Laplace-Matrix; dichte/sparse Eingabe, direkt einsetzbar in cg/gmres/bicgstab/eigh), v1.12.0 (`Graph[N, E]` als Shape-Annotation fuer torch_geometric.data.Data-aehnliche Objekte; symbolische Knoten/Kanten-Konsistenz; kombinierbar mit Unit-Annotationen auf anderen Argumenten), v1.13.0 (deklarative MILP-DSL via `Variable(name, lower, upper, integer)` und `optimize_milp(objective, constraints, sense)` mit Operator-Overloading und unit-aware Constraints), v1.14.0 (Molekulardynamik-Bruecke `md_simulate_lj(...)` via OpenMM mit dimensionsvalidierten Force-Field-Parametern; neue MD-Einheiten nm/Angstrom/pm, amu, fs/ps/ns, sowie neue Dimension molar_energy mit kJ/mol/kcal/mol/eV/Hartree), v1.15.0 (`LabeledTensor[lat, lon, time]` als Shape-Annotation fuer xarray.DataArray; `labeled_tensor(data, dims, coords, attrs)` zur Konstruktion; Achsen-Namen-Validierung Reihenfolge-irrelevant)
+Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit), v0.9.6 (Math-Funktionen), v0.9.7 (Chemie/Biologie: mol, L, M, ppm), v0.9.8 (Convenience, Elemente, Datei-I/O, Netzwerk, JSON), v1.0.0 (Release), v1.0.1–v1.0.6 (Patch), v1.2.6 (Winkel rad/deg, deg_to_rad, rad_to_deg), v1.2.7 (Dirichlet-Verteilung, dirichlet_function), v1.2.8 (Dedekind-Schnitte, Dedekind-Ringe, Riemann-Zeta, Riemann-Summen), v1.2.9 (Betragsstriche, Rotationskörper, logische Operatoren), v1.3.0 (integrate_sym, Lagrange/Hamilton, Lotka-Volterra, chemisches Gleichgewicht), v1.3.1 (Medizin, Pharmakologie, Epidemiologie), v1.4.0 (Modul-System `use`, Seed/data_hash, DataFrame+CSV/Parquet/HDF5/NetCDF, Unit-aware Plots, `@units`-Signaturen mit `fn f(x: [m]) -> [J]`, Dict-Literale), v1.5.0 (benchmark/profile/time_block, jit (torch.compile), sde_solve (Euler-Maruyama, Milstein), least_squares, minimize_constrained, milp, FEM-Primitiven mesh_unit_square/fem_assemble_*/fem_poisson_2d, `arange` int64), v1.6.0 (solve_sym/simplify_sym/series, cg/gmres/bicgstab + jacobi_/ilu_preconditioner, export_notebook (HTML/MD), print_table (markdown/latex/csv/plain) mit UncertainQuantity-±), v1.7.0 (Standardbibliothek-Module physics/stats/chemistry/biology/math/ml via `use`, benutzerdefinierte Einheiten `unit NAME = FAKTOR[basis]` mit Verkettung & Compile-Zeit-Registrierung, Quantity-Vergleichsoperatoren `<` `<=` `>` `>=` `==` `!=` mit Auto-Konvertierung), v1.8.0 (Source-Mapping fuer Runtime-Fehler — Tracebacks zeigen `.ddk`-Zeilen + Code-Auszug; `pyimport <mod[.sub]> [as alias]` als Fluchtluke in PyPI; `dedekind_exec` Helper in `compiler.py`), v1.8.1 (Purity-Check: `print`/`plot`/`write_file`/`http_*`/I/O-Built-ins in `jit`/`grad`/`fit`/`metropolis`/`hmc`/`sde_solve`-Argumenten werden zur Compile-Zeit transitiv erkannt und blockiert; Opt-Out via `--no-purity-check`), v1.9.0 (Shape-Annotationen `Scalar`/`Vector[n]`/`Matrix[m,n]`/`Tensor[...]` mit symbolischen Dimensionen, gebunden und konsistenzgeprueft pro Call; `unwrap(x)` strippt Quantity/UncertainQuantity-Wrapper fuer Hot-Path-Performance), v1.10.0 (PINN-Primitive `partial(u, x, order=n)` fuer ∂u/∂x via Autograd, ergaenzend zu `grad(fn, x)`; `fit()`-Hardening fuer PINN-Data-Listen mit gemischten Shapes und Collocation-grad-Reset), v1.11.0 (`graph_laplacian(adj, normalized=False)` fuer kombinatorische und normalisierte Laplace-Matrix; dichte/sparse Eingabe, direkt einsetzbar in cg/gmres/bicgstab/eigh), v1.12.0 (`Graph[N, E]` als Shape-Annotation fuer torch_geometric.data.Data-aehnliche Objekte; symbolische Knoten/Kanten-Konsistenz; kombinierbar mit Unit-Annotationen auf anderen Argumenten), v1.13.0 (deklarative MILP-DSL via `Variable(name, lower, upper, integer)` und `optimize_milp(objective, constraints, sense)` mit Operator-Overloading und unit-aware Constraints), v1.14.0 (Molekulardynamik-Bruecke `md_simulate_lj(...)` via OpenMM mit dimensionsvalidierten Force-Field-Parametern; neue MD-Einheiten nm/Angstrom/pm, amu, fs/ps/ns, sowie neue Dimension molar_energy mit kJ/mol/kcal/mol/eV/Hartree), v1.15.0 (`LabeledTensor[lat, lon, time]` als Shape-Annotation fuer xarray.DataArray; `labeled_tensor(data, dims, coords, attrs)` zur Konstruktion; Achsen-Namen-Validierung Reihenfolge-irrelevant), v1.16.0 (Bioinformatik-Quick-Wins: `Sequence[DNA]/Sequence[RNA]/Sequence[Protein]` mit Alphabet-Validierung, native Bio-Built-ins gc_content/transcribe/translate/reverse_complement/k_mer_count, Cheminformatik via pyimport rdkit mit smiles_descriptors/lipinski_rule_of_five)
 
 ---
 
@@ -761,6 +761,52 @@ Order in the annotation is documentation only — xarray operates name-based, so
 **What v1.15 deliberately does not provide:** no re-implementation of xarray operations (regridding, interp_like, groupby_bins, rolling means, etc.). Users call those directly on the DataArray (`da.coarsen(time=12).mean()` etc.). No Dask-/distributed-aware annotations — chunked DataArrays work via `pyimport xarray`, but only dim-name validation runs. Dedekind's role is the annotation-and-type layer over xarray, not a competitor to it.
 
 Example: `examples/dedekind/labeled_tensors_demo.ddk` (4×8×12 synthetic climate dataset: temporal mean, zonal mean, anomaly, `.sel`-slicing by coordinate value). Test: `tests/dedekind/labeled_tensors_test.ddk`.
+
+### 15.22 Bioinformatics Quick-Wins (v1.16)
+
+Typed bioinformatics primitives layered on top of the existing annotation system, with one cheminformatics bridge via `pyimport rdkit`.
+
+```dedekind
+fn dna_to_protein(dna: Sequence[DNA]) -> Sequence[Protein] {
+    rna = transcribe(dna)
+    return translate(rna)
+}
+protein = dna_to_protein("ATGGCCCTGTGGATGCGCCTCCTGCCCCTGCTG")
+// "MALWMRLLPL" — first 10 AA of insulin signal peptide
+```
+
+**`Sequence[kind]`-Annotation:**
+
+| Kind | Alphabet |
+|------|----------|
+| `DNA` | A, C, G, T, N (= unknown) |
+| `RNA` | A, C, G, U, N |
+| `Protein` | 20 standard amino acids + B, Z, X (ambiguity), `*` (stop) |
+
+Mismatch raises `ValueError: Sequence[DNA]-Check in fn(seq): ungueltiges Zeichen 'U' an Position 3 (erlaubt: ACGNT).` — catches the classic Python/Biopython bug of passing an RNA string into a DNA-only function and silently miscomputing GC content.
+
+**Native bio built-ins** (no pyimport):
+
+| Built-in | Returns |
+|----------|---------|
+| `gc_content(dna)` | float 0..1 |
+| `reverse_complement(dna)` | str |
+| `transcribe(dna)` | RNA str (T→U) |
+| `translate(rna, stop_at_stop=True)` | protein str |
+| `k_mer_count(seq, k)` | dict {k-mer: count} |
+
+**Cheminformatics via `pyimport rdkit`:**
+
+| Built-in | Returns |
+|----------|---------|
+| `smiles_descriptors(smiles)` | dict with `mw` ([g/mol]), `logp`, `num_atoms`, `num_heavy_atoms`, `num_rings`, `num_aromatic_rings`, `hbd`, `hba`, `tpsa`, `num_rotatable_bonds` |
+| `lipinski_rule_of_five(smiles)` | dict with `mw`, `logp`, `hbd`, `hba`, `checks` (four bool flags), `violations` (count), `passes` (bool) |
+
+MW and TPSA come back as `Quantity` — directly usable in unit-aware arithmetic.
+
+**What v1.16 deliberately does not provide:** no sequence alignment (Smith-Waterman, Needleman-Wunsch), no PDB/structure parsing, no phylogenetic trees, no multiple sequence alignment. For those, `pyimport Bio.Align`, `pyimport Bio.PDB`, etc. Dedekind's role here is typed quick-wins where native implementation is small, plus the annotated cheminformatics bridge with unit-aware descriptors.
+
+Example: `examples/dedekind/bioinformatics_demo.ddk` (insulin signal peptide via central dogma, k-mer analysis, Aspirin/Caffeine/Ibuprofen Lipinski). Test: `tests/dedekind/bioinformatics_test.ddk`.
 
 ---
 

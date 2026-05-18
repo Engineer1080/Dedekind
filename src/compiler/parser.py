@@ -244,7 +244,7 @@ class Parser:
         node.line = start_line
         return node
 
-    _SHAPE_TYPES = {'scalar', 'vector', 'matrix', 'tensor', 'graph', 'labeledtensor'}
+    _SHAPE_TYPES = {'scalar', 'vector', 'matrix', 'tensor', 'graph', 'labeledtensor', 'sequence'}
 
     def _parse_unit_bracket_inline(self):
         """Liest die Innenseite eines bereits konsumierten LBRACKET (für Einheits-Annotation)."""
@@ -310,6 +310,19 @@ class Parser:
                 f"Graph[...] erwartet genau 2 Dimensionen (N_nodes, E_edges), bekam {len(dims)}.",
                 line=name_tok.line,
             )
+        if name == 'sequence':
+            if len(dims) != 1 or not isinstance(dims[0], str):
+                raise CompileError(
+                    f"Sequence[...] erwartet genau einen Typ-Identifier (DNA, RNA, Protein), "
+                    f"bekam {dims!r}.",
+                    line=name_tok.line,
+                )
+            if dims[0].upper() not in ('DNA', 'RNA', 'PROTEIN'):
+                raise CompileError(
+                    f"Sequence[{dims[0]}]: erwartet DNA, RNA oder Protein, bekam {dims[0]!r}.",
+                    line=name_tok.line,
+                )
+            dims = [dims[0].upper()]  # normalisiert
         return (name, dims)
 
     def _parse_signature_annotation(self):

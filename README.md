@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-1.15.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-1.16.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -28,6 +28,30 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
+
+### What's New in v1.16.0
+
+- **`Sequence[DNA]` / `Sequence[RNA]` / `Sequence[Protein]`-Shape-Annotation:** Typsichere Sequenz-Validierung. Akzeptiert genau die Zeichen des jeweiligen Alphabets — sonst `ValueError: Sequence[DNA]-Check in fn(seq): ungueltiges Zeichen 'U' an Position 3 (erlaubt: ACGNT)`. Verhindert klassische Bioinformatik-Bugs wie RNA-statt-DNA-Verwechselung, die in Python/Biopython still falsche GC-Counts produzieren.
+- **Native Bio-Built-ins** (kein `pyimport` noetig):
+  - `gc_content(dna)` — Anteil G+C (0..1)
+  - `reverse_complement(dna)` — DNA reverse-complement
+  - `transcribe(dna)` — DNA → RNA (T → U)
+  - `translate(rna, stop_at_stop=true)` — RNA → Protein via Standard-Codon-Tabelle
+  - `k_mer_count(seq, k)` — alle ueberlappenden k-Mere mit Counts
+- **Cheminformatik via `pyimport rdkit`:**
+  - `smiles_descriptors(smiles)` liefert Dict mit `mw` ([g/mol]), `logp`, `num_atoms`, `num_heavy_atoms`, `num_rings`, `num_aromatic_rings`, `hbd`, `hba`, `tpsa`, `num_rotatable_bonds`. MW kommt als `Quantity` zurueck — direkt nutzbar in unit-aware Berechnungen.
+  - `lipinski_rule_of_five(smiles)` prueft die vier Drug-Likeness-Kriterien (MW≤500, LogP≤5, HBD≤5, HBA≤10) und liefert `{checks, violations, passes}`.
+- **Zentrales Dogma als Beispiel:**
+  ```dedekind
+  fn dna_to_protein(dna: Sequence[DNA]) -> Sequence[Protein] {
+      rna = transcribe(dna)
+      return translate(rna)
+  }
+  protein = dna_to_protein("ATGGCCCTGTGGATGCGCCTCCTGCCCCTGCTG")
+  // "MALWMRLLPL" (Insulin-Signalpeptid-Anfang)
+  ```
+- **Bewusst NICHT geliefert:** kein Sequence-Alignment (Smith-Waterman, Needleman-Wunsch) als nativen Built-in — Forscher rufen `pyimport Bio.Align as aln` direkt auf. Kein PDB-/Strukturen-Parsing — `pyimport Bio.PDB`. Keine phylogenetischen Baeume. Dedekinds Rolle: Typsicherheit + Quick-Wins, nicht Replacement von Biopython/rdkit.
+- Beispiel: `bioinformatics_demo.ddk` (DNA-Pipeline, k-Mer-Analyse, Aspirin/Coffein/Ibuprofen SMILES + Lipinski). Test: `bioinformatics_test.ddk` (18 Asserts). 42/42 Tests gruen, 98/98 Beispiele kompilieren.
 
 ### What's New in v1.15.0
 
