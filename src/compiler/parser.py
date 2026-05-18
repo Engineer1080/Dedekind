@@ -383,6 +383,16 @@ class Parser:
         start_line = self.peek().line
         self.consume('FN')
         name = self.consume('ID').value
+        # Optional: Typ-Parameter `<T, U, ...>` (polymorphe Einheiten/Shapes).
+        type_params = []
+        if self.peek() and self.peek().type == 'LT':
+            self.consume('LT')
+            if self.peek() and self.peek().type != 'GT':
+                type_params.append(self.consume('ID').value)
+                while self.peek() and self.peek().type == 'COMMA':
+                    self.consume('COMMA')
+                    type_params.append(self.consume('ID').value)
+            self.consume('GT')
         self.consume('LPAREN')
         args = []
         arg_units = []
@@ -426,6 +436,7 @@ class Parser:
             arg_shapes=arg_shapes if has_annotations and any(s is not None for s in arg_shapes) else None,
             return_shape=return_shape,
             is_pub=is_pub,
+            type_params=type_params,
         )
         node.line = start_line
         return node

@@ -5617,6 +5617,79 @@ def _check_return_unit(value, expected_unit, fn_name):
     return _coerce_to_expected_unit(value, expected_unit, f"return von {fn_name}")
 
 
+# ----- Polymorphe Typ-Parameter (v1.20) ----------------------------------------
+def _unit_of_value(value):
+    """Liefert die Einheit eines Wertes als String. '' fuer unitless / Zahlen / Tensoren."""
+    if isinstance(value, Quantity):
+        return value.unit or ""
+    if isinstance(value, UncertainQuantity):
+        return value.unit or ""
+    return ""
+
+
+def _check_param_unit(value, param_name, fn_name, arg_name, unit_env):
+    """Bindet eine polymorphe Einheits-Variable konsistent ueber alle Argumente eines Calls.
+
+    Erstes Auftreten: bindet param_name -> Einheit von value.
+    Folgende Auftritte: muss die gleiche Dimension haben; bei Bedarf wird value
+    in die gebundene Einheit umgerechnet.
+
+    Beispiel:
+        fn add<U>(a: [U], b: [U]) -> [U] { return a + b }
+        add(2[m], 3[m])       # U bindet auf 'm'
+        add(2[m], 100[cm])    # U bindet auf 'm', 100[cm] wird zu 1[m]
+        add(2[m], 3[kg])      # ValueError (Dimensions-Mismatch)
+    """
+    actual = _unit_of_value(value)
+    if param_name not in unit_env:
+        unit_env[param_name] = actual
+        return value
+    bound = unit_env[param_name]
+    if bound == actual:
+        return value
+    # Beide non-empty + gleiche Einheit (durch String-Vergleich)?
+    if _normalize_unit_for_compare(bound) == _normalize_unit_for_compare(actual):
+        return value
+    # Beide non-empty + gleiche Dimension? -> in gebundene Einheit umrechnen.
+    if isinstance(value, Quantity) and bound:
+        try:
+            return _coerce_to_expected_unit(value, bound, f"{fn_name}({arg_name}) [Typ-Param {param_name}]")
+        except ValueError:
+            pass
+    # Caller gab plain number, Bindung erwartet Einheit
+    if bound and not actual and isinstance(value, (int, float)):
+        return Quantity(float(value), bound)
+    raise ValueError(
+        f"Typ-Param-Einheit '{param_name}' in {fn_name}({arg_name}): "
+        f"bereits an [{bound or 'unitless'}] gebunden, hier [{actual or 'unitless'}]."
+    )
+
+
+def _check_return_param_unit(value, param_name, fn_name, unit_env):
+    """Pruefe / binde polymorphe Einheits-Variable am Return-Punkt."""
+    actual = _unit_of_value(value)
+    if param_name not in unit_env:
+        # Return ist die erste Stelle, die param_name sieht — binden, ohne Pruefung
+        unit_env[param_name] = actual
+        return value
+    bound = unit_env[param_name]
+    if bound == actual:
+        return value
+    if _normalize_unit_for_compare(bound) == _normalize_unit_for_compare(actual):
+        return value
+    if isinstance(value, Quantity) and bound:
+        try:
+            return _coerce_to_expected_unit(value, bound, f"return von {fn_name} [Typ-Param {param_name}]")
+        except ValueError:
+            pass
+    if bound and not actual and isinstance(value, (int, float)):
+        return Quantity(float(value), bound)
+    raise ValueError(
+        f"Typ-Param-Einheit '{param_name}' im Return von {fn_name}: "
+        f"erwartet [{bound or 'unitless'}], erhalten [{actual or 'unitless'}]."
+    )
+
+
 # ----- Shape annotations (v1.9) ------------------------------------------------
 def _shape_of(value):
     """Liefert die Shape eines Wertes als Tupel von ints. Skalar -> (), unbekannt -> None."""

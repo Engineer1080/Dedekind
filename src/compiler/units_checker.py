@@ -176,11 +176,15 @@ def _check_expr(node: Node, filepath: Optional[str]) -> None:
         return
     if isinstance(node, FunctionDef):
         arg_units = getattr(node, "arg_units", None)
+        type_params = set(getattr(node, "type_params", []) or [])
         if arg_units:
             saved = dict(KNOWN_UNITS)
             try:
                 for arg_name, u in zip(node.args, arg_units):
-                    if u is not None:
+                    if u is not None and u not in type_params:
+                        # Konkrete Einheit -> KNOWN_UNITS-Bindung fuer statischen Check.
+                        # Typ-Parameter-Einheiten ueberspringen wir hier — sie werden zur
+                        # Laufzeit ueber _unit_env konsistent geprueft.
                         KNOWN_UNITS[arg_name] = u
                 for stmt in node.body:
                     _check_stmt(stmt, filepath)

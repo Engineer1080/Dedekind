@@ -15,7 +15,7 @@ This folder contains the **source** and **generated** documentation for the Dede
 | **Commercialization_Options.md** | Potenzielle Kommerzialisierungsoptionen (Beratung, Support, Lizenzen, SaaS, Förderung, Phasierung, Risiken) |
 | **IDE_Studio_Roadmap.md** | Dedekind in bestehenden IDEs (VS Code, Jupyter) + Dedekind Studio als kommerzielle Wissenschaftler-IDE (Einheiten, Plots, Postgres, LaTeX, lokale KI) |
 | **Build_Dedekind_Studio_Exe.md** | Anleitung: Dedekind Studio als Windows-.exe bauen (PyInstaller) |
-| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.19.0; Stärken, Lücken, Roadmap) |
+| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.20.0; Stärken, Lücken, Roadmap) |
 | **Dedekind_Language_Specification_v0.1.pdf** | Legacy PDF (v0.1); for current spec use the Markdown or generate v0.2 PDF below |
 | **Dedekind_Research_Papers_and_Architecture.pdf** | Legacy PDF; for current content use the Markdown or generate PDF below |
 
@@ -41,6 +41,10 @@ pandoc Dedekind_Research_and_Architecture.md -o Dedekind_Research_and_Architectu
 - **Online**: Paste the Markdown into a service that converts Markdown to PDF (e.g. markdown-to-pdf converters).
 - **Typora / other editors**: Open the `.md` file and export to PDF from the application.
 
+
+## What changed in v1.20.0 (documented here)
+
+- **Version 1.20.0**: **Generics / Typ-Parameter mit echter Durchsetzung.** Syntax `fn name<T, U, ...>(args)` deklariert polymorphe Typ-Parameter. Implementiert via: Parser-Erweiterung in `parse_function_def` (akzeptiert optional `LT ID (COMMA ID)* GT` zwischen Funktionsname und Argument-Liste); `FunctionDef`-AST um `type_params: List[str]` (default leer) erweitert; `simplify.py` propagiert das Feld; Codegen `visit_FunctionDef` initialisiert `_unit_env = {}` falls Typ-Parameter vorhanden und dispatcht: Argument mit Einheits-Annotation, die einem Typ-Parameter entspricht, geht durch `_check_param_unit(value, "U", fn_name, arg_name, _unit_env)` statt durch `_check_signature_unit`; analog fuer Return durch `_check_return_param_unit`. Runtime `_check_param_unit` bindet `U -> Einheit(value)` beim ersten Auftreten in `_unit_env`; bei folgenden Auftritten wird die Dimension verglichen (gleiche Einheit -> pass, gleiche Dimension mit anderer Einheit -> `_coerce_to_expected_unit` zur gebundenen Einheit, Mismatch -> `ValueError` mit Bindungs- und Aktuell-Werten). Plain-Number-zu-Einheit-Coercion (Caller gibt `5` wo `[m]` erwartet, U bereits an `[m]` gebunden -> wird zu `5[m]`). **Units-Checker-Patch**: in `_check_expr(FunctionDef)` werden Typ-Parameter-Einheiten von `KNOWN_UNITS` ausgeschlossen, sodass der statische Check sie nicht als konkrete Einheit interpretiert und mit anderen `KNOWN_UNITS` vergleicht. **Backward-Kompatibilitaet**: Funktionen ohne `<...>`-Deklaration verhalten sich identisch zu Pre-v1.20 — `type_params` ist default leer, alle Checks gehen den klassischen Pfad. **Unterschied zu Python's `typing.TypeVar`**: dort dokumentarisch (vom Interpreter ignoriert); hier aktiv durchgesetzt mit Auto-Konvertierung bei dimensional kompatiblen Einheiten und ValueError bei Dimensions-Mismatch. Shape-Variablen (`<N>` mit `Vector[N]`) bleiben semantisch wie in v1.9 (bind in `_shape_env`); durch die explizite `<N>`-Deklaration wird der Vertrag aber im Funktionskopf sichtbar. Beispiel `generics_demo.ddk` mit 3 Demos (polymorphe Einheit inkl. Auto-Konvertierung, Shape-Parameter mit cross-arg-Konsistenz, kombinierter Shape-Parameter). Test `generics_test.ddk` (9 Asserts: gleiche Einheit, Auto-Konvertierung m<->cm, Dimensions-Mismatch via try/catch, Multi-Parameter pair<A,B>, Shape-Parameter dot3<N>, Shape-Mismatch). 46/46 Tests gruen, 102/102 Beispiele kompilieren.
 
 ## What changed in v1.19.0 (documented here)
 

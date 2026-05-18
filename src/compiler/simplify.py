@@ -80,6 +80,7 @@ class SimplifyVisitor:
             arg_shapes=getattr(node, "arg_shapes", None),
             return_shape=getattr(node, "return_shape", None),
             is_pub=getattr(node, "is_pub", False),
+            type_params=list(getattr(node, "type_params", [])),
             line=node.line,
         )
 

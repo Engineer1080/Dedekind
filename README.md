@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-1.19.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-1.20.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -28,6 +28,24 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
+
+### What's New in v1.20.0
+
+- **Generics / Typ-Parameter** mit echter Durchsetzung — `fn name<T, U, ...>(...)`.
+  ```dedekind
+  fn add_same<U>(a: [U], b: [U]) -> [U] { return a + b }
+
+  add_same(2[m], 3[m])        // U bindet auf m -> 5[m]
+  add_same(10[kg], 5[kg])     // U bindet auf kg -> 15[kg]
+  add_same(2[m], 100[cm])     // U bindet auf m, 100[cm] auto-konvertiert -> 3[m]
+  add_same(2[m], 3[kg])       // ValueError: Dimensions-Mismatch
+  ```
+- **Polymorphe Einheits-Variablen:** `[U]` mit `<U>` deklariert erzwingt Einheits-Konsistenz ueber Argumente und Return-Wert. Erstes Argument bindet U; weitere Argumente werden auf dieselbe Dimension geprueft und ggf. automatisch konvertiert (m vs cm). Mismatch (m vs kg) wirft `ValueError: Typ-Param-Einheit 'U' in fn(b): bereits an [m] gebunden, hier [kg].`
+- **Shape-Parameter:** `<N>` mit `Vector[N]` macht den symbolischen-Dimensions-Mechanismus aus v1.9 explizit. Bereits funktionierende cross-arg-Konsistenz (`dot<N>(a: Vector[N], b: Vector[N])`) ist jetzt im Funktionskopf deklariert.
+- **Mehrere Typ-Parameter:** `fn pair<A, B>(a: [A], b: [B])` haelt A und B unabhaengig — jeder bindet separat.
+- **Units-Checker-Patch:** Einheiten, die Typ-Parameter sind, werden zur Compile-Zeit als "polymorph" behandelt und ueberspringen den statischen Check; die Konsistenz-Validierung passiert per Laufzeit via `_unit_env`-Dict.
+- **Unterschied zu Python's `typing.TypeVar`:** Pythons Generics sind rein dokumentarisch — der Interpreter ignoriert sie. Dedekind erzwingt sie aktiv: dimensional inkonsistente Aufrufe brechen ab, dimensional kompatible aber unterschiedlich-skalierte Aufrufe werden automatisch konvertiert. Das macht Dedekind in puncto Typsicherheit Python tatsaechlich ueberlegen.
+- Beispiel: `generics_demo.ddk`. Test: `generics_test.ddk` (9 Asserts: gleiche Einheit, Auto-Konvertierung, Mismatch, Multi-Parameter, Shape). 46/46 Tests gruen, 102/102 Beispiele kompilieren.
 
 ### What's New in v1.19.0
 

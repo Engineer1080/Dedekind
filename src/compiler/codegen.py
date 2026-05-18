@@ -186,6 +186,7 @@ class CodeGenerator:
         self.indent_level = 0
         self._return_unit_stack = []  # Active function's declared return unit ("" = dimensionless, None = unchecked)
         self._return_shape_stack = []  # Active function's declared return shape (list of int|str) or None
+        self._type_param_stack = []   # Active function's declared type params (List[str])
         self._fn_name_stack = []
 
     def generate(self, node: Node) -> str:
@@ -319,10 +320,23 @@ class CodeGenerator:
         return_unit = getattr(node, "return_unit", None)
         arg_shapes = getattr(node, "arg_shapes", None)
         return_shape = getattr(node, "return_shape", None)
+        type_params = getattr(node, "type_params", []) or []
+        type_param_set = set(type_params)
+        # Typ-Parameter: lokales _unit_env fuer polymorphe Einheiten-Variablen
+        if type_params:
+            self.add_line("_unit_env = {}")
         if arg_units:
             for arg_name, unit in zip(node.args, arg_units):
-                if unit:
-                    safe_unit = unit.replace('"', '\\"')
+                if not unit:
+                    continue
+                safe_unit = unit.replace('"', '\\"')
+                if unit in type_param_set:
+                    # Polymorphe Einheit (Typ-Parameter): bindet im _unit_env beim
+                    # ersten Auftreten, danach Konsistenz-Check
+                    self.add_line(
+                        f'{arg_name} = _check_param_unit({arg_name}, "{safe_unit}", "{node.name}", "{arg_name}", _unit_env)'
+                    )
+                else:
                     self.add_line(
                         f'{arg_name} = _check_signature_unit({arg_name}, "{safe_unit}", "{node.name}", "{arg_name}")'
                     )
@@ -347,6 +361,7 @@ class CodeGenerator:
                 )
         self._return_unit_stack.append(return_unit)
         self._return_shape_stack.append(return_shape)
+        self._type_param_stack.append(type_param_set)
         self._fn_name_stack.append(node.name)
         try:
             for stmt in node.body:
@@ -356,6 +371,7 @@ class CodeGenerator:
         finally:
             self._return_unit_stack.pop()
             self._return_shape_stack.pop()
+            self._type_param_stack.pop()
             self._fn_name_stack.pop()
         self.indent_level -= 1
         self.add_line("")
@@ -384,12 +400,16 @@ class CodeGenerator:
         val = self.visit_expression(node.value)
         ret_unit = self._return_unit_stack[-1] if self._return_unit_stack else None
         ret_shape = self._return_shape_stack[-1] if self._return_shape_stack else None
+        type_params = self._type_param_stack[-1] if self._type_param_stack else set()
         fn_name = self._fn_name_stack[-1] if self._fn_name_stack else ""
         safe_fn = fn_name.replace('"', '\\"')
         # Reihenfolge: erst Unit-Konvertierung, dann Shape-Check (Shape wirkt auf umgerechneten Wert).
         if ret_unit is not None:
             safe_unit = ret_unit.replace('"', '\\"')
-            val = f'_check_return_unit({val}, "{safe_unit}", "{safe_fn}")'
+            if ret_unit in type_params:
+                val = f'_check_return_param_unit({val}, "{safe_unit}", "{safe_fn}", _unit_env)'
+            else:
+                val = f'_check_return_unit({val}, "{safe_unit}", "{safe_fn}")'
         if ret_shape is not None:
             kind, dims = ret_shape if isinstance(ret_shape, tuple) else ('tensor', ret_shape)
             if kind == 'graph':
