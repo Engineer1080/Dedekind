@@ -1,14 +1,15 @@
 import sys
 import os
 import re
+import dataclasses
 import traceback as _tb
 import linecache
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Dict
 from .lexer import Lexer
 from .parser import Parser
 from .codegen import CodeGenerator
 from .latex_export import program_to_latex
-from .ast_nodes import CompileError, Program, UseStmt
+from .ast_nodes import CompileError, Program, UseStmt, FunctionDef, Identifier, Node
 
 
 def _module_search_paths(filepath: Optional[str]) -> List[str]:
@@ -26,18 +27,91 @@ def _module_search_paths(filepath: Optional[str]) -> List[str]:
 
 
 def _resolve_module(name: str, search_paths: List[str], visiting_line: Optional[int]) -> str:
+    """Resolved sowohl flache Namen (`foo`) als auch gepunktete Pfade (`foo.bar.baz`).
+    Gepunktete Namen werden zu verschachtelten Verzeichnis-Pfaden: foo.bar -> foo/bar.ddk."""
+    parts = name.split(".")
+    rel_path = os.path.join(*parts) + ".ddk"
     for p in search_paths:
-        candidate = os.path.join(p, f"{name}.ddk")
+        candidate = os.path.join(p, rel_path)
         if os.path.isfile(candidate):
             return candidate
     raise CompileError(
-        f"Modul '{name}' nicht gefunden. Gesucht: {', '.join(p for p in search_paths)}.",
+        f"Modul '{name}' nicht gefunden (gesucht als {rel_path!r} in: "
+        f"{', '.join(p for p in search_paths)}).",
         line=visiting_line,
     )
 
 
+def _mangled_name(module_name: str, fn_name: str) -> str:
+    """Mangling fuer private (non-pub) Modul-Funktionen: __ddk_<modpath>_<fn>."""
+    flat = module_name.replace(".", "_")
+    return f"__ddk_{flat}_{fn_name}"
+
+
+def _rename_in_ast(node: Node, rename_map: Dict[str, str]) -> None:
+    """Walk AST in-place, renaming FunctionDef.name (top-level Ziele) und
+    Identifier.name (alle Referenzen) entsprechend rename_map."""
+    if node is None or not isinstance(node, Node):
+        return
+    if isinstance(node, FunctionDef) and node.name in rename_map:
+        node.name = rename_map[node.name]
+    if isinstance(node, Identifier) and node.name in rename_map:
+        node.name = rename_map[node.name]
+    if dataclasses.is_dataclass(node):
+        for f in dataclasses.fields(node):
+            val = getattr(node, f.name)
+            if isinstance(val, Node):
+                _rename_in_ast(val, rename_map)
+            elif isinstance(val, list):
+                for item in val:
+                    if isinstance(item, Node):
+                        _rename_in_ast(item, rename_map)
+                    elif isinstance(item, tuple):
+                        for sub in item:
+                            if isinstance(sub, Node):
+                                _rename_in_ast(sub, rename_map)
+            elif isinstance(val, tuple):
+                for sub in val:
+                    if isinstance(sub, Node):
+                        _rename_in_ast(sub, rename_map)
+
+
+def _apply_module_visibility(mod_ast: Program, module_name: str) -> Program:
+    """Mangling fuer Modul-Sichtbarkeit.
+
+    Verhalten:
+      - Hat das Modul KEINE `pub fn`-Deklaration: Legacy-Modus — alle Funktionen
+        bleiben oeffentlich (rueckwaerts-kompatibel mit Pre-v1.19-Modulen).
+      - Hat das Modul mindestens eine `pub fn`-Deklaration: Opt-in-Modus —
+        ALLE nicht-pub Funktionen bekommen einen Mangling-Prefix
+        `__ddk_<modpath>_` und werden so vor dem Aufrufer versteckt.
+        Aufrufe innerhalb des Moduls werden mit-renamed.
+    """
+    fn_names = []
+    pub_names = []
+    for stmt in mod_ast.statements:
+        if isinstance(stmt, FunctionDef):
+            fn_names.append(stmt.name)
+            if getattr(stmt, "is_pub", False):
+                pub_names.append(stmt.name)
+    if not pub_names:
+        # Legacy-Modus: nichts mangling
+        return mod_ast
+    rename_map = {
+        n: _mangled_name(module_name, n)
+        for n in fn_names if n not in pub_names
+    }
+    if not rename_map:
+        return mod_ast
+    for stmt in mod_ast.statements:
+        _rename_in_ast(stmt, rename_map)
+    return mod_ast
+
+
 def _expand_uses(ast: Program, filepath: Optional[str], loaded: set) -> Program:
-    """Ersetzt UseStmt-Knoten durch die Top-Level-Statements der referenzierten Module."""
+    """Ersetzt UseStmt-Knoten durch die Top-Level-Statements der referenzierten Module.
+    Wendet Visibility-Mangling an: nur Funktionen mit `pub fn` sind ausserhalb des
+    Moduls sichtbar (falls das Modul mindestens eine `pub fn`-Deklaration hat)."""
     new_stmts = []
     search_paths = _module_search_paths(filepath)
     for stmt in ast.statements:
@@ -55,6 +129,7 @@ def _expand_uses(ast: Program, filepath: Optional[str], loaded: set) -> Program:
             mod_tokens = Lexer(mod_source).tokenize()
             mod_ast = Parser(mod_tokens).parse()
             mod_ast = _expand_uses(mod_ast, mod_path, loaded)
+            mod_ast = _apply_module_visibility(mod_ast, stmt.module)
             new_stmts.extend(mod_ast.statements)
         else:
             new_stmts.append(stmt)

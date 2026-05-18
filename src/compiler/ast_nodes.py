@@ -38,6 +38,7 @@ class FunctionDef(Node):
     return_unit: Optional[str] = None  # Return unit annotation
     arg_shapes: Optional[List[Optional[List]]] = None  # Per-arg shape annotations (Vector[2], Tensor[batch,N]); None per slot = not annotated
     return_shape: Optional[List] = None  # Return shape annotation
+    is_pub: bool = False  # `pub fn` -> True; nur fuer Modul-Sichtbarkeit relevant
 
 
 @dataclass

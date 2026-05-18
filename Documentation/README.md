@@ -15,7 +15,7 @@ This folder contains the **source** and **generated** documentation for the Dede
 | **Commercialization_Options.md** | Potenzielle Kommerzialisierungsoptionen (Beratung, Support, Lizenzen, SaaS, Förderung, Phasierung, Risiken) |
 | **IDE_Studio_Roadmap.md** | Dedekind in bestehenden IDEs (VS Code, Jupyter) + Dedekind Studio als kommerzielle Wissenschaftler-IDE (Einheiten, Plots, Postgres, LaTeX, lokale KI) |
 | **Build_Dedekind_Studio_Exe.md** | Anleitung: Dedekind Studio als Windows-.exe bauen (PyInstaller) |
-| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.18.0; Stärken, Lücken, Roadmap) |
+| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.19.0; Stärken, Lücken, Roadmap) |
 | **Dedekind_Language_Specification_v0.1.pdf** | Legacy PDF (v0.1); for current spec use the Markdown or generate v0.2 PDF below |
 | **Dedekind_Research_Papers_and_Architecture.pdf** | Legacy PDF; for current content use the Markdown or generate PDF below |
 
@@ -41,6 +41,10 @@ pandoc Dedekind_Research_and_Architecture.md -o Dedekind_Research_and_Architectu
 - **Online**: Paste the Markdown into a service that converts Markdown to PDF (e.g. markdown-to-pdf converters).
 - **Typora / other editors**: Open the `.md` file and export to PDF from the application.
 
+
+## What changed in v1.19.0 (documented here)
+
+- **Version 1.19.0**: **Multi-File-Module mit Sichtbarkeit.** Zwei zusammengehoerende Sprach-Features fuer reale Projekt-Strukturen. **Gepunktete Modul-Pfade:** Parser akzeptiert in `use`-Statements jetzt eine Folge von ID-Tokens, getrennt durch DOT (`use foo.bar.baz`). `_resolve_module` zerlegt den Namen per `split(".")` und sucht via `os.path.join(*parts) + ".ddk"` — `geometry.area` -> `modules/geometry/area.ddk`. Damit thematische Verzeichnis-Strukturen statt eines flachen `modules/`-Ordners. **`pub fn` Export-Kontrolle:** Neues `pub`-Keyword im Lexer; Parser akzeptiert `pub` als Praefix vor `fn`. `FunctionDef`-AST um `is_pub: bool = False` erweitert. `simplify.py` `visit_FunctionDef` propagiert das Flag. Neue Pipeline-Stufe `_apply_module_visibility(mod_ast, module_name)` in `compiler.py`: scannt das Modul nach `pub`-Deklarationen — hat es **keine**, laeuft der Legacy-Modus (alle Funktionen public, rueckwaerts-kompatibel mit Pre-v1.19-Modulen wie `physics`, `stats`, `chemistry`, `biology`, `math`, `ml`, `mathlib`). Hat es **mindestens eine**, opt-in: alle nicht-pub Funktionen werden ueber `_mangled_name(module_name, fn_name)` zu `__ddk_<flat_modpath>_<fn>` umbenannt. Mangling via `_rename_in_ast(node, rename_map)`: AST-Walker rekursiert ueber dataclass-Felder, ersetzt `FunctionDef.name` (Definitions-Stelle) und alle `Identifier.name`-Referenzen — Aufrufe innerhalb des Moduls werden konsistent mit-renamed, auch ueber Klammern und verschachtelte Calls hinweg. **Limitation:** `use`-Statements muessen weiterhin top-level stehen (werden im Pre-Pass von `_expand_uses` expandiert, nicht innerhalb von Funktions-Bodies). Bestehende 7 Standardbibliotheks-Module bleiben ohne jegliche Aenderung funktionsfaehig dank Legacy-Modus. Beispiel `multi_file_modules_demo.ddk` mit zwei neuen Submodulen `modules/geometry/area.ddk` (circle_area, triangle_area + private priv_pi/priv_half) und `modules/geometry/volume.ddk` (cube_volume, sphere_volume, cone_volume + private priv_pi/priv_one_third/priv_four_thirds). Test `multi_file_modules_test.ddk` (10 Asserts) verifiziert: gepunktete Pfad-Aufloesung, korrekte pub-Funktionen erreichbar, ALLE drei privaten Funktionen via try/catch (v1.17) als unsichtbar bestaetigt, Legacy-Modul `math` weiterhin voll public. 45/45 Tests gruen, 101/101 Beispiele kompilieren.
 
 ## What changed in v1.18.0 (documented here)
 

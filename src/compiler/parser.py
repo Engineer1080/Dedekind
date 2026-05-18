@@ -79,7 +79,15 @@ class Parser:
                 return self.parse_assignment()
 
         if token.type == 'FN':
-            return self.parse_function_def()
+            return self.parse_function_def(is_pub=False)
+        elif token.type == 'PUB':
+            self.consume('PUB')
+            if not self.peek() or self.peek().type != 'FN':
+                raise CompileError(
+                    "`pub` muss vor einer Funktionsdefinition stehen (`pub fn name(...) { ... }`).",
+                    line=token.line,
+                )
+            return self.parse_function_def(is_pub=True)
         elif token.type == 'USE':
             return self.parse_use_stmt()
         elif token.type == 'ID' and token.value == 'unit' \
@@ -208,10 +216,16 @@ class Parser:
         return ''.join(parts)
 
     def parse_use_stmt(self):
+        """Akzeptiert `use foo`, `use foo.bar`, `use foo.bar.baz` — gepunktete
+        Pfade resolven zu modules/foo/bar/baz.ddk."""
         start_line = self.peek().line
         self.consume('USE')
-        name_tok = self.consume('ID')
-        node = UseStmt(name_tok.value)
+        parts = [self.consume('ID').value]
+        while self.peek() and self.peek().type == 'DOT' \
+                and self.peek(1) and self.peek(1).type == 'ID':
+            self.consume('DOT')
+            parts.append(self.consume('ID').value)
+        node = UseStmt(".".join(parts))
         node.line = start_line
         return node
 
@@ -365,7 +379,7 @@ class Parser:
             line=tok.line if tok else None,
         )
 
-    def parse_function_def(self):
+    def parse_function_def(self, is_pub=False):
         start_line = self.peek().line
         self.consume('FN')
         name = self.consume('ID').value
@@ -411,6 +425,7 @@ class Parser:
             return_unit=return_unit,
             arg_shapes=arg_shapes if has_annotations and any(s is not None for s in arg_shapes) else None,
             return_shape=return_shape,
+            is_pub=is_pub,
         )
         node.line = start_line
         return node

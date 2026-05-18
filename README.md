@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-1.18.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-1.19.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -28,6 +28,26 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
+
+### What's New in v1.19.0
+
+- **Multi-File-Module mit Sichtbarkeit.** Zwei zusammengehoerende Sprach-Features fuer reale Projekt-Strukturen.
+- **Gepunktete Modul-Pfade:** `use foo.bar.baz` resolved auf `modules/foo/bar/baz.ddk`. Verschachtelte Verzeichnis-Struktur fuer thematische Gliederung statt einem flachen `modules/`-Ordner.
+  ```dedekind
+  use geometry.area       // -> modules/geometry/area.ddk
+  use geometry.volume     // -> modules/geometry/volume.ddk
+  ```
+- **`pub fn` fuer Export-Kontrolle:** Nur als `pub fn name()` deklarierte Funktionen sind ausserhalb des Moduls sichtbar; alle anderen Funktionen werden zur Compile-Zeit mit `__ddk_<modpath>_<name>` umbenannt und sind damit von aussen nicht erreichbar.
+  ```dedekind
+  // modules/geometry/area.ddk
+  fn priv_pi() { return 3.14159265358979 }   // privat
+  pub fn circle_area(r) {                     // exportiert
+      return priv_pi() * r * r
+  }
+  ```
+- **Backward-Kompatibel:** Module ohne jede `pub`-Deklaration laufen im **Legacy-Modus** — alle Funktionen bleiben oeffentlich. Damit bleiben die bestehenden 7 Standardbibliotheks-Module (`physics`, `stats`, `chemistry`, `biology`, `math`, `ml`, `mathlib`) ohne Aenderung funktionsfaehig. Wer Sichtbarkeit haben will, deklariert mindestens eine Funktion als `pub` — ab dann gilt der Opt-In-Modus.
+- **Visibility-Mangling** zur Compile-Zeit via `_apply_module_visibility(mod_ast, module_name)`: AST-Walker (`_rename_in_ast`) ersetzt sowohl `FunctionDef.name` als auch jeden `Identifier`-Reference auf private Funktionen — Aufrufe innerhalb des Moduls werden konsistent mit-renamed.
+- Beispiel: `multi_file_modules_demo.ddk` mit zwei Submodulen `geometry.area` und `geometry.volume`, plus Legacy-Modul `math`. Test: `multi_file_modules_test.ddk` (10 Asserts: gepunktete Pfade, private Funktionen unsichtbar via try/catch aus v1.17, Backward-Kompatibilitaet). 45/45 Tests gruen, 101/101 Beispiele kompilieren.
 
 ### What's New in v1.18.0
 
