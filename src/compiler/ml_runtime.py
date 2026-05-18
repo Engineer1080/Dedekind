@@ -5887,6 +5887,319 @@ def _check_return_graph_shape(value, expected_dims, fn_name, shape_env):
     return value
 
 
+# ----- MILP-DSL (v1.13): deklarative Constraint-Optimierung mit Einheiten ------
+def _milp_scalar(x):
+    """Extrahiert eine reine Zahl aus Quantity/Tensor/Skalar fuer Bounds/Constraints."""
+    if isinstance(x, Quantity):
+        return float(x.value)
+    if hasattr(x, "item"):
+        try:
+            return float(x.item())
+        except Exception:
+            pass
+    return float(x)
+
+
+def _milp_units_compat(u1, u2, where):
+    """Wirft ValueError, wenn u1 und u2 nicht dimensional kompatibel sind.
+    Liefert die fuehrende Einheit (Linke-Seite-Konvention)."""
+    if not u1 or not u2:
+        return u1 or u2
+    if u1 == u2:
+        return u1
+    if _normalize_unit_for_compare(u1) == _normalize_unit_for_compare(u2):
+        return u1
+    d1 = _get_dimension(u1)
+    d2 = _get_dimension(u2)
+    if d1 is not None and d1 == d2:
+        return u1
+    if _units_dimensionally_equal(u1, u2):
+        return u1
+    raise ValueError(f"MILP-Einheiten passen nicht in {where}: [{u1}] vs [{u2}].")
+
+
+class _MILPVariable:
+    """Entscheidungsvariable. Hashbar via Identitaet (kein __eq__-Override)."""
+    __slots__ = ("name", "lower", "upper", "integer", "unit")
+
+    def __init__(self, name, lower=None, upper=None, integer=False):
+        self.name = str(name)
+        self.lower = lower
+        self.upper = upper
+        self.integer = bool(integer)
+        u = ""
+        for v in (lower, upper):
+            if isinstance(v, Quantity) and v.unit:
+                u = v.unit
+                break
+        self.unit = u
+
+    def __repr__(self):
+        suf = f" [{self.unit}]" if self.unit else ""
+        return f"Variable({self.name!r}{suf})"
+
+    def _as_expr(self):
+        return _MILPExpression({self: 1.0}, unit=self.unit)
+
+    def __add__(self, other): return self._as_expr() + other
+    def __radd__(self, other): return self._as_expr() + other
+    def __sub__(self, other): return self._as_expr() - other
+    def __rsub__(self, other): return _MILPExpression(offset=0.0) - self._as_expr() + other if False else self._as_expr().__rsub__(other)
+    def __mul__(self, other): return self._as_expr() * other
+    def __rmul__(self, other): return self._as_expr() * other
+    def __truediv__(self, other): return self._as_expr() / other
+    def __neg__(self): return _MILPExpression({self: -1.0}, unit=self.unit)
+    def __ge__(self, other): return _MILPConstraint(self._as_expr(), ">=", other)
+    def __le__(self, other): return _MILPConstraint(self._as_expr(), "<=", other)
+
+
+class _MILPExpression:
+    """Lineare Kombination sum(coef * Variable) + offset, mit Einheit."""
+    __slots__ = ("coeffs", "offset", "unit")
+
+    def __init__(self, coeffs=None, offset=0.0, unit=""):
+        self.coeffs = dict(coeffs) if coeffs else {}
+        self.offset = float(offset)
+        self.unit = str(unit)
+
+    def _coerce(self, other):
+        if isinstance(other, _MILPVariable):
+            return _MILPExpression({other: 1.0}, unit=other.unit)
+        if isinstance(other, _MILPExpression):
+            return other
+        if isinstance(other, Quantity):
+            return _MILPExpression(offset=other.value, unit=other.unit or "")
+        if isinstance(other, (int, float)):
+            return _MILPExpression(offset=float(other))
+        return None
+
+    def __add__(self, other):
+        oth = self._coerce(other)
+        if oth is None: return NotImplemented
+        unit = _milp_units_compat(self.unit, oth.unit, "Addition")
+        coeffs = dict(self.coeffs)
+        for v, c in oth.coeffs.items():
+            coeffs[v] = coeffs.get(v, 0.0) + c
+        return _MILPExpression(coeffs, self.offset + oth.offset, unit)
+    def __radd__(self, other): return self.__add__(other)
+
+    def __sub__(self, other):
+        oth = self._coerce(other)
+        if oth is None: return NotImplemented
+        unit = _milp_units_compat(self.unit, oth.unit, "Subtraktion")
+        coeffs = dict(self.coeffs)
+        for v, c in oth.coeffs.items():
+            coeffs[v] = coeffs.get(v, 0.0) - c
+        return _MILPExpression(coeffs, self.offset - oth.offset, unit)
+    def __rsub__(self, other):
+        oth = self._coerce(other)
+        if oth is None: return NotImplemented
+        return oth.__sub__(self)
+
+    def __mul__(self, other):
+        if isinstance(other, (_MILPVariable, _MILPExpression)):
+            other_expr = other if isinstance(other, _MILPExpression) else other._as_expr()
+            if self.coeffs and other_expr.coeffs:
+                raise ValueError(
+                    f"MILP: Produkt zweier Variabler ist nichtlinear "
+                    f"({list(self.coeffs.keys())[0].name} * {list(other_expr.coeffs.keys())[0].name})."
+                )
+            if not self.coeffs:
+                scalar, scalar_unit = self.offset, self.unit
+                expr = other_expr
+            else:
+                scalar, scalar_unit = other_expr.offset, other_expr.unit
+                expr = self
+            new_unit = _unit_mul(expr.unit, scalar_unit) if scalar_unit else expr.unit
+            return _MILPExpression(
+                {v: c * scalar for v, c in expr.coeffs.items()},
+                expr.offset * scalar,
+                new_unit,
+            )
+        if isinstance(other, Quantity):
+            scalar = other.value
+            new_unit = _unit_mul(self.unit, other.unit) if other.unit else self.unit
+            return _MILPExpression(
+                {v: c * scalar for v, c in self.coeffs.items()},
+                self.offset * scalar,
+                new_unit,
+            )
+        if isinstance(other, (int, float)):
+            return _MILPExpression(
+                {v: c * float(other) for v, c in self.coeffs.items()},
+                self.offset * float(other),
+                self.unit,
+            )
+        return NotImplemented
+    def __rmul__(self, other): return self.__mul__(other)
+
+    def __truediv__(self, other):
+        if isinstance(other, (int, float)):
+            inv = 1.0 / float(other)
+            return _MILPExpression({v: c * inv for v, c in self.coeffs.items()},
+                                   self.offset * inv, self.unit)
+        if isinstance(other, Quantity):
+            inv = 1.0 / other.value
+            new_unit = _unit_div(self.unit, other.unit) if other.unit else self.unit
+            return _MILPExpression({v: c * inv for v, c in self.coeffs.items()},
+                                   self.offset * inv, new_unit)
+        return NotImplemented
+
+    def __neg__(self):
+        return _MILPExpression({v: -c for v, c in self.coeffs.items()}, -self.offset, self.unit)
+
+    def __ge__(self, other): return _MILPConstraint(self, ">=", other)
+    def __le__(self, other): return _MILPConstraint(self, "<=", other)
+
+
+class _MILPConstraint:
+    """Normalisiert: sum(coef * var) op bound, op in {<=, >=, ==}."""
+    __slots__ = ("coeffs", "bound", "op", "unit")
+
+    def __init__(self, lhs, op, rhs):
+        if isinstance(lhs, _MILPVariable):
+            lhs = lhs._as_expr()
+        if not isinstance(lhs, _MILPExpression):
+            raise TypeError(f"MILP-Constraint linke Seite: erwartet Variable/Expression, bekam {type(lhs).__name__}.")
+        rhs_expr = lhs._coerce(rhs)
+        if rhs_expr is None:
+            raise TypeError(f"MILP-Constraint rechte Seite: erwartet Variable/Expression/Quantity/Zahl, bekam {type(rhs).__name__}.")
+        _milp_units_compat(lhs.unit, rhs_expr.unit, "Constraint")
+        diff = lhs - rhs_expr
+        self.coeffs = dict(diff.coeffs)
+        self.bound = -diff.offset
+        self.op = op
+        self.unit = diff.unit
+
+    def __repr__(self):
+        terms = " + ".join(f"{c}*{v.name}" for v, c in self.coeffs.items()) or "0"
+        return f"Constraint({terms} {self.op} {self.bound} [{self.unit}])"
+
+
+def Variable(name, lower=None, upper=None, integer=False):
+    """Erzeugt eine MILP-Entscheidungsvariable.
+
+    Beispiel:
+        x = Variable("x", lower=0[km], upper=1000[km])
+        y = Variable("trucks", lower=1, integer=true)
+        cost = 2.5[€/km] * x + 1000[€] * y
+        result = optimize_milp(cost, [x + 200[km]*y >= 500[km]])
+    """
+    return _MILPVariable(name=name, lower=lower, upper=upper, integer=integer)
+
+
+def optimize_milp(objective, constraints=None, sense="minimize"):
+    """Loest ein (gemischt-)ganzzahliges lineares Programm in deklarativer DSL.
+
+    objective:    _MILPExpression oder _MILPVariable.
+    constraints:  Liste von _MILPConstraint (per `>=`/`<=`), optional.
+    sense:        'minimize' (default) oder 'maximize'.
+
+    Rueckgabe: dict {<var_name>: optimaler_wert, ..., "objective": Z, "status": msg}.
+    """
+    try:
+        from scipy.optimize import milp as _milp, LinearConstraint, Bounds  # type: ignore[import-untyped]
+    except ImportError:
+        raise RuntimeError("optimize_milp benoetigt scipy>=1.9.")
+    import numpy as _np  # type: ignore[reportMissingImports]
+
+    if isinstance(objective, _MILPVariable):
+        obj_expr = objective._as_expr()
+    elif isinstance(objective, _MILPExpression):
+        obj_expr = objective
+    else:
+        raise TypeError(
+            f"optimize_milp: objective muss Variable oder MILP-Expression sein, "
+            f"bekam {type(objective).__name__}."
+        )
+
+    # constraints kann eine Python-Liste sein ODER ein leerer torch.Tensor
+    # (Dedekind transpiliert `[]` zu `torch.tensor([])`). Normalisieren:
+    if constraints is None:
+        cons_list = []
+    elif hasattr(constraints, "numel"):
+        cons_list = [] if constraints.numel() == 0 else list(constraints)
+    else:
+        cons_list = list(constraints)
+    for i, con in enumerate(cons_list):
+        if not isinstance(con, _MILPConstraint):
+            raise TypeError(
+                f"optimize_milp: constraints[{i}] ist {type(con).__name__}, "
+                f"erwartet Constraint (Variable >=/<= Wert)."
+            )
+
+    var_order = []
+    var_idx = {}
+    def _reg(v):
+        if v not in var_idx:
+            var_idx[v] = len(var_order)
+            var_order.append(v)
+    for v in obj_expr.coeffs:
+        _reg(v)
+    for con in cons_list:
+        for v in con.coeffs:
+            _reg(v)
+    N = len(var_order)
+    if N == 0:
+        raise ValueError("optimize_milp: keine Variablen in objective/constraints gefunden.")
+
+    c = _np.zeros(N, dtype=float)
+    for v, coef in obj_expr.coeffs.items():
+        c[var_idx[v]] = coef
+    if sense == "maximize":
+        c = -c
+    elif sense != "minimize":
+        raise ValueError(f"optimize_milp: sense muss 'minimize'/'maximize' sein, nicht {sense!r}.")
+
+    lb = _np.full(N, -_np.inf)
+    ub = _np.full(N, _np.inf)
+    integrality = _np.zeros(N, dtype=int)
+    for i, v in enumerate(var_order):
+        if v.lower is not None:
+            lb[i] = _milp_scalar(v.lower)
+        if v.upper is not None:
+            ub[i] = _milp_scalar(v.upper)
+        if v.integer:
+            integrality[i] = 1
+    bounds = Bounds(lb=lb, ub=ub)
+
+    ub_rows, ub_b = [], []
+    eq_rows, eq_b = [], []
+    for con in cons_list:
+        row = _np.zeros(N, dtype=float)
+        for v, coef in con.coeffs.items():
+            row[var_idx[v]] = coef
+        bnd = _milp_scalar(con.bound)
+        if con.op == "<=":
+            ub_rows.append(row); ub_b.append(bnd)
+        elif con.op == ">=":
+            ub_rows.append(-row); ub_b.append(-bnd)
+        elif con.op == "==":
+            eq_rows.append(row); eq_b.append(bnd)
+        else:
+            raise ValueError(f"optimize_milp: Operator {con.op!r} nicht unterstuetzt.")
+
+    sci_constraints = []
+    if ub_rows:
+        sci_constraints.append(LinearConstraint(_np.array(ub_rows), -_np.inf, _np.array(ub_b)))
+    if eq_rows:
+        sci_constraints.append(LinearConstraint(_np.array(eq_rows), _np.array(eq_b), _np.array(eq_b)))
+
+    res = _milp(c, constraints=sci_constraints if sci_constraints else None,
+                bounds=bounds, integrality=integrality)
+    if not res.success:
+        raise RuntimeError(f"optimize_milp: keine Loesung. {res.message}")
+
+    out = {v.name: float(res.x[i]) for i, v in enumerate(var_order)}
+    obj_val = float(res.fun)
+    if sense == "maximize":
+        obj_val = -obj_val
+    obj_val += obj_expr.offset
+    out["objective"] = obj_val
+    out["status"] = res.message
+    return out
+
+
 # ----- Quantity stripping helpers (v1.9) ---------------------------------------
 def unwrap(x):
     """Entfernt Einheit/Wrapper und liefert den nackten numerischen Wert (float/int/Tensor).

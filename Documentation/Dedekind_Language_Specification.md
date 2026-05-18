@@ -2,7 +2,7 @@
 
 **Language Specification v0.2**  
 Mario Michael Heinrich · github.com/Engineer1080  
-Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit), v0.9.6 (Math-Funktionen), v0.9.7 (Chemie/Biologie: mol, L, M, ppm), v0.9.8 (Convenience, Elemente, Datei-I/O, Netzwerk, JSON), v1.0.0 (Release), v1.0.1–v1.0.6 (Patch), v1.2.6 (Winkel rad/deg, deg_to_rad, rad_to_deg), v1.2.7 (Dirichlet-Verteilung, dirichlet_function), v1.2.8 (Dedekind-Schnitte, Dedekind-Ringe, Riemann-Zeta, Riemann-Summen), v1.2.9 (Betragsstriche, Rotationskörper, logische Operatoren), v1.3.0 (integrate_sym, Lagrange/Hamilton, Lotka-Volterra, chemisches Gleichgewicht), v1.3.1 (Medizin, Pharmakologie, Epidemiologie), v1.4.0 (Modul-System `use`, Seed/data_hash, DataFrame+CSV/Parquet/HDF5/NetCDF, Unit-aware Plots, `@units`-Signaturen mit `fn f(x: [m]) -> [J]`, Dict-Literale), v1.5.0 (benchmark/profile/time_block, jit (torch.compile), sde_solve (Euler-Maruyama, Milstein), least_squares, minimize_constrained, milp, FEM-Primitiven mesh_unit_square/fem_assemble_*/fem_poisson_2d, `arange` int64), v1.6.0 (solve_sym/simplify_sym/series, cg/gmres/bicgstab + jacobi_/ilu_preconditioner, export_notebook (HTML/MD), print_table (markdown/latex/csv/plain) mit UncertainQuantity-±), v1.7.0 (Standardbibliothek-Module physics/stats/chemistry/biology/math/ml via `use`, benutzerdefinierte Einheiten `unit NAME = FAKTOR[basis]` mit Verkettung & Compile-Zeit-Registrierung, Quantity-Vergleichsoperatoren `<` `<=` `>` `>=` `==` `!=` mit Auto-Konvertierung), v1.8.0 (Source-Mapping fuer Runtime-Fehler — Tracebacks zeigen `.ddk`-Zeilen + Code-Auszug; `pyimport <mod[.sub]> [as alias]` als Fluchtluke in PyPI; `dedekind_exec` Helper in `compiler.py`), v1.8.1 (Purity-Check: `print`/`plot`/`write_file`/`http_*`/I/O-Built-ins in `jit`/`grad`/`fit`/`metropolis`/`hmc`/`sde_solve`-Argumenten werden zur Compile-Zeit transitiv erkannt und blockiert; Opt-Out via `--no-purity-check`), v1.9.0 (Shape-Annotationen `Scalar`/`Vector[n]`/`Matrix[m,n]`/`Tensor[...]` mit symbolischen Dimensionen, gebunden und konsistenzgeprueft pro Call; `unwrap(x)` strippt Quantity/UncertainQuantity-Wrapper fuer Hot-Path-Performance), v1.10.0 (PINN-Primitive `partial(u, x, order=n)` fuer ∂u/∂x via Autograd, ergaenzend zu `grad(fn, x)`; `fit()`-Hardening fuer PINN-Data-Listen mit gemischten Shapes und Collocation-grad-Reset), v1.11.0 (`graph_laplacian(adj, normalized=False)` fuer kombinatorische und normalisierte Laplace-Matrix; dichte/sparse Eingabe, direkt einsetzbar in cg/gmres/bicgstab/eigh), v1.12.0 (`Graph[N, E]` als Shape-Annotation fuer torch_geometric.data.Data-aehnliche Objekte; symbolische Knoten/Kanten-Konsistenz; kombinierbar mit Unit-Annotationen auf anderen Argumenten)
+Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit), v0.9.6 (Math-Funktionen), v0.9.7 (Chemie/Biologie: mol, L, M, ppm), v0.9.8 (Convenience, Elemente, Datei-I/O, Netzwerk, JSON), v1.0.0 (Release), v1.0.1–v1.0.6 (Patch), v1.2.6 (Winkel rad/deg, deg_to_rad, rad_to_deg), v1.2.7 (Dirichlet-Verteilung, dirichlet_function), v1.2.8 (Dedekind-Schnitte, Dedekind-Ringe, Riemann-Zeta, Riemann-Summen), v1.2.9 (Betragsstriche, Rotationskörper, logische Operatoren), v1.3.0 (integrate_sym, Lagrange/Hamilton, Lotka-Volterra, chemisches Gleichgewicht), v1.3.1 (Medizin, Pharmakologie, Epidemiologie), v1.4.0 (Modul-System `use`, Seed/data_hash, DataFrame+CSV/Parquet/HDF5/NetCDF, Unit-aware Plots, `@units`-Signaturen mit `fn f(x: [m]) -> [J]`, Dict-Literale), v1.5.0 (benchmark/profile/time_block, jit (torch.compile), sde_solve (Euler-Maruyama, Milstein), least_squares, minimize_constrained, milp, FEM-Primitiven mesh_unit_square/fem_assemble_*/fem_poisson_2d, `arange` int64), v1.6.0 (solve_sym/simplify_sym/series, cg/gmres/bicgstab + jacobi_/ilu_preconditioner, export_notebook (HTML/MD), print_table (markdown/latex/csv/plain) mit UncertainQuantity-±), v1.7.0 (Standardbibliothek-Module physics/stats/chemistry/biology/math/ml via `use`, benutzerdefinierte Einheiten `unit NAME = FAKTOR[basis]` mit Verkettung & Compile-Zeit-Registrierung, Quantity-Vergleichsoperatoren `<` `<=` `>` `>=` `==` `!=` mit Auto-Konvertierung), v1.8.0 (Source-Mapping fuer Runtime-Fehler — Tracebacks zeigen `.ddk`-Zeilen + Code-Auszug; `pyimport <mod[.sub]> [as alias]` als Fluchtluke in PyPI; `dedekind_exec` Helper in `compiler.py`), v1.8.1 (Purity-Check: `print`/`plot`/`write_file`/`http_*`/I/O-Built-ins in `jit`/`grad`/`fit`/`metropolis`/`hmc`/`sde_solve`-Argumenten werden zur Compile-Zeit transitiv erkannt und blockiert; Opt-Out via `--no-purity-check`), v1.9.0 (Shape-Annotationen `Scalar`/`Vector[n]`/`Matrix[m,n]`/`Tensor[...]` mit symbolischen Dimensionen, gebunden und konsistenzgeprueft pro Call; `unwrap(x)` strippt Quantity/UncertainQuantity-Wrapper fuer Hot-Path-Performance), v1.10.0 (PINN-Primitive `partial(u, x, order=n)` fuer ∂u/∂x via Autograd, ergaenzend zu `grad(fn, x)`; `fit()`-Hardening fuer PINN-Data-Listen mit gemischten Shapes und Collocation-grad-Reset), v1.11.0 (`graph_laplacian(adj, normalized=False)` fuer kombinatorische und normalisierte Laplace-Matrix; dichte/sparse Eingabe, direkt einsetzbar in cg/gmres/bicgstab/eigh), v1.12.0 (`Graph[N, E]` als Shape-Annotation fuer torch_geometric.data.Data-aehnliche Objekte; symbolische Knoten/Kanten-Konsistenz; kombinierbar mit Unit-Annotationen auf anderen Argumenten), v1.13.0 (deklarative MILP-DSL via `Variable(name, lower, upper, integer)` und `optimize_milp(objective, constraints, sense)` mit Operator-Overloading und unit-aware Constraints)
 
 ---
 
@@ -605,6 +605,64 @@ What v1.12 **deliberately does not provide** (Stage 3 of the graph roadmap):
 - Dedekind's contribution to v1.12 is the annotation and unit layer **over** PyG, not a replacement.
 
 Examples: `examples/dedekind/gnn_molecule_demo.ddk` (drug discovery: water molecule with atomic masses in `[g/mol]`, GCNConv), `examples/dedekind/gnn_materials_demo.ddk` (materials: 4-atom FCC unit cell with bond lengths in `[pm]` and binding energy in `[eV]`, GraphConv). Test: `tests/dedekind/graph_shape_test.ddk`.
+
+### 15.19 Declarative MILP DSL with Units (v1.13)
+
+A declarative DSL for (mixed-)integer linear programming. Users write constraints and objective in natural arithmetic notation; Dedekind builds the scipy.optimize.milp problem matrix and validates dimensions.
+
+```dedekind
+x      = Variable("strecke", lower=0[km])
+trucks = Variable("trucks",  lower=1, integer=true)
+
+cost = 2.5 * x + 1000 * trucks
+res  = optimize_milp(cost, [
+    x >= 500[km],
+    trucks * 200[km] >= x
+])
+print(res["strecke"], res["trucks"], res["objective"])
+// 500.0 km, 3 trucks, 4250 EUR
+```
+
+**Variable** parameters:
+
+| Argument | Type | Meaning |
+|----------|------|---------|
+| `name`   | str  | Result key |
+| `lower`  | number or Quantity, optional | Lower bound |
+| `upper`  | number or Quantity, optional | Upper bound |
+| `integer`| bool, default false | Force integer values |
+
+**Operator overloads**:
+
+- `Variable + Variable`, `Quantity * Variable`, `scalar * Variable` → `_MILPExpression`
+- `_MILPExpression + _MILPExpression`, etc. → `_MILPExpression`
+- `Variable >= Quantity`, `_MILPExpression <= number`, etc. → `_MILPConstraint`
+- `Variable * Variable` raises `ValueError` (non-linear)
+
+**optimize_milp** parameters:
+
+| Argument | Type | Meaning |
+|----------|------|---------|
+| `objective` | `_MILPVariable` or `_MILPExpression` | Linear cost function |
+| `constraints` | list of `_MILPConstraint`, optional | Inequality/equality constraints |
+| `sense` | `"minimize"` (default) or `"maximize"` | Optimization direction |
+
+Returns a `dict`:
+
+```python
+{
+    "<var_name>": optimal_value,   # one entry per variable
+    ...,
+    "objective": optimal_objective,
+    "status":    scipy_status_message,
+}
+```
+
+**Unit-awareness as the USP** vs. Gurobi/cvxpy/pyomo/PuLP: every constraint runs through `_milp_units_compat` (which uses the existing v1.7 dimension system). `x >= 500[km]` with `x: Variable(lower=0[km])` validates; `x >= 500[kg]` raises `ValueError: MILP-Einheiten passen nicht in Constraint: [km] vs [kg]`. No other MILP toolkit catches dimensional errors before the solver runs.
+
+The low-level `milp(c, A_ub, b_ub, A_eq, b_eq, bounds, integrality)` from v1.5 stays unchanged; the v1.13 DSL is an additive convenience layer.
+
+Examples: `examples/dedekind/optimize_milp_demo.ddk` (Vehicle Routing, Production Mix, Energy Mix). Test: `tests/dedekind/optimize_milp_test.ddk`.
 
 ---
 

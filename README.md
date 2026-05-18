@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-1.12.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-1.13.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -28,6 +28,25 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
+
+### What's New in v1.13.0
+
+- **Operations Research mit deklarativer MILP-DSL:** Neue Built-ins `Variable(name, lower, upper, integer)` und `optimize_milp(objective, constraints, sense)`. Constraints werden ueber Operator-Overloading direkt geschrieben — keine A_ub/b_ub-Matrizen mehr selber bauen. Beispiel:
+  ```dedekind
+  x = Variable("strecke", lower=0[km])
+  trucks = Variable("trucks", lower=1, integer=true)
+  cost = 2.5 * x + 1000 * trucks
+  res = optimize_milp(cost, [
+      x >= 500[km],
+      trucks * 200[km] >= x
+  ])
+  // res = {strecke: 500.0, trucks: 3.0, objective: 4250.0, status: "..."}
+  ```
+- **Unit-Awareness in Constraints — der USP:** `x >= 500[km]` mit `x: Variable(lower=0[km])` passt; `x >= 500[kg]` wirft `ValueError: MILP-Einheiten passen nicht in Constraint: [km] vs [kg]`. Keine andere MILP-Bibliothek (Gurobi, cvxpy, pyomo, PuLP) hat das.
+- **Operator-Overloading:** `_MILPVariable` ueberlaedt `+`, `-`, `*`, `/`, `>=`, `<=` mit Linearitaets-Check (nichtlineares `x * y` wirft sofort `ValueError`). Variablen sind Identitaets-hashbar, damit Coefficient-Dicts intern funktionieren.
+- **Drei Demos in `optimize_milp_demo.ddk`:** Vehicle Routing (Strecke + Truck-Anzahl), Produktions-Mix (max Profit unter Ressourcen-Constraints), Energie-Mix (billigste Quelle zuerst unter Bedarfs-Constraint).
+- **Bestehender `milp(c, A_ub, b_ub, ...)`-Aufruf (v1.5) bleibt unveraendert** — die DSL ist eine Komfort-Schicht, kein Replacement.
+- Test: `optimize_milp_test.ddk` (13 Asserts: LP-Min/Max, Integer-Variablen, Vehicle Routing mit km, Energie-Mix mit kW). 39/39 Tests gruen, 95/95 Beispiele kompilieren.
 
 ### What's New in v1.12.0
 

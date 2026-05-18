@@ -15,7 +15,7 @@ This folder contains the **source** and **generated** documentation for the Dede
 | **Commercialization_Options.md** | Potenzielle Kommerzialisierungsoptionen (Beratung, Support, Lizenzen, SaaS, Förderung, Phasierung, Risiken) |
 | **IDE_Studio_Roadmap.md** | Dedekind in bestehenden IDEs (VS Code, Jupyter) + Dedekind Studio als kommerzielle Wissenschaftler-IDE (Einheiten, Plots, Postgres, LaTeX, lokale KI) |
 | **Build_Dedekind_Studio_Exe.md** | Anleitung: Dedekind Studio als Windows-.exe bauen (PyInstaller) |
-| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.12.0; Stärken, Lücken, Roadmap) |
+| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.13.0; Stärken, Lücken, Roadmap) |
 | **Dedekind_Language_Specification_v0.1.pdf** | Legacy PDF (v0.1); for current spec use the Markdown or generate v0.2 PDF below |
 | **Dedekind_Research_Papers_and_Architecture.pdf** | Legacy PDF; for current content use the Markdown or generate PDF below |
 
@@ -41,6 +41,10 @@ pandoc Dedekind_Research_and_Architecture.md -o Dedekind_Research_and_Architectu
 - **Online**: Paste the Markdown into a service that converts Markdown to PDF (e.g. markdown-to-pdf converters).
 - **Typora / other editors**: Open the `.md` file and export to PDF from the application.
 
+
+## What changed in v1.13.0 (documented here)
+
+- **Version 1.13.0**: **Operations Research mit deklarativer MILP-DSL.** Neue Runtime-Klassen `_MILPVariable`, `_MILPExpression`, `_MILPConstraint` plus Built-ins `Variable(name, lower, upper, integer)` und `optimize_milp(objective, constraints, sense)` ueber scipy.optimize.milp. Operator-Overloading (`+`, `-`, `*`, `/`, `>=`, `<=`) baut Linear-Expressions und Constraints; Linearitaets-Check wirft fruehzeitig `ValueError` bei `x * y` (nicht-konvexer Spezialfall). `_MILPVariable` ist per Identitaet hashbar (`__slots__`, kein `__eq__`-Override) — Voraussetzung dafuer dass `{var: coef}`-Coefficient-Dicts korrekt funktionieren. **Unit-Awareness als USP gegenueber Gurobi/cvxpy/pyomo/PuLP**: jedes Constraint laeuft durch `_milp_units_compat(u1, u2)` via dem bestehenden v1.7-Dimensionssystem — `x >= 500[km]` mit `x: Variable(lower=0[km])` passt, `x >= 500[kg]` wirft sofort `ValueError: MILP-Einheiten passen nicht in Constraint: [km] vs [kg]`. Bounds koennen Quantities sein (`lower=0[km]`), automatisch in Skalar konvertiert fuer scipy via `_milp_scalar()`. Constraints-Listen werden defensive normalisiert (Dedekinds `[]` wird zu `torch.tensor([])`; wir erkennen das via `.numel() == 0`). Rueckgabe ist ein Dict mit `var_name -> optimaler Wert`, `"objective"` und `"status"`. Drei Demos in `optimize_milp_demo.ddk`: Vehicle Routing (2.5*x + 1000*trucks mit Strecken- und Truck-Kapazitaets-Constraints, ergibt 500 km/3 trucks/4250 EUR), Produktions-Mix (max 40*A + 30*B unter Maschinen- und Material-Constraints), Energie-Mix (Solar/Wind/Gas-Kraftwerke mit jeweiligen Bound-Limits, billigste Quelle zuerst). **Bestehender low-level `milp(c, A_ub, b_ub, ...)` (v1.5) bleibt unveraendert** — die DSL ist additive Komfort-Schicht. Test `optimize_milp_test.ddk` (13 Asserts ueber LP-Min/Max, Integer-Variablen, Vehicle Routing in km, Energie-Mix in kW). 39/39 Tests gruen, 95/95 Beispiele kompilieren.
 
 ## What changed in v1.12.0 (documented here)
 
