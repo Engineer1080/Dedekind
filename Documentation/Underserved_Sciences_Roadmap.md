@@ -1,7 +1,32 @@
 # Dedekind für vernachlässigte Wissenschaften — Roadmap
 
 **Dedekind Language**  
-Draft: Januar 2026
+Draft: Januar 2026 · letzter Status-Update: v1.17.0 (März 2027)
+
+---
+
+## Status-Update (v1.17.0)
+
+Diese Roadmap ist **weitgehend ausgeliefert**:
+
+| Phase | Thema | Status | Geliefert in |
+|---|---|---|---|
+| 1 | Chemie/Biologie-Quick-Wins (siehe Chemistry_Biology_Roadmap) | ✅ erledigt | v0.9.7 – v1.16 |
+| 2 | Maschinenbau-Einheiten (kN, MPa, MN, kPa) | ✅ erledigt | v1.x |
+| 2 | Musik-Convenience (`cents_to_ratio`, `ratio_to_cents`, `equal_temperament`) | ✅ erledigt | v1.x |
+| 2 | Ökonomie-Convenience (`discount_factor`, `cobb_douglas`, `solow_rhs`) | ✅ erledigt | v1.x |
+| 2 | Geologie (Darcy-Einheit, `darcy_velocity`) | ✅ erledigt | v1.x |
+| 2 | Materialwissenschaft (`johnson_mehl_avrami`, `avrami_rate`) | ✅ erledigt | v1.x |
+| 3 | Geologie-/Materials-/Structural-Beispiele | ✅ erledigt | `geology_darcy.ddk`, `materials_jmak.ddk` etc. |
+| 4 | Ökonomie- und Musik-Beispiele | ✅ erledigt | `economics_solow.ddk`, `music_intervals.ddk` |
+| 5 (optional) | `nernst`, `van_t_hoff`, `rate_order`; `fick_diffusion_1d`, `beam_eigenmodes`, `truss_solve` | 📋 nicht prioritisiert — bei konkreter Forscher-Nachfrage nachreichbar |
+| 5 (optional) | Benutzerdefinierte Einheiten `unit Darcy = 9.87e-13[m^2]` | ✅ erledigt | v1.7 (`unit X = N[base]`) |
+| 6 (optional) | Formale Linguistik, Archäologie | 📋 nicht angefangen — als langfristig markiert; ohne konkreten Anwender wenig Sinn |
+| Bonus | **Molekulardynamik via OpenMM** (`md_simulate_lj`) — über die Roadmap hinausgehend | ✅ erledigt | v1.14 |
+| Bonus | **Bioinformatik/Cheminformatik** (`Sequence[DNA]`, `smiles_descriptors`) | ✅ erledigt | v1.16 |
+| Bonus | **Earth-Science Labeled Tensors** (`LabeledTensor[lat, lon, time]`) | ✅ erledigt | v1.15 |
+
+**Status:** Diese Roadmap ist effektiv geschlossen für Phasen 1–4. Phase 5 (zusätzliche Spezial-Funktionen) und Phase 6 (sehr nischige Disziplinen) bleiben **on-demand** — nicht von sich aus interessant, aber realisierbar wenn ein konkreter Forscher danach fragt.
 
 ---
 

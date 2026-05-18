@@ -1,7 +1,29 @@
 # Dedekind für Chemie und Biologie — Roadmap
 
 **Dedekind Language**  
-Draft: January 2026
+Draft: January 2026 · letzter Status-Update: v1.17.0 (März 2027)
+
+---
+
+## Status-Update (v1.17.0)
+
+Diese Roadmap ist **inhaltlich weitgehend abgearbeitet**:
+
+| Phase | Thema | Status | Geliefert in |
+|---|---|---|---|
+| 1 | mol, L, M (= mol/L), ppm als Einheiten + Compile-Zeit-Check | ✅ erledigt | v0.9.7, v1.7 |
+| 1 | Beispiele `chemistry_kinetics.ddk`, `dose_response.ddk`, `biology_growth.ddk` | ✅ erledigt | v0.9.7 ff. |
+| 2 | `michaelis_menten`, `logistic`, `arrhenius`, `linear_regression` als Convenience-Built-ins | ✅ erledigt | v0.9.8 |
+| 2 | `atomic_mass`, `atomic_number` für ~50 Elemente | ✅ erledigt | v0.9.8 |
+| 3 | bar, atm, g, Bq, Sv, Gy als Einheiten | ✅ erledigt | v1.x |
+| 3 | pH-Funktionen / % w/v | ✅ erledigt | v1.0 |
+| 4 | Tutorials + Blog-Posts | 📋 nicht prioritisiert (in-repo-Beispiele decken den Pfad) |
+| Bonus | Bioinformatik-Quick-Wins (`Sequence[DNA/RNA/Protein]`, `gc_content`, `transcribe`, `translate`, `reverse_complement`, `k_mer_count`) | ✅ erledigt | v1.16 |
+| Bonus | Cheminformatik via `pyimport rdkit` (`smiles_descriptors`, `lipinski_rule_of_five`) | ✅ erledigt | v1.16 |
+| Bonus | Molekulardynamik via OpenMM (`md_simulate_lj` mit Unit-Validierung) | ✅ erledigt | v1.14 |
+| Bonus | Standardbibliothek-Module `use chemistry`, `use biology` | ✅ erledigt | v1.7 |
+
+**Status:** Diese Roadmap ist effektiv geschlossen — die ursprünglichen Phasen 1–3 sind fertig, Phase 4 (Outreach) ist eine Marketing-Frage, kein Engineering. Für aktuelle Chemie-/Biologie-Features siehe `Dedekind_Language_Specification.md` §15.12 (Standardbibliothek) und §15.22 (Bioinformatik).
 
 ---
 
