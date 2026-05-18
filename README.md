@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-1.13.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-1.14.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -28,6 +28,36 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
+
+### What's New in v1.14.0
+
+- **Molekulardynamik via OpenMM-Bruecke:** Neue Built-in `md_simulate_lj(n_particles, sigma, epsilon, mass, temperature, dt, n_steps, box_size, friction, seed)` startet eine Lennard-Jones NVT-Simulation (Langevin-Integrator) auf dem OpenMM-C++-Kernel — **mit erzwungener Dimensionssicherheit** vor dem Aufruf.
+  ```dedekind
+  res = md_simulate_lj(
+      n_particles=27,
+      sigma=3.4[Angstrom],         // alternative Eingabe in A
+      epsilon=0.238[kcal/mol],     // oder kJ/mol
+      mass=39.948[amu],
+      temperature=85[K],
+      dt=1[fs],
+      n_steps=200,
+      box_size=2.0[nm],
+      seed=42
+  )
+  // res["potential_energy"] : Quantity in [kJ/mol]
+  // res["kinetic_energy"]   : Quantity in [kJ/mol]
+  // res["temperature"]      : Quantity in [K]
+  // res["positions"]        : torch.Tensor (n_particles, 3) in nm
+  ```
+- **USP gegenueber rohem `pyimport openmm`:** Dedekind validiert die Dimensionen ALLER Force-Field-Parameter, bevor der C++-Kernel laeuft. `epsilon=0.238[eV]` wirft `ValueError: epsilon=0.238[eV] hat falsche Dimension; erwartet kompatibel zu [kJ/mol] (molar_energy)`. In rohem OpenMM ist eV-vs-kcal/mol-Verwechselung ein stiller Bug.
+- **Neue MD-Einheiten im Dimensionssystem:**
+  - Laenge: `nm`, `Angstrom`, `pm`, `fm`
+  - Masse: `amu`, `Da` (Dalton)
+  - Zeit: `fs`, `ps`, `ns`, `us`
+  - Neue Dimension `molar_energy`: `kJ/mol` (Basis), `kcal/mol` (4.184), `J/mol`, `eV/atom`, `Hartree/mol`
+- **Gitter-Initialisierung statt Random-Placement:** vermeidet NaN-Energien durch Teilchen-Ueberlappungen (LJ-r⁻¹² explodiert bei r → 0). Leichte Stoerung gegen perfekte Gitter-Symmetrie.
+- **Bewusst NICHT geliefert:** keine Protein-Force-Fields (AMBER, CHARMM, OPLS), kein implicit solvent, keine REMD/free-energy-Methoden. Wer das braucht: `pyimport openmm.app as omm_app` — wir bauen die einfache LJ-Routine als Brueckenkopf, nicht als Replacement von OpenMM.
+- Beispiel: `md_lennard_jones_demo.ddk` (Argon-Cluster, Equilibrierung + Produktion). Test: `md_simulate_lj_test.ddk` (8 Asserts: Shape, Energien, Temperatur, Angstrom/kcal-Alternativeingabe). 40/40 Tests gruen, 96/96 Beispiele kompilieren.
 
 ### What's New in v1.13.0
 

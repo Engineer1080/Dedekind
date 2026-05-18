@@ -1,0 +1,66 @@
+// md_lennard_jones_demo.ddk — Molekulardynamik via OpenMM-Bruecke (v1.14).
+//
+// Demonstriert Dedekinds USP im MD-Bereich: Unit-bewusste Konfiguration der
+// Force-Field-Parameter VOR dem C++-Kernel. OpenMM uebernimmt die schwere
+// Simulation; Dedekind verhindert dimensionale Bugs (kcal/mol vs eV, A vs nm),
+// die in Roh-OpenMM still falsch durchlaufen wuerden.
+
+fn main() {
+    print("=== Molekulardynamik (v1.14) ===")
+    print("Argon-Cluster, NVT-Ensemble via Langevin-Integrator, OpenMM-Kernel")
+    print("")
+
+    // Argon-LJ-Parameter aus der Standardliteratur:
+    //   sigma   = 3.4 A   = 0.34 nm
+    //   epsilon = 0.99 kJ/mol  (~ 0.238 kcal/mol)
+    //   mass    = 39.948 amu
+    //
+    // Demonstration: wir geben gemischte Einheiten an (A, kcal/mol, etc.),
+    // Dedekind konvertiert intern auf OpenMM-Standards (nm, kJ/mol, ps).
+
+    n = 27                          // 3x3x3-Cluster
+    print("[1] Equilibrierung (200 fs @ 85 K)")
+    eq = md_simulate_lj(
+        n_particles=n,
+        sigma=3.4[Angstrom],        // alternative Eingabe in Angstrom
+        epsilon=0.238[kcal/mol],    // alternative Eingabe in kcal/mol
+        mass=39.948[amu],
+        temperature=85[K],
+        dt=1[fs],                   // 1 fs Zeitschritt
+        n_steps=200,
+        box_size=20[Angstrom],
+        seed=42
+    )
+    print("   PE: " + str(eq["potential_energy"]))
+    print("   KE: " + str(eq["kinetic_energy"]))
+    print("   T:  " + str(eq["temperature"]))
+    print("")
+
+    // [2] Produktion: bei hoeherer Temperatur, mehr Schritte
+    print("[2] Produktion (1 ps @ 150 K)")
+    prod = md_simulate_lj(
+        n_particles=n,
+        sigma=0.34[nm],
+        epsilon=0.99[kJ/mol],
+        mass=39.948[amu],
+        temperature=150[K],
+        dt=2[fs],
+        n_steps=500,
+        box_size=2.0[nm],
+        seed=7
+    )
+    print("   PE: " + str(prod["potential_energy"]))
+    print("   KE: " + str(prod["kinetic_energy"]))
+    print("   T:  " + str(prod["temperature"]))
+    print("   End-positions shape: " + str(prod["positions"].shape))
+    print("")
+
+    // [3] USP: Unit-Mismatch wird VOR dem OpenMM-Aufruf abgefangen
+    print("[3] Unit-Safety: kcal-vs-eV-Mix")
+    print("    // res = md_simulate_lj(..., epsilon=0.238[eV], ...)")
+    print("    // -> ValueError: epsilon=0.238[eV] hat falsche Dimension;")
+    print("    //                erwartet kompatibel zu [kJ/mol] (molar_energy)")
+    print("    // PyImport openmm wuerde stattdessen still falsch rechnen.")
+}
+
+main()

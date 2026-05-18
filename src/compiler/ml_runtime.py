@@ -19,9 +19,12 @@ def _normalize_unit_for_compare(unit):
 # Wert in Einheit * Faktor = Wert in Basiseinheit
 DIMENSION_TO_BASE = {
     # SI-Basis
-    "length": ("m", {"m": 1.0, "cm": 0.01, "km": 1000.0, "mm": 0.001, "dm": 0.1}),
-    "mass": ("kg", {"kg": 1.0, "g": 0.001, "t": 1000.0, "mg": 1e-6}),
-    "time": ("s", {"s": 1.0, "min": 60.0, "h": 3600.0, "ms": 0.001}),
+    "length": ("m", {"m": 1.0, "cm": 0.01, "km": 1000.0, "mm": 0.001, "dm": 0.1,
+                    "nm": 1e-9, "Angstrom": 1e-10, "pm": 1e-12, "fm": 1e-15}),
+    "mass": ("kg", {"kg": 1.0, "g": 0.001, "t": 1000.0, "mg": 1e-6,
+                   "amu": 1.66053906660e-27, "Da": 1.66053906660e-27}),
+    "time": ("s", {"s": 1.0, "min": 60.0, "h": 3600.0, "ms": 0.001,
+                  "us": 1e-6, "ns": 1e-9, "ps": 1e-12, "fs": 1e-15}),
     "current": ("A", {"A": 1.0, "mA": 0.001, "kA": 1000.0, "uA": 1e-6, "muA": 1e-6}),
     "temperature": ("K", {"K": 1.0, "mK": 0.001}),
     "amount_of_substance": ("mol", {"mol": 1.0, "mmol": 0.001, "kmol": 1000.0}),
@@ -41,6 +44,9 @@ DIMENSION_TO_BASE = {
     "mass_concentration": ("g/L", {"g/L": 1.0, "mg/mL": 1.0, "percent_wv": 10.0}),  # 1% w/v = 10 g/L
     # Winkel (SI-Ergänzung: rad; deg = pi/180 rad)
     "angle": ("rad", {"rad": 1.0, "deg": 0.017453292519943295}),  # 1 deg = pi/180 rad
+    # Molare Energie (MD/Chemie): Basis kJ/mol (1 kcal/mol = 4.184 kJ/mol)
+    "molar_energy": ("kJ/mol", {"kJ/mol": 1.0, "kcal/mol": 4.184, "J/mol": 0.001,
+                                 "eV/atom": 96.485, "Hartree/mol": 2625.5}),
 }
 # Für Units-Checker: Liste der Einheitenmengen pro Dimension (in-place gepflegt, damit
 # user-definierte Einheiten via _register_user_unit() vom Checker erkannt werden).
@@ -6198,6 +6204,152 @@ def optimize_milp(objective, constraints=None, sense="minimize"):
     out["objective"] = obj_val
     out["status"] = res.message
     return out
+
+
+# ----- Molekulardynamik via OpenMM-Brücke (v1.14) ------------------------------
+def _md_convert_to_unit(q, target_unit, dimension, arg_name):
+    """Validiert Quantity-Dimension und liefert numerischen Wert in target_unit."""
+    if not isinstance(q, Quantity):
+        raise TypeError(
+            f"md_simulate_lj: {arg_name} muss Quantity sein (z. B. 0.34[nm]), "
+            f"bekam {type(q).__name__}."
+        )
+    dim = _get_dimension(q.unit)
+    expected_dim = _get_dimension(target_unit)
+    if dim is None or dim != expected_dim:
+        raise ValueError(
+            f"md_simulate_lj: {arg_name}={q} hat falsche Dimension; "
+            f"erwartet kompatibel zu [{target_unit}] ({expected_dim})."
+        )
+    base = _convert_to_base(q.value, q.unit, dim)
+    return _convert_from_base(base, target_unit, dim)
+
+
+def md_simulate_lj(n_particles, sigma, epsilon, mass, temperature, dt, n_steps,
+                    box_size=None, friction=1.0, seed=None):
+    """Lennard-Jones Molekulardynamik-Simulation via OpenMM, mit Unit-Validierung.
+
+    Anders als ein direkter OpenMM-Aufruf prueft diese Funktion die Dimensionen
+    aller Eingabeparameter VOR dem C++-Kernel — kein stilles Mischen von kcal/mol
+    mit eV oder Å mit nm.
+
+    Parameter:
+      n_particles:  int, Anzahl Teilchen.
+      sigma:        Quantity in Laengeneinheit [nm, Angstrom, pm, m, ...].
+      epsilon:      Quantity in molarer Energie [kJ/mol, kcal/mol, ...].
+      mass:         Quantity in Masse [amu, g, kg, ...].
+      temperature:  Quantity in [K] — Langevin-Bad.
+      dt:           Quantity in Zeit [fs, ps, ns, ...] — Integrations-Zeitschritt.
+      n_steps:      int — Anzahl Integrationsschritte.
+      box_size:     Optional Quantity in Laenge — kubische periodische Box.
+      friction:     float in 1/ps — Langevin-Reibung (Default 1.0).
+      seed:         Optional int — RNG-Seed fuer reproduzierbare Trajektorien.
+
+    Rueckgabe: dict mit
+      positions:        torch.Tensor (n_particles, 3) — Endpositionen in nm.
+      potential_energy: Quantity in [kJ/mol].
+      kinetic_energy:   Quantity in [kJ/mol].
+      temperature:      Quantity in [K] — gemessene End-Temperatur.
+      n_steps:          ausgefuehrte Schritte.
+    """
+    try:
+        import openmm as _mm  # type: ignore[import-untyped]
+        import openmm.unit as _ommu  # type: ignore[import-untyped]
+    except ImportError:
+        raise RuntimeError(
+            "md_simulate_lj benoetigt openmm. Installation: pip install openmm"
+        )
+    import numpy as _np  # type: ignore[reportMissingImports]
+
+    # Unit-Validierung + Konvertierung in OpenMM-Standards (nm, kJ/mol, amu, ps, K)
+    sigma_nm = _md_convert_to_unit(sigma, "nm", "length", "sigma")
+    eps_kjm = _md_convert_to_unit(epsilon, "kJ/mol", "molar_energy", "epsilon")
+    mass_g_per_mol = _md_convert_to_unit(mass, "g", "mass", "mass")
+    # OpenMM: amu numerisch gleich g/mol fuer Avogadro-Skalierung
+    mass_amu = mass_g_per_mol / 1.66053906660e-24
+    if not isinstance(temperature, Quantity) or temperature.unit != "K":
+        raise ValueError(f"md_simulate_lj: temperature muss in [K] sein, bekam {temperature}.")
+    temp_K = float(temperature.value)
+    dt_ps = _md_convert_to_unit(dt, "ps", "time", "dt")
+    box_nm = _md_convert_to_unit(box_size, "nm", "length", "box_size") if box_size is not None else None
+
+    # System aufbauen
+    system = _mm.System()
+    for _ in range(int(n_particles)):
+        system.addParticle(mass_amu * _ommu.amu)
+
+    nb = _mm.NonbondedForce()
+    cutoff = 2.5 * sigma_nm
+    for _ in range(int(n_particles)):
+        nb.addParticle(0.0, sigma_nm * _ommu.nanometer, eps_kjm * _ommu.kilojoule_per_mole)
+    if box_nm is not None:
+        box_vec = box_nm * _np.eye(3)
+        system.setDefaultPeriodicBoxVectors(*(v * _ommu.nanometer for v in box_vec))
+        nb.setNonbondedMethod(_mm.NonbondedForce.CutoffPeriodic)
+        nb.setCutoffDistance(_builtin_min(cutoff, 0.49 * box_nm) * _ommu.nanometer)
+    else:
+        nb.setNonbondedMethod(_mm.NonbondedForce.CutoffNonPeriodic)
+        nb.setCutoffDistance(cutoff * _ommu.nanometer)
+    system.addForce(nb)
+
+    # Anfangspositionen: regelmaessiges Gitter — vermeidet Ueberlappungen
+    # und resultierende NaN-Energien (LJ-r^-12 explodiert bei r -> 0).
+    if seed is not None:
+        _np.random.seed(int(seed))
+    extent = box_nm if box_nm is not None else _builtin_max(5.0 * sigma_nm, 1.0)
+    # Gitter-Abstand >= 1.05 * sigma (LJ-Gleichgewicht ~ 2^(1/6)*sigma ≈ 1.122*sigma)
+    side = int(_np.ceil(int(n_particles) ** (1.0 / 3.0)))
+    spacing = extent / _builtin_max(side, 1)
+    grid_min = 1.05 * sigma_nm
+    if spacing < grid_min:
+        spacing = grid_min
+        extent = spacing * side  # Box ggf. vergroessern
+    positions = _np.zeros((int(n_particles), 3), dtype=float)
+    k = 0
+    for i in range(side):
+        for j in range(side):
+            for kk in range(side):
+                if k >= int(n_particles):
+                    break
+                positions[k] = [(i + 0.5) * spacing, (j + 0.5) * spacing, (kk + 0.5) * spacing]
+                k += 1
+            if k >= int(n_particles):
+                break
+        if k >= int(n_particles):
+            break
+    # Leichte Stoerung gegen perfekte Gitter-Symmetrie
+    positions += 0.02 * spacing * (_np.random.rand(int(n_particles), 3) - 0.5)
+
+    integrator = _mm.LangevinIntegrator(
+        temp_K * _ommu.kelvin,
+        float(friction) / _ommu.picosecond,
+        dt_ps * _ommu.picosecond,
+    )
+    if seed is not None:
+        integrator.setRandomNumberSeed(int(seed))
+
+    ctx = _mm.Context(system, integrator)
+    ctx.setPositions(positions * _ommu.nanometer)
+    ctx.setVelocitiesToTemperature(temp_K * _ommu.kelvin)
+
+    integrator.step(int(n_steps))
+
+    state = ctx.getState(getPositions=True, getEnergy=True, getVelocities=True)
+    pos_nm = _np.asarray(state.getPositions(asNumpy=True).value_in_unit(_ommu.nanometer))
+    pe = float(state.getPotentialEnergy().value_in_unit(_ommu.kilojoule_per_mole))
+    ke = float(state.getKineticEnergy().value_in_unit(_ommu.kilojoule_per_mole))
+    # Kinetic Energy -> Temperatur: KE = (3/2)*N*k_B*T => T = 2*KE / (3*N*k_B)
+    # k_B = 8.314e-3 kJ/(mol*K) in molaren Einheiten
+    k_B_mol = 0.008314462618
+    T_measured = 2.0 * ke / (3.0 * n_particles * k_B_mol)
+
+    return {
+        "positions": torch.as_tensor(pos_nm, dtype=torch.float32),
+        "potential_energy": Quantity(pe, "kJ/mol"),
+        "kinetic_energy": Quantity(ke, "kJ/mol"),
+        "temperature": Quantity(T_measured, "K"),
+        "n_steps": int(n_steps),
+    }
 
 
 # ----- Quantity stripping helpers (v1.9) ---------------------------------------

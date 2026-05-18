@@ -14,3 +14,7 @@ ipykernel>=6.0
 # Optional: GNN-Beispiele (gnn_molecule_demo.ddk, gnn_materials_demo.ddk, graph_shape_test.ddk).
 # Andere Dedekind-Features funktionieren auch ohne torch_geometric.
 torch_geometric>=2.7
+
+# Optional: MD-Bruecke (md_lennard_jones_demo.ddk, md_simulate_lj_test.ddk).
+# Wird nur fuer md_simulate_lj() benoetigt.
+openmm>=8.0

@@ -15,7 +15,7 @@ This folder contains the **source** and **generated** documentation for the Dede
 | **Commercialization_Options.md** | Potenzielle Kommerzialisierungsoptionen (Beratung, Support, Lizenzen, SaaS, Förderung, Phasierung, Risiken) |
 | **IDE_Studio_Roadmap.md** | Dedekind in bestehenden IDEs (VS Code, Jupyter) + Dedekind Studio als kommerzielle Wissenschaftler-IDE (Einheiten, Plots, Postgres, LaTeX, lokale KI) |
 | **Build_Dedekind_Studio_Exe.md** | Anleitung: Dedekind Studio als Windows-.exe bauen (PyInstaller) |
-| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.13.0; Stärken, Lücken, Roadmap) |
+| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.14.0; Stärken, Lücken, Roadmap) |
 | **Dedekind_Language_Specification_v0.1.pdf** | Legacy PDF (v0.1); for current spec use the Markdown or generate v0.2 PDF below |
 | **Dedekind_Research_Papers_and_Architecture.pdf** | Legacy PDF; for current content use the Markdown or generate PDF below |
 
@@ -41,6 +41,10 @@ pandoc Dedekind_Research_and_Architecture.md -o Dedekind_Research_and_Architectu
 - **Online**: Paste the Markdown into a service that converts Markdown to PDF (e.g. markdown-to-pdf converters).
 - **Typora / other editors**: Open the `.md` file and export to PDF from the application.
 
+
+## What changed in v1.14.0 (documented here)
+
+- **Version 1.14.0**: **Molekulardynamik via OpenMM-Bruecke.** Neue Runtime-Built-in `md_simulate_lj(n_particles, sigma, epsilon, mass, temperature, dt, n_steps, box_size, friction, seed)` startet eine Lennard-Jones-NVT-Simulation (Langevin-Integrator) auf dem OpenMM-C++-Kernel. Dedekinds USP gegenueber rohem `pyimport openmm`: **alle Force-Field-Parameter werden dimensional validiert, bevor der C++-Kernel laeuft.** `epsilon=0.238[eV]` wirft `ValueError: epsilon=0.238[eV] hat falsche Dimension; erwartet kompatibel zu [kJ/mol] (molar_energy)` — in rohem OpenMM ist eV-vs-kcal/mol-Verwechselung ein stiller Bug, der Stunden Diagnose kostet. Dedekind macht ihn unmoeglich. Implementiert via `_md_convert_to_unit(q, target_unit, dimension, arg_name)`, das ueber das v1.7-Dimensionssystem laeuft. Akzeptiert alternative Einheiten und konvertiert intern auf OpenMM-Standards (nm, kJ/mol, amu, ps, K). Anfangs-Positionen auf regelmaessigem 3D-Gitter mit Abstand max(extent/n^(1/3), 1.05*sigma) — vermeidet NaN-Energien durch Teilchen-Ueberlappungen (LJ-r⁻¹² explodiert bei r → 0); leichte Stoerung gegen perfekte Symmetrie. **Erweiterung des Dimensionssystems um MD-typische Einheiten:** Laenge `nm`, `Angstrom`, `pm`, `fm`; Masse `amu`, `Da` (Dalton, numerisch gleich amu); Zeit `fs`, `ps`, `ns`, `us`; neue Dimension `molar_energy` mit Basis `kJ/mol` und Konvertern fuer `kcal/mol` (4.184), `J/mol`, `eV/atom` (96.485), `Hartree/mol` (2625.5). Rueckgabe-Dict: `positions` (torch.Tensor, n_particles x 3, in nm), `potential_energy`/`kinetic_energy` (Quantity in kJ/mol), `temperature` (Quantity in K, via Equipartition aus KE berechnet), `n_steps`. requirements.txt: `openmm>=8.0` als optionale Dependency vermerkt. **Bewusst NICHT geliefert** (jenseits LJ-Scope = `pyimport openmm.app`): keine Protein-Force-Fields (AMBER, CHARMM, OPLS), kein implicit solvent, keine REMD/free-energy/Umbrella-Sampling-Methoden — diese liefert OpenMM selbst weit besser als wir es portieren koennten. Dedekinds Beitrag bleibt die Annotations- und Unit-Schicht ueber dem einen kanonischen MD-Workflow. Beispiel `md_lennard_jones_demo.ddk` (Argon-Cluster: 200 fs Equilibrierung @ 85 K, dann 1 ps Produktion @ 150 K). Test `md_simulate_lj_test.ddk` (8 Asserts: Shape, Energie-Einheiten, Temperatur-Plausibilitaet, Angstrom+kcal/mol-Alternativeingabe). 40/40 Tests gruen, 96/96 Beispiele kompilieren.
 
 ## What changed in v1.13.0 (documented here)
 

@@ -2,7 +2,7 @@
 
 **Language Specification v0.2**  
 Mario Michael Heinrich · github.com/Engineer1080  
-Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit), v0.9.6 (Math-Funktionen), v0.9.7 (Chemie/Biologie: mol, L, M, ppm), v0.9.8 (Convenience, Elemente, Datei-I/O, Netzwerk, JSON), v1.0.0 (Release), v1.0.1–v1.0.6 (Patch), v1.2.6 (Winkel rad/deg, deg_to_rad, rad_to_deg), v1.2.7 (Dirichlet-Verteilung, dirichlet_function), v1.2.8 (Dedekind-Schnitte, Dedekind-Ringe, Riemann-Zeta, Riemann-Summen), v1.2.9 (Betragsstriche, Rotationskörper, logische Operatoren), v1.3.0 (integrate_sym, Lagrange/Hamilton, Lotka-Volterra, chemisches Gleichgewicht), v1.3.1 (Medizin, Pharmakologie, Epidemiologie), v1.4.0 (Modul-System `use`, Seed/data_hash, DataFrame+CSV/Parquet/HDF5/NetCDF, Unit-aware Plots, `@units`-Signaturen mit `fn f(x: [m]) -> [J]`, Dict-Literale), v1.5.0 (benchmark/profile/time_block, jit (torch.compile), sde_solve (Euler-Maruyama, Milstein), least_squares, minimize_constrained, milp, FEM-Primitiven mesh_unit_square/fem_assemble_*/fem_poisson_2d, `arange` int64), v1.6.0 (solve_sym/simplify_sym/series, cg/gmres/bicgstab + jacobi_/ilu_preconditioner, export_notebook (HTML/MD), print_table (markdown/latex/csv/plain) mit UncertainQuantity-±), v1.7.0 (Standardbibliothek-Module physics/stats/chemistry/biology/math/ml via `use`, benutzerdefinierte Einheiten `unit NAME = FAKTOR[basis]` mit Verkettung & Compile-Zeit-Registrierung, Quantity-Vergleichsoperatoren `<` `<=` `>` `>=` `==` `!=` mit Auto-Konvertierung), v1.8.0 (Source-Mapping fuer Runtime-Fehler — Tracebacks zeigen `.ddk`-Zeilen + Code-Auszug; `pyimport <mod[.sub]> [as alias]` als Fluchtluke in PyPI; `dedekind_exec` Helper in `compiler.py`), v1.8.1 (Purity-Check: `print`/`plot`/`write_file`/`http_*`/I/O-Built-ins in `jit`/`grad`/`fit`/`metropolis`/`hmc`/`sde_solve`-Argumenten werden zur Compile-Zeit transitiv erkannt und blockiert; Opt-Out via `--no-purity-check`), v1.9.0 (Shape-Annotationen `Scalar`/`Vector[n]`/`Matrix[m,n]`/`Tensor[...]` mit symbolischen Dimensionen, gebunden und konsistenzgeprueft pro Call; `unwrap(x)` strippt Quantity/UncertainQuantity-Wrapper fuer Hot-Path-Performance), v1.10.0 (PINN-Primitive `partial(u, x, order=n)` fuer ∂u/∂x via Autograd, ergaenzend zu `grad(fn, x)`; `fit()`-Hardening fuer PINN-Data-Listen mit gemischten Shapes und Collocation-grad-Reset), v1.11.0 (`graph_laplacian(adj, normalized=False)` fuer kombinatorische und normalisierte Laplace-Matrix; dichte/sparse Eingabe, direkt einsetzbar in cg/gmres/bicgstab/eigh), v1.12.0 (`Graph[N, E]` als Shape-Annotation fuer torch_geometric.data.Data-aehnliche Objekte; symbolische Knoten/Kanten-Konsistenz; kombinierbar mit Unit-Annotationen auf anderen Argumenten), v1.13.0 (deklarative MILP-DSL via `Variable(name, lower, upper, integer)` und `optimize_milp(objective, constraints, sense)` mit Operator-Overloading und unit-aware Constraints)
+Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit), v0.9.6 (Math-Funktionen), v0.9.7 (Chemie/Biologie: mol, L, M, ppm), v0.9.8 (Convenience, Elemente, Datei-I/O, Netzwerk, JSON), v1.0.0 (Release), v1.0.1–v1.0.6 (Patch), v1.2.6 (Winkel rad/deg, deg_to_rad, rad_to_deg), v1.2.7 (Dirichlet-Verteilung, dirichlet_function), v1.2.8 (Dedekind-Schnitte, Dedekind-Ringe, Riemann-Zeta, Riemann-Summen), v1.2.9 (Betragsstriche, Rotationskörper, logische Operatoren), v1.3.0 (integrate_sym, Lagrange/Hamilton, Lotka-Volterra, chemisches Gleichgewicht), v1.3.1 (Medizin, Pharmakologie, Epidemiologie), v1.4.0 (Modul-System `use`, Seed/data_hash, DataFrame+CSV/Parquet/HDF5/NetCDF, Unit-aware Plots, `@units`-Signaturen mit `fn f(x: [m]) -> [J]`, Dict-Literale), v1.5.0 (benchmark/profile/time_block, jit (torch.compile), sde_solve (Euler-Maruyama, Milstein), least_squares, minimize_constrained, milp, FEM-Primitiven mesh_unit_square/fem_assemble_*/fem_poisson_2d, `arange` int64), v1.6.0 (solve_sym/simplify_sym/series, cg/gmres/bicgstab + jacobi_/ilu_preconditioner, export_notebook (HTML/MD), print_table (markdown/latex/csv/plain) mit UncertainQuantity-±), v1.7.0 (Standardbibliothek-Module physics/stats/chemistry/biology/math/ml via `use`, benutzerdefinierte Einheiten `unit NAME = FAKTOR[basis]` mit Verkettung & Compile-Zeit-Registrierung, Quantity-Vergleichsoperatoren `<` `<=` `>` `>=` `==` `!=` mit Auto-Konvertierung), v1.8.0 (Source-Mapping fuer Runtime-Fehler — Tracebacks zeigen `.ddk`-Zeilen + Code-Auszug; `pyimport <mod[.sub]> [as alias]` als Fluchtluke in PyPI; `dedekind_exec` Helper in `compiler.py`), v1.8.1 (Purity-Check: `print`/`plot`/`write_file`/`http_*`/I/O-Built-ins in `jit`/`grad`/`fit`/`metropolis`/`hmc`/`sde_solve`-Argumenten werden zur Compile-Zeit transitiv erkannt und blockiert; Opt-Out via `--no-purity-check`), v1.9.0 (Shape-Annotationen `Scalar`/`Vector[n]`/`Matrix[m,n]`/`Tensor[...]` mit symbolischen Dimensionen, gebunden und konsistenzgeprueft pro Call; `unwrap(x)` strippt Quantity/UncertainQuantity-Wrapper fuer Hot-Path-Performance), v1.10.0 (PINN-Primitive `partial(u, x, order=n)` fuer ∂u/∂x via Autograd, ergaenzend zu `grad(fn, x)`; `fit()`-Hardening fuer PINN-Data-Listen mit gemischten Shapes und Collocation-grad-Reset), v1.11.0 (`graph_laplacian(adj, normalized=False)` fuer kombinatorische und normalisierte Laplace-Matrix; dichte/sparse Eingabe, direkt einsetzbar in cg/gmres/bicgstab/eigh), v1.12.0 (`Graph[N, E]` als Shape-Annotation fuer torch_geometric.data.Data-aehnliche Objekte; symbolische Knoten/Kanten-Konsistenz; kombinierbar mit Unit-Annotationen auf anderen Argumenten), v1.13.0 (deklarative MILP-DSL via `Variable(name, lower, upper, integer)` und `optimize_milp(objective, constraints, sense)` mit Operator-Overloading und unit-aware Constraints), v1.14.0 (Molekulardynamik-Bruecke `md_simulate_lj(...)` via OpenMM mit dimensionsvalidierten Force-Field-Parametern; neue MD-Einheiten nm/Angstrom/pm, amu, fs/ps/ns, sowie neue Dimension molar_energy mit kJ/mol/kcal/mol/eV/Hartree)
 
 ---
 
@@ -663,6 +663,58 @@ Returns a `dict`:
 The low-level `milp(c, A_ub, b_ub, A_eq, b_eq, bounds, integrality)` from v1.5 stays unchanged; the v1.13 DSL is an additive convenience layer.
 
 Examples: `examples/dedekind/optimize_milp_demo.ddk` (Vehicle Routing, Production Mix, Energy Mix). Test: `tests/dedekind/optimize_milp_test.ddk`.
+
+### 15.20 Molecular Dynamics Bridge to OpenMM (v1.14)
+
+A typed Lennard-Jones MD wrapper around OpenMM with full unit validation of force-field parameters before the C++ kernel runs.
+
+```dedekind
+res = md_simulate_lj(
+    n_particles=27,
+    sigma=3.4[Angstrom],         // alternative input in Å
+    epsilon=0.238[kcal/mol],     // or kJ/mol
+    mass=39.948[amu],
+    temperature=85[K],
+    dt=1[fs],
+    n_steps=200,
+    box_size=2.0[nm],
+    seed=42
+)
+// res["potential_energy"] : Quantity in [kJ/mol]
+// res["kinetic_energy"]   : Quantity in [kJ/mol]
+// res["temperature"]      : Quantity in [K]
+// res["positions"]        : torch.Tensor (n_particles, 3) in nm
+```
+
+Parameters:
+
+| Name | Type | Notes |
+|------|------|-------|
+| `n_particles` | int | |
+| `sigma` | Quantity, length | nm, Å, pm, m |
+| `epsilon` | Quantity, molar energy | kJ/mol, kcal/mol, eV/atom, Hartree/mol |
+| `mass` | Quantity, mass | amu, Da, g, kg |
+| `temperature` | Quantity in K | Langevin bath |
+| `dt` | Quantity, time | fs, ps, ns |
+| `n_steps` | int | integration steps |
+| `box_size` | optional Quantity, length | cubic periodic box |
+| `friction` | float | Langevin friction in 1/ps |
+| `seed` | optional int | reproducible trajectory |
+
+**The USP vs. raw `pyimport openmm`:** every input passes through the v1.7 dimension system before reaching the C++ kernel. `epsilon=0.238[eV]` raises `ValueError: epsilon=0.238[eV] hat falsche Dimension; erwartet kompatibel zu [kJ/mol] (molar_energy)` — in raw OpenMM, mixing eV with kcal/mol is a silent bug that costs hours to diagnose.
+
+Supporting extensions to the dimension system in v1.14:
+
+- **length**: added `nm`, `Angstrom`, `pm`, `fm` to the length dimension table.
+- **mass**: added `amu`, `Da` (1.66053906660e-27 kg).
+- **time**: added `fs`, `ps`, `ns`, `us`.
+- **new dimension** `molar_energy`: `kJ/mol` (base), `kcal/mol` (4.184), `J/mol`, `eV/atom` (96.485), `Hartree/mol` (2625.5).
+
+Initial positions are placed on a regular 3D grid with spacing ≥ 1.05·σ, then perturbed by 2% of grid spacing — avoids NaN energies from random overlaps (LJ-r⁻¹² explodes as r → 0) without losing thermalization stochasticity.
+
+**What v1.14 deliberately does not provide:** no protein force fields (AMBER, CHARMM, OPLS), no implicit solvent, no REMD/free-energy/umbrella-sampling methods. For those, `pyimport openmm.app as omm_app` directly — Dedekind's role is the unit-aware bridge for the canonical LJ workflow, not a re-implementation of OpenMM.
+
+Example: `examples/dedekind/md_lennard_jones_demo.ddk` (Argon cluster: 200 fs equilibration at 85 K, then 1 ps production at 150 K). Test: `tests/dedekind/md_simulate_lj_test.ddk`.
 
 ---
 
