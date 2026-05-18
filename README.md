@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-1.17.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-1.18.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -28,6 +28,24 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
+
+### What's New in v1.18.0
+
+- **3D Geometric / Clifford Algebra G(3,0) nativ.** Neue `MultiVector`-Klasse mit 8 reellen Komponenten (Skalar, e1, e2, e3, e12, e13, e23, e123) und nativem Operator-Overloading. Vereinheitlicht Skalare, Vektoren, Bivektoren (orientierte Flaechen) und Pseudoskalare in einer Algebra — Rotationen werden zu Sandwich-Produkten, komplexe Zahlen sind eine Subalgebra, Quaternionen sind die gerade Subalgebra.
+  ```dedekind
+  e1 = vector(1, 0, 0)
+  e2 = vector(0, 1, 0)
+  print(e1 * e2)                      // e12 (Bivektor)
+
+  R = rotor(1.5707963, 1, 0, 0)       // 90 deg in der e1-e2-Ebene
+  print(rotate(e1, R))                // ~ e2 (Rotation via Sandwich-Produkt)
+  ```
+- **Konstruktoren:** `scalar(s)`, `vector(x,y,z)`, `bivector(b12,b13,b23)`, `pseudoscalar(s)`, `multivector(8 args)`, `rotor(angle, b12, b13, b23)`.
+- **Operationen:** `+`, `-`, `*` (geometrisches Produkt), Skalar-Multiplikation; Methoden `.wedge(b)` (outer/Grad-Erhoehung), `.dot(b)` (inner/Grad-Reduktion), `.reverse()`, `.grade(n)`, `.norm()`, `.scalar_part()`.
+- **Funktion `rotate(v, R)`** macht das Sandwich-Produkt `R v ~R` explizit.
+- **Multiplikationstabelle** (8×8) ueber Bit-Pattern berechnet: result_blade = `a XOR b`, Vorzeichen aus der Anzahl Swaps. Numerisch stabil, keine externen Abhaengigkeiten.
+- **Bewusst NICHT geliefert:** keine Signaturen jenseits G(3,0) (kein Spacetime G(3,1), keine Conformal Geometric Algebra G(4,1)). Wer die braucht: `pyimport clifford` direkt. Dedekinds Beitrag: die kanonischen 3D-Faelle (Robotik, Graphik, klassische Physik) als typisierte native Built-ins, ohne Extra-Dependency.
+- Beispiel: `geometric_algebra_demo.ddk` (8 Demos: Basis, geom. Produkt, Quadrate, Rotor, Rotor-Komposition, Bivektor-Orientierung, Pseudoskalar, komplexe Zahlen als Subalgebra). Test: `geometric_algebra_test.ddk` (16 Asserts). 44/44 Tests gruen, 100/100 Beispiele kompilieren.
 
 ### What's New in v1.17.0
 

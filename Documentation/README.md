@@ -15,7 +15,7 @@ This folder contains the **source** and **generated** documentation for the Dede
 | **Commercialization_Options.md** | Potenzielle Kommerzialisierungsoptionen (Beratung, Support, Lizenzen, SaaS, Förderung, Phasierung, Risiken) |
 | **IDE_Studio_Roadmap.md** | Dedekind in bestehenden IDEs (VS Code, Jupyter) + Dedekind Studio als kommerzielle Wissenschaftler-IDE (Einheiten, Plots, Postgres, LaTeX, lokale KI) |
 | **Build_Dedekind_Studio_Exe.md** | Anleitung: Dedekind Studio als Windows-.exe bauen (PyInstaller) |
-| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.17.0; Stärken, Lücken, Roadmap) |
+| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.18.0; Stärken, Lücken, Roadmap) |
 | **Dedekind_Language_Specification_v0.1.pdf** | Legacy PDF (v0.1); for current spec use the Markdown or generate v0.2 PDF below |
 | **Dedekind_Research_Papers_and_Architecture.pdf** | Legacy PDF; for current content use the Markdown or generate PDF below |
 
@@ -41,6 +41,10 @@ pandoc Dedekind_Research_and_Architecture.md -o Dedekind_Research_and_Architectu
 - **Online**: Paste the Markdown into a service that converts Markdown to PDF (e.g. markdown-to-pdf converters).
 - **Typora / other editors**: Open the `.md` file and export to PDF from the application.
 
+
+## What changed in v1.18.0 (documented here)
+
+- **Version 1.18.0**: **3D Geometric / Clifford Algebra G(3,0) als nativer Built-in.** Neue `MultiVector`-Klasse in `src/compiler/ml_runtime.py` mit 8 reellen Komponenten und kanonischer Bit-Pattern-Indizierung (0=skalar, 1=e1, 2=e2, 3=e12, 4=e3, 5=e13, 6=e23, 7=e123). Operator-Overloading fuer `+`, `-`, `*` (geometrisches Produkt), Skalar-Multiplikation, Negation. Methoden `.wedge(b)` (outer/Grad-erhoehend), `.dot(b)` (inner/Grad-reduzierend), `.reverse()` (Sign pro Grad k: `(-1)^(k(k-1)/2)`), `.grade(n)` (Grad-Extraktion), `.norm()` (`sqrt(<a*~a>_0)`), `.scalar_part()`. Multiplikationstabelle (8×8) via `_gp_basis(a_bits, b_bits)` berechnet: result-Bits = `a XOR b` (in G(3,0) annihilieren sich gleiche Faktoren), Vorzeichen aus Swap-Anzahl. Konstruktoren `scalar`, `vector(x,y,z)`, `bivector(b12,b13,b23)`, `pseudoscalar`, `multivector` (8 args), `rotor(angle, b12, b13, b23)` (= `exp(-angle/2 * B)`). Funktion `rotate(v, R)` macht das Sandwich-Produkt `R v ~R` explizit. Beispiel `geometric_algebra_demo.ddk` demonstriert 8 zentrale Faelle: (1) Basis-Vektoren, (2) geom. Produkt zweier orthogonaler Vektoren ergibt Bivektor (3*4=12*e12), (3) e_i*e_i = 1 in (3,0) und I*I = -1, (4) Rotation e1 → e2 via 90deg-Rotor in xy-Ebene, e2 → -e1, e3 unveraendert, (5) Komposition R_45 * R_45 = R_90, (6) Bivektor als orientierte Flaeche, (7) Pseudoskalar I^2 = -1 (wie imaginaere Einheit), (8) komplexe Zahlen `cos(t) + sin(t)*e12` als Subalgebra. Test `geometric_algebra_test.ddk` mit 16 Asserts: Basis-Quadrate, Antikommutativitaet, I^2, Wedge/Dot von orthogonal vs. kollinear, Rotor in allen 3 Achsen, Rotor-Komposition, Reverse von Bivektor, Norm von (3,4,0)=5. **Bewusst NICHT geliefert**: keine Signaturen jenseits G(3,0) — kein Spacetime G(3,1) oder G(1,3), keine Conformal GA G(4,1) mit Punkten/Linien/Kreisen/Sphaeren als Primitiven. Wer diese braucht: `pyimport clifford` direkt. Dedekinds Beitrag bleibt die kanonischen 3D-Faelle (Robotik, Computer-Graphik, klassische Physik) als typisierte native Built-ins ohne Extra-Dependency. 44/44 Tests gruen, 100/100 Beispiele kompilieren.
 
 ## What changed in v1.17.0 (documented here)
 
