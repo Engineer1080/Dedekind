@@ -1,0 +1,87 @@
+// try_catch_slicing_demo.ddk — Sprachreife: Error-Handling + Python-Style Slicing (v1.17)
+//
+// Zwei kleine, aber lange ueberfaellige Features, die Dedekind von einem
+// Notebook-DSL zu einer echten Skript-Sprache fuer wissenschaftliche
+// Anwendungen heben.
+
+// --- try / catch ----------------------------------------------------------
+fn safe_divide(a, b) {
+    try {
+        return a / b
+    } catch e {
+        print("  Fehler abgefangen:", e)
+        return 0.0
+    }
+}
+
+// Datei einlesen mit Fallback
+fn read_or_default(path, default) {
+    try {
+        return read_file(path)
+    } catch e {
+        print("  Datei nicht lesbar, nutze Default:", e)
+        return default
+    }
+}
+
+// --- Slicing-Syntax -------------------------------------------------------
+fn diff_first_last(data) {
+    // Slice nutzt erste 5 und letzte 5 Werte, vergleicht Mittelwerte.
+    head_mean = data[:5].mean()
+    tail_mean = data[-5:].mean()
+    return tail_mean - head_mean
+}
+
+fn main() {
+    print("=== try/catch + Slicing (v1.17) ===")
+    print("")
+
+    // --- 1. Slicing-Vielfalt ---
+    print("[1] Slicing-Syntax")
+    x = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+    print("  x         =", x)
+    print("  x[3:7]    =", x[3:7])         // Standard-Range
+    print("  x[:5]     =", x[:5])          // Anfang bis 5
+    print("  x[5:]     =", x[5:])          // Ab 5 bis Ende
+    print("  x[::2]    =", x[::2])         // Jedes 2.
+    print("  x[1::2]   =", x[1::2])        // Jedes 2., ab Index 1
+    print("  x[2:8:2]  =", x[2:8:2])       // Range mit Schritt
+    // Hinweis: PyTorch erlaubt keinen negativen Step; fuer Reverse `torch.flip` nutzen.
+    print("")
+
+    // --- 2. Praktische Anwendung: Head- vs. Tail-Vergleich ---
+    print("[2] Trend ueber 10 Datenpunkte (mean tail - mean head)")
+    series = [1.0, 1.2, 1.5, 2.0, 2.3, 2.8, 3.1, 3.4, 3.9, 4.5]
+    print("  diff:", diff_first_last(series))
+    print("")
+
+    // --- 3. try/catch: kontrollierter Fehler ---
+    print("[3] safe_divide")
+    print("  10 / 2 =", safe_divide(10.0, 2.0))
+    print("  10 / 0:")
+    r = safe_divide(10.0, 0.0)
+    print("    -> fallback ergibt:", r)
+    print("")
+
+    // --- 4. try/catch: I/O mit Fallback ---
+    print("[4] Datei-Lesen mit Fallback")
+    content = read_or_default("/nicht/existent.txt", "DEFAULT_CONTENT")
+    print("  Inhalt:", content)
+    print("")
+
+    // --- 5. Verschachtelte try-Bloecke ---
+    print("[5] Verschachtelte try-Bloecke")
+    data = [100, 200, 300]
+    try {
+        slice = data[1:5]                  // OK: gibt [200, 300]
+        print("  Slice:", slice)
+        try {
+            element = slice[10]            // Fehler im inneren Block
+        } catch inner {
+            print("  Innerer Fehler:", inner)
+        }
+    } catch outer {
+        print("  Aeusserer Fehler:", outer)
+    }
+}
+main()

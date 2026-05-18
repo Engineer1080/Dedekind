@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-1.16.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-1.17.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -28,6 +28,31 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
+
+### What's New in v1.17.0
+
+- **`try { ... } catch e { ... }` — natives Error-Handling.** Bisher konnten Forscher Exceptions nicht im `.ddk`-Code abfangen. Jetzt:
+  ```dedekind
+  try {
+      content = read_file("/maybe/exists.json")
+      return json_parse(content)
+  } catch e {
+      print("Datei nicht lesbar:", e)
+      return {}
+  }
+  ```
+  Verschachtelbar. Codegen emittiert standardmaessiges Python `try: ... except Exception as e: ...`. Damit ist Dedekind von einem Skript-DSL zu einer echten Anwendungs-Sprache geworden — defensive Programmierung und Fallback-Pfade sind ab v1.17 erstklassig.
+- **Python-Style Slicing-Syntax `x[a:b]`, `x[:b]`, `x[a:]`, `x[::s]`, `x[a:b:s]`, `x[:]`.** Vorher musste man `x.narrow(0, a, b-a)` schreiben — jetzt:
+  ```dedekind
+  x = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+  head = x[:5]            // [10..50]
+  tail = x[5:]            // [60..100]
+  every2nd = x[::2]       // [10, 30, 50, 70, 90]
+  middle = x[2:8:2]       // [30, 50, 70]
+  ```
+  Funktioniert auf Listen, Tensoren, allem was `__getitem__` mit `slice` versteht. Neuer `Slice(start, stop, step)`-AST-Knoten; jede Komponente ist optional.
+- **Hinweis: PyTorch-Limitierung.** Negativer Step (`x[::-1]` fuer Reverse) wird von PyTorch nicht unterstuetzt — nutze `torch.flip(x, [0])`. Slice mit positivem Step funktioniert unveraendert.
+- Beispiel: `try_catch_slicing_demo.ddk`. Test: `try_catch_slicing_test.ddk` (18 Asserts: 7 Slice-Varianten, try/catch flat und verschachtelt, kombinierte try+Slice). 43/43 Tests gruen, 99/99 Beispiele kompilieren.
 
 ### What's New in v1.16.0
 

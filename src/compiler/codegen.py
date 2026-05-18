@@ -553,6 +553,39 @@ class CodeGenerator:
         idx = self.visit_expression(node.index)
         return f"{val}[{idx}]"
 
+    def visit_Slice(self, node):
+        """Python-Slice: start:stop:step (jede Komponente optional)."""
+        start = self.visit_expression(node.start) if node.start is not None else ""
+        stop = self.visit_expression(node.stop) if node.stop is not None else ""
+        if node.step is not None:
+            step = self.visit_expression(node.step)
+            return f"{start}:{stop}:{step}"
+        return f"{start}:{stop}"
+
+    def visit_TryCatch(self, node):
+        self.add_line("try:")
+        self.indent_level += 1
+        if not node.body:
+            self.add_line("pass")
+        else:
+            for stmt in node.body:
+                self._emit_ddk_marker(stmt)
+                res = self.visit(stmt)
+                if isinstance(res, str):
+                    self.add_line(res)
+        self.indent_level -= 1
+        self.add_line(f"except Exception as {node.catch_var}:")
+        self.indent_level += 1
+        if not node.handler:
+            self.add_line("pass")
+        else:
+            for stmt in node.handler:
+                self._emit_ddk_marker(stmt)
+                res = self.visit(stmt)
+                if isinstance(res, str):
+                    self.add_line(res)
+        self.indent_level -= 1
+
     def visit_ItemAssignment(self, node: ItemAssignment):
         target = self.visit_Subscript(node.target)
         value = self.visit_expression(node.value)

@@ -15,7 +15,7 @@ This folder contains the **source** and **generated** documentation for the Dede
 | **Commercialization_Options.md** | Potenzielle Kommerzialisierungsoptionen (Beratung, Support, Lizenzen, SaaS, Förderung, Phasierung, Risiken) |
 | **IDE_Studio_Roadmap.md** | Dedekind in bestehenden IDEs (VS Code, Jupyter) + Dedekind Studio als kommerzielle Wissenschaftler-IDE (Einheiten, Plots, Postgres, LaTeX, lokale KI) |
 | **Build_Dedekind_Studio_Exe.md** | Anleitung: Dedekind Studio als Windows-.exe bauen (PyInstaller) |
-| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.16.0; Stärken, Lücken, Roadmap) |
+| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.17.0; Stärken, Lücken, Roadmap) |
 | **Dedekind_Language_Specification_v0.1.pdf** | Legacy PDF (v0.1); for current spec use the Markdown or generate v0.2 PDF below |
 | **Dedekind_Research_Papers_and_Architecture.pdf** | Legacy PDF; for current content use the Markdown or generate PDF below |
 
@@ -41,6 +41,10 @@ pandoc Dedekind_Research_and_Architecture.md -o Dedekind_Research_and_Architectu
 - **Online**: Paste the Markdown into a service that converts Markdown to PDF (e.g. markdown-to-pdf converters).
 - **Typora / other editors**: Open the `.md` file and export to PDF from the application.
 
+
+## What changed in v1.17.0 (documented here)
+
+- **Version 1.17.0**: **Sprachreife — `try`/`catch` und Slicing-Syntax.** Zwei kompakte Sprach-Features, die Dedekind von einem Notebook-DSL zu einer echten Anwendungs-Sprache heben. **try/catch**: neuer AST-Knoten `TryCatch(body, catch_var, handler)`; Lexer-Keywords `try` und `catch`; Parser `parse_try_catch()` produziert `try { ... } catch e { ... }`-Syntax; Codegen emittiert standardmaessiges Python `try: ... except Exception as e: ...` mit DDK-Marker-Annotation fuer Source-Mapping (jeder Frame im catch-Block wird zur richtigen `.ddk`-Zeile aufgeloest). Verschachtelung unterstuetzt; jeder catch-Block bindet die Exception an einen frei waehlbaren Namen. Keine Typ-Filter (kein `catch e: ValueError`) und kein `finally` in v1.17 — beides nachreichbar, wenn jemand danach fragt. **Slicing-Syntax** Python-Style: neuer `Slice(start, stop, step)`-AST-Knoten, jede Komponente optional. Parser-Erweiterung in `parse_subscript`: nach `[` sammelt jetzt bis zu 3 durch `:` getrennte Komponenten; leere Komponenten werden zu `None`. Ein einzelner Index ohne `:` bleibt das klassische `Subscript(value, index)`; sobald ein `:` auftritt, wird ein `Slice` erzeugt. Codegen `visit_Slice` rendert die Python-Slice-Notation `start:stop:step` mit leeren Komponenten fuer offene Schranken. Funktioniert auf allem, was `__getitem__` mit einem `slice`-Objekt akzeptiert: Listen, torch.Tensor, numpy-Arrays. Wichtige Einschraenkung dokumentiert: PyTorch unterstuetzt negativen Step nicht (`x[::-1]` -> RuntimeError); fuer Reverse `torch.flip(x, [0])`. Beispiel `try_catch_slicing_demo.ddk` (7 Slice-Varianten, safe_divide-Helper, Datei-Lesen mit Fallback, verschachtelte try-Bloecke). Test `try_catch_slicing_test.ddk` (18 Asserts: alle Slice-Formen inklusive Schritt, try mit/ohne Fehler, verschachtelt, kombiniert try+Slice). 43/43 Tests gruen, 99/99 Beispiele kompilieren.
 
 ## What changed in v1.16.0 (documented here)
 

@@ -104,8 +104,34 @@ class Parser:
             return self.parse_while_stmt()
         elif token.type == 'FOR':
             return self.parse_for_stmt()
+        elif token.type == 'TRY':
+            return self.parse_try_catch()
         else:
             return self.parse_expression()
+
+    def parse_try_catch(self):
+        start_line = self.peek().line
+        self.consume('TRY')
+        self.consume('LBRACE')
+        body = []
+        while self.peek().type != 'RBRACE':
+            body.append(self.parse_statement())
+        self.consume('RBRACE')
+        if not self.peek() or self.peek().type != 'CATCH':
+            raise CompileError(
+                "`try { ... }` braucht `catch <name> { ... }`.",
+                line=start_line,
+            )
+        self.consume('CATCH')
+        var_tok = self.consume('ID')
+        self.consume('LBRACE')
+        handler = []
+        while self.peek().type != 'RBRACE':
+            handler.append(self.parse_statement())
+        self.consume('RBRACE')
+        node = TryCatch(body=body, catch_var=var_tok.value, handler=handler)
+        node.line = start_line
+        return node
 
     def parse_if_stmt(self):
         start_line = self.peek().line
@@ -662,8 +688,31 @@ class Parser:
 
             elif self.peek().type == 'LBRACKET':
                 self.consume('LBRACKET')
-                index = self.parse_expression()
+                # Subscript ODER Slice (Python-Style x[a:b], x[:b], x[a:], x[::s], ...).
+                # Wir sammeln bis zu 3 durch ':' getrennte Komponenten; jede darf leer sein.
+                parts = []
+                # erste Komponente
+                if self.peek().type not in ('COLON', 'RBRACKET'):
+                    parts.append(self.parse_expression())
+                else:
+                    parts.append(None)
+                while self.peek() and self.peek().type == 'COLON':
+                    self.consume('COLON')
+                    if self.peek().type not in ('COLON', 'RBRACKET'):
+                        parts.append(self.parse_expression())
+                    else:
+                        parts.append(None)
                 self.consume('RBRACKET')
+                if len(parts) == 1:
+                    # Klassisches Subscript
+                    index = parts[0]
+                else:
+                    # Slice: [start, stop] oder [start, stop, step]
+                    start = parts[0]
+                    stop = parts[1] if len(parts) > 1 else None
+                    step = parts[2] if len(parts) > 2 else None
+                    index = Slice(start=start, stop=stop, step=step)
+                    index.line = line_at
                 node = Subscript(node, index)
                 if getattr(node, 'line', None) is None:
                     node.line = line_at

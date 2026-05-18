@@ -157,6 +157,23 @@ class Subscript(Node):
     value: Node
     index: Node
 
+
+@dataclass
+class Slice(Node):
+    """Python-Style Slice fuer Subscript-Indizes: x[start:stop:step].
+    Jede Komponente kann None sein (offene Schranke)."""
+    start: Optional[Node] = None
+    stop: Optional[Node] = None
+    step: Optional[Node] = None
+
+
+@dataclass
+class TryCatch(Node):
+    """try { body } catch var { handler } — faengt jede Exception und bindet sie an var."""
+    body: List[Node]
+    catch_var: str
+    handler: List[Node]
+
 @dataclass
 class ItemAssignment(Node):
     target: Subscript
