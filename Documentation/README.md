@@ -15,7 +15,7 @@ This folder contains the **source** and **generated** documentation for the Dede
 | **Commercialization_Options.md** | Potenzielle Kommerzialisierungsoptionen (Beratung, Support, Lizenzen, SaaS, Förderung, Phasierung, Risiken) |
 | **IDE_Studio_Roadmap.md** | Dedekind in bestehenden IDEs (VS Code, Jupyter) + Dedekind Studio als kommerzielle Wissenschaftler-IDE (Einheiten, Plots, Postgres, LaTeX, lokale KI) |
 | **Build_Dedekind_Studio_Exe.md** | Anleitung: Dedekind Studio als Windows-.exe bauen (PyInstaller) |
-| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.14.0; Stärken, Lücken, Roadmap) |
+| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.15.0; Stärken, Lücken, Roadmap) |
 | **Dedekind_Language_Specification_v0.1.pdf** | Legacy PDF (v0.1); for current spec use the Markdown or generate v0.2 PDF below |
 | **Dedekind_Research_Papers_and_Architecture.pdf** | Legacy PDF; for current content use the Markdown or generate PDF below |
 
@@ -41,6 +41,10 @@ pandoc Dedekind_Research_and_Architecture.md -o Dedekind_Research_and_Architectu
 - **Online**: Paste the Markdown into a service that converts Markdown to PDF (e.g. markdown-to-pdf converters).
 - **Typora / other editors**: Open the `.md` file and export to PDF from the application.
 
+
+## What changed in v1.15.0 (documented here)
+
+- **Version 1.15.0**: **Labeled Tensors fuer Klima- und Earth-Science-Workflows.** Neue Shape-Annotation `LabeledTensor[lat, lon, time]` erweitert das v1.9-Annotations-System um achsen-namens-basierte Validierung. Parser-`_SHAPE_TYPES` um `'labeledtensor'` erweitert; Codegen dispatcht `_check_labeled_shape` (Argument) bzw. `_check_return_labeled_shape` (Return) statt `_check_shape`. Runtime extrahiert die dim-Namen via `_labeled_dims(value)` (xarray-API: `.dims`-Attribut). Validierung erfolgt als **Set-Vergleich** — Reihenfolge ist irrelevant, weil xarray namens-basiert operiert. Bei Mismatch: detaillierte Fehlermeldung mit fehlenden und zusaetzlichen Dimensionen (`fehlende Dimensionen: ['time']; zusaetzliche Dimensionen: ['level']`). Damit ist `data.mean(axis=2)`-statt-`dim="time"`-Bug — einer der haeufigsten Fehler in der Klimaforschung — vor dem Funktionsaufruf gefangen. **Neue Built-in `labeled_tensor(data, dims, coords, name, attrs)`** erzeugt direkt ein `xarray.DataArray`. Akzeptiert torch.Tensor / numpy.ndarray / Liste; haengt Achsen-Namen, optionale Koordinaten-Achsen und Meta-Attribute (`units`, `crs`, `source`, ...) an. Implementiert via `pyimport xarray` (optionale Dependency in `requirements.txt`); kein Re-Implementieren von xarray. **Bewusst NICHT geliefert** (jenseits des Annotations-Scopes): keine eigenen Geo-Operationen (regridding, interpolate_na, groupby_bins) — wer die braucht, ruft sie direkt ueber das DataArray (`da.regrid(...)`) auf; kein Dask-/distributed-Support — Dedekind validiert nur dim-Namen, nicht Chunk-Topologie. **Dedekinds Beitrag bleibt die Annotations- und Typsicherheits-Schicht ueber xarray, nicht ein Replacement.** Beispiel `labeled_tensors_demo.ddk` (4 x 8 x 12 synthetischer Klima-Datensatz: temporal mean shape (4,8,12)->(4,8), zonal mean (4,12), Anomalie (4,8,12), `.sel(lat=60, method="nearest")` reduziert auf (8,12), Reihenfolge-Insensitivitaet der dim-Validierung). Test `labeled_tensors_test.ddk` (9 Asserts: Shape, Dim-Namen, Reihenfolge irrelevant, Coords, Attrs). 41/41 Tests gruen, 97/97 Beispiele kompilieren.
 
 ## What changed in v1.14.0 (documented here)
 

@@ -5893,6 +5893,102 @@ def _check_return_graph_shape(value, expected_dims, fn_name, shape_env):
     return value
 
 
+# ----- Labeled Tensors (v1.15): xarray-aware Shape-Annotation ------------------
+def _labeled_dims(value):
+    """Liefert tuple der dim-Namen fuer xarray.DataArray oder DataArray-aehnliche
+    Objekte. None wenn nicht ermittelbar."""
+    if hasattr(value, "dims"):
+        try:
+            return tuple(str(d) for d in value.dims)
+        except Exception:
+            pass
+    return None
+
+
+def _check_labeled_shape(value, expected_dims, fn_name, arg_name, shape_env):
+    """Validiert, dass `value` ein xarray.DataArray-aehnliches Objekt mit GENAU der
+    deklarierten Menge von dim-Namen ist (Reihenfolge irrelevant — xarray operiert
+    namens-basiert)."""
+    actual = _labeled_dims(value)
+    if actual is None:
+        raise ValueError(
+            f"LabeledTensor-Shape-Check in {fn_name}({arg_name}): erwarte ein "
+            f"DataArray-aehnliches Objekt mit .dims (z. B. xarray.DataArray), "
+            f"erhalten {type(value).__name__}."
+        )
+    expected_set = set(str(d) for d in expected_dims)
+    actual_set = set(actual)
+    if expected_set != actual_set:
+        missing = expected_set - actual_set
+        extra = actual_set - expected_set
+        msgs = []
+        if missing:
+            msgs.append(f"fehlende Dimensionen: {sorted(missing)}")
+        if extra:
+            msgs.append(f"zusaetzliche Dimensionen: {sorted(extra)}")
+        raise ValueError(
+            f"LabeledTensor-Shape-Mismatch in {fn_name}({arg_name}): "
+            f"erwartet {{ {', '.join(sorted(expected_set))} }}, "
+            f"erhalten {{ {', '.join(sorted(actual_set))} }} ({'; '.join(msgs)})."
+        )
+    return value
+
+
+def _check_return_labeled_shape(value, expected_dims, fn_name, shape_env):
+    actual = _labeled_dims(value)
+    if actual is None:
+        raise ValueError(
+            f"LabeledTensor-Return-Check in {fn_name}: erwarte DataArray-aehnliches "
+            f"Objekt, erhalten {type(value).__name__}."
+        )
+    expected_set = set(str(d) for d in expected_dims)
+    actual_set = set(actual)
+    if expected_set != actual_set:
+        raise ValueError(
+            f"LabeledTensor-Return-Mismatch in {fn_name}: erwartet "
+            f"{{ {', '.join(sorted(expected_set))} }}, "
+            f"erhalten {{ {', '.join(sorted(actual_set))} }}."
+        )
+    return value
+
+
+def labeled_tensor(data, dims, coords=None, name=None, attrs=None):
+    """Erzeugt ein xarray.DataArray fuer Klima-/Geo-/Earth-Science-Workflows.
+
+    Im Gegensatz zu nackten Tensoren tragen Labeled Tensors die *Namen* ihrer
+    Achsen mit ('lat', 'lon', 'time', ...), und xarray-Operationen koennen
+    namens-basiert (statt indexbasiert) arbeiten. Das verhindert die klassische
+    Verwechslung 'mean ueber lat vs. mean ueber time'.
+
+    Parameter:
+      data:   Tensor/numpy-Array/Liste — die Werte.
+      dims:   Liste/Tuple von Strings — Namen der Achsen, gleiche Reihenfolge wie data.shape.
+      coords: Optional Dict {dim_name: 1D-Werte} — Koordinaten-Achsen.
+      name:   Optional Name fuer das DataArray.
+      attrs:  Optional Dict — Metadaten (z. B. {"units": "K", "crs": "EPSG:4326"}).
+
+    Rueckgabe: xarray.DataArray.
+    """
+    try:
+        import xarray as _xr  # type: ignore[import-untyped]
+    except ImportError:
+        raise RuntimeError("labeled_tensor benoetigt xarray. Installation: pip install xarray")
+    import numpy as _np  # type: ignore[reportMissingImports]
+    if hasattr(data, "detach"):
+        arr = data.detach().cpu().numpy()
+    else:
+        arr = _np.asarray(data)
+    dims_t = tuple(str(d) for d in dims)
+    if len(dims_t) != arr.ndim:
+        raise ValueError(
+            f"labeled_tensor: data hat {arr.ndim} Achsen, dims hat {len(dims_t)} "
+            f"({dims_t!r}). Anzahl muss uebereinstimmen."
+        )
+    coords_dict = dict(coords) if coords else {}
+    return _xr.DataArray(arr, dims=dims_t, coords=coords_dict if coords_dict else None,
+                          name=name, attrs=attrs or {})
+
+
 # ----- MILP-DSL (v1.13): deklarative Constraint-Optimierung mit Einheiten ------
 def _milp_scalar(x):
     """Extrahiert eine reine Zahl aus Quantity/Tensor/Skalar fuer Bounds/Constraints."""

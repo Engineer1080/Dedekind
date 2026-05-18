@@ -2,7 +2,7 @@
 
 **Language Specification v0.2**  
 Mario Michael Heinrich · github.com/Engineer1080  
-Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit), v0.9.6 (Math-Funktionen), v0.9.7 (Chemie/Biologie: mol, L, M, ppm), v0.9.8 (Convenience, Elemente, Datei-I/O, Netzwerk, JSON), v1.0.0 (Release), v1.0.1–v1.0.6 (Patch), v1.2.6 (Winkel rad/deg, deg_to_rad, rad_to_deg), v1.2.7 (Dirichlet-Verteilung, dirichlet_function), v1.2.8 (Dedekind-Schnitte, Dedekind-Ringe, Riemann-Zeta, Riemann-Summen), v1.2.9 (Betragsstriche, Rotationskörper, logische Operatoren), v1.3.0 (integrate_sym, Lagrange/Hamilton, Lotka-Volterra, chemisches Gleichgewicht), v1.3.1 (Medizin, Pharmakologie, Epidemiologie), v1.4.0 (Modul-System `use`, Seed/data_hash, DataFrame+CSV/Parquet/HDF5/NetCDF, Unit-aware Plots, `@units`-Signaturen mit `fn f(x: [m]) -> [J]`, Dict-Literale), v1.5.0 (benchmark/profile/time_block, jit (torch.compile), sde_solve (Euler-Maruyama, Milstein), least_squares, minimize_constrained, milp, FEM-Primitiven mesh_unit_square/fem_assemble_*/fem_poisson_2d, `arange` int64), v1.6.0 (solve_sym/simplify_sym/series, cg/gmres/bicgstab + jacobi_/ilu_preconditioner, export_notebook (HTML/MD), print_table (markdown/latex/csv/plain) mit UncertainQuantity-±), v1.7.0 (Standardbibliothek-Module physics/stats/chemistry/biology/math/ml via `use`, benutzerdefinierte Einheiten `unit NAME = FAKTOR[basis]` mit Verkettung & Compile-Zeit-Registrierung, Quantity-Vergleichsoperatoren `<` `<=` `>` `>=` `==` `!=` mit Auto-Konvertierung), v1.8.0 (Source-Mapping fuer Runtime-Fehler — Tracebacks zeigen `.ddk`-Zeilen + Code-Auszug; `pyimport <mod[.sub]> [as alias]` als Fluchtluke in PyPI; `dedekind_exec` Helper in `compiler.py`), v1.8.1 (Purity-Check: `print`/`plot`/`write_file`/`http_*`/I/O-Built-ins in `jit`/`grad`/`fit`/`metropolis`/`hmc`/`sde_solve`-Argumenten werden zur Compile-Zeit transitiv erkannt und blockiert; Opt-Out via `--no-purity-check`), v1.9.0 (Shape-Annotationen `Scalar`/`Vector[n]`/`Matrix[m,n]`/`Tensor[...]` mit symbolischen Dimensionen, gebunden und konsistenzgeprueft pro Call; `unwrap(x)` strippt Quantity/UncertainQuantity-Wrapper fuer Hot-Path-Performance), v1.10.0 (PINN-Primitive `partial(u, x, order=n)` fuer ∂u/∂x via Autograd, ergaenzend zu `grad(fn, x)`; `fit()`-Hardening fuer PINN-Data-Listen mit gemischten Shapes und Collocation-grad-Reset), v1.11.0 (`graph_laplacian(adj, normalized=False)` fuer kombinatorische und normalisierte Laplace-Matrix; dichte/sparse Eingabe, direkt einsetzbar in cg/gmres/bicgstab/eigh), v1.12.0 (`Graph[N, E]` als Shape-Annotation fuer torch_geometric.data.Data-aehnliche Objekte; symbolische Knoten/Kanten-Konsistenz; kombinierbar mit Unit-Annotationen auf anderen Argumenten), v1.13.0 (deklarative MILP-DSL via `Variable(name, lower, upper, integer)` und `optimize_milp(objective, constraints, sense)` mit Operator-Overloading und unit-aware Constraints), v1.14.0 (Molekulardynamik-Bruecke `md_simulate_lj(...)` via OpenMM mit dimensionsvalidierten Force-Field-Parametern; neue MD-Einheiten nm/Angstrom/pm, amu, fs/ps/ns, sowie neue Dimension molar_energy mit kJ/mol/kcal/mol/eV/Hartree)
+Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit), v0.9.6 (Math-Funktionen), v0.9.7 (Chemie/Biologie: mol, L, M, ppm), v0.9.8 (Convenience, Elemente, Datei-I/O, Netzwerk, JSON), v1.0.0 (Release), v1.0.1–v1.0.6 (Patch), v1.2.6 (Winkel rad/deg, deg_to_rad, rad_to_deg), v1.2.7 (Dirichlet-Verteilung, dirichlet_function), v1.2.8 (Dedekind-Schnitte, Dedekind-Ringe, Riemann-Zeta, Riemann-Summen), v1.2.9 (Betragsstriche, Rotationskörper, logische Operatoren), v1.3.0 (integrate_sym, Lagrange/Hamilton, Lotka-Volterra, chemisches Gleichgewicht), v1.3.1 (Medizin, Pharmakologie, Epidemiologie), v1.4.0 (Modul-System `use`, Seed/data_hash, DataFrame+CSV/Parquet/HDF5/NetCDF, Unit-aware Plots, `@units`-Signaturen mit `fn f(x: [m]) -> [J]`, Dict-Literale), v1.5.0 (benchmark/profile/time_block, jit (torch.compile), sde_solve (Euler-Maruyama, Milstein), least_squares, minimize_constrained, milp, FEM-Primitiven mesh_unit_square/fem_assemble_*/fem_poisson_2d, `arange` int64), v1.6.0 (solve_sym/simplify_sym/series, cg/gmres/bicgstab + jacobi_/ilu_preconditioner, export_notebook (HTML/MD), print_table (markdown/latex/csv/plain) mit UncertainQuantity-±), v1.7.0 (Standardbibliothek-Module physics/stats/chemistry/biology/math/ml via `use`, benutzerdefinierte Einheiten `unit NAME = FAKTOR[basis]` mit Verkettung & Compile-Zeit-Registrierung, Quantity-Vergleichsoperatoren `<` `<=` `>` `>=` `==` `!=` mit Auto-Konvertierung), v1.8.0 (Source-Mapping fuer Runtime-Fehler — Tracebacks zeigen `.ddk`-Zeilen + Code-Auszug; `pyimport <mod[.sub]> [as alias]` als Fluchtluke in PyPI; `dedekind_exec` Helper in `compiler.py`), v1.8.1 (Purity-Check: `print`/`plot`/`write_file`/`http_*`/I/O-Built-ins in `jit`/`grad`/`fit`/`metropolis`/`hmc`/`sde_solve`-Argumenten werden zur Compile-Zeit transitiv erkannt und blockiert; Opt-Out via `--no-purity-check`), v1.9.0 (Shape-Annotationen `Scalar`/`Vector[n]`/`Matrix[m,n]`/`Tensor[...]` mit symbolischen Dimensionen, gebunden und konsistenzgeprueft pro Call; `unwrap(x)` strippt Quantity/UncertainQuantity-Wrapper fuer Hot-Path-Performance), v1.10.0 (PINN-Primitive `partial(u, x, order=n)` fuer ∂u/∂x via Autograd, ergaenzend zu `grad(fn, x)`; `fit()`-Hardening fuer PINN-Data-Listen mit gemischten Shapes und Collocation-grad-Reset), v1.11.0 (`graph_laplacian(adj, normalized=False)` fuer kombinatorische und normalisierte Laplace-Matrix; dichte/sparse Eingabe, direkt einsetzbar in cg/gmres/bicgstab/eigh), v1.12.0 (`Graph[N, E]` als Shape-Annotation fuer torch_geometric.data.Data-aehnliche Objekte; symbolische Knoten/Kanten-Konsistenz; kombinierbar mit Unit-Annotationen auf anderen Argumenten), v1.13.0 (deklarative MILP-DSL via `Variable(name, lower, upper, integer)` und `optimize_milp(objective, constraints, sense)` mit Operator-Overloading und unit-aware Constraints), v1.14.0 (Molekulardynamik-Bruecke `md_simulate_lj(...)` via OpenMM mit dimensionsvalidierten Force-Field-Parametern; neue MD-Einheiten nm/Angstrom/pm, amu, fs/ps/ns, sowie neue Dimension molar_energy mit kJ/mol/kcal/mol/eV/Hartree), v1.15.0 (`LabeledTensor[lat, lon, time]` als Shape-Annotation fuer xarray.DataArray; `labeled_tensor(data, dims, coords, attrs)` zur Konstruktion; Achsen-Namen-Validierung Reihenfolge-irrelevant)
 
 ---
 
@@ -715,6 +715,52 @@ Initial positions are placed on a regular 3D grid with spacing ≥ 1.05·σ, the
 **What v1.14 deliberately does not provide:** no protein force fields (AMBER, CHARMM, OPLS), no implicit solvent, no REMD/free-energy/umbrella-sampling methods. For those, `pyimport openmm.app as omm_app` directly — Dedekind's role is the unit-aware bridge for the canonical LJ workflow, not a re-implementation of OpenMM.
 
 Example: `examples/dedekind/md_lennard_jones_demo.ddk` (Argon cluster: 200 fs equilibration at 85 K, then 1 ps production at 150 K). Test: `tests/dedekind/md_simulate_lj_test.ddk`.
+
+### 15.21 Labeled Tensors for Earth Science (v1.15)
+
+A new shape-annotation kind for tensors whose axes have *names* rather than just sizes — the standard data model in climate, geosciences, and earth-system simulations. Built on top of `xarray.DataArray`.
+
+```dedekind
+pyimport numpy as np
+
+fn temporal_mean(t: LabeledTensor[lat, lon, time]) -> LabeledTensor[lat, lon] {
+    return t.mean(dim="time")
+}
+
+fn zonal_mean(t: LabeledTensor[lat, lon, time]) -> LabeledTensor[lat, time] {
+    return t.mean(dim="lon")
+}
+
+T = labeled_tensor(raw_data,
+    dims=["lat", "lon", "time"],
+    coords={"lat": lats, "lon": lons, "time": times},
+    attrs={"units": "K", "crs": "EPSG:4326"}
+)
+```
+
+The annotation:
+
+| Form | Meaning |
+|------|---------|
+| `LabeledTensor[a, b, c]` | DataArray with **exactly** the dim names `{a, b, c}` |
+
+Order in the annotation is documentation only — xarray operates name-based, so validation is set-based. Mismatch raises `ValueError` with the specific missing/extra dims.
+
+**The USP vs. raw xarray:** xarray has no type system. The classic climate bug `data.mean(axis=2)` instead of `data.mean(dim="time")` produces a silent wrong result; `LabeledTensor[...]` annotations catch this at the function boundary.
+
+**`labeled_tensor` parameters:**
+
+| Argument | Type | Notes |
+|----------|------|-------|
+| `data` | tensor / numpy / list | underlying values |
+| `dims` | list of str | axis names, same order as `data.shape` |
+| `coords` | dict[str → 1D array], optional | coordinate axes |
+| `name` | str, optional | DataArray name |
+| `attrs` | dict, optional | metadata (units, CRS, source, ...) |
+
+**What v1.15 deliberately does not provide:** no re-implementation of xarray operations (regridding, interp_like, groupby_bins, rolling means, etc.). Users call those directly on the DataArray (`da.coarsen(time=12).mean()` etc.). No Dask-/distributed-aware annotations — chunked DataArrays work via `pyimport xarray`, but only dim-name validation runs. Dedekind's role is the annotation-and-type layer over xarray, not a competitor to it.
+
+Example: `examples/dedekind/labeled_tensors_demo.ddk` (4×8×12 synthetic climate dataset: temporal mean, zonal mean, anomaly, `.sel`-slicing by coordinate value). Test: `tests/dedekind/labeled_tensors_test.ddk`.
 
 ---
 

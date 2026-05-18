@@ -1,6 +1,6 @@
 # Was Dedekind aktuell kann
 
-**Stand:** Basierend auf Code und Changelogs (v1.14.0, Dezember 2026). Dedekind ist ein **Prototyp** – die Sprache wird nach Python transpiliert und nutzt PyTorch/NumPy als Laufzeit.
+**Stand:** Basierend auf Code und Changelogs (v1.15.0, Januar 2027). Dedekind ist ein **Prototyp** – die Sprache wird nach Python transpiliert und nutzt PyTorch/NumPy als Laufzeit.
 
 ---
 

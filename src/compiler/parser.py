@@ -244,7 +244,7 @@ class Parser:
         node.line = start_line
         return node
 
-    _SHAPE_TYPES = {'scalar', 'vector', 'matrix', 'tensor', 'graph'}
+    _SHAPE_TYPES = {'scalar', 'vector', 'matrix', 'tensor', 'graph', 'labeledtensor'}
 
     def _parse_unit_bracket_inline(self):
         """Liest die Innenseite eines bereits konsumierten LBRACKET (für Einheits-Annotation)."""

@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-1.14.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-1.15.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -28,6 +28,30 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
+
+### What's New in v1.15.0
+
+- **`LabeledTensor[lat, lon, time]`-Shape-Annotation:** Tensoren mit Achsen-NAMEN statt Groessen — fuer Klima-, Geo- und Earth-Science-Workflows. Validiert zur Laufzeit, dass ein xarray.DataArray genau diese Dimension-Namen traegt (Reihenfolge irrelevant, weil xarray namens-basiert operiert):
+  ```dedekind
+  fn temperature_anomaly(t: LabeledTensor[lat, lon, time]) -> LabeledTensor[lat, lon, time] {
+      return t - t.mean(dim="time")
+  }
+  fn zonal_mean(t: LabeledTensor[lat, lon, time]) -> LabeledTensor[lat, time] {
+      return t.mean(dim="lon")
+  }
+  ```
+  Fehlt eine Dimension oder ist eine zusaetzliche da: `ValueError: LabeledTensor-Shape-Mismatch ... fehlende Dimensionen: ['time']; zusaetzliche Dimensionen: ['level']`.
+- **`labeled_tensor(data, dims, coords, name, attrs)`-Built-in:** erzeugt ein `xarray.DataArray` direkt in Dedekind. Akzeptiert Tensoren, numpy-Arrays oder Listen; haengt Achsen-Namen, Koordinaten und Meta-Attribute (units, CRS, source, ...) an:
+  ```dedekind
+  T = labeled_tensor(raw_data,
+      dims=["lat", "lon", "time"],
+      coords={"lat": lats, "lon": lons, "time": times},
+      attrs={"units": "K", "crs": "EPSG:4326"}
+  )
+  ```
+- **Der USP gegenueber rohem xarray:** xarray hat selbst kein Typsystem — `data_array.mean(axis=2)` statt `dim="time"` ist ein klassischer Bug in der Klimaforschung. `LabeledTensor[...]` erzwingt die richtigen Achsen-Namen am Funktions-Eingang und Return.
+- **Bewusst NICHT geliefert:** kein Re-Implementieren von xarray-Operationen (regridding, interp_like, groupby_bins, etc.) — wer das braucht, ruft sie direkt ueber `da.regrid(...)` auf. Dedekinds Rolle ist die Annotations-Schicht. **Kein Dask-/distributed support** — zarr-/Dask-Backed-DataArrays funktionieren via `pyimport xarray` weiterhin, aber wir validieren nur die dim-Namen, nicht Chunk-Topologie.
+- Beispiel: `labeled_tensors_demo.ddk` (4 x 8 x 12 Klima-Datensatz: temporal mean, zonal mean, Anomalie, `.sel`-Slicing nach Koordinate). Test: `labeled_tensors_test.ddk` (9 Asserts: Shape, Dim-Namen, Reihenfolge-Insensitivitaet, Coords, Attrs). 41/41 Tests gruen, 97/97 Beispiele kompilieren.
 
 ### What's New in v1.14.0
 

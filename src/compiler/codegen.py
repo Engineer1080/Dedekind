@@ -69,7 +69,7 @@ _RUNTIME_BUILTIN_NAMES = frozenset({
     'print_table',
     'assert', 'diff_sym', 'integrate_sym', 'jacobian', 'hessian',
     '_register_user_unit', 'unwrap', 'partial', 'graph_laplacian',
-    'Variable', 'optimize_milp', 'md_simulate_lj',
+    'Variable', 'optimize_milp', 'md_simulate_lj', 'labeled_tensor',
     # Constants (from ml_runtime)
     'pi', 'e', 'c', 'G', 'h', 'k_B', 'k_e', 'hbar', 'e_charge', 'epsilon_0', 'mu_0',
     'm_e', 'm_p', 'N_A', 'R_gas', 'alpha', 'sigma_SB', 'F_faraday',
@@ -330,7 +330,12 @@ class CodeGenerator:
                 if shape is None:
                     continue
                 kind, dims = shape if isinstance(shape, tuple) else ('tensor', shape)
-                check_fn = '_check_graph_shape' if kind == 'graph' else '_check_shape'
+                if kind == 'graph':
+                    check_fn = '_check_graph_shape'
+                elif kind == 'labeledtensor':
+                    check_fn = '_check_labeled_shape'
+                else:
+                    check_fn = '_check_shape'
                 self.add_line(
                     f'{check_fn}({arg_name}, {dims!r}, "{node.name}", "{arg_name}", _shape_env)'
                 )
@@ -381,7 +386,12 @@ class CodeGenerator:
             val = f'_check_return_unit({val}, "{safe_unit}", "{safe_fn}")'
         if ret_shape is not None:
             kind, dims = ret_shape if isinstance(ret_shape, tuple) else ('tensor', ret_shape)
-            check_fn = '_check_return_graph_shape' if kind == 'graph' else '_check_return_shape'
+            if kind == 'graph':
+                check_fn = '_check_return_graph_shape'
+            elif kind == 'labeledtensor':
+                check_fn = '_check_return_labeled_shape'
+            else:
+                check_fn = '_check_return_shape'
             val = f'{check_fn}({val}, {dims!r}, "{safe_fn}", _shape_env)'
         self.add_line(f"return {val}")
 

@@ -18,3 +18,7 @@ torch_geometric>=2.7
 # Optional: MD-Bruecke (md_lennard_jones_demo.ddk, md_simulate_lj_test.ddk).
 # Wird nur fuer md_simulate_lj() benoetigt.
 openmm>=8.0
+
+# Optional: Labeled Tensors (labeled_tensors_demo.ddk, labeled_tensors_test.ddk).
+# Wird nur fuer labeled_tensor() / LabeledTensor[...]-Annotation benoetigt.
+xarray>=2024.0
