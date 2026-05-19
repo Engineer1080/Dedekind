@@ -2,7 +2,7 @@
 
 **Language Specification v0.2**  
 Mario Michael Heinrich · github.com/Engineer1080  
-Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit), v0.9.6 (Math-Funktionen), v0.9.7 (Chemie/Biologie: mol, L, M, ppm), v0.9.8 (Convenience, Elemente, Datei-I/O, Netzwerk, JSON), v1.0.0 (Release), v1.0.1–v1.0.6 (Patch), v1.2.6 (Winkel rad/deg, deg_to_rad, rad_to_deg), v1.2.7 (Dirichlet-Verteilung, dirichlet_function), v1.2.8 (Dedekind-Schnitte, Dedekind-Ringe, Riemann-Zeta, Riemann-Summen), v1.2.9 (Betragsstriche, Rotationskörper, logische Operatoren), v1.3.0 (integrate_sym, Lagrange/Hamilton, Lotka-Volterra, chemisches Gleichgewicht), v1.3.1 (Medizin, Pharmakologie, Epidemiologie), v1.4.0 (Modul-System `use`, Seed/data_hash, DataFrame+CSV/Parquet/HDF5/NetCDF, Unit-aware Plots, `@units`-Signaturen mit `fn f(x: [m]) -> [J]`, Dict-Literale), v1.5.0 (benchmark/profile/time_block, jit (torch.compile), sde_solve (Euler-Maruyama, Milstein), least_squares, minimize_constrained, milp, FEM-Primitiven mesh_unit_square/fem_assemble_*/fem_poisson_2d, `arange` int64), v1.6.0 (solve_sym/simplify_sym/series, cg/gmres/bicgstab + jacobi_/ilu_preconditioner, export_notebook (HTML/MD), print_table (markdown/latex/csv/plain) mit UncertainQuantity-±), v1.7.0 (Standardbibliothek-Module physics/stats/chemistry/biology/math/ml via `use`, benutzerdefinierte Einheiten `unit NAME = FAKTOR[basis]` mit Verkettung & Compile-Zeit-Registrierung, Quantity-Vergleichsoperatoren `<` `<=` `>` `>=` `==` `!=` mit Auto-Konvertierung), v1.8.0 (Source-Mapping fuer Runtime-Fehler — Tracebacks zeigen `.ddk`-Zeilen + Code-Auszug; `pyimport <mod[.sub]> [as alias]` als Fluchtluke in PyPI; `dedekind_exec` Helper in `compiler.py`), v1.8.1 (Purity-Check: `print`/`plot`/`write_file`/`http_*`/I/O-Built-ins in `jit`/`grad`/`fit`/`metropolis`/`hmc`/`sde_solve`-Argumenten werden zur Compile-Zeit transitiv erkannt und blockiert; Opt-Out via `--no-purity-check`), v1.9.0 (Shape-Annotationen `Scalar`/`Vector[n]`/`Matrix[m,n]`/`Tensor[...]` mit symbolischen Dimensionen, gebunden und konsistenzgeprueft pro Call; `unwrap(x)` strippt Quantity/UncertainQuantity-Wrapper fuer Hot-Path-Performance), v1.10.0 (PINN-Primitive `partial(u, x, order=n)` fuer ∂u/∂x via Autograd, ergaenzend zu `grad(fn, x)`; `fit()`-Hardening fuer PINN-Data-Listen mit gemischten Shapes und Collocation-grad-Reset), v1.11.0 (`graph_laplacian(adj, normalized=False)` fuer kombinatorische und normalisierte Laplace-Matrix; dichte/sparse Eingabe, direkt einsetzbar in cg/gmres/bicgstab/eigh), v1.12.0 (`Graph[N, E]` als Shape-Annotation fuer torch_geometric.data.Data-aehnliche Objekte; symbolische Knoten/Kanten-Konsistenz; kombinierbar mit Unit-Annotationen auf anderen Argumenten), v1.13.0 (deklarative MILP-DSL via `Variable(name, lower, upper, integer)` und `optimize_milp(objective, constraints, sense)` mit Operator-Overloading und unit-aware Constraints), v1.14.0 (Molekulardynamik-Bruecke `md_simulate_lj(...)` via OpenMM mit dimensionsvalidierten Force-Field-Parametern; neue MD-Einheiten nm/Angstrom/pm, amu, fs/ps/ns, sowie neue Dimension molar_energy mit kJ/mol/kcal/mol/eV/Hartree), v1.15.0 (`LabeledTensor[lat, lon, time]` als Shape-Annotation fuer xarray.DataArray; `labeled_tensor(data, dims, coords, attrs)` zur Konstruktion; Achsen-Namen-Validierung Reihenfolge-irrelevant), v1.16.0 (Bioinformatik-Quick-Wins: `Sequence[DNA]/Sequence[RNA]/Sequence[Protein]` mit Alphabet-Validierung, native Bio-Built-ins gc_content/transcribe/translate/reverse_complement/k_mer_count, Cheminformatik via pyimport rdkit mit smiles_descriptors/lipinski_rule_of_five), v1.17.0 (Sprachreife: `try { ... } catch e { ... }` Error-Handling, Python-Style Slicing `x[a:b]/x[:b]/x[a:]/x[::s]/x[a:b:s]/x[:]`), v1.18.0 (3D Geometric/Clifford Algebra G(3,0) nativ: `MultiVector`-Klasse mit 8 Komponenten, Konstruktoren `scalar/vector/bivector/pseudoscalar/rotor`, Operationen `wedge/dot/reverse/grade/norm`, `rotate(v, R)`-Sandwich-Produkt), v1.19.0 (Multi-File-Module: `use foo.bar.baz` -> `modules/foo/bar/baz.ddk`; `pub fn` fuer Export-Kontrolle mit backward-kompatiblem Legacy-Modus), v1.20.0 (Generics / Typ-Parameter `fn name<T, U, ...>(args)` mit polymorphen Einheits-Variablen, Auto-Konvertierung bei kompatibler Dimension, durchgesetzt vom Compiler — anders als Pythons rein dokumentarische `typing.TypeVar`)
+Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit), v0.9.6 (Math-Funktionen), v0.9.7 (Chemie/Biologie: mol, L, M, ppm), v0.9.8 (Convenience, Elemente, Datei-I/O, Netzwerk, JSON), v1.0.0 (Release), v1.0.1–v1.0.6 (Patch), v1.2.6 (Winkel rad/deg, deg_to_rad, rad_to_deg), v1.2.7 (Dirichlet-Verteilung, dirichlet_function), v1.2.8 (Dedekind-Schnitte, Dedekind-Ringe, Riemann-Zeta, Riemann-Summen), v1.2.9 (Betragsstriche, Rotationskörper, logische Operatoren), v1.3.0 (integrate_sym, Lagrange/Hamilton, Lotka-Volterra, chemisches Gleichgewicht), v1.3.1 (Medizin, Pharmakologie, Epidemiologie), v1.4.0 (Modul-System `use`, Seed/data_hash, DataFrame+CSV/Parquet/HDF5/NetCDF, Unit-aware Plots, `@units`-Signaturen mit `fn f(x: [m]) -> [J]`, Dict-Literale), v1.5.0 (benchmark/profile/time_block, jit (torch.compile), sde_solve (Euler-Maruyama, Milstein), least_squares, minimize_constrained, milp, FEM-Primitiven mesh_unit_square/fem_assemble_*/fem_poisson_2d, `arange` int64), v1.6.0 (solve_sym/simplify_sym/series, cg/gmres/bicgstab + jacobi_/ilu_preconditioner, export_notebook (HTML/MD), print_table (markdown/latex/csv/plain) mit UncertainQuantity-±), v1.7.0 (Standardbibliothek-Module physics/stats/chemistry/biology/math/ml via `use`, benutzerdefinierte Einheiten `unit NAME = FAKTOR[basis]` mit Verkettung & Compile-Zeit-Registrierung, Quantity-Vergleichsoperatoren `<` `<=` `>` `>=` `==` `!=` mit Auto-Konvertierung), v1.8.0 (Source-Mapping fuer Runtime-Fehler — Tracebacks zeigen `.ddk`-Zeilen + Code-Auszug; `pyimport <mod[.sub]> [as alias]` als Fluchtluke in PyPI; `dedekind_exec` Helper in `compiler.py`), v1.8.1 (Purity-Check: `print`/`plot`/`write_file`/`http_*`/I/O-Built-ins in `jit`/`grad`/`fit`/`metropolis`/`hmc`/`sde_solve`-Argumenten werden zur Compile-Zeit transitiv erkannt und blockiert; Opt-Out via `--no-purity-check`), v1.9.0 (Shape-Annotationen `Scalar`/`Vector[n]`/`Matrix[m,n]`/`Tensor[...]` mit symbolischen Dimensionen, gebunden und konsistenzgeprueft pro Call; `unwrap(x)` strippt Quantity/UncertainQuantity-Wrapper fuer Hot-Path-Performance), v1.10.0 (PINN-Primitive `partial(u, x, order=n)` fuer ∂u/∂x via Autograd, ergaenzend zu `grad(fn, x)`; `fit()`-Hardening fuer PINN-Data-Listen mit gemischten Shapes und Collocation-grad-Reset), v1.11.0 (`graph_laplacian(adj, normalized=False)` fuer kombinatorische und normalisierte Laplace-Matrix; dichte/sparse Eingabe, direkt einsetzbar in cg/gmres/bicgstab/eigh), v1.12.0 (`Graph[N, E]` als Shape-Annotation fuer torch_geometric.data.Data-aehnliche Objekte; symbolische Knoten/Kanten-Konsistenz; kombinierbar mit Unit-Annotationen auf anderen Argumenten), v1.13.0 (deklarative MILP-DSL via `Variable(name, lower, upper, integer)` und `optimize_milp(objective, constraints, sense)` mit Operator-Overloading und unit-aware Constraints), v1.14.0 (Molekulardynamik-Bruecke `md_simulate_lj(...)` via OpenMM mit dimensionsvalidierten Force-Field-Parametern; neue MD-Einheiten nm/Angstrom/pm, amu, fs/ps/ns, sowie neue Dimension molar_energy mit kJ/mol/kcal/mol/eV/Hartree), v1.15.0 (`LabeledTensor[lat, lon, time]` als Shape-Annotation fuer xarray.DataArray; `labeled_tensor(data, dims, coords, attrs)` zur Konstruktion; Achsen-Namen-Validierung Reihenfolge-irrelevant), v1.16.0 (Bioinformatik-Quick-Wins: `Sequence[DNA]/Sequence[RNA]/Sequence[Protein]` mit Alphabet-Validierung, native Bio-Built-ins gc_content/transcribe/translate/reverse_complement/k_mer_count, Cheminformatik via pyimport rdkit mit smiles_descriptors/lipinski_rule_of_five), v1.17.0 (Sprachreife: `try { ... } catch e { ... }` Error-Handling, Python-Style Slicing `x[a:b]/x[:b]/x[a:]/x[::s]/x[a:b:s]/x[:]`), v1.18.0 (3D Geometric/Clifford Algebra G(3,0) nativ: `MultiVector`-Klasse mit 8 Komponenten, Konstruktoren `scalar/vector/bivector/pseudoscalar/rotor`, Operationen `wedge/dot/reverse/grade/norm`, `rotate(v, R)`-Sandwich-Produkt), v1.19.0 (Multi-File-Module: `use foo.bar.baz` -> `modules/foo/bar/baz.ddk`; `pub fn` fuer Export-Kontrolle mit backward-kompatiblem Legacy-Modus), v1.20.0 (Generics / Typ-Parameter `fn name<T, U, ...>(args)` mit polymorphen Einheits-Variablen, Auto-Konvertierung bei kompatibler Dimension, durchgesetzt vom Compiler — anders als Pythons rein dokumentarische `typing.TypeVar`), v1.21.0 (Quantum Computing Bruecke: native QuantumCircuit-Klasse, reiner Statevector-Simulator, Bell/GHZ/Grover Convenience, VQE-Optimizer, Quanten-Informatik-Utilities fidelity/entropy_von_neumann/schmidt_rank, Shape-Annotationen Qubit[N]/StateVec[N], Einheiten eV/meV/THz, optionaler Qiskit-Export)
 
 ---
 
@@ -990,6 +990,101 @@ add_same(2[m], 3[kg])       // ValueError: U already bound to [m], here [kg]
 **Difference from Python's `typing.TypeVar`.** Python's generics are documentary; the interpreter ignores them. Dedekind's type parameters are actively enforced by the compiler. Dimensionally inconsistent calls abort; dimensionally compatible-but-differently-scaled calls are auto-converted. This makes Dedekind's static-feeling type system actually meaningful at runtime.
 
 Example: `examples/dedekind/generics_demo.ddk`. Test: `tests/dedekind/generics_test.ddk`.
+
+### 15.27 Quantum Computing Bridge (v1.21)
+
+Dedekind v1.21 provides a native, zero-dependency quantum computing layer. A Qiskit bridge is available for exporting to real hardware (`pyimport qiskit`), but all simulation runs within the Dedekind runtime.
+
+#### 15.27.1 QuantumCircuit
+
+```dedekind
+qc = quantum_circuit(2)    // 2-qubit circuit
+qc.h(0)                    // Hadamard on qubit 0
+qc.cx(0, 1)               // CNOT: control=0, target=1
+```
+
+Gate methods: `.h(q)`, `.x(q)`, `.y(q)`, `.z(q)`, `.t(q)`, `.s(q)`, `.cx(ctrl, tgt)`, `.cz(ctrl, tgt)`, `.rx(θ, q)`, `.ry(θ, q)`, `.rz(θ, q)`, `.swap(q0, q1)`, `.measure(q)`, `.measure_all()`.
+
+Properties: `.n_qubits`, `.n_gates()`, `.depth()`.
+
+**Qubit convention:** qubit 0 is the least significant bit (LSB) of the state index. State |q_{n-1}...q_1 q_0> has integer index sum q_i * 2^i.
+
+#### 15.27.2 Statevector Simulation
+
+```dedekind
+sv = statevec_sim(qc)           // returns list[complex], length 2^n
+sv = statevec_sim(qc, 1000)    // 1000 shots -> dict[bitstring, count]
+probs = statevec_probs(qc)      // probabilities |psi_i|^2
+exp_zz = statevec_expectation(qc, "ZZ")   // <psi|ZZ|psi>
+```
+
+The Pauli-string observable must have exactly `n_qubits` characters from {I, X, Y, Z, H}.
+
+#### 15.27.3 Convenience Constructors
+
+```dedekind
+phi_plus = bell_state(0)    // |Phi+> = (|00>+|11>)/sqrt(2); which in {0,1,2,3}
+ghz = ghz_state(3)          // (|000>+|111>)/sqrt(2) for n qubits
+grover = grover_circuit(3, 5)  // Grover search for |101> in 3-qubit space
+```
+
+#### 15.27.4 VQE (Variational Quantum Eigensolver)
+
+```dedekind
+// Hardware-efficient ansatz: Ry layers + linear CNOT chain
+qc = vqe_circuit(2, 2, params)         // n_qubits=2, n_layers=2
+terms = [[0.5, "ZI"], [-0.5, "IZ"]]   // Hamiltonian as (coeff, Pauli-string) pairs
+e = vqe_energy(params, 2, 2, terms)   // <psi(theta)|H|psi(theta)>
+```
+
+#### 15.27.5 Quantum Information Utilities
+
+```dedekind
+f = fidelity(sv1, sv2)             // |<psi1|psi2>|^2
+s = entropy_von_neumann(probs)     // -sum p_i log2 p_i (from probability list)
+r = schmidt_rank(sv, n_a)         // Schmidt rank for A|B bipartition
+```
+
+#### 15.27.6 Physical Unit Validation
+
+Quantum hardware parameters carry SI units:
+
+```dedekind
+freq = 5.1[GHz]
+freq_ok = qubit_frequency_check(freq)  // Validates [GHz/MHz/THz], returns in GHz
+
+t1 = 100.0[us]
+t1_ok = coherence_time_check(t1)       // Validates [us/ns/ms/s]
+
+gap = 10.5[meV]
+gap_ok = energy_gap_check(gap)         // Validates [eV/meV/J]
+```
+
+New energy units: `eV` (1.602e-19 J), `meV` (1.602e-22 J), `MeV` (1.602e-13 J). New frequency unit: `THz` (1e12 Hz).
+
+#### 15.27.7 Shape Annotations
+
+```dedekind
+fn apply_h(qc: Qubit[N]) -> Qubit[N] { qc.h(0); return qc }
+fn check_fid(sv1: StateVec[2], sv2: StateVec[2]) { return fidelity(sv1, sv2) }
+```
+
+| Annotation | Validates | Symbolic dim? |
+|-----------|-----------|---------------|
+| `Qubit[N]` | `QuantumCircuit` with `n_qubits == N` | Yes |
+| `Circuit[N, G]` | `QuantumCircuit` with `n_qubits == N` | Yes |
+| `StateVec[N]` | `list[complex]` with length `2^N` | Yes |
+
+#### 15.27.8 Qiskit Bridge (Optional)
+
+```dedekind
+pyimport qiskit as qk
+qc = quantum_circuit(2)
+qc.h(0).cx(0, 1)
+qk_circuit = qc.to_qiskit()   // Requires: pip install qiskit
+```
+
+Examples: `quantum_bell.ddk`, `quantum_grover.ddk`, `quantum_vqe.ddk`, `quantum_units.ddk`, `quantum_shapes.ddk`. Tests: `quantum_circuit_test.ddk`, `quantum_units_test.ddk`.
 
 ---
 

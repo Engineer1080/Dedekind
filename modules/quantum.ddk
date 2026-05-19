@@ -1,0 +1,52 @@
+# modules/quantum.ddk — Dedekind Quantum Computing Standardbibliothek (v1.21)
+# Importieren: use quantum
+
+# Bellsche Zustaende
+fn make_bell(which) {
+    return bell_state(which)
+}
+
+# GHZ-Zustand
+fn make_ghz(n) {
+    return ghz_state(n)
+}
+
+# Grover-Suche
+fn make_grover(n, target) {
+    return grover_circuit(n, target)
+}
+
+# VQE-Ansatz
+fn make_vqe_ansatz(n_qubits, n_layers, params) {
+    return vqe_circuit(n_qubits, n_layers, params)
+}
+
+# Zustandsvektor simulieren
+fn simulate(qc) {
+    return statevec_sim(qc)
+}
+
+# Sampling
+fn sample_circuit(qc, shots) {
+    return statevec_sim(qc, shots)
+}
+
+# Erwartungswert berechnen
+fn expectation(qc, observable) {
+    return statevec_expectation(qc, observable)
+}
+
+# Wahrscheinlichkeiten aus Statevector
+fn probs(qc) {
+    return statevec_probs(qc)
+}
+
+# Fidelitaet zweier Zustaende
+fn state_fidelity(sv1, sv2) {
+    return fidelity(sv1, sv2)
+}
+
+# Von-Neumann-Entropie (aus Wahrscheinlichkeitsliste)
+fn vn_entropy(prob_list) {
+    return entropy_von_neumann(prob_list)
+}

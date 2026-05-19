@@ -74,6 +74,13 @@ _RUNTIME_BUILTIN_NAMES = frozenset({
     'smiles_descriptors', 'lipinski_rule_of_five',
     'MultiVector', 'scalar', 'vector', 'bivector', 'pseudoscalar',
     'multivector', 'rotor', 'rotate',
+    # Quantum Computing (v1.21)
+    'QuantumCircuit', 'quantum_circuit', 'statevec_sim', 'statevec_probs',
+    'statevec_expectation', 'vqe_circuit', 'vqe_energy',
+    'bell_state', 'ghz_state', 'grover_circuit',
+    'qubit_frequency_check', 'coherence_time_check', 'energy_gap_check',
+    'fidelity', 'entropy_von_neumann', 'schmidt_rank',
+    'PAULI_I', 'PAULI_X', 'PAULI_Y', 'PAULI_Z', 'PAULI_H',
     # Constants (from ml_runtime)
     'pi', 'e', 'c', 'G', 'h', 'k_B', 'k_e', 'hbar', 'e_charge', 'epsilon_0', 'mu_0',
     'm_e', 'm_p', 'N_A', 'R_gas', 'alpha', 'sigma_SB', 'F_faraday',
@@ -354,6 +361,12 @@ class CodeGenerator:
                     check_fn = '_check_labeled_shape'
                 elif kind == 'sequence':
                     check_fn = '_check_sequence_shape'
+                elif kind == 'qubit':
+                    check_fn = '_check_qubit_shape'
+                elif kind == 'statevec':
+                    check_fn = '_check_statevec_shape'
+                elif kind == 'circuit':
+                    check_fn = '_check_qubit_shape'  # Circuit[N,G] treated as qubit[N]
                 else:
                     check_fn = '_check_shape'
                 self.add_line(
@@ -418,6 +431,10 @@ class CodeGenerator:
                 check_fn = '_check_return_labeled_shape'
             elif kind == 'sequence':
                 check_fn = '_check_return_sequence_shape'
+            elif kind in ('qubit', 'circuit'):
+                check_fn = '_check_return_qubit_shape'
+            elif kind == 'statevec':
+                check_fn = '_check_return_statevec_shape'
             else:
                 check_fn = '_check_return_shape'
             val = f'{check_fn}({val}, {dims!r}, "{safe_fn}", _shape_env)'

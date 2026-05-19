@@ -1,6 +1,6 @@
 # Was Dedekind aktuell kann
 
-**Stand:** Basierend auf Code und Changelogs (v1.20.0, Juni 2027). Dedekind ist ein **Prototyp** – die Sprache wird nach Python transpiliert und nutzt PyTorch/NumPy als Laufzeit.
+**Stand:** Basierend auf Code und Changelogs (v1.21.0, Mai 2026). Dedekind ist ein **Prototyp** – die Sprache wird nach Python transpiliert und nutzt PyTorch/NumPy als Laufzeit.
 
 ---
 
@@ -90,6 +90,19 @@
 - **Dateien:** `read_file(path)` (UTF-8), `write_file(path, content)`, `file_exists(path)`.
 - **Netzwerk:** `http_get(url)`, `http_post(url, data)` (data als String oder Dict/List → JSON).
 - **JSON:** `json_parse(s)` → Objekt (Zugriff `obj["key"]`), `json_stringify(obj)` → String.
+
+---
+
+## Quantum Computing (v1.21)
+
+- **Nativer Simulator:** `quantum_circuit(n)` erstellt Schaltkreis; Gatter: `.h`, `.x`, `.y`, `.z`, `.cx`, `.cz`, `.rx`, `.ry`, `.rz`, `.t`, `.s`, `.swap`, `.measure`; `statevec_sim(qc)` → `list[complex]`; `statevec_sim(qc, shots)` → Mess-Dict; `statevec_expectation(qc, "ZZ")` → float.
+- **Convenience:** `bell_state(which)`, `ghz_state(n)`, `grover_circuit(n, target)` einzeilig nutzbar.
+- **VQE:** `vqe_circuit(n, L, params)` hardware-effizienter Ansatz; `vqe_energy(params, n, L, terms)` mit Pauli-String-Hamiltonian.
+- **Quanten-Informatik:** `fidelity(sv1, sv2)`, `entropy_von_neumann(probs)`, `schmidt_rank(sv, n_a)`.
+- **Physikalische Einheiten:** `[GHz]`, `[THz]`, `[eV]`, `[meV]`, `[us]`, `[mK]` fuer Quanten-Hardware-Parameter; `qubit_frequency_check`, `coherence_time_check`, `energy_gap_check`.
+- **Shape-Annotationen:** `Qubit[N]`, `StateVec[N]`, `Circuit[N,G]` in Funktionssignaturen mit symbolischen Dimensionen.
+- **Qiskit-Export:** `qc.to_qiskit()` (erfordert `pip install qiskit`).
+- **Modul:** `use quantum` mit Wrapper-Funktionen `simulate`, `sample_circuit`, `state_fidelity`, `vn_entropy` etc.
 
 ---
 

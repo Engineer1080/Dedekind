@@ -284,7 +284,8 @@ class Parser:
         node.line = start_line
         return node
 
-    _SHAPE_TYPES = {'scalar', 'vector', 'matrix', 'tensor', 'graph', 'labeledtensor', 'sequence'}
+    _SHAPE_TYPES = {'scalar', 'vector', 'matrix', 'tensor', 'graph', 'labeledtensor', 'sequence',
+                    'qubit', 'circuit', 'statevec'}
 
     def _parse_unit_bracket_inline(self):
         """Liest die Innenseite eines bereits konsumierten LBRACKET (für Einheits-Annotation)."""
@@ -363,6 +364,21 @@ class Parser:
                     line=name_tok.line,
                 )
             dims = [dims[0].upper()]  # normalisiert
+        if name == 'qubit' and len(dims) != 1:
+            raise CompileError(
+                f"Qubit[...] erwartet genau 1 Dimension (Anzahl Qubits), bekam {len(dims)}.",
+                line=name_tok.line,
+            )
+        if name == 'circuit' and len(dims) != 2:
+            raise CompileError(
+                f"Circuit[...] erwartet genau 2 Dimensionen (N_qubits, N_gates), bekam {len(dims)}.",
+                line=name_tok.line,
+            )
+        if name == 'statevec' and len(dims) != 1:
+            raise CompileError(
+                f"StateVec[...] erwartet genau 1 Dimension (N Qubits, Laenge=2^N), bekam {len(dims)}.",
+                line=name_tok.line,
+            )
         return (name, dims)
 
     def _parse_signature_annotation(self):

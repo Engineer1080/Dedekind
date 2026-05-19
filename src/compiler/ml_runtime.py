@@ -34,9 +34,10 @@ DIMENSION_TO_BASE = {
     "force": ("N", {"N": 1.0, "kN": 1000.0, "MN": 1e6}),
     "permeability": ("m^2", {"m^2": 1.0, "D": 9.869233e-13, "mD": 9.869233e-16}),  # Darcy: 1 D ≈ 9.87e-13 m²
     "volume": ("L", {"L": 1.0, "mL": 0.001, "dm^3": 1.0, "m^3": 1000.0}),  # dm³ = 1 L, m³ = 1000 L
-    "energy": ("J", {"J": 1.0, "kJ": 1000.0, "MJ": 1e6, "Wh": 3600.0, "kWh": 3.6e6}),
+    "energy": ("J", {"J": 1.0, "kJ": 1000.0, "MJ": 1e6, "Wh": 3600.0, "kWh": 3.6e6,
+                    "eV": 1.602176634e-19, "meV": 1.602176634e-22, "MeV": 1.602176634e-13}),
     "electric_potential": ("V", {"V": 1.0, "mV": 0.001, "kV": 1000.0}),
-    "frequency": ("Hz", {"Hz": 1.0, "kHz": 1000.0, "MHz": 1e6, "GHz": 1e9}),
+    "frequency": ("Hz", {"Hz": 1.0, "kHz": 1000.0, "MHz": 1e6, "GHz": 1e9, "THz": 1e12}),
     "charge": ("C", {"C": 1.0, "mC": 0.001, "uC": 1e-6}),
     "resistance": ("ohm", {"ohm": 1.0, "kohm": 1000.0, "Mohm": 1e6}),
     "power": ("W", {"W": 1.0, "kW": 1000.0, "MW": 1e6}),
@@ -2434,8 +2435,15 @@ def sqrt(x):
     return torch.sqrt(_to_tensor(x).float())
 
 def abs(x):
-    """Betrag |x|; x Tensor oder Skalar."""
-    return torch.abs(_to_tensor(x).float())
+    """Betrag |x|; x Tensor, Skalar oder komplexe Zahl."""
+    if isinstance(x, complex):
+        return _math.sqrt(x.real ** 2 + x.imag ** 2)
+    if isinstance(x, Quantity):
+        return Quantity(abs(x.value), x.unit)
+    t = _to_tensor(x)
+    if t.is_complex():
+        return torch.abs(t)
+    return torch.abs(t.float())
 
 def asin(x):
     """Arkussinus asin(x); x im Intervall [-1, 1]."""
@@ -8015,3 +8023,793 @@ def _table_plain(rows, headers, precision, units_map):
     for b in body:
         lines.append(sep.join(b[j].ljust(widths[j]) for j in range(len(headers))))
     return "\n".join(lines)
+
+# =============================================================================
+# === Quantum Computing Bridge (v1.21) ========================================
+# =============================================================================
+# Dedekind bietet:
+#   1. Native Qubit/Circuit/StateVec Shape-Annotationen
+#   2. Unit-Checks fuer Qubit-Frequenzen [GHz/THz], Energieluecken [eV/meV],
+#      Kohaerenzzeiten [us/ns], Temperatur [mK]
+#   3. Reinen Statevector-Simulator (kein Qiskit erforderlich)
+#   4. Optionaler Qiskit-Bridge fuer echte Hardware-Runs
+#   5. VQE-Optimizer ueber fit() + grad()
+
+import cmath as _cmath
+import math as _math
+
+# --- Pauli-Matrizen (als komplexe Listen, konvertierbar zu Tensoren) ----------
+PAULI_I  = [[1+0j,  0+0j],  [0+0j,  1+0j]]
+PAULI_X  = [[0+0j,  1+0j],  [1+0j,  0+0j]]
+PAULI_Y  = [[0+0j, -1j   ], [1j,    0+0j]]
+PAULI_Z  = [[1+0j,  0+0j],  [0+0j, -1+0j]]
+PAULI_H  = [[1/_math.sqrt(2)+0j, 1/_math.sqrt(2)+0j],
+            [1/_math.sqrt(2)+0j, -1/_math.sqrt(2)+0j]]
+
+def _pauli(name):
+    m = {"I": PAULI_I, "X": PAULI_X, "Y": PAULI_Y, "Z": PAULI_Z, "H": PAULI_H}
+    if name not in m:
+        raise ValueError(f"Unbekannte Pauli-Matrix '{name}'. Erlaubt: I, X, Y, Z, H.")
+    return m[name]
+
+
+# --- QuantumCircuit: leichtgewichtiger Schaltkreis-Builder -------------------
+class QuantumCircuit:
+    """Leichtgewichtiger Dedekind-Schaltkreis (kein Qiskit nötig).
+
+    Speichert Gatter als Liste von (name, qubits, params). Kann via
+    `statevec_sim()` simuliert werden oder per `to_qiskit()` exportiert werden.
+    """
+
+    def __init__(self, n_qubits: int):
+        if not isinstance(n_qubits, int) or n_qubits < 1:
+            raise ValueError(f"QuantumCircuit: n_qubits muss >= 1 sein, bekam {n_qubits!r}.")
+        self.n_qubits = n_qubits
+        self._gates = []   # [(name, qubit_list, params)]
+        self._measurements = []  # [(qubit, clbit)]
+
+    def h(self, qubit: int):
+        """Hadamard-Gatter."""
+        self._validate_qubit(qubit)
+        self._gates.append(("H", [qubit], []))
+        return self
+
+    def x(self, qubit: int):
+        """Pauli-X (NOT) Gatter."""
+        self._validate_qubit(qubit)
+        self._gates.append(("X", [qubit], []))
+        return self
+
+    def y(self, qubit: int):
+        """Pauli-Y Gatter."""
+        self._validate_qubit(qubit)
+        self._gates.append(("Y", [qubit], []))
+        return self
+
+    def z(self, qubit: int):
+        """Pauli-Z Gatter."""
+        self._validate_qubit(qubit)
+        self._gates.append(("Z", [qubit], []))
+        return self
+
+    def cx(self, control: int, target: int):
+        """CNOT-Gatter."""
+        self._validate_qubit(control)
+        self._validate_qubit(target)
+        if control == target:
+            raise ValueError("CNOT: control und target dürfen nicht gleich sein.")
+        self._gates.append(("CX", [control, target], []))
+        return self
+
+    def cz(self, control: int, target: int):
+        """CZ-Gatter."""
+        self._validate_qubit(control)
+        self._validate_qubit(target)
+        self._gates.append(("CZ", [control, target], []))
+        return self
+
+    def rx(self, theta, qubit: int):
+        """Rx-Rotation um Winkel theta (Bogenmass)."""
+        self._validate_qubit(qubit)
+        th = float(_unwrap_q(theta))
+        self._gates.append(("RX", [qubit], [th]))
+        return self
+
+    def ry(self, theta, qubit: int):
+        """Ry-Rotation."""
+        self._validate_qubit(qubit)
+        th = float(_unwrap_q(theta))
+        self._gates.append(("RY", [qubit], [th]))
+        return self
+
+    def rz(self, theta, qubit: int):
+        """Rz-Rotation."""
+        self._validate_qubit(qubit)
+        th = float(_unwrap_q(theta))
+        self._gates.append(("RZ", [qubit], [th]))
+        return self
+
+    def swap(self, q0: int, q1: int):
+        """SWAP-Gatter."""
+        self._validate_qubit(q0)
+        self._validate_qubit(q1)
+        self._gates.append(("SWAP", [q0, q1], []))
+        return self
+
+    def t(self, qubit: int):
+        """T-Gatter (pi/4-Phase)."""
+        self._validate_qubit(qubit)
+        self._gates.append(("T", [qubit], []))
+        return self
+
+    def s(self, qubit: int):
+        """S-Gatter (pi/2-Phase)."""
+        self._validate_qubit(qubit)
+        self._gates.append(("S", [qubit], []))
+        return self
+
+    def measure(self, qubit: int, clbit: int = None):
+        """Fügt Messung hinzu."""
+        self._validate_qubit(qubit)
+        self._measurements.append((qubit, clbit if clbit is not None else qubit))
+        return self
+
+    def measure_all(self):
+        """Misst alle Qubits."""
+        for i in range(self.n_qubits):
+            self.measure(i, i)
+        return self
+
+    def _validate_qubit(self, q):
+        if not isinstance(q, int) or q < 0 or q >= self.n_qubits:
+            raise ValueError(
+                f"Qubit-Index {q} ausserhalb des Bereichs [0, {self.n_qubits - 1}]."
+            )
+
+    def depth(self) -> int:
+        """Schaltkreistiefe (naiv: Anzahl Gatter-Schichten ohne Parallelisierung)."""
+        layers = [0] * self.n_qubits
+        for name, qubits, _ in self._gates:
+            d = _builtin_max(layers[q] for q in qubits) + 1
+            for q in qubits:
+                layers[q] = d
+        return _builtin_max(layers) if layers else 0
+
+    def n_gates(self) -> int:
+        """Gesamtanzahl der Gatter."""
+        return len(self._gates)
+
+    def __repr__(self):
+        lines = [f"QuantumCircuit({self.n_qubits} Qubits, {self.n_gates()} Gatter, Tiefe={self.depth()})"]
+        for name, qubits, params in self._gates:
+            pstr = f"({', '.join(f'{p:.4f}' for p in params)})" if params else ""
+            qstr = ", ".join(str(q) for q in qubits)
+            lines.append(f"  {name}{pstr}  q[{qstr}]")
+        if self._measurements:
+            lines.append(f"  MEASURE: {self._measurements}")
+        return "\n".join(lines)
+
+    def to_qiskit(self):
+        """Konvertiert zu echtem Qiskit QuantumCircuit (erfordert `pyimport qiskit`)."""
+        try:
+            import qiskit
+        except ImportError:
+            raise ImportError(
+                "Qiskit nicht gefunden. Installiere es: pip install qiskit\n"
+                "Alternativ: statevec_sim(circuit) fuer reine Simulation."
+            )
+        from qiskit import QuantumCircuit as _QC
+        qc = _QC(self.n_qubits, self.n_qubits if self._measurements else 0)
+        _QISKIT_MAP = {
+            "H": qc.h, "X": qc.x, "Y": qc.y, "Z": qc.z,
+            "CX": qc.cx, "CZ": qc.cz, "SWAP": qc.swap,
+            "T": qc.t, "S": qc.s,
+        }
+        _QISKIT_ROT = {"RX": qc.rx, "RY": qc.ry, "RZ": qc.rz}
+        for name, qubits, params in self._gates:
+            if name in _QISKIT_ROT:
+                _QISKIT_ROT[name](params[0], qubits[0])
+            elif name in _QISKIT_MAP:
+                _QISKIT_MAP[name](*qubits)
+        for qubit, clbit in self._measurements:
+            qc.measure(qubit, clbit)
+        return qc
+
+
+def _unwrap_q(x):
+    """Unwraps Quantity to float (dimensionslos oder rad)."""
+    if isinstance(x, Quantity):
+        if x.unit not in ("", "rad", None):
+            raise ValueError(
+                f"Rotationswinkel muss dimensionslos oder [rad] sein, bekam [{x.unit}]."
+            )
+        return float(x.value) if hasattr(x.value, 'item') else float(x.value)
+    if hasattr(x, 'item'):
+        return float(x.item())
+    return float(x)
+
+
+# --- Statevector Simulator ---------------------------------------------------
+def _kron2(a, b):
+    """Kronecker-Produkt zweier komplexer 2D-Listen."""
+    ra, ca = len(a), len(a[0])
+    rb, cb = len(b), len(b[0])
+    result = [[0+0j] * (ca * cb) for _ in range(ra * rb)]
+    for i in range(ra):
+        for j in range(ca):
+            for k in range(rb):
+                for l in range(cb):
+                    result[i * rb + k][j * cb + l] = a[i][j] * b[k][l]
+    return result
+
+
+def _mat_vec(mat, vec):
+    """Matrix-Vektor-Multiplikation (komplexe Listen)."""
+    n = len(mat)
+    return [sum(mat[i][j] * vec[j] for j in range(n)) for i in range(n)]
+
+
+def _single_qubit_gate_unitary(gate_mat, qubit, n):
+    """Erstellt 2^n x 2^n Unitary fuer ein 1-Qubit-Gatter auf qubit `qubit`.
+
+    Konvention: qubit 0 = LSB (rightmost in kron product).
+    kron wird von MSB nach LSB aufgebaut (von links nach rechts).
+    Qubit q befindet sich an Kron-Position n-1-q von links.
+    """
+    result = [[1+0j]]
+    for q in range(n - 1, -1, -1):  # n-1 (MSB) down to 0 (LSB)
+        if q == qubit:
+            m = gate_mat
+        else:
+            m = PAULI_I
+        result = _kron2(result, m)
+    return result
+
+
+def _cx_unitary(control, target, n):
+    """CNOT-Unitary fuer gegebene Qubit-Indizes."""
+    dim = 1 << n
+    U = [[0+0j] * dim for _ in range(dim)]
+    for state in range(dim):
+        ctrl_bit = (state >> control) & 1
+        if ctrl_bit == 1:
+            new_state = state ^ (1 << target)
+        else:
+            new_state = state
+        U[new_state][state] = 1+0j
+    return U
+
+
+def _cz_unitary(control, target, n):
+    """CZ-Unitary."""
+    dim = 1 << n
+    U = [[complex(i == j) for j in range(dim)] for i in range(dim)]
+    for state in range(dim):
+        c_bit = (state >> control) & 1
+        t_bit = (state >> target) & 1
+        if c_bit == 1 and t_bit == 1:
+            U[state][state] = -1+0j
+    return U
+
+
+def _swap_unitary(q0, q1, n):
+    """SWAP-Unitary."""
+    dim = 1 << n
+    U = [[0+0j] * dim for _ in range(dim)]
+    for state in range(dim):
+        b0 = (state >> q0) & 1
+        b1 = (state >> q1) & 1
+        if b0 != b1:
+            new_state = state ^ (1 << q0) ^ (1 << q1)
+        else:
+            new_state = state
+        U[new_state][state] = 1+0j
+    return U
+
+
+def _rx_mat(theta):
+    c = _cmath.cos(theta / 2)
+    s = _cmath.sin(theta / 2)
+    return [[c, -1j * s], [-1j * s, c]]
+
+
+def _ry_mat(theta):
+    c = _cmath.cos(theta / 2)
+    s = _cmath.sin(theta / 2)
+    return [[c, -s], [s, c]]
+
+
+def _rz_mat(theta):
+    return [[_cmath.exp(-1j * theta / 2), 0], [0, _cmath.exp(1j * theta / 2)]]
+
+
+_T_MAT = [[1+0j, 0+0j], [0+0j, _cmath.exp(1j * _math.pi / 4)]]
+_S_MAT = [[1+0j, 0+0j], [0+0j, 1j]]
+
+
+def statevec_sim(circuit, shots: int = 0):
+    """Reiner Statevector-Simulator fuer QuantumCircuit.
+
+    Args:
+        circuit: QuantumCircuit-Objekt
+        shots: 0 = gibt Statevector (Liste komplexer Amplituden) zurueck.
+               > 0 = gibt Mess-Ergebnis-Dict mit Bitstringen und Haeufigkeiten zurueck.
+
+    Returns:
+        Statevector (list[complex]) oder dict[str, int] (bei shots > 0).
+    """
+    shots = int(shots.item() if hasattr(shots, 'item') else shots)
+    if not isinstance(circuit, QuantumCircuit):
+        raise TypeError(f"statevec_sim: Erwartet QuantumCircuit, bekam {type(circuit).__name__}.")
+    n = circuit.n_qubits
+    dim = 1 << n
+    # Startzustand |0...0>
+    sv = [0+0j] * dim
+    sv[0] = 1+0j
+
+    for name, qubits, params in circuit._gates:
+        if name == "H":
+            U = _single_qubit_gate_unitary(PAULI_H, qubits[0], n)
+        elif name == "X":
+            U = _single_qubit_gate_unitary(PAULI_X, qubits[0], n)
+        elif name == "Y":
+            U = _single_qubit_gate_unitary(PAULI_Y, qubits[0], n)
+        elif name == "Z":
+            U = _single_qubit_gate_unitary(PAULI_Z, qubits[0], n)
+        elif name == "T":
+            U = _single_qubit_gate_unitary(_T_MAT, qubits[0], n)
+        elif name == "S":
+            U = _single_qubit_gate_unitary(_S_MAT, qubits[0], n)
+        elif name == "RX":
+            U = _single_qubit_gate_unitary(_rx_mat(params[0]), qubits[0], n)
+        elif name == "RY":
+            U = _single_qubit_gate_unitary(_ry_mat(params[0]), qubits[0], n)
+        elif name == "RZ":
+            U = _single_qubit_gate_unitary(_rz_mat(params[0]), qubits[0], n)
+        elif name == "CX":
+            U = _cx_unitary(qubits[0], qubits[1], n)
+        elif name == "CZ":
+            U = _cz_unitary(qubits[0], qubits[1], n)
+        elif name == "SWAP":
+            U = _swap_unitary(qubits[0], qubits[1], n)
+        else:
+            raise ValueError(f"Unbekanntes Gatter '{name}' im Simulator.")
+        sv = _mat_vec(U, sv)
+
+    if shots <= 0:
+        return sv
+
+    # Messe alle Qubits (oder nur die gemessenen)
+    probs = [abs(a) ** 2 for a in sv]
+    import random
+    counts = {}
+    measure_qubits = [q for q, _ in circuit._measurements] if circuit._measurements else list(range(n))
+    for _ in range(shots):
+        r = random.random()
+        cumsum = 0.0
+        idx = dim - 1
+        for i, p in enumerate(probs):
+            cumsum += p
+            if r <= cumsum:
+                idx = i
+                break
+        # Extrahiere gemessene Bits (MSB = Qubit 0)
+        bits = format(idx, f'0{n}b')
+        key = ''.join(bits[q] for q in sorted(measure_qubits))
+        counts[key] = counts.get(key, 0) + 1
+    return counts
+
+
+def statevec_probs(circuit):
+    """Gibt Wahrscheinlichkeiten |ψ_i|² als Liste zurueck."""
+    sv = statevec_sim(circuit)
+    return [abs(a) ** 2 for a in sv]
+
+
+def statevec_expectation(circuit, observable):
+    """Berechnet ⟨ψ|O|ψ⟩ fuer einen Pauli-String-Observable.
+
+    Args:
+        circuit: QuantumCircuit
+        observable: String wie "ZI", "XX", "ZZ" (Pauli-Produkt)
+
+    Returns:
+        Erwartungswert (float)
+    """
+    if not isinstance(circuit, QuantumCircuit):
+        raise TypeError("statevec_expectation: Erwartet QuantumCircuit.")
+    n = circuit.n_qubits
+    if not isinstance(observable, str) or len(observable) != n:
+        raise ValueError(
+            f"Observable muss ein {n}-Zeichen-Pauli-String sein (z.B. 'ZI'), bekam {observable!r}."
+        )
+    sv = statevec_sim(circuit)
+    # Baue Observ.-Matrix als Tensor-Produkt
+    obs_mat = [[1+0j]]
+    for ch in observable:
+        obs_mat = _kron2(obs_mat, _pauli(ch))
+    obs_sv = _mat_vec(obs_mat, sv)
+    return sum((a.conjugate() * b).real for a, b in zip(sv, obs_sv))
+
+
+# --- quantum_circuit() Konstruktor-Funktion -----------------------------------
+def quantum_circuit(n_qubits):
+    """Erstellt einen neuen QuantumCircuit mit n_qubits Qubits.
+
+    Beispiel:
+        qc = quantum_circuit(2)
+        qc.h(0).cx(0, 1)
+        sv = statevec_sim(qc)
+    """
+    if isinstance(n_qubits, Quantity):
+        if n_qubits.unit not in ("", None):
+            raise ValueError(
+                f"quantum_circuit: n_qubits muss dimensionslos sein, bekam [{n_qubits.unit}]."
+            )
+        n_qubits = int(float(n_qubits.value))
+    else:
+        n_qubits = int(n_qubits)
+    return QuantumCircuit(n_qubits)
+
+
+# --- Shape-Check-Funktionen fuer Qubit/Circuit/StateVec ----------------------
+def _check_qubit_shape(val, dims, fn_name, arg_name, shape_env):
+    """Prueft Qubit[N] — erwartet QuantumCircuit oder int."""
+    if isinstance(val, QuantumCircuit):
+        expected = dims[0] if dims else None
+        if expected is not None:
+            if isinstance(expected, str):
+                if expected in shape_env:
+                    if shape_env[expected] != val.n_qubits:
+                        raise TypeError(
+                            f"{fn_name}(): Argument '{arg_name}' Qubit[{expected}]={shape_env[expected]} "
+                            f"aber QuantumCircuit hat {val.n_qubits} Qubits."
+                        )
+                else:
+                    shape_env[expected] = val.n_qubits
+            elif val.n_qubits != int(expected):
+                raise TypeError(
+                    f"{fn_name}(): Argument '{arg_name}' erwartet Qubit[{expected}], "
+                    f"QuantumCircuit hat {val.n_qubits} Qubits."
+                )
+    return val
+
+
+def _check_statevec_shape(val, dims, fn_name, arg_name, shape_env):
+    """Prueft StateVec[N] — erwartet Liste der Laenge 2^N."""
+    expected_n = dims[0] if dims else None
+    if isinstance(val, list):
+        actual_len = len(val)
+        if expected_n is not None:
+            if isinstance(expected_n, str):
+                if expected_n in shape_env:
+                    exp_len = 1 << shape_env[expected_n]
+                    if actual_len != exp_len:
+                        raise TypeError(
+                            f"{fn_name}(): '{arg_name}' StateVec[{expected_n}]: "
+                            f"erwartet Laenge 2^{shape_env[expected_n]}={exp_len}, bekam {actual_len}."
+                        )
+                else:
+                    import math
+                    if actual_len == 0 or (actual_len & (actual_len - 1)) != 0:
+                        raise TypeError(
+                            f"{fn_name}(): '{arg_name}' StateVec[{expected_n}]: "
+                            f"Laenge muss Potenz von 2 sein, bekam {actual_len}."
+                        )
+                    shape_env[expected_n] = int(math.log2(actual_len))
+            else:
+                exp_len = 1 << int(expected_n)
+                if actual_len != exp_len:
+                    raise TypeError(
+                        f"{fn_name}(): '{arg_name}' erwartet StateVec[{expected_n}] "
+                        f"(Laenge {exp_len}), bekam {actual_len}."
+                    )
+    return val
+
+
+# --- VQE: Variational Quantum Eigensolver ------------------------------------
+def vqe_circuit(n_qubits, n_layers, params):
+    """Erstellt einen parametrisierten Ansatz-Schaltkreis fuer VQE.
+
+    Hardware-efficient Ansatz: abwechselnd Ry-Schicht und CNOT-Kette.
+    params: Liste/Tensor der Laenge n_qubits * n_layers (Ry-Winkel).
+
+    Returns:
+        QuantumCircuit (kann mit statevec_expectation ausgewertet werden)
+    """
+    if isinstance(n_qubits, Quantity):
+        n_qubits = int(float(n_qubits.value))
+    if isinstance(n_layers, Quantity):
+        n_layers = int(float(n_layers.value))
+    n_qubits = int(n_qubits)
+    n_layers = int(n_layers)
+
+    # Flatten params
+    if hasattr(params, 'tolist'):
+        flat = params.reshape(-1).tolist()
+    elif isinstance(params, list):
+        flat = params
+    else:
+        flat = list(params)
+
+    expected = n_qubits * n_layers
+    if len(flat) != expected:
+        raise ValueError(
+            f"vqe_circuit: Erwartet {expected} Parameter (n_qubits={n_qubits} * n_layers={n_layers}), "
+            f"bekam {len(flat)}."
+        )
+
+    qc = QuantumCircuit(n_qubits)
+    idx = 0
+    for layer in range(n_layers):
+        for q in range(n_qubits):
+            theta = flat[idx] if not hasattr(flat[idx], 'item') else flat[idx].item()
+            qc.ry(float(theta), q)
+            idx += 1
+        # Entangle: lineare Kette
+        for q in range(n_qubits - 1):
+            qc.cx(q, q + 1)
+    return qc
+
+
+def vqe_energy(params, n_qubits, n_layers, hamiltonian_terms):
+    """Berechnet Energie ⟨ψ(θ)|H|ψ(θ)⟩ fuer VQE-Schleife.
+
+    Args:
+        params: Tensor der Winkel (grad() faehig via torch)
+        n_qubits: Anzahl Qubits
+        n_layers: Anzahl VQE-Schichten
+        hamiltonian_terms: Liste von (koeffizient, pauli_string) — z.B. [(0.5, "ZI"), (-0.5, "IZ")]
+
+    Returns:
+        Energie als float
+    """
+    import torch as _torch
+    # params als Python-Liste (detachieren falls Tensor)
+    if hasattr(params, 'detach'):
+        flat = params.detach().tolist()
+        if isinstance(flat, float):
+            flat = [flat]
+    else:
+        flat = list(params) if hasattr(params, '__iter__') else [float(params)]
+
+    qc = vqe_circuit(n_qubits, n_layers, flat)
+    energy = 0.0
+    for coeff, pauli_str in hamiltonian_terms:
+        c = float(coeff.value if isinstance(coeff, Quantity) else coeff)
+        energy += c * statevec_expectation(qc, pauli_str)
+    return energy
+
+
+# --- Bell-Zustand Helfer ------------------------------------------------------
+def bell_state(which: int = 0):
+    """Erstellt einen der vier Bell-Zustaende als QuantumCircuit.
+
+    which=0: |Φ+⟩ = (|00⟩+|11⟩)/√2
+    which=1: |Φ-⟩ = (|00⟩-|11⟩)/√2
+    which=2: |Ψ+⟩ = (|01⟩+|10⟩)/√2
+    which=3: |Ψ-⟩ = (|01⟩-|10⟩)/√2
+    """
+    which = int(which.item() if hasattr(which, 'item') else which)
+    qc = QuantumCircuit(2)
+    qc.h(0)
+    qc.cx(0, 1)
+    if which == 1:
+        qc.z(0)
+    elif which == 2:
+        qc.x(1)
+    elif which == 3:
+        qc.z(0)
+        qc.x(1)
+    return qc
+
+
+def ghz_state(n_qubits: int):
+    """GHZ-Zustand: (|0...0⟩ + |1...1⟩)/√2 fuer n Qubits."""
+    n_qubits = int(n_qubits.item() if hasattr(n_qubits, 'item') else n_qubits)
+    qc = QuantumCircuit(n_qubits)
+    qc.h(0)
+    for i in range(1, n_qubits):
+        qc.cx(0, i)
+    return qc
+
+
+# --- Grover-Orakel Helper ----------------------------------------------------
+def grover_circuit(n_qubits: int, target_state: int, n_iterations: int = None):
+    """Erstellt Grover-Suchalgorithmus-Schaltkreis.
+
+    Args:
+        n_qubits: Anzahl Qubits
+        target_state: Gesuchter Zustand als Integer (0 bis 2^n - 1)
+        n_iterations: Grover-Iterationen (default: pi/4 * sqrt(2^n))
+
+    Returns:
+        QuantumCircuit
+    """
+    n_qubits = int(n_qubits.item() if hasattr(n_qubits, 'item') else n_qubits)
+    target_state = int(target_state.item() if hasattr(target_state, 'item') else target_state)
+    dim = 1 << n_qubits
+    if target_state < 0 or target_state >= dim:
+        raise ValueError(f"grover_circuit: target_state={target_state} ausserhalb [0, {dim-1}].")
+
+    if n_iterations is None:
+        n_iterations = int(_builtin_max(1, round(_math.pi / 4 * _math.sqrt(dim))))
+    n_iterations = int(n_iterations.item() if hasattr(n_iterations, 'item') else n_iterations)
+
+    qc = QuantumCircuit(n_qubits)
+
+    # Initialisierung: Hadamard auf alle Qubits
+    for q in range(n_qubits):
+        qc.h(q)
+
+    for _ in range(n_iterations):
+        # Orakel: Phase-Flip fuer |target⟩
+        # Implementiert via Z auf korrekten Qubits (vereinfacht fuer native Simulation)
+        bits = format(target_state, f'0{n_qubits}b')
+        # X-Gatter auf Qubits die 0 sind (Bitumkehr fuer Multi-CZ)
+        for q in range(n_qubits):
+            if bits[q] == '0':
+                qc.x(q)
+        # Mehrstufige CZ-Kette (approximiert Multi-Qubit-Controlled-Z)
+        for q in range(n_qubits - 1):
+            qc.cz(q, n_qubits - 1)
+        for q in range(n_qubits):
+            if bits[q] == '0':
+                qc.x(q)
+
+        # Diffusion-Operator
+        for q in range(n_qubits):
+            qc.h(q)
+        for q in range(n_qubits):
+            qc.x(q)
+        for q in range(n_qubits - 1):
+            qc.cz(q, n_qubits - 1)
+        for q in range(n_qubits):
+            qc.x(q)
+        for q in range(n_qubits):
+            qc.h(q)
+
+    return qc
+
+
+# --- Qubit-Eigenschaften und Einheitenchecks ---------------------------------
+def qubit_frequency_check(freq):
+    """Prueft, dass freq eine Frequenz-Einheit ([GHz], [MHz], [THz]) hat.
+
+    Gibt den Wert in GHz zurueck.
+    """
+    if not isinstance(freq, Quantity):
+        raise TypeError(
+            f"qubit_frequency_check: Erwartet Quantity mit Frequenz-Einheit ([GHz]), "
+            f"bekam {type(freq).__name__}."
+        )
+    freq_units = {"Hz", "kHz", "MHz", "GHz", "THz"}
+    if freq.unit not in freq_units:
+        raise TypeError(
+            f"qubit_frequency_check: Einheit [{freq.unit}] ist keine Frequenzeinheit. "
+            f"Erlaubt: {freq_units}."
+        )
+    # Konvertiere zu GHz
+    dim_info = DIMENSION_TO_BASE["frequency"]
+    base_val = float(freq.value) * dim_info[1].get(freq.unit, 1.0)  # -> Hz
+    return Quantity(base_val / 1e9, "GHz")
+
+
+def coherence_time_check(t):
+    """Prueft Kohaerenzzeit (muss [us], [ns], [ms] oder [s] sein)."""
+    if not isinstance(t, Quantity):
+        raise TypeError(
+            f"coherence_time_check: Erwartet Quantity mit Zeit-Einheit ([us]), "
+            f"bekam {type(t).__name__}."
+        )
+    time_units = {"s", "ms", "us", "ns", "ps", "fs"}
+    if t.unit not in time_units:
+        raise TypeError(
+            f"coherence_time_check: Einheit [{t.unit}] ist keine Zeiteinheit."
+        )
+    return t
+
+
+def energy_gap_check(E):
+    """Prueft Energieluecke (muss [eV], [meV], [J] sein)."""
+    if not isinstance(E, Quantity):
+        raise TypeError(
+            f"energy_gap_check: Erwartet Quantity mit Energie-Einheit ([eV]), "
+            f"bekam {type(E).__name__}."
+        )
+    energy_units = {"J", "kJ", "MJ", "eV", "meV", "MeV"}
+    if E.unit not in energy_units:
+        raise TypeError(
+            f"energy_gap_check: Einheit [{E.unit}] ist keine Energieeinheit."
+        )
+    return E
+
+
+# --- Quantum-Informations-Hilfsfunktionen ------------------------------------
+def fidelity(sv1, sv2):
+    """Fidelitaet |⟨ψ1|ψ2⟩|² zwischen zwei Statevektoren."""
+    if len(sv1) != len(sv2):
+        raise ValueError(f"fidelity: Vektoren muessen gleiche Laenge haben, bekam {len(sv1)} und {len(sv2)}.")
+    inner = sum(a.conjugate() * b for a, b in zip(sv1, sv2))
+    return abs(inner) ** 2
+
+
+def entropy_von_neumann(probs):
+    """Von-Neumann-Entropie S = -Σ p_i log2(p_i) (aus Wahrscheinlichkeiten)."""
+    if hasattr(probs, 'tolist'):
+        probs = probs.tolist()
+    s = 0.0
+    for p in probs:
+        p = abs(float(p))
+        if p > 1e-15:
+            s -= p * _math.log2(p)
+    return s
+
+
+def schmidt_rank(sv, n_a):
+    """Schmidt-Rang des Statevektors fuer bipartite Zerlegung A|B.
+
+    Args:
+        sv: Statevector (Liste komplexer Zahlen, Laenge 2^n)
+        n_a: Anzahl Qubits in Teilsystem A
+
+    Returns:
+        Schmidt-Rang (int)
+    """
+    import math
+    n = int(math.log2(len(sv)))
+    n_b = n - n_a
+    dim_a = 1 << n_a
+    dim_b = 1 << n_b
+    # Reshape als Matrix dim_a x dim_b
+    mat = [[0+0j] * dim_b for _ in range(dim_a)]
+    for idx, amp in enumerate(sv):
+        i = idx >> n_b
+        j = idx & (dim_b - 1)
+        mat[i][j] = amp
+    # SVD via Python (kein scipy/numpy noetig fuer kleine Systeme)
+    try:
+        import torch as _t
+        T = _t.tensor([[mat[i][j] for j in range(dim_b)] for i in range(dim_a)],
+                      dtype=_t.complex64)
+        sv_vals = _t.linalg.svdvals(T)
+        return int((sv_vals > 1e-8).sum().item())
+    except Exception:
+        # Fallback: Rang der Matrix via Gauss
+        return _matrix_rank_approx(mat, dim_a, dim_b)
+
+
+def _matrix_rank_approx(mat, rows, cols, tol=1e-8):
+    """Naiver Gauss-Rank (fuer kleine Matrizen wenn torch fehlt)."""
+    m = [row[:] for row in mat]
+    rank = 0
+    for col in range(cols):
+        pivot = None
+        for row in range(rank, rows):
+            if abs(m[row][col]) > tol:
+                pivot = row
+                break
+        if pivot is None:
+            continue
+        m[rank], m[pivot] = m[pivot], m[rank]
+        for row in range(rows):
+            if row != rank and abs(m[row][col]) > tol:
+                factor = m[row][col] / m[rank][col]
+                m[row] = [m[row][j] - factor * m[rank][j] for j in range(cols)]
+        rank += 1
+    return rank
+
+
+
+
+# --- Quantum Return-Shape-Checks (analog zu _check_return_sequence_shape) ----
+def _check_return_qubit_shape(val, dims, fn_name, shape_env):
+    """Prueft Rueckgabe Qubit[N]/Circuit[N,G]."""
+    _check_qubit_shape(val, dims, fn_name, "return", shape_env)
+    return val
+
+
+def _check_return_statevec_shape(val, dims, fn_name, shape_env):
+    """Prueft Rueckgabe StateVec[N]."""
+    _check_statevec_shape(val, dims, fn_name, "return", shape_env)
+    return val

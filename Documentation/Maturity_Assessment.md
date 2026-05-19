@@ -1,13 +1,13 @@
 # Dedekind — Ausgereiftheit für Mathematik, Physik, Informatik, Biologie und Chemie
 
 **Dedekind Language**  
-Draft: January 2026 · Stand: v1.20.0 (Prototyp)
+Draft: January 2026 · Stand: v1.21.0 (Prototyp)
 
 ---
 
 ## Übersicht
 
-Dedekind ist aktuell ein **Prototyp (v1.20.0)**. Die folgende Einschätzung bezieht sich auf den **aktuellen Implementierungsstand** und nennt Lücken sowie Roadmap-Punkte.
+Dedekind ist aktuell ein **Prototyp (v1.21.0)**. Die folgende Einschätzung bezieht sich auf den **aktuellen Implementierungsstand** und nennt Lücken sowie Roadmap-Punkte.
 
 | Domäne       | Ausgereiftheit (kurz) | Nutzbar für …                          | Wichtige Lücken / Roadmap          |
 |-------------|------------------------|----------------------------------------|------------------------------------|
@@ -16,6 +16,7 @@ Dedekind ist aktuell ein **Prototyp (v1.20.0)**. Die folgende Einschätzung bezi
 | **Informatik**| Grundlegend          | ML-Pipeline, Algos, Kontrollfluss      | Typen, Module, Tooling, Performance|
 | **Biologie** | Grundlegend          | Wachstum, Fitting, Unsicherheit, `logistic` | Lotka-Volterra, weitere Modelle     |
 | **Chemie**    | Grundlegend          | Kinetik, Konzentration, Einheiten, Convenience | Gleichgewichte, weitere Einheiten   |
+| **Quantum**   | Grundlegend          | Bell/GHZ/Grover, Statevec-Sim, VQE   | Rauschen/Dekohaerenz, Fehlerkorrektur |
 
 ---
 
@@ -128,7 +129,33 @@ Dedekind ist aktuell ein **Prototyp (v1.20.0)**. Die folgende Einschätzung bezi
 
 ---
 
-## 6. Zusammenfassung und Priorisierung
+## 6. Quantum Computing (v1.21)
+
+### Was vorhanden ist
+
+- **Nativer Simulator**: `QuantumCircuit`-Klasse; 14 Gatter-Methoden; `statevec_sim(qc, shots=0)` — reiner Python-Statevector-Simulator ohne Qiskit; qubit 0 = LSB-Konvention.
+- **Erwartungswerte**: `statevec_expectation(qc, “ZZ”)` für beliebige Pauli-Strings.
+- **Convenience**: `bell_state(which)`, `ghz_state(n)`, `grover_circuit(n, target)` direkt verwendbar.
+- **VQE**: `vqe_circuit(n_qubits, n_layers, params)` — hardware-effizienter Ansatz; `vqe_energy(params, n, L, terms)` — Energie aus Pauli-Term-Liste.
+- **Quanten-Informatik**: `fidelity(sv1, sv2)`, `entropy_von_neumann(probs)`, `schmidt_rank(sv, n_a)`.
+- **Einheiten**: `qubit_frequency_check` [GHz/MHz/THz], `coherence_time_check` [us/ns/ms], `energy_gap_check` [eV/meV]; neue Einheiten `eV`, `meV`, `MeV`, `THz`.
+- **Shape-Annotationen**: `Qubit[N]`, `Circuit[N,G]`, `StateVec[N]` in Funktionssignaturen.
+- **Qiskit-Bridge**: `.to_qiskit()` exportiert den Schaltkreis zu echtem `qiskit.QuantumCircuit`.
+- **Modul**: `use quantum` mit 10 Wrapper-Funktionen.
+- **Beispiele**: `quantum_bell.ddk`, `quantum_grover.ddk`, `quantum_vqe.ddk`, `quantum_units.ddk`, `quantum_shapes.ddk`.
+
+### Lücken / Roadmap
+
+- **Rauschen & Dekohaerenz**: Kein Noise-Modell (T1/T2-Decay, Depolarisierung). Workaround: Qiskit Aer.
+- **Fehlerkorrektur**: Kein eingebauter QEC (Surface Code etc.). Workaround: `pyimport qiskit.providers`.
+- **Groessere Systeme**: Statevector exponentiell — ab 20+ Qubits zu langsam. Workaround: Qiskit MPS.
+- **Optimale Kompilierung**: Kein Gate-Decomposer oder Mapping auf echte Qubit-Topologien.
+
+**Fazit Quantum**: Für **Algorithmen-Prototypen, VQE, Grover, Bell/GHZ-Zustände und Quanten-Informations-Berechnung** grundlegend nutzbar; native Simulation bis ~15 Qubits; für **Rauschen, QEC und Hardware-Runs** über Qiskit-Bridge. **Ausgereiftheit: grundlegend.**
+
+---
+
+## 7. Zusammenfassung und Priorisierung
 
 | Domäne       | Reife      | Stärken                                      | Nächste Schritte (aus Roadmaps)           |
 |-------------|------------|----------------------------------------------|-------------------------------------------|
@@ -137,5 +164,6 @@ Dedekind ist aktuell ein **Prototyp (v1.20.0)**. Die folgende Einschätzung bezi
 | **Informatik**| Grundlegend| ML, Tensoren, Kontrollfluss, Algos           | Typen, Module, Tooling, AOT-Reife          |
 | **Biologie**  | Grundlegend| ODE, Fitting, Unsicherheit, `logistic`      | Lotka-Volterra, weitere Modelle          |
 | **Chemie**    | Grundlegend| Einheiten mol/L/M/ppm, Kinetik, Fitting, Convenience | Gleichgewichte, weitere Einheiten        |
+| **Quantum**   | Grundlegend| Statevec-Sim, Bell/GHZ/Grover, VQE, Fidelitaet | Rauschen, QEC, groessere Systeme        |
 
-**Gesamtbewertung**: Dedekind ist für **Mathematik und Physik** bereits **gut nutzbar** (numerische und einheitenbewusste Anwendungen). Für **Informatik** ist die Basis gelegt, aber Typen, Module und Tooling fehlen für „ausgereift“. Für **Biologie und Chemie** sind die **Grundbausteine** (Einheiten, ODE, Fitting, Unsicherheit) sowie **Convenience-Funktionen** (`logistic`, `michaelis_menten`, `arrhenius`, `balance_equation`, Elemente) da; **Gleichgewichte und weitere domänenspezifische Modelle** würden die Ausgereiftheit weiter erhöhen.
+**Gesamtbewertung**: Dedekind ist für **Mathematik und Physik** bereits **gut nutzbar** (numerische und einheitenbewusste Anwendungen). Für **Informatik** ist die Basis gelegt, aber Typen, Module und Tooling fehlen für „ausgereift”. Für **Biologie und Chemie** sind die **Grundbausteine** (Einheiten, ODE, Fitting, Unsicherheit) sowie **Convenience-Funktionen** (`logistic`, `michaelis_menten`, `arrhenius`, `balance_equation`, Elemente) da. **Quantum Computing** (v1.21) ergaenzt die Plattform um native Quanten-Simulation und VQE, und positioniert Dedekind als erste wissenschaftliche DSL mit nativem Quanten-Layer.
