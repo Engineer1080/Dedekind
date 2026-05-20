@@ -192,34 +192,6 @@ class CodeGenerator:
         self.code.append("import torch")
         self.code.append("import torch.nn as nn")
         self.code.append("")
-
-        self.add_line("def _to_tensor(data):")
-        self.add_line("    if isinstance(data, torch.Tensor): return data")
-        self.add_line("    if isinstance(data, (list, tuple)):")
-        self.add_line("        if not data: return torch.tensor([], dtype=torch.float32)")
-        self.add_line("        try: return torch.as_tensor(data)")
-        self.add_line("        except: pass")
-        self.add_line("        converted = []")
-        self.add_line("        for x in data:")
-        self.add_line("            try:")
-        self.add_line("                t = _to_tensor(x)")
-        self.add_line("                if isinstance(t, torch.Tensor): converted.append(t)")
-        self.add_line("                else: return data")
-        self.add_line("            except: return data")
-        self.add_line("        if converted and len(converted) == len(data): return torch.stack(converted)")
-        self.add_line("        return data")
-        self.add_line("    try: return torch.as_tensor(data, dtype=torch.float32)")
-        self.add_line("    except: return data")
-        self.add_line("")
-        self.add_line("def _to_gpu(data):")
-        self.add_line("    data = _to_tensor(data)")
-        self.add_line("    if torch.cuda.is_available(): return data.to('cuda')")
-        self.add_line("    return data")
-        self.add_line("")
-        self.add_line("def _to_cpu(data):")
-        self.add_line("    data = _to_tensor(data)")
-        self.add_line("    return data.to('cpu')")
-        self.add_line("")
         
         self.code.append("# Dedekind ML Runtime")
         ml_runtime_path = __file__.replace('codegen.py', 'ml_runtime.py')
@@ -450,33 +422,42 @@ class CodeGenerator:
         target = obj_expr if obj_expr else (args[0] if args else None)
         other_args = args if obj_expr else args[1:]
         
-        if func_name == "gpu": return f"_to_gpu({target})"
-        if func_name == "cpu": return f"_to_cpu({target})"
-        if func_name == "fast": return f"compile_model({target})"
-        if func_name == "with_grad": return f"_to_grad({target})"
-        if func_name == "sparse": return f"_to_sparse({target})"
-        
-        if func_name == "grad":
+        if func_name == "gpu":
+            call_str = f"_to_gpu({target})"
+        elif func_name == "cpu":
+            call_str = f"_to_cpu({target})"
+        elif func_name == "fast":
+            call_str = f"compile_model({target})"
+        elif func_name == "with_grad":
+            call_str = f"_to_grad({target})"
+        elif func_name == "sparse":
+            call_str = f"_to_sparse({target})"
+        elif func_name == "grad":
             # Native Autograd implementation: grad(f, x)
-            return f"torch.autograd.grad({args[0]}({args[1]}), {args[1]}, create_graph=True)[0]"
-        if func_name == "einsum":
-            return f"torch.einsum({args[0]}, {', '.join(args[1:])})"
-        if func_name == "matmul": return f"torch.matmul({args[0]}, {args[1]})"
-        if func_name == "forward":
-             all_args = other_args + kwargs
-             return f"{target}({', '.join(all_args)})"
-        
-        all_args_str = ", ".join(args + kwargs)
-        if func_name == "assert":
-            return f"_dedekind_assert({all_args_str})"
-        if obj_expr:
-            return f"{obj_expr}.{func_name}({all_args_str})"
+            call_str = f"torch.autograd.grad({args[0]}({args[1]}), {args[1]}, create_graph=True)[0]"
+        elif func_name == "einsum":
+            call_str = f"torch.einsum({args[0]}, {', '.join(args[1:])})"
+        elif func_name == "matmul":
+            call_str = f"torch.matmul({args[0]}, {args[1]})"
+        elif func_name == "forward":
+            all_args = other_args + kwargs
+            call_str = f"{target}({', '.join(all_args)})"
         else:
-            return f"{func_name}({all_args_str})"
+            all_args_str = ", ".join(args + kwargs)
+            if func_name == "assert":
+                call_str = f"_dedekind_assert({all_args_str})"
+            elif obj_expr:
+                call_str = f"{obj_expr}.{func_name}({all_args_str})"
+            else:
+                call_str = f"{func_name}({all_args_str})"
         
-        if 'gpu' in node.modifiers: call_str = f"_to_gpu({call_str})"
-        if 'cpu' in node.modifiers: call_str = f"_to_cpu({call_str})"
-        if 'fast' in node.modifiers: call_str = f"compile_model({call_str})"
+        modifiers = getattr(node, 'modifiers', None) or []
+        if 'gpu' in modifiers:
+            call_str = f"_to_gpu({call_str})"
+        if 'cpu' in modifiers:
+            call_str = f"_to_cpu({call_str})"
+        if 'fast' in modifiers:
+            call_str = f"compile_model({call_str})"
         return call_str
 
     def visit_MemberAccess(self, node: MemberAccess):

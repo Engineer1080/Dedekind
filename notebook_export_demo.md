@@ -1,6 +1,6 @@
 # Gedämpfter Oszillator – Mess-Notizen
 
-*Source:* `notebook_export_demo.ddk`  ·  *Generated:* 2026-05-20T05:46:43
+*Source:* `notebook_export_demo.ddk`  ·  *Generated:* 2026-05-20T07:40:51
 
 *SHA-256:* `1ae14f0a36decdd415329a478facbde514550e960e7526e45bcf54173d20ec65`
 

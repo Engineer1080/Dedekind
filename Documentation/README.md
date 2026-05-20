@@ -15,7 +15,7 @@ This folder contains the **source** and **generated** documentation for the Dede
 | **Commercialization_Options.md** | Potenzielle Kommerzialisierungsoptionen (Beratung, Support, Lizenzen, SaaS, Förderung, Phasierung, Risiken) |
 | **IDE_Studio_Roadmap.md** | Dedekind in bestehenden IDEs (VS Code, Jupyter) + Dedekind Studio als kommerzielle Wissenschaftler-IDE (Einheiten, Plots, Postgres, LaTeX, lokale KI) |
 | **Build_Dedekind_Studio_Exe.md** | Anleitung: Dedekind Studio als Windows-.exe bauen (PyInstaller) |
-| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.6.0; Stärken, Lücken, Roadmap) |
+| **Maturity_Assessment.md** | Ausgereiftheit von Dedekind für Mathematik, Physik, Informatik, Biologie und Chemie (Stand v1.6.3; Stärken, Lücken, Roadmap) |
 | **Dedekind_Language_Specification_v0.1.pdf** | Legacy PDF (v0.1); for current spec use the Markdown or generate v0.2 PDF below |
 | **Dedekind_Research_Papers_and_Architecture.pdf** | Legacy PDF; for current content use the Markdown or generate PDF below |
 
@@ -41,6 +41,18 @@ pandoc Dedekind_Research_and_Architecture.md -o Dedekind_Research_and_Architectu
 - **Online**: Paste the Markdown into a service that converts Markdown to PDF (e.g. markdown-to-pdf converters).
 - **Typora / other editors**: Open the `.md` file and export to PDF from the application.
 
+
+## What changed in v1.6.3 (documented here)
+
+- **Version 1.6.3**: **Hardware-Beschleunigung & JIT-Optimierung (torch.compile):** Vollständige und fehlerfreie Auswertung von AST-Aufrufmodifikatoren (`.fast()`, `.gpu()`, `.cpu()`) im Code-Generator, wodurch Berechnungen jetzt nativ als hocheffiziente Triton-GPU-Kernels ausgeführt werden. **Runtime-Konsolidierung:** Konsolidierung aller Tensor-Hilfsfunktionen (`_to_tensor`, `_to_gpu`, `_to_cpu`) zur Verringerung von Code-Redundanz und zur Optimierung der JIT-Kompilierungszeit.
+
+## What changed in v1.6.2 (documented here)
+
+- **Version 1.6.2**: **Statischer Compile-Time Unit Checker:** Der Einheiten-Checker (`units_checker.py`) wurde zu einem echten statischen Typen-Analysator ausgebaut. Er verwendet nun einen *Environment-Stack* zur Scope-basierten Verfolgung lokaler Variablenzuweisungen (Type Inference) und führt eine kanonische Dimensionsanalyse zur Kompilierzeit durch. Das bedeutet, dass komplexe Ausdrücke wie `(m/s)*s` automatisch zu `m` gekürzt und typgeprüft werden, bevor der Code überhaupt ausgeführt wird.
+
+## What changed in v1.6.1 (documented here)
+
+- **Version 1.6.1**: **Modularisierung der Laufzeitumgebung:** Die über 250 KB große `ml_runtime.py` wurde in 10 thematisch getrennte Module unter `src/compiler/runtime_modules/` aufgeteilt. Ein neues Build-Skript (`src/compiler/build_runtime.py`) fügt diese bei Bedarf nahtlos zusammen. Dies verbessert die Wartbarkeit massiv und senkt die Hürde für Open-Source-Kontributoren, ohne den bestehenden Transpiler (`codegen.py`) zu beeinträchtigen. **Bugfixes:** Behebung von hartkodierten `/tmp/`-Pfaden in den Beispielen `notebook_export_demo.ddk` und `v1_4_features_showcase.ddk` für plattformübergreifende Kompatibilität.
 
 ## What changed in v1.6.0 (documented here)
 

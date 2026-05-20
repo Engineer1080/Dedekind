@@ -1,6 +1,6 @@
 # Was Dedekind aktuell kann
 
-**Stand:** Basierend auf Code und Changelogs (v1.6.0, Februar 2026). Dedekind ist ein **Prototyp** – die Sprache wird nach Python transpiliert und nutzt PyTorch/NumPy als Laufzeit.
+**Stand:** Basierend auf Code und Changelogs (v1.6.3, Mai 2026). Dedekind ist ein **Prototyp** – die Sprache wird nach Python transpiliert und nutzt PyTorch/NumPy als Laufzeit.
 
 ---
 
@@ -8,8 +8,8 @@
 
 - **Syntax:** Imperativ, C/JavaScript-ähnlich mit Blöcken in `{}`, Funktionen mit `fn name(args) { ... }`, Kontrollfluss `if`/`else`, `while`, `for ... in`. **Betragsstriche:** `|x|` = `abs(x)` (z. B. `x = |-1|` → 1). **Logische Operatoren:** `and`, `or`, `not`, `xor`, `nand`, `nor`, `xnor` (Python-ähnliche Keywords; Präzedenz: `or` < `xor` < `and`/`nand`/`nor`/`xnor` < `not`).
 - **Typen:** Dynamische Typinferenz; primitive Typen, Listen, Vektoren/Matrizen als Tensoren, Quaternionen; Property-Zugriff (z. B. `.shape`, `.gpu()`). **Matrix-Multiplikation:** Operator `@` (z. B. `A @ B`).
-- **Ausführungsmodifikatoren:** `.gpu()`, `.cpu()`, `.single()` für Hardware-Platzierung bzw. sequentielle Ausführung; `.sparse()` für Sparse-Tensoren; `.fast()` für MLIR/Inductor-Optimierung (z. B. bei Modellen).
-- **Fehlerbehandlung:** Compiler-Fehler mit Zeilennummer (`CompileError`); Einheiten-Check zur Compile-Zeit (`1[m] + 1[s]` → Fehler); Runtime-Meldungen mit Kontext. **Assert:** `assert(condition, message)` – löst AssertionError bei falscher Bedingung; Mini-Test-Runner `run_tests.py` für `tests/dedekind/*.ddk`.
+- **Ausführungsmodifikatoren:** `.gpu()`, `.cpu()`, `.single()` für Hardware-Platzierung bzw. sequentielle Ausführung; `.sparse()` für Sparse-Tensoren; `.fast()` für hocheffiziente Hardware-Beschleunigung und JIT-Kompilierung (`torch.compile` / native Triton GPU Kernels bei kompatiblen Grafikprozessoren).
+- **Fehlerbehandlung:** Compiler-Fehler mit Zeilennummer (`CompileError`); Einheiten-Check zur Compile-Zeit (`1[m] + 1[s]` → Fehler), der als echter statischer Typ-Analysator mittels Scope-basiertem Environment-Stack und kanonischer Dimensionsanalyse arbeitet. Runtime-Meldungen mit Kontext. **Assert:** `assert(condition, message)` – löst AssertionError bei falscher Bedingung; Mini-Test-Runner `run_tests.py` für `tests/dedekind/*.ddk`.
 
 ---
 

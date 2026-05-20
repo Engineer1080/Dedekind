@@ -40,6 +40,9 @@ DIMENSION_TO_BASE = {
     "magnetic_flux_density": ("T", {"T": 1.0, "G": 1e-4}),
     "magnetic_flux": ("Wb", {"Wb": 1.0}),
     "inductance": ("H", {"H": 1.0, "mH": 0.001, "uH": 1e-6}),
+    "amount_concentration": ("M", {"M": 1.0, "mM": 0.001, "uM": 1e-6, "nM": 1e-9}),
+    "absorbed_dose": ("Gy", {"Gy": 1.0, "mGy": 0.001}),
+    "equivalent_dose": ("Sv", {"Sv": 1.0, "mSv": 0.001}),
     # Chemie/Biologie: Massenkonzentration (% w/v = g/100mL)
     "mass_concentration": ("g/L", {"g/L": 1.0, "mg/mL": 1.0, "percent_wv": 10.0}),  # 1% w/v = 10 g/L
     # Winkel (SI-Ergänzung: rad; deg = pi/180 rad)
@@ -667,6 +670,17 @@ def _to_sparse(data):
     if not tensor.is_sparse:
         return tensor.to_sparse()
     return tensor
+
+def _to_gpu(data):
+    data = _to_tensor(data)
+    if torch.cuda.is_available():
+        return data.to('cuda')
+    return data
+
+def _to_cpu(data):
+    data = _to_tensor(data)
+    return data.to('cpu')
+
 
 def compile_model(model):
     """
@@ -5704,6 +5718,21 @@ def time_block(label, fn):
 # JIT-Backend: torch.compile-Wrapper als realistischer Schritt Richtung AOT
 # ============================================================================
 
+class RobustJITWrapper:
+    def __init__(self, original_fn, compiled_fn):
+        self.original_fn = original_fn
+        self.compiled_fn = compiled_fn
+        self.failed = False
+
+    def __call__(self, *args, **kwargs):
+        if not self.failed:
+            try:
+                return self.compiled_fn(*args, **kwargs)
+            except Exception as e:
+                # Robust fallback for runtime compilation errors (e.g. cl.exe not found)
+                self.failed = True
+        return self.original_fn(*args, **kwargs)
+
 def jit(fn):
     """Versucht, `fn` mit `torch.compile` zu beschleunigen (falls verfügbar); fällt sonst auf die
     Original-Funktion zurück. Realistischer Zwischenschritt Richtung AOT: nutzt TorchInductor als
@@ -5716,9 +5745,11 @@ def jit(fn):
         # PyTorch < 2.0 oder Stub: einfach Original zurückgeben.
         return fn
     try:
-        return compiler(fn)
+        compiled = compiler(fn)
+        return RobustJITWrapper(fn, compiled)
     except Exception:
         return fn
+
 
 
 # ============================================================================

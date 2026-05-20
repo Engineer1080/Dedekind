@@ -585,6 +585,17 @@ def _to_sparse(data):
         return tensor.to_sparse()
     return tensor
 
+def _to_gpu(data):
+    data = _to_tensor(data)
+    if torch.cuda.is_available():
+        return data.to('cuda')
+    return data
+
+def _to_cpu(data):
+    data = _to_tensor(data)
+    return data.to('cpu')
+
+
 def compile_model(model):
     """
     Dedekind Native Compilation Hook.

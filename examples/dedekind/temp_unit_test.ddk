@@ -1,0 +1,15 @@
+print("--- Dedekind Unit Test ---")
+E1 = 1[eV]
+E2 = 1.602176634e-19[J]
+E_total = E1 + E2
+print("1 eV + 1.602e-19 J = ", E_total)
+
+B1 = 1[T]
+B2 = 10000[G]
+B_total = B1 + B2
+print("1 T + 10000 G = ", B_total)
+
+L1 = 1[ly]
+L2 = 1[pc]
+L_total = L1 + L2
+print("1 ly + 1 pc = ", L_total)

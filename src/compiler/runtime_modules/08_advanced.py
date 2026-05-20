@@ -102,6 +102,21 @@ def time_block(label, fn):
 # JIT-Backend: torch.compile-Wrapper als realistischer Schritt Richtung AOT
 # ============================================================================
 
+class RobustJITWrapper:
+    def __init__(self, original_fn, compiled_fn):
+        self.original_fn = original_fn
+        self.compiled_fn = compiled_fn
+        self.failed = False
+
+    def __call__(self, *args, **kwargs):
+        if not self.failed:
+            try:
+                return self.compiled_fn(*args, **kwargs)
+            except Exception as e:
+                # Robust fallback for runtime compilation errors (e.g. cl.exe not found)
+                self.failed = True
+        return self.original_fn(*args, **kwargs)
+
 def jit(fn):
     """Versucht, `fn` mit `torch.compile` zu beschleunigen (falls verfügbar); fällt sonst auf die
     Original-Funktion zurück. Realistischer Zwischenschritt Richtung AOT: nutzt TorchInductor als
@@ -114,9 +129,11 @@ def jit(fn):
         # PyTorch < 2.0 oder Stub: einfach Original zurückgeben.
         return fn
     try:
-        return compiler(fn)
+        compiled = compiler(fn)
+        return RobustJITWrapper(fn, compiled)
     except Exception:
         return fn
+
 
 
 # ============================================================================

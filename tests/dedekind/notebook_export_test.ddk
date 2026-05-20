@@ -1,13 +1,13 @@
 // Test für export_notebook: erzeugt eine winzige .ddk-Datei und bündelt sie als HTML + MD.
 
 fn main() {
-    // 1) Minimal-Quelle in /tmp schreiben (rohstring vermeidet Quote-Escape-Probleme im Lexer)
-    src_path = "/tmp/dedekind_nb_src.ddk"
+    // 1) Minimal-Quelle in CWD schreiben (rohstring vermeidet Quote-Escape-Probleme im Lexer)
+    src_path = "./dedekind_nb_src.ddk"
     src_body = r"fn main() { x = 1 + 1 print(x) } main()"
     write_file(src_path, src_body)
 
     // 2) HTML-Export
-    html_path = export_notebook(src_path, output_path="/tmp/dedekind_nb.html",
+    html_path = export_notebook(src_path, output_path="./dedekind_nb.html",
                                 format="html", title="Mini-Notebook")
     assert(file_exists(html_path), "HTML-Datei existiert")
     html = read_file(html_path)
@@ -15,7 +15,7 @@ fn main() {
     assert(len(html) > 200, "HTML hat substanzielle Länge")
 
     // 3) Markdown-Export
-    md_path = export_notebook(src_path, output_path="/tmp/dedekind_nb.md",
+    md_path = export_notebook(src_path, output_path="./dedekind_nb.md",
                               format="md", title="Mini-Notebook")
     md = read_file(md_path)
     assert(len(md) > 50, "Markdown hat Inhalt")
