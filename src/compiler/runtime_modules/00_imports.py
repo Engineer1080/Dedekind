@@ -40,6 +40,9 @@ DIMENSION_TO_BASE = {
     "magnetic_flux_density": ("T", {"T": 1.0, "G": 1e-4}),
     "magnetic_flux": ("Wb", {"Wb": 1.0}),
     "inductance": ("H", {"H": 1.0, "mH": 0.001, "uH": 1e-6}),
+    "amount_concentration": ("M", {"M": 1.0, "mM": 0.001, "uM": 1e-6, "nM": 1e-9}),
+    "absorbed_dose": ("Gy", {"Gy": 1.0, "mGy": 0.001}),
+    "equivalent_dose": ("Sv", {"Sv": 1.0, "mSv": 0.001}),
     # Chemie/Biologie: Massenkonzentration (% w/v = g/100mL)
     "mass_concentration": ("g/L", {"g/L": 1.0, "mg/mL": 1.0, "percent_wv": 10.0}),  # 1% w/v = 10 g/L
     # Winkel (SI-Ergänzung: rad; deg = pi/180 rad)

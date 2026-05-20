@@ -1,0 +1,54 @@
+// ============================================================================
+// Dedekind v1.6.2: Umfassende wissenschaftliche Einheiten
+// ============================================================================
+// Dedekind versteht nun nativ eine enorme Bandbreite an Einheiten quer
+// durch alle Disziplinen. Additionen mit unterschiedlichen Einheiten
+// derselben Dimension werden automatisch skaliert!
+
+print("--- 1. Quantenphysik ---")
+// Energie in Elektronenvolt
+E_photon = 2.5[eV]
+E_thermal = 1.0[meV]
+
+// Automatische Addition und Konvertierung
+E_diff = E_photon - E_thermal
+print("Energie-Differenz:      ", E_diff)
+
+// Umrechnung in Joule (die erste Einheit dominiert das Ergebnis)
+E_joule = 0[J] + E_photon
+print("In Joule (SI):          ", E_joule)
+
+// Und noch ein Praxisbeispiel:
+W_battery = 0[kWh] + 3.6[MJ]
+print("3.6 MJ als Batterie:    ", W_battery)
+
+
+print("\n--- 2. Magnetismus ---")
+B_erdmagnetfeld = 0.5[G]       // Gauss
+B_mrt = 3.0[T]                 // Tesla
+
+B_total = B_mrt + B_erdmagnetfeld
+print("Magnetfeld (MRT + Erde):", B_total)
+
+
+print("\n--- 3. Astronomie ---")
+dist_alpha_centauri = 1.34[pc] // Parsec
+dist_sirius = 8.6[ly]          // Lichtjahre
+
+dist_total = dist_alpha_centauri + dist_sirius
+print("Distanz (Parsec + Ly):  ", dist_total)
+// Zurück in SI (Meter)
+dist_m = dist_total + 0[m]
+print("Distanz in Metern:      ", dist_m)
+
+
+print("\n--- 4. Biologie & Thermodynamik ---")
+// Kalorien in Joule umrechnen
+snack_energy = 250[kcal]
+snack_joule = 0[MJ] + snack_energy
+print("250 kcal in Megajoule:  ", snack_joule)
+
+// Molare Konzentrationen
+c_blutzucker = 5.5[mM] // Millimolar
+c_si = 0[M] + c_blutzucker // Mol pro Liter
+print("Blutzucker in M (mol/L):", c_si)
