@@ -9,3 +9,19 @@ pub fn state_space(A, B, C, D) {
 pub fn pi_controller(Kp, Ki) {
     return StateSpace([[0.0]], [[1.0]], [[Ki]], [[Kp]])
 }
+
+pub fn bode_plot(sys, omega) {
+    res = sys.frequency_response(omega)
+    w_out = res[0]
+    
+    // Extrahieren der Magnitude [N, 1, 1] -> flatten -> [N]
+    mag_db = res[1]
+    mag_1d = mag_db.flatten()
+    
+    phase_deg = res[2]
+    phase_1d = phase_deg.flatten()
+    
+    plot(w_out, mag_1d, title="Bode Plot - Magnitude", xlabel="Frequency (rad/s)", ylabel="Magnitude (dB)", xscale="log")
+    plot(w_out, phase_1d, title="Bode Plot - Phase", xlabel="Frequency (rad/s)", ylabel="Phase (deg)", xscale="log")
+}
+

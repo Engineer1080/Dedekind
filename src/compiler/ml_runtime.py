@@ -9515,6 +9515,46 @@ class StateSpace:
         
         return t_t, y_out, x_out
 
+    def frequency_response(self, omega):
+        """Berechnet die komplexe Frequenzantwort H(jw) voll vektorisiert."""
+        omega_t = _to_tensor(omega).float()
+        
+        # A, B, C, D in complex64
+        A_c = self.A.to(torch.complex64)
+        B_c = self.B.to(torch.complex64)
+        C_c = self.C.to(torch.complex64)
+        D_c = self.D.to(torch.complex64)
+        
+        n = self.A.shape[0]
+        I = torch.eye(n, dtype=torch.complex64)
+        
+        # s = j*omega (shape: [N])
+        s = 1j * omega_t
+        
+        # sI_A = s*I - A
+        # Broadcasting: s is [N], I is [n, n] -> s[:, None, None] * I[None, :, :] -> [N, n, n]
+        sI = s.unsqueeze(-1).unsqueeze(-1) * I.unsqueeze(0)
+        sI_A = sI - A_c.unsqueeze(0)
+        
+        # Batched complex inversion: [N, n, n]
+        inv = torch.linalg.inv(sI_A)
+        
+        # H = C * inv * B + D
+        # C_c.unsqueeze(0) ist [1, p, n], B_c.unsqueeze(0) ist [1, n, q]
+        H = torch.matmul(C_c.unsqueeze(0), torch.matmul(inv, B_c.unsqueeze(0))) + D_c.unsqueeze(0)
+        
+        # Berechne Magnitude in dB und Phase in Grad
+        mag = torch.abs(H)
+        mag_db = 20.0 * torch.log10(mag + 1e-12)
+        
+        phase = torch.angle(H)
+        # Phase in Grad umrechnen
+        import math
+        phase_deg = phase * (180.0 / math.pi)
+        
+        return omega_t, mag_db, phase_deg
+
+
 def _notebook_in_progress_set():
     """Process-weite Re-Entry-Tracking-Menge. Liegt auf sys, damit sie über exec-Kontexte
     persistent ist (jeder exec(compile_source(...)) bekommt sonst eine frische ml_runtime-Kopie)."""

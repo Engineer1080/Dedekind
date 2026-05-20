@@ -43,6 +43,12 @@ fn main() {
     print("Da Dedekind 'ode_solve' nutzt, sind die Parameter A, B, C, D differenzierbar.")
     print("Du kannst dieses System in eine Loss-Funktion stecken und z.B. einen ")
     print("PID-Regler über Reinforcement Learning oder Backpropagation trainieren!")
+    
+    // Bode-Diagramm zeichnen
+    print("")
+    print("Generiere Bode-Diagramm für Frequenzen 10^-2 bis 10^2 rad/s...")
+    omega = logspace(-2.0, 2.0, 100)
+    bode_plot(sys, omega)
 }
 
 main()
