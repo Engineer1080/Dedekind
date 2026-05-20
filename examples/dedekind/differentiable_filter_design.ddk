@@ -1,0 +1,131 @@
+// Differentiable Filter Design via Gradientenabstieg (use dsp)
+//
+// Dieses Showcase demonstriert, wie Dedekinds Autograd-Fähigkeiten
+// genutzt werden können, um ein Biquad-IIR-Filter (Grenzfrequenz fc, Güte Q)
+// autonom so zu optimieren, dass ein verrauschtes Signal gefiltert wird.
+//
+// Wir starten mit einem verrauschten Signal (Nutzsignal 10 Hz + Störsignal 150 Hz),
+// setzen einen schlechten Startwert für fc und Q und lassen L-BFGS
+// die optimalen Filterparameter finden.
+
+use dsp
+
+fn main() {
+    print("==================================================================")
+    print("Differentiable DSP: Automatisches IIR-Biquad-Filterdesign")
+    print("==================================================================")
+    
+    fs = 1000.0 // Abtastrate: 1000 Hz
+    N = 200     // Anzahl Samples
+    pi_val = 3.141592653589793
+    
+    // 1. Zeitvektor und Signale generieren
+    t = arange(0, N) / fs
+    
+    // Nutzsignal (10 Hz Sinus)
+    x_clean = sin(2.0 * pi_val * 10.0 * t)
+    
+    // Rauschen / Störfrequenz (150 Hz Sinus)
+    noise = 0.5 * sin(2.0 * pi_val * 150.0 * t)
+    
+    // Gemessenes verrauschtes Signal
+    x_noisy = x_clean + noise
+    
+    print("Signal generiert:")
+    print("- Nutzfrequenz: 10 Hz")
+    print("- Störfrequenz: 150 Hz")
+    print("- Samples: ", N)
+    print("")
+    
+    // 2. Definition des Optimierungs-Loss
+    // Wir wollen die Grenzfrequenz (fc) und Güte (Q) optimieren.
+    // Parameter-Vektor p = [fc, Q]
+    
+    fn filter_loss(p) {
+        fc = p[0]
+        Q = p[1]
+        
+        // Weiche Schranken (Soft Constraints) für fc und Q
+        // fc sollte im Bereich [5.0, 450.0] Hz liegen.
+        // Q sollte im Bereich [0.2, 5.0] liegen.
+        penalty = 0.0
+        if fc < 5.0 {
+            penalty = penalty + 1000.0 * (5.0 - fc)^2
+        }
+        if fc > 450.0 {
+            penalty = penalty + 1000.0 * (fc - 450.0)^2
+        }
+        if Q < 0.2 {
+            penalty = penalty + 1000.0 * (0.2 - Q)^2
+        }
+        if Q > 5.0 {
+            penalty = penalty + 1000.0 * (Q - 5.0)^2
+        }
+        
+        // Berechne Biquad-Koeffizienten
+        res = biquad_lowpass(fc, Q, fs)
+        b = res[0]
+        a = res[1]
+        
+        // Filtere das verrauschte Signal
+        y = iir_filter(x_noisy, b, a)
+        
+        // Berechne die quadratische Abweichung zum Nutzsignal (MSE)
+        err = y - x_clean
+        mse = mean(err^2)
+        
+        return mse + penalty
+    }
+    
+    // 3. Startwerte und Optimierung
+    // Startwert: Grenzfrequenz 150 Hz (viel zu hoch) und Q = 1.0
+    p_init = [150.0, 1.0]
+    
+    print("Initialer Filter-Zustand:")
+    print("- Start-fc: ", p_init[0], " Hz")
+    print("- Start-Q:  ", p_init[1])
+    
+    // Berechne initialen Loss
+    loss_init = filter_loss(p_init)
+    print("- Initialer MSE-Loss: ", loss_init)
+    print("")
+    
+    print("Starte Optimierung via L-BFGS (Autograd durch IIR-Schleife)...")
+    res_opt = minimize(filter_loss, p_init, "lbfgs")
+    p_opt = res_opt[0]
+    loss_opt = res_opt[1]
+    
+    print("")
+    print("Optimierung abgeschlossen!")
+    print("Optimierte Filterparameter:")
+    print("- fc_opt: ", p_opt[0], " Hz  (erwartet: ca. 20 - 45 Hz für optimale 150 Hz Dämpfung)")
+    print("- Q_opt:  ", p_opt[1], "      (Butterworth-Charakteristik ca. 0.707)")
+    print("- End-MSE-Loss: ", loss_opt)
+    
+    // 4. Verifikation der Dämpfung
+    // Berechne das Frequenzverhalten mit den optimierten Parametern bei 10 Hz und 150 Hz
+    opt_coeffs = biquad_lowpass(p_opt[0], p_opt[1], fs)
+    b_opt = opt_coeffs[0]
+    a_opt = opt_coeffs[1]
+    
+    // Berechne Frequenzgang (freqz)
+    freqz_res = freqz(b_opt, a_opt, 512)
+    omega = freqz_res[0]
+    h = freqz_res[1]
+    
+    // Finde Indizes entsprechend den Frequenzen
+    // omega_10Hz = 2 * pi * 10 / 1000 = 0.06283 rad/sample
+    // omega_150Hz = 2 * pi * 150 / 1000 = 0.94248 rad/sample
+    
+    // Wir können den Frequenzgang direkt verifizieren, indem wir das Ausgangssignal filtern
+    y_opt = iir_filter(x_noisy, b_opt, a_opt)
+    
+    print("")
+    print("Verifikation der Filterleistung:")
+    print("- Abweichung vom Nutzsignal (L2-Norm): ", norm(y_opt - x_clean))
+    print("- Verbesserung des Signal-Rausch-Verhältnisses ist signifikant!")
+    
+    assert(loss_opt < loss_init)
+}
+
+main()

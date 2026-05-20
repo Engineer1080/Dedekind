@@ -1,0 +1,33 @@
+// --- Digital Signal Processing (DSP) & Z-Transformation Module ---
+
+pub fn fir_filter(x, b) {
+    return fir_filter_impl(x, b)
+}
+
+pub fn iir_filter(x, b, a) {
+    return iir_filter_impl(x, b, a)
+}
+
+pub fn biquad_lowpass(fc, Q, fs) {
+    return biquad_lowpass_impl(fc, Q, fs)
+}
+
+pub fn biquad_highpass(fc, Q, fs) {
+    return biquad_highpass_impl(fc, Q, fs)
+}
+
+pub fn biquad_bandpass(fc, Q, fs) {
+    return biquad_bandpass_impl(fc, Q, fs)
+}
+
+pub fn freqz(b, a, worN) {
+    return freqz_impl(b, a, worN)
+}
+
+pub fn butter(order, Wn, btype, fs) {
+    return butter_impl(order, Wn, btype, fs)
+}
+
+pub fn cheby1(order, rp, Wn, btype, fs) {
+    return cheby1_impl(order, rp, Wn, btype, fs)
+}

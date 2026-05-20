@@ -1,0 +1,83 @@
+use dsp
+
+fn test_fir_filter() {
+    print("Testing FIR Filter...")
+    
+    x = [1.0, 2.0, 3.0]
+    b = [0.5, 1.0]
+    
+    y = fir_filter(x, b)
+    print("FIR Output y:", y)
+    
+    assert(abs(y[0] - 0.5) < 1e-5)
+    assert(abs(y[1] - 2.0) < 1e-5)
+    assert(abs(y[2] - 3.5) < 1e-5)
+    
+    print("[OK] FIR Filter")
+}
+
+fn test_iir_filter() {
+    print("Testing IIR Filter (Impulse Response)...")
+    
+    x = [1.0, 0.0, 0.0, 0.0]
+    b = [1.0]
+    a = [1.0, -0.5]
+    
+    y = iir_filter(x, b, a)
+    print("IIR Output y:", y)
+    
+    assert(abs(y[0] - 1.0) < 1e-5)
+    assert(abs(y[1] - 0.5) < 1e-5)
+    assert(abs(y[2] - 0.25) < 1e-5)
+    assert(abs(y[3] - 0.125) < 1e-5)
+    
+    print("[OK] IIR Filter")
+}
+
+fn test_freqz() {
+    print("Testing freqz (Frequency Response)...")
+    
+    // Einfacher Differenzierer: y[n] = x[n] - x[n-1]
+    b = [1.0, -1.0]
+    a = [1.0, 0.0]
+    
+    res = freqz(b, a, 10)
+    omega = res[0]
+    h = res[1]
+    
+    print("DC Frequency response (omega=0):", h[0])
+    print("Nyquist Frequency response (omega=pi):", h[9])
+    
+    // DC Magnitude muss 0 sein
+    assert(abs(h[0]) < 1e-5)
+    // Nyquist Magnitude muss 2.0 sein (h = 1 - e^(-j*pi) = 1 - (-1) = 2)
+    assert(abs(abs(h[9]) - 2.0) < 1e-5)
+    
+    print("[OK] freqz")
+}
+
+fn test_differentiable_biquad() {
+    print("Testing Differentiable Biquad (Autograd)...")
+    
+    fn get_b0(fc) {
+        res = biquad_lowpass(fc, 0.707, 1.0)
+        b = res[0]
+        return b[0]
+    }
+    
+    fc = [0.2]
+    deriv = jacobian(get_b0, fc)
+    print("Derivative of biquad lowpass b0 w.r.t fc:", deriv)
+    
+    // Die Ableitung muss numerisch vorhanden und ungleich null sein
+    assert(abs(deriv[0]) > 0.01)
+    
+    print("[OK] Differentiable Biquad")
+}
+
+fn main() {
+    test_fir_filter()
+    test_iir_filter()
+    test_freqz()
+    test_differentiable_biquad()
+}
