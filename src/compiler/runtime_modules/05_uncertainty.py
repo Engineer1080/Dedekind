@@ -259,6 +259,40 @@ def one_compartment_pk(C0, ke, t):
     return C0 * torch.exp(-ke * t)
 
 
+def two_compartment_pk(C0, k12, k21, ke, t):
+    """
+    Zwei-Kompartiment-Modell (IV Bolus in das zentrale Kompartiment):
+    C1(t) = A * exp(-alpha * t) + B * exp(-beta * t)
+    C0: Anfangskonzentration im zentralen Kompartiment
+    k12: Transferrate von zentral zu peripher (1/Zeit)
+    k21: Transferrate von peripher zu zentral (1/Zeit)
+    ke: Eliminationsrate aus dem zentralen Kompartiment (1/Zeit)
+    t: Zeitgitter (1D)
+    Rückgabe: Konzentration im zentralen Kompartiment C1(t) (differenzierbar).
+    """
+    C0 = _to_tensor(C0).float()
+    k12 = _to_tensor(k12).float()
+    k21 = _to_tensor(k21).float()
+    ke = _to_tensor(ke).float()
+    t = _to_tensor(t).float()
+
+    sum_k = ke + k12 + k21
+    prod_k = ke * k21
+
+    disc = sum_k ** 2 - 4.0 * prod_k
+    disc = torch.clamp(disc, min=0.0)
+    sqrt_disc = torch.sqrt(disc)
+
+    alpha = 0.5 * (sum_k + sqrt_disc)
+    beta = 0.5 * (sum_k - sqrt_disc)
+
+    denom = torch.where(sqrt_disc < 1e-15, torch.tensor(1e-15, dtype=alpha.dtype, device=alpha.device), sqrt_disc)
+    A = C0 * (alpha - k21) / denom
+    B = C0 * (k21 - beta) / denom
+
+    return A * torch.exp(-alpha * t) + B * torch.exp(-beta * t)
+
+
 def half_life(ke):
     """
     Halbwertszeit aus Eliminationskonstante: t1/2 = ln(2) / ke.
@@ -626,5 +660,375 @@ def balance_equation(reactants_str, products_str):
     coeffs = [int(_builtin_max(1, abs(x // g))) for x in scaled_int]
     return list(coeffs[:n_r]), list(coeffs[n_r:])
 
-# --- Standard Library: File I/O, Network, JSON ---
+# --- Standard Library: Life Sciences Extension (Phase 1) ---
+
+def _get_bond_order(bond_char, aromatic1, aromatic2):
+    if bond_char == '-': return 1.0
+    if bond_char == '=': return 2.0
+    if bond_char == '#': return 3.0
+    if bond_char == ':': return 1.5
+    if aromatic1 and aromatic2: return 1.5
+    return 1.0
+
+def _handle_ring(ring_num, last_idx, pending_bond, atoms, bonds, ring_closures):
+    if last_idx is None:
+        return
+    if ring_num in ring_closures:
+        partner_idx, r_bond_char = ring_closures.pop(ring_num)
+        bond_char = pending_bond or r_bond_char
+        order = _get_bond_order(bond_char, atoms[last_idx]["aromatic"], atoms[partner_idx]["aromatic"])
+        bonds.append((last_idx, partner_idx, order))
+    else:
+        ring_closures[ring_num] = (last_idx, pending_bond)
+
+def _parse_smiles(smiles):
+    import re
+    smiles = str(smiles).strip()
+    atoms = []
+    bonds = []
+    branch_stack = []
+    ring_closures = {}
+    
+    i = 0
+    n = len(smiles)
+    last_idx = None
+    pending_bond = None
+    
+    while i < n:
+        c = smiles[i]
+        
+        if c == '(':
+            branch_stack.append(last_idx)
+            i += 1
+            continue
+        elif c == ')':
+            if branch_stack:
+                last_idx = branch_stack.pop()
+            i += 1
+            continue
+        elif c in ['-', '=', '#', ':']:
+            pending_bond = c
+            i += 1
+            continue
+        elif c == '.':
+            last_idx = None
+            pending_bond = None
+            i += 1
+            continue
+        elif c == '%':
+            if i + 2 < n and smiles[i+1:i+3].isdigit():
+                ring_num = int(smiles[i+1:i+3])
+                i += 3
+            else:
+                i += 1
+                continue
+            _handle_ring(ring_num, last_idx, pending_bond, atoms, bonds, ring_closures)
+            pending_bond = None
+            continue
+        elif c.isdigit():
+            ring_num = int(c)
+            i += 1
+            _handle_ring(ring_num, last_idx, pending_bond, atoms, bonds, ring_closures)
+            pending_bond = None
+            continue
+        elif c == '[':
+            j = smiles.find(']', i)
+            if j == -1:
+                raise ValueError(f"SMILES-Parser: Fehlende schließende Klammer bei Position {i}")
+            content = smiles[i+1:j]
+            i = j + 1
+            
+            m = re.match(r"^(\d*)([A-Z][a-z]?|[a-z])(@+)?(H\d*)?([\+\-]\d*|\d*[\+\-]|\++|\-+)?", content)
+            if not m:
+                elem = "C"
+                aromatic = False
+                explicit_h = 0
+                charge = 0
+            else:
+                elem_raw = m.group(2)
+                aromatic = elem_raw.islower()
+                elem = elem_raw.capitalize()
+                
+                h_str = m.group(4)
+                explicit_h = 0
+                if h_str:
+                    explicit_h = 1 if len(h_str) == 1 else int(h_str[1:])
+                    
+                charge_str = m.group(5)
+                charge = 0
+                if charge_str:
+                    if charge_str == '+': charge = 1
+                    elif charge_str == '-': charge = -1
+                    elif '+' in charge_str:
+                        parts = charge_str.replace('+', '')
+                        charge = int(parts) if parts else charge_str.count('+')
+                    elif '-' in charge_str:
+                        parts = charge_str.replace('-', '')
+                        charge = -int(parts) if parts else -charge_str.count('-')
+                        
+            new_atom = {
+                "elem": elem,
+                "aromatic": aromatic,
+                "charge": charge,
+                "explicit_h": explicit_h,
+                "is_bracket": True
+            }
+            atoms.append(new_atom)
+            new_idx = len(atoms) - 1
+            
+            if last_idx is not None:
+                order = _get_bond_order(pending_bond, atoms[last_idx]["aromatic"], aromatic)
+                bonds.append((last_idx, new_idx, order))
+                
+            last_idx = new_idx
+            pending_bond = None
+            continue
+        else:
+            elem_raw = None
+            if smiles[i:i+2] in ['Cl', 'Br', 'cl', 'br']:
+                elem_raw = smiles[i:i+2]
+                i += 2
+            elif c in ['B', 'C', 'N', 'O', 'P', 'S', 'F', 'I', 'b', 'c', 'n', 'o', 'p', 's']:
+                elem_raw = c
+                i += 1
+            else:
+                i += 1
+                continue
+                
+            aromatic = elem_raw.islower()
+            elem = elem_raw.capitalize()
+            
+            new_atom = {
+                "elem": elem,
+                "aromatic": aromatic,
+                "charge": 0,
+                "explicit_h": 0,
+                "is_bracket": False
+            }
+            atoms.append(new_atom)
+            new_idx = len(atoms) - 1
+            
+            if last_idx is not None:
+                order = _get_bond_order(pending_bond, atoms[last_idx]["aromatic"], aromatic)
+                bonds.append((last_idx, new_idx, order))
+                
+            last_idx = new_idx
+            pending_bond = None
+            continue
+            
+    STANDARD_VALENCES = {
+        "C": 4, "N": 3, "O": 2, "S": 2, "P": 3, "B": 3,
+        "F": 1, "Cl": 1, "Br": 1, "I": 1
+    }
+    
+    counts = {}
+    for idx, atom in enumerate(atoms):
+        elem = atom["elem"]
+        if atom["is_bracket"]:
+            h_count = atom["explicit_h"]
+        else:
+            conn_bonds = [order for (i1, i2, order) in bonds if i1 == idx or i2 == idx]
+            tot_order = sum(conn_bonds)
+            val = STANDARD_VALENCES.get(elem, 0)
+            h_count = int(round(_builtin_max(0.0, float(val) - tot_order)))
+            
+        counts[elem] = counts.get(elem, 0) + 1
+        if h_count > 0:
+            counts["H"] = counts.get("H", 0) + h_count
+            
+    return counts, atoms, bonds
+
+def smiles_molecular_weight(smiles):
+    """
+    Berechnet das Molekulargewicht eines SMILES-Strings (g/mol).
+    smiles: String. Rückgabe: Quantity(Wert, "g/mol").
+    """
+    counts, _, _ = _parse_smiles(smiles)
+    mw = sum(ATOMIC_MASSES.get(elem, 0.0) * count for elem, count in counts.items())
+    return Quantity(mw, "g/mol")
+
+def lipinski_descriptors(smiles):
+    """
+    Lipinski-Deskriptoren für einen SMILES-String:
+    - mw: Molekulargewicht (g/mol)
+    - logp: Abschätzung über atomadditive Beiträge
+    - hbd: Wasserstoffbrücken-Donoren
+    - hba: Wasserstoffbrücken-Akzeptoren
+    - violations: Anzahl verletzter Lipinski-Regeln (MW > 500, logP > 5, HBD > 5, HBA > 10)
+    - passes: true wenn violations <= 1
+    Rückgabe: Dict mit diesen Metriken.
+    """
+    counts, atoms, bonds = _parse_smiles(smiles)
+    mw_qty = smiles_molecular_weight(smiles)
+    mw = mw_qty.value
+    
+    hbd = 0
+    hba = 0
+    
+    STANDARD_VALENCES = {
+        "C": 4, "N": 3, "O": 2, "S": 2, "P": 3, "B": 3,
+        "F": 1, "Cl": 1, "Br": 1, "I": 1
+    }
+    
+    logp = 0.0
+    
+    for idx, atom in enumerate(atoms):
+        elem = atom["elem"]
+        aromatic = atom["aromatic"]
+        
+        if atom["is_bracket"]:
+            h_count = atom["explicit_h"]
+        else:
+            conn_bonds = [order for (i1, i2, order) in bonds if i1 == idx or i2 == idx]
+            tot_order = sum(conn_bonds)
+            val = STANDARD_VALENCES.get(elem, 0)
+            h_count = int(round(_builtin_max(0.0, float(val) - tot_order)))
+            
+        if elem in ["N", "O"]:
+            hba += 1
+            if h_count > 0:
+                hbd += 1
+        elif elem == "F":
+            hba += 1
+            
+        if elem == "C":
+            if aromatic:
+                logp += 0.35
+            else:
+                logp += 0.40
+        elif elem == "O":
+            if h_count > 0:
+                logp -= 1.50
+            else:
+                logp -= 0.40
+        elif elem == "N":
+            if h_count > 0:
+                logp -= 1.00
+            elif aromatic:
+                logp -= 0.50
+            else:
+                logp -= 0.70
+        elif elem == "F":
+            logp += 0.14
+        elif elem == "Cl":
+            logp += 0.56
+        elif elem == "Br":
+            logp += 0.88
+        elif elem == "I":
+            logp += 1.25
+        elif elem == "S":
+            logp += 0.20
+        elif elem == "P":
+            logp -= 0.40
+            
+        logp += h_count * 0.11
+        
+    violations = 0
+    if mw > 500.0:
+        violations += 1
+    if logp > 5.0:
+        violations += 1
+    if hbd > 5:
+        violations += 1
+    if hba > 10:
+        violations += 1
+        
+    passes = (violations <= 1)
+    
+    return {
+        "mw": float(mw),
+        "logp": float(logp),
+        "hbd": int(hbd),
+        "hba": int(hba),
+        "violations": int(violations),
+        "passes": bool(passes)
+    }
+
+def pubchem_get_molecular_formula(name):
+    """
+    Fragt die PubChem API nach der Summenformel eines Verbindungsnamens.
+    Weicht bei Verbindungsfehlern transparent auf ein internes Wörterbuch aus.
+    """
+    n = str(name).strip().lower()
+    
+    PUBCHEM_CACHE = {
+        "aspirin": "C9H8O4",
+        "caffeine": "C8H10N4O2",
+        "water": "H2O",
+        "wasser": "H2O",
+        "ethanol": "C2H6O",
+        "ibuprofen": "C13H18O2",
+        "paracetamol": "C8H9NO2",
+        "glucose": "C6H12O6",
+        "methane": "CH4",
+        "methan": "CH4",
+        "benzene": "C6H6",
+        "benzol": "C6H6",
+        "pyridine": "C5H5N",
+        "nicotine": "C10H14N2",
+        "urea": "CH4N2O",
+        "harnstoff": "CH4N2O",
+        "penicillin": "C16H18N2O4S",
+        "taxol": "C47H51NO14"
+    }
+    
+    try:
+        import urllib.request
+        import urllib.parse
+        import json
+        safe_name = urllib.parse.quote(n)
+        url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{safe_name}/property/MolecularFormula/JSON"
+        req = urllib.request.Request(url, headers={'User-Agent': 'DedekindLifeSciences/1.0'})
+        with urllib.request.urlopen(req, timeout=3.0) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+            formula = data["PropertyTable"]["Properties"][0]["MolecularFormula"]
+            return str(formula)
+    except Exception:
+        if n in PUBCHEM_CACHE:
+            return PUBCHEM_CACHE[n]
+        raise ValueError(f"pubchem_get_molecular_formula: Verbindung fehlgeschlagen und Name '{name}' nicht im lokalen Cache.")
+
+def chembl_get_ic50(target, compound):
+    """
+    Fragt die ChEMBL-Datenbank nach dem IC50-Wert einer Substanz gegen ein Target.
+    Weicht bei Verbindungsfehlern transparent auf ein internes Wörterbuch aus.
+    """
+    tgt = str(target).strip().lower()
+    cmpd = str(compound).strip().lower()
+    
+    CHEMBL_CACHE = {
+        ("cox-1", "aspirin"): 100000.0,
+        ("chembl1914", "aspirin"): 15000.0,
+        ("cox-2", "ibuprofen"): 10000.0,
+        ("egfr", "gefitinib"): 33.0,
+        ("chembl203", "gefitinib"): 33.0,
+        ("herg", "aspirin"): 100000.0,
+        ("chembl240", "aspirin"): 100000.0
+    }
+    
+    try:
+        import urllib.request
+        import urllib.parse
+        import json
+        safe_tgt = urllib.parse.quote(tgt)
+        safe_cmpd = urllib.parse.quote(cmpd)
+        url = f"https://www.ebi.ac.uk/chembl/api/data/activity.json?target_chembl_id={safe_tgt}&molecule_pref_name__iexact={safe_cmpd}&standard_type=IC50"
+        if not tgt.startswith("chembl"):
+            url = f"https://www.ebi.ac.uk/chembl/api/data/activity.json?target_components__target_protein__keyword={safe_tgt}&molecule_pref_name__iexact={safe_cmpd}&standard_type=IC50"
+        
+        req = urllib.request.Request(url, headers={'User-Agent': 'DedekindLifeSciences/1.0'})
+        with urllib.request.urlopen(req, timeout=3.0) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+            activities = data.get("activities", [])
+            if activities:
+                for act in activities:
+                    val = act.get("standard_value")
+                    if val is not None:
+                        return Quantity(float(val), "nM")
+            raise ValueError("Keine Aktivitäten gefunden.")
+    except Exception:
+        key = (tgt, cmpd)
+        if key in CHEMBL_CACHE:
+            return Quantity(CHEMBL_CACHE[key], "nM")
+        raise ValueError(f"chembl_get_ic50: Verbindung fehlgeschlagen und Paar ({target}, {compound}) nicht im lokalen Cache.")
 

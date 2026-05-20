@@ -1,0 +1,85 @@
+// Test: Life Sciences Extension Phase 1
+
+fn test_two_compartment_pk() {
+    // k12 = 0.1, k21 = 0.05, ke = 0.2
+    // C0 = 100.0, t = 0.0
+    t = 0.0
+    c0_val = two_compartment_pk(100.0, 0.1, 0.05, 0.2, t)
+    assert(abs(c0_val - 100.0) < 1e-4)
+    
+    // Test that the return is differentiable and integrates with autograd
+    t_arr = [0.0, 1.0, 2.0, 5.0]
+    res = two_compartment_pk(100.0, 0.1, 0.05, 0.2, t_arr)
+    assert(abs(res[0] - 100.0) < 1e-4)
+    assert(res[1] < 100.0)
+    assert(res[2] < res[1])
+    assert(res[3] < res[2])
+    print("test_two_compartment_pk: bestanden.")
+}
+
+fn test_smiles_molecular_weight() {
+    // Ethanol (CCO): 2 * 12.011 + 6 * 1.008 + 15.999 = 46.069 g/mol
+    mw_ethanol = smiles_molecular_weight("CCO")
+    assert(abs(mw_ethanol.value - 46.069) < 1e-2)
+    assert(mw_ethanol.unit == "g/mol")
+    
+    // Benzene (c1ccccc1): 6 * 12.011 + 6 * 1.008 = 78.114 g/mol
+    mw_benzene = smiles_molecular_weight("c1ccccc1")
+    assert(abs(mw_benzene.value - 78.114) < 1e-2)
+    
+    // Water (O): 15.999 + 2 * 1.008 = 18.015 g/mol
+    mw_water = smiles_molecular_weight("O")
+    assert(abs(mw_water.value - 18.015) < 1e-2)
+    
+    print("test_smiles_molecular_weight: bestanden.")
+}
+
+fn test_lipinski_descriptors() {
+    // Ethanol (CCO) Lipinski
+    desc_ethanol = lipinski_descriptors("CCO")
+    assert(desc_ethanol["hbd"] == 1) // 1 OH group
+    assert(desc_ethanol["hba"] == 1) // 1 O
+    assert(desc_ethanol["violations"] == 0)
+    assert(desc_ethanol["passes"])
+    
+    // Aspirin (CC(=O)Oc1ccccc1C(=O)O)
+    desc_aspirin = lipinski_descriptors("CC(=O)Oc1ccccc1C(=O)O")
+    assert(desc_aspirin["hbd"] == 1) // 1 COOH OH group
+    assert(desc_aspirin["hba"] == 4) // 4 O atoms
+    assert(desc_aspirin["violations"] == 0)
+    assert(desc_aspirin["passes"])
+    
+    print("test_lipinski_descriptors: bestanden.")
+}
+
+fn test_pubchem_get_molecular_formula() {
+    formula = pubchem_get_molecular_formula("aspirin")
+    assert(formula == "C9H8O4")
+    
+    formula_water = pubchem_get_molecular_formula("water")
+    assert(formula_water == "H2O")
+    
+    print("test_pubchem_get_molecular_formula: bestanden.")
+}
+
+fn test_chembl_get_ic50() {
+    ic50 = chembl_get_ic50("COX-1", "aspirin")
+    assert(ic50.value > 0.0)
+    assert(ic50.unit == "nM")
+    
+    ic50_egfr = chembl_get_ic50("EGFR", "gefitinib")
+    assert(ic50_egfr.value > 0.0)
+    assert(ic50_egfr.unit == "nM")
+    
+    print("test_chembl_get_ic50: bestanden.")
+}
+
+fn main() {
+    test_two_compartment_pk()
+    test_smiles_molecular_weight()
+    test_lipinski_descriptors()
+    test_pubchem_get_molecular_formula()
+    test_chembl_get_ic50()
+    print("life_sciences_phase1_test: Alle Tests bestanden!")
+}
+main()
