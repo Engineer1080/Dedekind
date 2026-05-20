@@ -28,7 +28,7 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **Math Functions**: `sin`, `cos`, `tan`, `exp`, `log`, `log10`, `sqrt`, `abs`; `asin`, `acos`, `atan`, `atan2(y,x)`; `sinh`, `cosh`, `tanh` — element-wise, differentiable; Tensor or scalar. **Reductions**: `min(x)`, `max(x)`, `argmin(x)`, `argmax(x)` (optional `dim`). **Rounding**: `round(x)`, `floor(x)`, `ceil(x)`. **Linear algebra**: `norm(x)`, `det(A)`, `trace(A)`.
 - **Uncertainty Propagation**: `uncertain(value, std)` bzw. `UncertainQuantity` — Gauß'sche Fehlerfortpflanzung für +, -, *, /, ^; optional mit Einheit.
 - **Fitting / Regression**: `fit(loss_fn, params_init, data, method="gd"|"mcmc"|"hmc", lr=0.01, steps=500)` — minimiert `loss_fn(params, data)` via Gradient Descent, Metropolis-Hastings oder **HMC** (Hamiltonian Monte Carlo).
-- **Life Sciences Extension**: Differentiable two-compartment pharmacokinetics (`two_compartment_pk`); zero-dependency SMILES molecular weight calculator (`smiles_molecular_weight`) and Lipinski's Rule of Five descriptor checker (`lipinski_descriptors`); online bioinformatics database clients for PubChem (`pubchem_get_molecular_formula`) and ChEMBL (`chembl_get_ic50`) with robust local offline fallbacks.
+- **Life Sciences Extension**: Differentiable two-compartment pharmacokinetics (`two_compartment_pk`), SMILES/molecular tools (`smiles_molecular_weight`, `lipinski_descriptors`), online databases (`pubchem_get_molecular_formula`, `chembl_get_ic50`), **PyTorch local sequence alignment** (`smith_waterman_alignment`), and **unit-aware PDB/mmCIF protein coordinate parser** (`protein_structure_parse`).
 - **LaTeX-Export**: `export_to_latex(source)` bzw. CLI `--latex` — Formeln aus Dedekind-Code als LaTeX (für Papers/Notizen). **Wissenschaftliche Konsole**: `print_latex(s)` rendert LaTeX in der Dedekind-Studio-/Jupyter-Konsole (z. B. Formeln, griechische Buchstaben).
 - **Bessere Fehlermeldungen**: Compiler-Fehler mit Zeile (`CompileError`); Parser setzt `line` im AST; Runtime-Quantity-Meldungen with Kontext.
 - **Einheiten zur Compile-Zeit**: `1[m] + 1[s]` → Compiler-Fehler mit Zeile; `compile_source(..., check_units=True)` (Default), CLI `--no-units-check`.
@@ -40,11 +40,13 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 
 ### What's New in v1.7.0 (May 2026)
 
-- **Life Sciences Extension (Phase 1):**
+- **Life Sciences Extension (Phase 1 & 2):**
   - **Differentiable PK/PD Solver:** `two_compartment_pk(C0, k12, k21, ke, t)` simulates a two-compartment pharmacokinetic model, supporting full auto-differentiation via PyTorch.
   - **Zero-Dependency SMILES Parsing:** Pure-Python parsing of SMILES notation to build chemical graphs and resolve aromaticity.
   - **Molecular Weight & Lipinski Descriptors:** `smiles_molecular_weight(smiles)` calculates molecular weight, and `lipinski_descriptors(smiles)` checks Lipinski's Rule of Five (HBD, HBA, MW, logP).
   - **Online Database Access:** `pubchem_get_molecular_formula(name)` and `chembl_get_ic50(target, compound)` query official scientific APIs with robust, offline-safe mock fallbacks.
+  - **Tensor-based Smith-Waterman Alignment:** `smith_waterman_alignment(seq1, seq2, match_score, mismatch_penalty, gap_penalty)` performs local sequence alignment in PyTorch, supporting strings and 1D tensors with tracebacks.
+  - **Unit-aware PDB/mmCIF Coordinate Parser:** `protein_structure_parse(path_or_content)` parses standard PDB and mmCIF crystallographic structures into first-class `DataFrame` tables with automatic `"angstrom"` units for spatial coordinates.
 
 ### What's New in v1.6.3
 

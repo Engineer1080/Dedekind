@@ -330,11 +330,11 @@ main()
 
 ---
 
-### 15.13 Chemistry & Biology Elements
+### 15.13 Chemistry, Biology & Bioinformatics
 
-Dedekind contains built-in domain-specific APIs for chemistry and biology, supporting molar mass calculations for biological and chemical molecules and solving chemical stoichiometry.
+Dedekind contains built-in domain-specific APIs for chemistry, biology, and bioinformatics, supporting molar mass calculations, chemical stoichiometry, sequence alignments, and structural parsing.
 
-#### Built-in Chemistry Functions
+#### Built-in Chemistry & Bioinformatics Functions
 
 | Function | Signature | Description |
 |:---|:---|:---|
@@ -347,6 +347,8 @@ Dedekind contains built-in domain-specific APIs for chemistry and biology, suppo
 | `lipinski_descriptors(smiles)` | `lipinski_descriptors(smiles: string) -> dict` | Evaluates Lipinski's Rule of Five. Returns a dictionary with keys `"molecular_weight"`, `"logp"`, `"hbd"`, `"hba"`, `"violations"`, and `"pass"`. |
 | `pubchem_get_molecular_formula(name)` | `pubchem_get_molecular_formula(name: string) -> string` | Retrieves the chemical molecular formula for a compound name from PubChem. |
 | `chembl_get_ic50(target, compound)` | `chembl_get_ic50(target: string, compound: string) -> Quantity [nM]` | Queries the ChEMBL database for the IC50 activity value of a compound against a specific target. |
+| `smith_waterman_alignment(seq1, seq2, match_score, mismatch_penalty, gap_penalty)` | `smith_waterman_alignment(seq1: string \| Tensor, seq2: string \| Tensor, match_score: float, mismatch_penalty: float, gap_penalty: float) -> dict` | Computes local sequence alignment using PyTorch. Returns a dictionary with keys `"score"`, `"aligned_seq1"`, and `"aligned_seq2"`. |
+| `protein_structure_parse(path_or_content)` | `protein_structure_parse(path_or_content: string) -> DataFrame` | Parses a PDB or mmCIF protein structure file (or content) into a unit-aware `DataFrame` with `"angstrom"` units for `"x"`, `"y"`, and `"z"` columns. |
 
 #### Code Example
 
@@ -386,6 +388,16 @@ fn main() {
 
     ic50 = chembl_get_ic50("COX-1", "aspirin")
     print(ic50) // e.g. 100000.0[nM]
+
+    // 5. Sequence & Structural Biology
+    align = smith_waterman_alignment("TGCATG", "GGCA", 2.0, -1.0, -1.0)
+    print(align["score"]) // 6.0
+    print(align["aligned_seq1"]) // "GCA"
+
+    pdb_data = "ATOM      1  N   ALA A   1      11.111  22.222  33.333  1.00 15.00           N"
+    df = protein_structure_parse(pdb_data)
+    x_coords = df.column_with_unit("x")
+    print(x_coords[0]) // 11.111[angstrom]
 }
 main()
 ```

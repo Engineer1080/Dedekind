@@ -4607,6 +4607,301 @@ def chembl_get_ic50(target, compound):
             return Quantity(CHEMBL_CACHE[key], "nM")
         raise ValueError(f"chembl_get_ic50: Verbindung fehlgeschlagen und Paar ({target}, {compound}) nicht im lokalen Cache.")
 
+
+# --- Standard Library: Life Sciences Extension (Phase 2) ---
+
+def smith_waterman_alignment(seq1, seq2, match_score=2.0, mismatch_penalty=-1.0, gap_penalty=-1.0):
+    """
+    Lokales Sequenzalignment nach dem Smith-Waterman-Algorithmus in PyTorch.
+    seq1, seq2: Strings oder 1D-Tensors.
+    Rückgabe: Dict mit "score" (Tensor), "aligned_seq1" und "aligned_seq2" (Strings oder Listen).
+    """
+    is_str = isinstance(seq1, str) and isinstance(seq2, str)
+    
+    if isinstance(seq1, str):
+        s1_arr = list(seq1)
+    elif hasattr(seq1, "tolist"):
+        s1_arr = seq1.tolist()
+    else:
+        s1_arr = list(seq1)
+
+    if isinstance(seq2, str):
+        s2_arr = list(seq2)
+    elif hasattr(seq2, "tolist"):
+        s2_arr = seq2.tolist()
+    else:
+        s2_arr = list(seq2)
+
+    M, N = len(s1_arr), len(s2_arr)
+    
+    device = "cpu"
+    if hasattr(seq1, "device"):
+        device = seq1.device
+    elif hasattr(seq2, "device"):
+        device = seq2.device
+
+    import torch
+    H = torch.zeros((M + 1, N + 1), device=device, dtype=torch.float32)
+    
+    match = float(match_score)
+    mismatch = float(mismatch_penalty)
+    gap = float(gap_penalty)
+    
+    for i in range(1, M + 1):
+        for j in range(1, N + 1):
+            val_match = match if s1_arr[i - 1] == s2_arr[j - 1] else mismatch
+            diag = H[i - 1, j - 1] + val_match
+            up = H[i - 1, j] + gap
+            left = H[i, j - 1] + gap
+            H[i, j] = torch.max(
+                torch.tensor(0.0, device=device),
+                torch.max(diag, torch.max(up, left))
+            )
+            
+    max_val = torch.max(H)
+    max_pos = torch.argmax(H)
+    i_max, j_max = int(max_pos.item() // (N + 1)), int(max_pos.item() % (N + 1))
+    
+    aligned1 = []
+    aligned2 = []
+    
+    curr_i, curr_j = i_max, j_max
+    
+    while curr_i > 0 and curr_j > 0:
+        val = H[curr_i, curr_j].item()
+        if val == 0.0:
+            break
+            
+        val_match = match if s1_arr[curr_i - 1] == s2_arr[curr_j - 1] else mismatch
+        
+        if abs(H[curr_i - 1, curr_j - 1].item() + val_match - val) < 1e-4:
+            aligned1.append(s1_arr[curr_i - 1])
+            aligned2.append(s2_arr[curr_j - 1])
+            curr_i -= 1
+            curr_j -= 1
+        elif abs(H[curr_i - 1, curr_j].item() + gap - val) < 1e-4:
+            aligned1.append(s1_arr[curr_i - 1])
+            aligned2.append("-" if is_str else None)
+            curr_i -= 1
+        elif abs(H[curr_i, curr_j - 1].item() + gap - val) < 1e-4:
+            aligned1.append("-" if is_str else None)
+            aligned2.append(s2_arr[curr_j - 1])
+            curr_j -= 1
+        else:
+            aligned1.append(s1_arr[curr_i - 1])
+            aligned2.append(s2_arr[curr_j - 1])
+            curr_i -= 1
+            curr_j -= 1
+            
+    aligned1.reverse()
+    aligned2.reverse()
+    
+    if is_str:
+        aligned1_out = "".join(aligned1)
+        aligned2_out = "".join(aligned2)
+    else:
+        aligned1_out = aligned1
+        aligned2_out = aligned2
+        
+    return {
+        "score": max_val,
+        "aligned_seq1": aligned1_out,
+        "aligned_seq2": aligned2_out
+    }
+
+def protein_structure_parse(path_or_content):
+    """
+    Parst eine PDB- oder mmCIF-Proteinstruktur (aus Datei oder String).
+    Rückgabe: DataFrame mit x, y, z Spalten in 'angstrom'.
+    """
+    import os
+    content = ""
+    is_file = False
+    if isinstance(path_or_content, str):
+        if len(path_or_content) < 500 and ("/" in path_or_content or "\\" in path_or_content or path_or_content.lower().endswith(('.pdb', '.cif', '.mmcif'))):
+            if os.path.exists(path_or_content):
+                is_file = True
+                with open(path_or_content, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+                    
+    if not is_file:
+        content = str(path_or_content)
+        
+    is_cif = "_atom_site." in content
+    
+    group_list = []
+    atom_id_list = []
+    atom_name_list = []
+    res_name_list = []
+    chain_id_list = []
+    res_seq_list = []
+    x_list = []
+    y_list = []
+    z_list = []
+    occupancy_list = []
+    b_factor_list = []
+    element_list = []
+    
+    if is_cif:
+        lines = content.splitlines()
+        in_loop = False
+        headers = []
+        data_rows = []
+        i = 0
+        n_lines = len(lines)
+        while i < n_lines:
+            line = lines[i].strip()
+            if not line:
+                i += 1
+                continue
+            if line == "loop_":
+                in_loop = True
+                headers = []
+                data_rows = []
+                i += 1
+                while i < n_lines:
+                    nxt = lines[i].strip()
+                    if nxt.startswith("_atom_site."):
+                        headers.append(nxt)
+                        i += 1
+                    else:
+                        break
+                while i < n_lines:
+                    nxt = lines[i].strip()
+                    if not nxt or nxt.startswith("#") or nxt == "loop_":
+                        break
+                    import shlex
+                    try:
+                        parts = shlex.split(nxt)
+                    except Exception:
+                        parts = nxt.split()
+                    if len(parts) >= len(headers):
+                        data_rows.append(parts[:len(headers)])
+                    i += 1
+                if any(h.startswith("_atom_site.") for h in headers):
+                    break
+            else:
+                i += 1
+        
+        if headers:
+            h_map = {h: idx for idx, h in enumerate(headers)}
+            
+            def get_val(row, *keys):
+                for k in keys:
+                    if k in h_map:
+                        return row[h_map[k]]
+                return None
+                
+            for row in data_rows:
+                group = get_val(row, "_atom_site.group_PDB") or "ATOM"
+                
+                atom_id_str = get_val(row, "_atom_site.id") or "0"
+                atom_id = int(atom_id_str)
+                
+                element = get_val(row, "_atom_site.type_symbol") or ""
+                
+                atom_name = get_val(row, "_atom_site.label_atom_id", "_atom_site.auth_atom_id") or ""
+                
+                res_name = get_val(row, "_atom_site.label_comp_id", "_atom_site.auth_comp_id") or ""
+                
+                chain_id = get_val(row, "_atom_site.auth_asym_id", "_atom_site.label_asym_id") or ""
+                
+                res_seq_str = get_val(row, "_atom_site.auth_seq_id", "_atom_site.label_seq_id") or "0"
+                res_seq = int(''.join(filter(str.isdigit, res_seq_str)) or "0")
+                
+                x_str = get_val(row, "_atom_site.Cartn_x") or "0.0"
+                y_str = get_val(row, "_atom_site.Cartn_y") or "0.0"
+                z_str = get_val(row, "_atom_site.Cartn_z") or "0.0"
+                
+                occ_str = get_val(row, "_atom_site.occupancy") or "1.0"
+                b_str = get_val(row, "_atom_site.B_iso_or_equiv") or "0.0"
+                
+                group_list.append(group)
+                atom_id_list.append(atom_id)
+                atom_name_list.append(atom_name)
+                res_name_list.append(res_name)
+                chain_id_list.append(chain_id)
+                res_seq_list.append(res_seq)
+                x_list.append(float(x_str))
+                y_list.append(float(y_str))
+                z_list.append(float(z_str))
+                occupancy_list.append(float(occ_str))
+                b_factor_list.append(float(b_str))
+                element_list.append(element)
+    else:
+        for line in content.splitlines():
+            if line.startswith("ATOM  ") or line.startswith("HETATM"):
+                group = line[0:6].strip()
+                try:
+                    atom_id = int(line[6:11].strip())
+                except ValueError:
+                    atom_id = 0
+                atom_name = line[12:16].strip()
+                res_name = line[17:20].strip()
+                chain_id = line[21:22].strip()
+                try:
+                    res_seq = int(line[22:26].strip())
+                except ValueError:
+                    res_seq = 0
+                try:
+                    x = float(line[30:38].strip())
+                except ValueError:
+                    x = 0.0
+                try:
+                    y = float(line[38:46].strip())
+                except ValueError:
+                    y = 0.0
+                try:
+                    z = float(line[46:54].strip())
+                except ValueError:
+                    z = 0.0
+                try:
+                    occupancy = float(line[54:60].strip())
+                except ValueError:
+                    occupancy = 1.0
+                try:
+                    b_factor = float(line[60:66].strip())
+                except ValueError:
+                    b_factor = 0.0
+                element = line[76:78].strip()
+                if not element:
+                    if atom_name:
+                        element = atom_name[0]
+                        if element.isdigit():
+                            element = atom_name[1] if len(atom_name) > 1 else ""
+                
+                group_list.append(group)
+                atom_id_list.append(atom_id)
+                atom_name_list.append(atom_name)
+                res_name_list.append(res_name)
+                chain_id_list.append(chain_id)
+                res_seq_list.append(res_seq)
+                x_list.append(x)
+                y_list.append(y)
+                z_list.append(z)
+                occupancy_list.append(occupancy)
+                b_factor_list.append(b_factor)
+                element_list.append(element)
+                
+    import torch
+    data = {
+        "group": group_list,
+        "atom_id": torch.tensor(atom_id_list, dtype=torch.int32),
+        "atom_name": atom_name_list,
+        "res_name": res_name_list,
+        "chain_id": chain_id_list,
+        "res_seq": torch.tensor(res_seq_list, dtype=torch.int32),
+        "x": torch.tensor(x_list, dtype=torch.float32),
+        "y": torch.tensor(y_list, dtype=torch.float32),
+        "z": torch.tensor(z_list, dtype=torch.float32),
+        "occupancy": torch.tensor(occupancy_list, dtype=torch.float32),
+        "b_factor": torch.tensor(b_factor_list, dtype=torch.float32),
+        "element": element_list
+    }
+    
+    return DataFrame(data, units={"x": "angstrom", "y": "angstrom", "z": "angstrom"})
+
+
 def read_file(path):
     """
     Liest eine Datei als Text (UTF-8).

@@ -62,6 +62,7 @@
 - **Stöchiometrie:** `balance_equation(reactants_str, products_str)` – Koeffizienten für ausgeglichene Reaktionsgleichung (z. B. `"H2 + O2"`, `"H2O"` → ([2,1], [2])); nutzt lineare Algebra (Nullraum via SVD).
 - **Beispiele:** Kinetik 1. Ordnung, Dosis-Wirkung (EC50, Michaelis-Menten), logistisches Wachstum mit `ode_solve` und `fit`.
 - **Chemoinformatik & APIs:** `smiles_molecular_weight(smiles)` zur Berechnung der molaren Masse aus SMILES-Strings; `lipinski_descriptors(smiles)` zur Überprüfung von Lipinskis Rule of Five (MW, logP, HBD, HBA); `pubchem_get_molecular_formula(name)` und `chembl_get_ic50(target, compound)` zur Abfrage von Summenformeln und Aktivitätswerten (IC50) aus PubChem und ChEMBL mit robustem lokalem Fallback/Cache.
+- **Sequenz- & Strukturanalyse:** `smith_waterman_alignment(seq1, seq2, match_score, mismatch_penalty, gap_penalty)` führt ein lokales Sequenzalignment in PyTorch durch (unterstützt Strings und 1D-Tensors mit Traceback); `protein_structure_parse(path_or_content)` parst PDB- und mmCIF-Proteinstrukturen (aus Datei oder String) direkt in ein first-class `DataFrame` mit automatischen `"angstrom"`-Einheiten auf den Koordinaten-Spalten.
 
 ---
 

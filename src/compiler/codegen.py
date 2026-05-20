@@ -43,6 +43,7 @@ _RUNTIME_BUILTIN_NAMES = frozenset({
     'michaelis_menten', 'logistic', 'logistic_growth_dt', 'arrhenius', 'linear_regression',
     'hill_equation', 'one_compartment_pk', 'two_compartment_pk', 'half_life', 'sir_model', 'basic_reproduction_number',
     'smiles_molecular_weight', 'lipinski_descriptors', 'pubchem_get_molecular_formula', 'chembl_get_ic50',
+    'smith_waterman_alignment', 'protein_structure_parse',
     'confidence_interval', 'odds_ratio', 'sensitivity_specificity',
     'cents_to_ratio', 'ratio_to_cents', 'equal_temperament',
     'discount_factor', 'cobb_douglas', 'solow_rhs',
@@ -370,7 +371,7 @@ class CodeGenerator:
         if isinstance(node.value, str):
             if getattr(node, 'raw', False):
                 return 'r"' + node.value.replace('"', '\\"') + '"'
-            return '"' + node.value.replace('\\', '\\\\').replace('"', '\\"') + '"'
+            return '"' + node.value.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n').replace('\r', '\\r') + '"'
         return str(node.value)
 
     def visit_Quantity(self, node):
