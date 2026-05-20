@@ -86,3 +86,6 @@ def _convert_between_units(value, std, from_unit, to_unit, dimension):
     u_to = str(to_unit).strip()
     if u_from not in tab or u_to not in tab:
         return float(value), float(std)
+    factor = tab[u_from] / tab[u_to]
+    return float(value) * factor, float(std) * abs(factor)
+

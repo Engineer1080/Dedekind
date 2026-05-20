@@ -1,0 +1,11 @@
+// Dedekind Standard Library: Control Theory
+// Provides primitives for Linear Time-Invariant (LTI) systems
+
+pub fn state_space(A, B, C, D) {
+    return StateSpace(A, B, C, D)
+}
+
+// Simple PI Controller (Proportional-Integral) in State-Space form
+pub fn pi_controller(Kp, Ki) {
+    return StateSpace([[0.0]], [[1.0]], [[Ki]], [[Kp]])
+}

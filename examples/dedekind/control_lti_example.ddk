@@ -1,0 +1,48 @@
+// -------------------------------------------------------------
+// Dedekind v2.1 Example: Linear Time-Invariant (LTI) Systems
+// -------------------------------------------------------------
+// Simulation eines PT1-Gliedes (z.B. RC-Tiefpass oder 
+// Motormodell) im Zustandsraum.
+
+use control
+
+fn main() {
+    print("Starte LTI-System Simulation...")
+    
+    // PT1-System: 
+    // T * dx/dt + x = K * u
+    // => dx/dt = -(1/T)*x + (K/T)*u
+    // 
+    // Parameter: K = 1.0 (Verstärkung), T = 2.0s (Zeitkonstante)
+    K = 1.0
+    T = 2.0
+    
+    A = [[-1.0 / T]]
+    B = [[K / T]]
+    C = [[1.0]]
+    D = [[0.0]]
+    
+    // Erstelle StateSpace Modell
+    sys = state_space(A, B, C, D)
+    
+    // Generiere Zeitvektor von 0 bis 10 Sekunden (50 Punkte)
+    time_pts = linspace(0.0, 10.0, 50)
+    
+    // Simuliere Sprungantwort
+    // u(t) = 1 für t >= 0
+    res = sys.step_response(time_pts)
+    
+    t_out = res[0]
+    y_out = res[1]
+    
+    print("Sprungantwort bei t=10s: " + str(y_out[49][0]))
+    print("Erwarteter asymptotischer Wert: " + str(K))
+    
+    // Info für den Benutzer
+    print("")
+    print("Da Dedekind 'ode_solve' nutzt, sind die Parameter A, B, C, D differenzierbar.")
+    print("Du kannst dieses System in eine Loss-Funktion stecken und z.B. einen ")
+    print("PID-Regler über Reinforcement Learning oder Backpropagation trainieren!")
+}
+
+main()

@@ -1,0 +1,28 @@
+use control
+
+fn test_lti_step() {
+    // dx/dt = -x + u => A=[-1], B=[1]
+    // y = x => C=[1], D=[0]
+    // Step response: y(t) = 1 - e^-t
+    sys = state_space([[-1.0]], [[1.0]], [[1.0]], [[0.0]])
+    
+    t = linspace(0.0, 5.0, 100)
+    res = sys.step_response(t)
+    
+    t_out = res[0]
+    y_out = res[1]
+    
+    // At t=0, y=0
+    assert(abs(y_out[0][0]) < 1e-4)
+    
+    // At t=5, y ~ 1 - e^-5 ~ 0.993
+    assert(abs(y_out[99][0] - 0.993) < 1e-2)
+    
+    print("test_lti_step: passed")
+}
+
+fn main() {
+    test_lti_step()
+    print("control_test: Alle Tests bestanden!")
+}
+main()

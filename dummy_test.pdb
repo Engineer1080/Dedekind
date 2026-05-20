@@ -1,0 +1,4 @@
+HEADER    DUMMY PROTEIN
+ATOM      1  N   ALA A   1      11.111  22.222  33.333  1.00 15.00           N
+ATOM      2  CA  ALA A   1      12.000  23.000  34.000  1.00 16.50           C
+HETATM    3  O   HOH A   2      15.000  25.000  35.000  0.50 20.00           O

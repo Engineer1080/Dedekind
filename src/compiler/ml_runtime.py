@@ -89,7 +89,6 @@ def _convert_between_units(value, std, from_unit, to_unit, dimension):
     factor = tab[u_from] / tab[u_to]
     return float(value) * factor, float(std) * abs(factor)
 
-
 class Quantity:
     """Physikalische Größe mit Einheit (z. B. 10[m], 5[m/s], 0.1[M], 50[ppm]). Rechenregeln: gleiche Einheit für +/-, Einheiten multiplizieren/dividieren. Chemie: mol, L, M (= mol/L), ppm, bar, atm, g. Radioaktivität: Bq (1/s), Gy (J/kg), Sv (J/kg, Äquivalentdosis)."""
     def __init__(self, value, unit=""):
@@ -6181,103 +6180,6 @@ def smiles_molecular_weight(smiles):
     mw = sum(ATOMIC_MASSES.get(elem, 0.0) * count for elem, count in counts.items())
     return Quantity(mw, "g/mol")
 
-def lipinski_descriptors(smiles):
-    """
-    Lipinski-Deskriptoren für einen SMILES-String:
-    - mw: Molekulargewicht (g/mol)
-    - logp: Abschätzung über atomadditive Beiträge
-    - hbd: Wasserstoffbrücken-Donoren
-    - hba: Wasserstoffbrücken-Akzeptoren
-    - violations: Anzahl verletzter Lipinski-Regeln (MW > 500, logP > 5, HBD > 5, HBA > 10)
-    - passes: true wenn violations <= 1
-    Rückgabe: Dict mit diesen Metriken.
-    """
-    counts, atoms, bonds = _parse_smiles(smiles)
-    mw_qty = smiles_molecular_weight(smiles)
-    mw = mw_qty.value
-    
-    hbd = 0
-    hba = 0
-    
-    STANDARD_VALENCES = {
-        "C": 4, "N": 3, "O": 2, "S": 2, "P": 3, "B": 3,
-        "F": 1, "Cl": 1, "Br": 1, "I": 1
-    }
-    
-    logp = 0.0
-    
-    for idx, atom in enumerate(atoms):
-        elem = atom["elem"]
-        aromatic = atom["aromatic"]
-        
-        if atom["is_bracket"]:
-            h_count = atom["explicit_h"]
-        else:
-            conn_bonds = [order for (i1, i2, order) in bonds if i1 == idx or i2 == idx]
-            tot_order = sum(conn_bonds)
-            val = STANDARD_VALENCES.get(elem, 0)
-            h_count = int(round(_builtin_max(0.0, float(val) - tot_order)))
-            
-        if elem in ["N", "O"]:
-            hba += 1
-            if h_count > 0:
-                hbd += 1
-        elif elem == "F":
-            hba += 1
-            
-        if elem == "C":
-            if aromatic:
-                logp += 0.35
-            else:
-                logp += 0.40
-        elif elem == "O":
-            if h_count > 0:
-                logp -= 1.50
-            else:
-                logp -= 0.40
-        elif elem == "N":
-            if h_count > 0:
-                logp -= 1.00
-            elif aromatic:
-                logp -= 0.50
-            else:
-                logp -= 0.70
-        elif elem == "F":
-            logp += 0.14
-        elif elem == "Cl":
-            logp += 0.56
-        elif elem == "Br":
-            logp += 0.88
-        elif elem == "I":
-            logp += 1.25
-        elif elem == "S":
-            logp += 0.20
-        elif elem == "P":
-            logp -= 0.40
-            
-        logp += h_count * 0.11
-        
-    violations = 0
-    if mw > 500.0:
-        violations += 1
-    if logp > 5.0:
-        violations += 1
-    if hbd > 5:
-        violations += 1
-    if hba > 10:
-        violations += 1
-        
-    passes = (violations <= 1)
-    
-    return {
-        "mw": float(mw),
-        "logp": float(logp),
-        "hbd": int(hbd),
-        "hba": int(hba),
-        "violations": int(violations),
-        "passes": bool(passes)
-    }
-
 def pubchem_get_molecular_formula(name):
     """
     Fragt die PubChem API nach der Summenformel eines Verbindungsnamens.
@@ -9297,35 +9199,103 @@ def k_mer_count(seq, k):
     return counts
 
 def smiles_descriptors(smiles):
-    """Molekulare Descriptors aus einer SMILES-Notation via rdkit.
+    """Molekulare Deskriptoren aus einer SMILES-Notation via rdkit.
     Liefert Dict mit: mw [g/mol], logp, num_atoms, num_heavy_atoms, num_rings,
-    num_aromatic_rings, hbd, hba, tpsa [Angstrom^2]."""
+    num_aromatic_rings, hbd, hba, tpsa [Angstrom^2] (oder [Angstrom]), num_rotatable_bonds.
+    Falls rdkit nicht installiert ist, erfolgt ein Fallback auf den integrierten Parser
+    für die Basis-Deskriptoren (mw, logp, hbd, hba)."""
     if not isinstance(smiles, str):
         raise TypeError(f"smiles_descriptors: erwarte String, erhalten {type(smiles).__name__}.")
     try:
         from rdkit import Chem  # type: ignore[import-untyped]
         from rdkit.Chem import Descriptors, Lipinski  # type: ignore[import-untyped]
+        mol = Chem.MolFromSmiles(smiles)
+        if mol is None:
+            raise ValueError(f"smiles_descriptors: ungueltige SMILES {smiles!r}.")
+        return {
+            "mw": Quantity(float(Descriptors.MolWt(mol)), "g/mol"),
+            "logp": float(Descriptors.MolLogP(mol)),
+            "num_atoms": int(mol.GetNumAtoms()),
+            "num_heavy_atoms": int(mol.GetNumHeavyAtoms()),
+            "num_rings": int(Descriptors.RingCount(mol)),
+            "num_aromatic_rings": int(Descriptors.NumAromaticRings(mol)),
+            "hbd": int(Lipinski.NumHDonors(mol)),
+            "hba": int(Lipinski.NumHAcceptors(mol)),
+            "tpsa": Quantity(float(Descriptors.TPSA(mol)), "Angstrom"),
+            "num_rotatable_bonds": int(Lipinski.NumRotatableBonds(mol)),
+        }
     except ImportError:
-        raise RuntimeError("smiles_descriptors benoetigt rdkit. Installation: pip install rdkit")
-    mol = Chem.MolFromSmiles(smiles)
-    if mol is None:
-        raise ValueError(f"smiles_descriptors: ungueltige SMILES {smiles!r}.")
-    return {
-        "mw": Quantity(float(Descriptors.MolWt(mol)), "g/mol"),
-        "logp": float(Descriptors.MolLogP(mol)),
-        "num_atoms": int(mol.GetNumAtoms()),
-        "num_heavy_atoms": int(mol.GetNumHeavyAtoms()),
-        "num_rings": int(Descriptors.RingCount(mol)),
-        "num_aromatic_rings": int(Descriptors.NumAromaticRings(mol)),
-        "hbd": int(Lipinski.NumHDonors(mol)),
-        "hba": int(Lipinski.NumHAcceptors(mol)),
-        "tpsa": Quantity(float(Descriptors.TPSA(mol)), "Angstrom"),  # eigentlich A^2; wir markieren die Laengendimension
-        "num_rotatable_bonds": int(Lipinski.NumRotatableBonds(mol)),
-    }
+        counts, atoms, bonds = _parse_smiles(smiles)
+        mw = sum(ATOMIC_MASSES.get(elem, 0.0) * count for elem, count in counts.items())
+        hbd = 0
+        hba = 0
+        STANDARD_VALENCES = {
+            "C": 4, "N": 3, "O": 2, "S": 2, "P": 3, "B": 3,
+            "F": 1, "Cl": 1, "Br": 1, "I": 1
+        }
+        logp = 0.0
+        for idx, atom in enumerate(atoms):
+            elem = atom["elem"]
+            aromatic = atom["aromatic"]
+            if atom["is_bracket"]:
+                h_count = atom["explicit_h"]
+            else:
+                conn_bonds = [order for (i1, i2, order) in bonds if i1 == idx or i2 == idx]
+                tot_order = sum(conn_bonds)
+                val = STANDARD_VALENCES.get(elem, 0)
+                h_count = int(round(_builtin_max(0.0, float(val) - tot_order)))
+            if elem in ["N", "O"]:
+                hba += 1
+                if h_count > 0:
+                    hbd += 1
+            elif elem == "F":
+                hba += 1
+            if elem == "C":
+                if aromatic:
+                    logp += 0.35
+                else:
+                    logp += 0.40
+            elif elem == "O":
+                if h_count > 0:
+                    logp -= 1.50
+                else:
+                    logp -= 0.40
+            elif elem == "N":
+                if h_count > 0:
+                    logp -= 1.00
+                elif aromatic:
+                    logp -= 0.50
+                else:
+                    logp -= 0.70
+            elif elem == "F":
+                logp += 0.14
+            elif elem == "Cl":
+                logp += 0.56
+            elif elem == "Br":
+                logp += 0.88
+            elif elem == "I":
+                logp += 1.25
+            elif elem == "S":
+                logp += 0.20
+            elif elem == "P":
+                logp -= 0.40
+            logp += h_count * 0.11
+        return {
+            "mw": Quantity(mw, "g/mol"),
+            "logp": float(logp),
+            "num_atoms": len(atoms),
+            "num_heavy_atoms": sum(1 for a in atoms if a["elem"] != "H"),
+            "num_rings": 0,
+            "num_aromatic_rings": 0,
+            "hbd": int(hbd),
+            "hba": int(hba),
+            "tpsa": Quantity(0.0, "Angstrom"),
+            "num_rotatable_bonds": 0,
+        }
 
 def lipinski_rule_of_five(smiles):
     """Lipinskis 'Rule of Five' fuer orale Bioverfuegbarkeit.
-    Liefert Dict mit Boolean-Checks + Anzahl Verletzungen."""
+    Liefert Dict mit Werten, Boolean-Checks und Anzahl Verletzungen."""
     desc = smiles_descriptors(smiles)
     mw = desc["mw"].value
     logp = desc["logp"]
@@ -9345,8 +9315,206 @@ def lipinski_rule_of_five(smiles):
         "hba": hba,
         "checks": checks,
         "violations": violations,
-        "passes": violations == 0,
+        "passes": violations <= 1,
     }
+
+# --- Elektrotechnik und Regelungstechnik (Differentiable Engineering) ---
+
+import torch
+
+class Circuit:
+    """
+    Differentiable SPICE: Löst elektrische Schaltungen (DC) über Modified Nodal Analysis (MNA).
+    Vollständig differenzierbar für Autograd (Optimierung von Bauteilwerten).
+    """
+    def __init__(self):
+        self.nodes = set([0])
+        self.resistors = []
+        self.v_sources = []
+        self.i_sources = []
+
+    def _get_val(self, v, dim):
+        if isinstance(v, Quantity):
+            return _convert_to_base(v.value, v.unit, dim)
+        return v
+        
+    def add_resistor(self, name, node1, node2, R):
+        self.nodes.add(node1)
+        self.nodes.add(node2)
+        r_val = self._get_val(R, "resistance")
+        self.resistors.append((node1, node2, r_val))
+        return self
+
+    def add_voltage_source(self, name, node1, node2, V):
+        self.nodes.add(node1)
+        self.nodes.add(node2)
+        v_val = self._get_val(V, "electric_potential")
+        self.v_sources.append((name, node1, node2, v_val))
+        return self
+
+    def add_current_source(self, name, node1, node2, I):
+        self.nodes.add(node1)
+        self.nodes.add(node2)
+        i_val = self._get_val(I, "current")
+        self.i_sources.append((node1, node2, i_val))
+        return self
+
+    def solve_dc(self):
+        node_list = sorted(list(self.nodes))
+        if 0 in node_list:
+            node_list.remove(0)
+            
+        n_nodes = len(node_list)
+        n_vs = len(self.v_sources)
+        size = n_nodes + n_vs
+        
+        node_map = {node: i for i, node in enumerate(node_list)}
+        node_map[0] = -1  # Ground
+        
+        # Build A and z as python lists of tensors to ensure autograd tracks gradient paths safely
+        A = [[0.0 for _ in range(size)] for _ in range(size)]
+        z = [0.0 for _ in range(size)]
+        
+        def add_to_A(i, j, val):
+            if i >= 0 and j >= 0:
+                A[i][j] = A[i][j] + val
+                
+        def add_to_z(i, val):
+            if i >= 0:
+                z[i] = z[i] + val
+
+        # 1. Resistors (Conductance matrix G)
+        for n1, n2, r_val in self.resistors:
+            g = 1.0 / _to_tensor(r_val)
+            idx1 = node_map[n1]
+            idx2 = node_map[n2]
+            add_to_A(idx1, idx1, g)
+            add_to_A(idx2, idx2, g)
+            add_to_A(idx1, idx2, -g)
+            add_to_A(idx2, idx1, -g)
+                
+        # 2. Current sources
+        for n1, n2, i_val in self.i_sources:
+            # Leaves n1 (-), enters n2 (+)
+            i_t = _to_tensor(i_val)
+            idx1 = node_map[n1]
+            idx2 = node_map[n2]
+            add_to_z(idx1, -i_t)
+            add_to_z(idx2, i_t)
+                
+        # 3. Voltage sources
+        v_names = []
+        for i, (name, n1, n2, v_val) in enumerate(self.v_sources):
+            v_names.append(name)
+            v_t = _to_tensor(v_val)
+            idx1 = node_map[n1] # positive
+            idx2 = node_map[n2] # negative
+            v_idx = n_nodes + i
+            
+            add_to_z(v_idx, v_t)
+            
+            if idx1 >= 0:
+                A[idx1][v_idx] = 1.0
+                A[v_idx][idx1] = 1.0
+            if idx2 >= 0:
+                A[idx2][v_idx] = -1.0
+                A[v_idx][idx2] = -1.0
+                
+        A_t = torch.stack([torch.stack([_to_tensor(e).float() for e in row]) for row in A])
+        z_t = torch.stack([_to_tensor(e).float() for e in z])
+        
+        # Solve the system
+        x = torch.linalg.solve(A_t, z_t)
+        
+        results = {}
+        results["v_0"] = Quantity(0.0, "V")
+        for node in node_list:
+            idx = node_map[node]
+            v_t = x[idx]
+            if v_t.requires_grad:
+                results[f"v_{node}"] = v_t
+            else:
+                results[f"v_{node}"] = Quantity(float(v_t.item()), "V")
+        
+        for i, name in enumerate(v_names):
+            i_t = x[n_nodes + i]
+            if i_t.requires_grad:
+                results[f"i_{name}"] = i_t
+            else:
+                results[f"i_{name}"] = Quantity(float(i_t.item()), "A")
+                
+        return results
+
+
+class Phasor:
+    """Repräsentation einer komplexen Wechselstromgröße mit Einheit."""
+    def __init__(self, mag, phase, unit=""):
+        if isinstance(mag, Quantity):
+            self.mag = float(mag.value)
+            self.unit = mag.unit
+        else:
+            self.mag = float(mag)
+            self.unit = unit
+            
+        if isinstance(phase, Quantity):
+            self.phase = float(_convert_to_base(phase.value, phase.unit, "angle"))
+        else:
+            self.phase = float(phase)
+            
+    def complex_value(self):
+        import cmath
+        return cmath.rect(self.mag, self.phase)
+        
+    def __repr__(self):
+        import math
+        deg = math.degrees(self.phase)
+        return f"{self.mag}[{self.unit}] \u2220 {deg:.2f}\xb0"
+
+
+class StateSpace:
+    """
+    Linear Time-Invariant (LTI) System im Zustandsraum:
+    x_dot = A*x + B*u
+    y = C*x + D*u
+    Voll differenzierbar für KI-Regler-Optimierung.
+    """
+    def __init__(self, A, B, C, D):
+        def _ensure_2d(t):
+            t = _to_tensor(t).float()
+            if t.ndim == 0:
+                return t.unsqueeze(0).unsqueeze(0)
+            elif t.ndim == 1:
+                return t.unsqueeze(1)
+            return t
+            
+        self.A = _ensure_2d(A)
+        self.B = _ensure_2d(B)
+        self.C = _ensure_2d(C)
+        self.D = _ensure_2d(D)
+        
+    def step_response(self, t):
+        """Simuliert die Sprungantwort (u=1) über die Zeit t (Tensor) via ode_solve."""
+        if 'ode_solve' not in globals():
+            raise RuntimeError("ode_solve function not found. Ensure 03_solvers.py is loaded.")
+        
+        t_t = _to_tensor(t).float()
+        
+        def system_dynamics(t_scalar, x):
+            # Step input u = [1, 1, ...]
+            u = torch.ones((self.B.shape[1],), dtype=torch.float32)
+            # x_dot = Ax + Bu
+            return torch.matmul(self.A, x) + torch.matmul(self.B, u)
+            
+        x0 = torch.zeros((self.A.shape[0],), dtype=torch.float32)
+        
+        # ode_solve liefert x(t) als Tensor der Shape (len(t), states)
+        x_out = globals()['ode_solve'](system_dynamics, x0, t_t, method="rk4")
+        
+        u_out = torch.ones((len(t_t), self.B.shape[1]), dtype=torch.float32)
+        y_out = torch.matmul(x_out, self.C.t()) + torch.matmul(u_out, self.D.t())
+        
+        return t_t, y_out, x_out
+
 def _notebook_in_progress_set():
     """Process-weite Re-Entry-Tracking-Menge. Liegt auf sys, damit sie über exec-Kontexte
     persistent ist (jeder exec(compile_source(...)) bekommt sonst eine frische ml_runtime-Kopie)."""

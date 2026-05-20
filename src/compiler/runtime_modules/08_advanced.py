@@ -869,35 +869,103 @@ def k_mer_count(seq, k):
     return counts
 
 def smiles_descriptors(smiles):
-    """Molekulare Descriptors aus einer SMILES-Notation via rdkit.
+    """Molekulare Deskriptoren aus einer SMILES-Notation via rdkit.
     Liefert Dict mit: mw [g/mol], logp, num_atoms, num_heavy_atoms, num_rings,
-    num_aromatic_rings, hbd, hba, tpsa [Angstrom^2]."""
+    num_aromatic_rings, hbd, hba, tpsa [Angstrom^2] (oder [Angstrom]), num_rotatable_bonds.
+    Falls rdkit nicht installiert ist, erfolgt ein Fallback auf den integrierten Parser
+    für die Basis-Deskriptoren (mw, logp, hbd, hba)."""
     if not isinstance(smiles, str):
         raise TypeError(f"smiles_descriptors: erwarte String, erhalten {type(smiles).__name__}.")
     try:
         from rdkit import Chem  # type: ignore[import-untyped]
         from rdkit.Chem import Descriptors, Lipinski  # type: ignore[import-untyped]
+        mol = Chem.MolFromSmiles(smiles)
+        if mol is None:
+            raise ValueError(f"smiles_descriptors: ungueltige SMILES {smiles!r}.")
+        return {
+            "mw": Quantity(float(Descriptors.MolWt(mol)), "g/mol"),
+            "logp": float(Descriptors.MolLogP(mol)),
+            "num_atoms": int(mol.GetNumAtoms()),
+            "num_heavy_atoms": int(mol.GetNumHeavyAtoms()),
+            "num_rings": int(Descriptors.RingCount(mol)),
+            "num_aromatic_rings": int(Descriptors.NumAromaticRings(mol)),
+            "hbd": int(Lipinski.NumHDonors(mol)),
+            "hba": int(Lipinski.NumHAcceptors(mol)),
+            "tpsa": Quantity(float(Descriptors.TPSA(mol)), "Angstrom"),
+            "num_rotatable_bonds": int(Lipinski.NumRotatableBonds(mol)),
+        }
     except ImportError:
-        raise RuntimeError("smiles_descriptors benoetigt rdkit. Installation: pip install rdkit")
-    mol = Chem.MolFromSmiles(smiles)
-    if mol is None:
-        raise ValueError(f"smiles_descriptors: ungueltige SMILES {smiles!r}.")
-    return {
-        "mw": Quantity(float(Descriptors.MolWt(mol)), "g/mol"),
-        "logp": float(Descriptors.MolLogP(mol)),
-        "num_atoms": int(mol.GetNumAtoms()),
-        "num_heavy_atoms": int(mol.GetNumHeavyAtoms()),
-        "num_rings": int(Descriptors.RingCount(mol)),
-        "num_aromatic_rings": int(Descriptors.NumAromaticRings(mol)),
-        "hbd": int(Lipinski.NumHDonors(mol)),
-        "hba": int(Lipinski.NumHAcceptors(mol)),
-        "tpsa": Quantity(float(Descriptors.TPSA(mol)), "Angstrom"),  # eigentlich A^2; wir markieren die Laengendimension
-        "num_rotatable_bonds": int(Lipinski.NumRotatableBonds(mol)),
-    }
+        counts, atoms, bonds = _parse_smiles(smiles)
+        mw = sum(ATOMIC_MASSES.get(elem, 0.0) * count for elem, count in counts.items())
+        hbd = 0
+        hba = 0
+        STANDARD_VALENCES = {
+            "C": 4, "N": 3, "O": 2, "S": 2, "P": 3, "B": 3,
+            "F": 1, "Cl": 1, "Br": 1, "I": 1
+        }
+        logp = 0.0
+        for idx, atom in enumerate(atoms):
+            elem = atom["elem"]
+            aromatic = atom["aromatic"]
+            if atom["is_bracket"]:
+                h_count = atom["explicit_h"]
+            else:
+                conn_bonds = [order for (i1, i2, order) in bonds if i1 == idx or i2 == idx]
+                tot_order = sum(conn_bonds)
+                val = STANDARD_VALENCES.get(elem, 0)
+                h_count = int(round(_builtin_max(0.0, float(val) - tot_order)))
+            if elem in ["N", "O"]:
+                hba += 1
+                if h_count > 0:
+                    hbd += 1
+            elif elem == "F":
+                hba += 1
+            if elem == "C":
+                if aromatic:
+                    logp += 0.35
+                else:
+                    logp += 0.40
+            elif elem == "O":
+                if h_count > 0:
+                    logp -= 1.50
+                else:
+                    logp -= 0.40
+            elif elem == "N":
+                if h_count > 0:
+                    logp -= 1.00
+                elif aromatic:
+                    logp -= 0.50
+                else:
+                    logp -= 0.70
+            elif elem == "F":
+                logp += 0.14
+            elif elem == "Cl":
+                logp += 0.56
+            elif elem == "Br":
+                logp += 0.88
+            elif elem == "I":
+                logp += 1.25
+            elif elem == "S":
+                logp += 0.20
+            elif elem == "P":
+                logp -= 0.40
+            logp += h_count * 0.11
+        return {
+            "mw": Quantity(mw, "g/mol"),
+            "logp": float(logp),
+            "num_atoms": len(atoms),
+            "num_heavy_atoms": sum(1 for a in atoms if a["elem"] != "H"),
+            "num_rings": 0,
+            "num_aromatic_rings": 0,
+            "hbd": int(hbd),
+            "hba": int(hba),
+            "tpsa": Quantity(0.0, "Angstrom"),
+            "num_rotatable_bonds": 0,
+        }
 
 def lipinski_rule_of_five(smiles):
     """Lipinskis 'Rule of Five' fuer orale Bioverfuegbarkeit.
-    Liefert Dict mit Boolean-Checks + Anzahl Verletzungen."""
+    Liefert Dict mit Werten, Boolean-Checks und Anzahl Verletzungen."""
     desc = smiles_descriptors(smiles)
     mw = desc["mw"].value
     logp = desc["logp"]
@@ -917,5 +985,6 @@ def lipinski_rule_of_five(smiles):
         "hba": hba,
         "checks": checks,
         "violations": violations,
-        "passes": violations == 0,
+        "passes": violations <= 1,
     }
+

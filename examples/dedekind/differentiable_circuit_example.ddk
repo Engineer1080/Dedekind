@@ -1,0 +1,61 @@
+// -------------------------------------------------------------
+// Dedekind v2.1 Example: Differentiable Circuit Simulation
+// -------------------------------------------------------------
+// Dieses Beispiel demonstriert, wie Dedekinds SPICE-Ersatz
+// nahtlos mit PyTorch's Autograd harmoniert.
+//
+// Wir haben eine Wheatstone-Brücke oder einen Spannungsteiler,
+// und wir möchten den Wert eines unbekannten Widerstands R_x
+// so anpassen (optimieren), dass eine bestimmte Zielspannung 
+// erreicht wird.
+
+use electronics
+use optimize
+
+fn main() {
+    print("Starte Differentiable Circuit Simulation...")
+    
+    // Ziel: Wir wollen, dass die Spannung an Knoten 2 exakt 5.0 V beträgt.
+    target_v = 5.0
+    
+    // Die Loss-Funktion (Mean Squared Error)
+    fn circuit_loss(R_x) {
+        c = circuit()
+        c.add_voltage_source("V1", 1, 0, 10.0) // 10V Quelle
+        c.add_resistor("R1", 1, 2, 100.0)      // Fester Widerstand 100 Ohm
+        
+        // Unser anpassbarer Widerstand R_x
+        c.add_resistor("R_x", 2, 0, R_x[0])
+        
+        res = c.solve_dc()
+        v2 = res["v_2"].value
+        
+        error = v2 - target_v
+        return error^2
+    }
+    
+    // Startschätzung: R_x = 10.0 Ohm
+    initial_guess = [10.0]
+    
+    print("Initialer Loss bei R_x = 10 Ohm: " + str(circuit_loss(initial_guess)))
+    
+    // Gradient Descent (Optimierung)
+    // Wir nutzen Dedekinds eingebauten differenzierbaren Optimizer
+    print("Optimiere R_x mit Gradientenabstieg...")
+    opt_result = minimize(circuit_loss, initial_guess, method="adam", lr=1.0, max_iter=200)
+    
+    R_opt = opt_result.x[0]
+    print("Optimierter Widerstand R_x: " + str(R_opt) + " Ohm")
+    
+    // Kontrolle
+    c_final = circuit()
+    c_final.add_voltage_source("V1", 1, 0, 10.0)
+    c_final.add_resistor("R1", 1, 2, 100.0)
+    c_final.add_resistor("R_x", 2, 0, R_opt)
+    res_final = c_final.solve_dc()
+    
+    print("Erreichte Spannung v_2: " + str(res_final["v_2"].value) + " V")
+    print("Erwartet: 5.0 V")
+}
+
+main()

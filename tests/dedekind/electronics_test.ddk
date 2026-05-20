@@ -1,0 +1,43 @@
+use electronics
+
+fn test_dc_circuit() {
+    c = circuit()
+    c.add_voltage_source("V1", 1, 0, 10.0[V])
+    c.add_resistor("R1", 1, 2, 100.0[ohm])
+    c.add_resistor("R2", 2, 0, 100.0[ohm])
+    
+    res = c.solve_dc()
+    
+    assert(abs(res["v_1"].value - 10.0) < 1e-4)
+    assert(abs(res["v_2"].value - 5.0) < 1e-4)
+    
+    print("test_dc_circuit: passed")
+}
+
+fn test_differentiable_circuit() {
+    fn v_mid(R_val) {
+        c = circuit()
+        c.add_voltage_source("V1", 1, 0, 10.0)
+        c.add_resistor("R1", 1, 2, 100.0)
+        c.add_resistor("R2", 2, 0, R_val[0])
+        res = c.solve_dc()
+        return res["v_2"]
+    }
+    
+    // R2_val must be a vector for jacobian to work nicely
+    x0 = [100.0]
+    J = jacobian(v_mid, x0)
+    
+    // v2 = V1 * R2 / (R1 + R2)
+    // dv2/dR2 = V1 * R1 / (R1 + R2)^2 = 1000 / 40000 = 0.025
+    assert(abs(J[0][0] - 0.025) < 1e-4)
+    
+    print("test_differentiable_circuit: passed")
+}
+
+fn main() {
+    test_dc_circuit()
+    test_differentiable_circuit()
+    print("electronics_test: Alle Tests bestanden!")
+}
+main()
