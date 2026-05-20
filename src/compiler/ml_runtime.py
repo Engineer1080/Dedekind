@@ -3034,9 +3034,9 @@ def trapz(y, x=None):
         if x_t.numel() != y_t.numel():
             raise ValueError("trapz: x und y müssen gleiche Länge haben.")
         x_np = x_t.detach().cpu().numpy()
-        result = np.trapz(y_np, x_np)
+        result = np.trapezoid(y_np, x_np) if hasattr(np, 'trapezoid') else np.trapz(y_np, x_np)
     else:
-        result = np.trapz(y_np)
+        result = np.trapezoid(y_np) if hasattr(np, 'trapezoid') else np.trapz(y_np)
     return torch.tensor(float(result), dtype=torch.float32)
 
 def root_bisect(f, a, b, tol=1e-8, max_iter=200):
