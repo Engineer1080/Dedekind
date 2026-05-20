@@ -40,13 +40,14 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 
 ### What's New in v1.7.0 (May 2026)
 
-- **Life Sciences Extension (Phase 1 & 2):**
+- **Life Sciences Extension (Phase 1, 2 & 3):**
   - **Differentiable PK/PD Solver:** `two_compartment_pk(C0, k12, k21, ke, t)` simulates a two-compartment pharmacokinetic model, supporting full auto-differentiation via PyTorch.
   - **Zero-Dependency SMILES Parsing:** Pure-Python parsing of SMILES notation to build chemical graphs and resolve aromaticity.
   - **Molecular Weight & Lipinski Descriptors:** `smiles_molecular_weight(smiles)` calculates molecular weight, and `lipinski_descriptors(smiles)` checks Lipinski's Rule of Five (HBD, HBA, MW, logP).
   - **Online Database Access:** `pubchem_get_molecular_formula(name)` and `chembl_get_ic50(target, compound)` query official scientific APIs with robust, offline-safe mock fallbacks.
   - **Tensor-based Smith-Waterman Alignment:** `smith_waterman_alignment(seq1, seq2, match_score, mismatch_penalty, gap_penalty)` performs local sequence alignment in PyTorch, supporting strings and 1D tensors with tracebacks.
   - **Unit-aware PDB/mmCIF Coordinate Parser:** `protein_structure_parse(path_or_content)` parses standard PDB and mmCIF crystallographic structures into first-class `DataFrame` tables with automatic `"angstrom"` units for spatial coordinates.
+  - **Extended Chemical & Physical Units:** Full support for pressure units `bar` and `atm` (with auto-conversions to `Pa`), mass concentration `% w/v` (where $1\% \text{ w/v} = 10 \text{ g/L}$), and native compiler verification for concentration variables.
 
 ### What's New in v1.6.3
 

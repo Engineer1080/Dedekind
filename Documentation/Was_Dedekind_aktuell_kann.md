@@ -56,7 +56,8 @@
 
 ## Chemie & Biologie
 
-- **Einheiten:** Konzentration in `[M]`, Stoffmenge in `[mol]`, Volumen in `[L]`, Verdünnungen in `[ppm]`; Massenkonzentration `[percent_wv]` (= g/100mL); M und mol/L gelten als gleich (Runtime und Compile-Check). **pH:** `concentration_to_pH(c_M)`, `pH_to_concentration(pH)` für Umrechnung [H⁺] ↔ pH.
+- **Einheiten:** Konzentration in `[M]` (mol/L), Stoffmenge in `[mol]`, Volumen in `[L]`, Verdünnungen in `[ppm]`; Massenkonzentration `[percent_wv]` (= 10 g/L), `[g/L]` und `[mg/mL]`; Druck in `[bar]`, `[atm]` und `[Pa]` (mit automatischer Umrechnung: 1 bar = 10⁵ Pa, 1 atm = 101325 Pa). M und mol/L gelten als gleich (vollständiger statischer Compile-Time und Runtime-Check).
+- **pH & Säure-Base:** `concentration_to_pH(c_M)` ($pH = -\log_{10}([H^+])$) und `pH_to_concentration(pH)` zur Umrechnung zwischen pH-Wert und Hydronium-Ionen-Konzentration in `[M]`.
 - **Convenience:** `michaelis_menten(S, Vmax, Km)`, `logistic(t, r, K, N0)`, `logistic_growth_dt(N, r, K)`, `arrhenius(T, A, Ea)`, `linear_regression(x, y)`. **Chemisches Gleichgewicht:** `chemical_equilibrium(K, n_A, n_B, n_C, n_D, A0, B0, C0, D0)` – Massenwirkungsgesetz für aA + bB <-> cC + dD; Rückgabe (A_eq, B_eq, C_eq, D_eq).
 - **Chemische Elemente:** `atomic_mass("C")` (g/mol), `atomic_number("C")`; ca. 50 Elemente (IUPAC-nah); molare Masse z. B. H₂O, C₂H₆.
 - **Stöchiometrie:** `balance_equation(reactants_str, products_str)` – Koeffizienten für ausgeglichene Reaktionsgleichung (z. B. `"H2 + O2"`, `"H2O"` → ([2,1], [2])); nutzt lineare Algebra (Nullraum via SVD).

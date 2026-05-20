@@ -1,0 +1,69 @@
+// Test: Life Sciences Extension Phase 3
+
+fn test_pressure_units() {
+    p1 = 1.0[bar]
+    p2 = 1.0[atm]
+    p3 = 101325.0[Pa]
+    p4 = 100.0[kPa]
+
+    assert(abs(p1.value - 1.0) < 1e-6)
+    assert(p1.unit == "bar")
+
+    // Addition of compatible pressure units (retains left operand unit)
+    p_sum = p1 + p4 // 1 bar + 100 kPa = 2 bar
+    assert(abs(p_sum.value - 2.0) < 1e-4)
+    assert(p_sum.unit == "bar")
+
+    // Subtraction of compatible pressure units
+    p_diff = p2 - p3 // 1 atm - 101325 Pa = 0 atm
+    assert(abs(p_diff.value - 0.0) < 1e-4)
+    assert(p_diff.unit == "atm")
+
+    print("test_pressure_units: bestanden.")
+}
+
+fn test_concentration_units() {
+    c1 = 1.0[percent_wv]  // 1% w/v = 10 g/L
+    c2 = 10.0[g/L]
+    c3 = 10.0[mg/mL]      // 10 mg/mL = 10 g/L
+
+    assert(abs(c1.value - 1.0) < 1e-6)
+    assert(c1.unit == "percent_wv")
+
+    // 1% w/v + 10 g/L = 2% w/v
+    c_sum1 = c1 + c2
+    assert(abs(c_sum1.value - 2.0) < 1e-4)
+    assert(c_sum1.unit == "percent_wv")
+
+    // 10 g/L + 10 mg/mL = 20 g/L
+    c_sum2 = c2 + c3
+    assert(abs(c_sum2.value - 20.0) < 1e-4)
+    assert(c_sum2.unit == "g/L")
+
+    print("test_concentration_units: bestanden.")
+}
+
+fn test_ph_conventions() {
+    // 1. pH calculation using concentration_to_pH
+    h_conc = 1.0e-3[M]
+    ph = concentration_to_pH(h_conc)
+    assert(abs(ph - 3.0) < 1e-4)
+
+    // 2. pH reverse calculation using pH_to_concentration
+    h_back = pH_to_concentration(3.0)
+    assert(abs(h_back - 1.0e-3) < 1e-6)
+
+    // 3. Direct pH calculation formula in Dedekind using -log10([H+])
+    ph_direct = -log10(h_conc.value)
+    assert(abs(ph_direct - 3.0) < 1e-4)
+
+    print("test_ph_conventions: bestanden.")
+}
+
+fn main() {
+    test_pressure_units()
+    test_concentration_units()
+    test_ph_conventions()
+    print("life_sciences_phase3_test: Alle Tests bestanden!")
+}
+main()

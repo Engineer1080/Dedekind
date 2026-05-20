@@ -334,6 +334,17 @@ main()
 
 Dedekind contains built-in domain-specific APIs for chemistry, biology, and bioinformatics, supporting molar mass calculations, chemical stoichiometry, sequence alignments, and structural parsing.
 
+#### Extended Units & Chemical Conventions
+
+*   **Pressure Units:** `bar` and `atm` are fully integrated into the physical units engine. They auto-convert to standard Pascals (`Pa`) during compile-time verification and runtime calculations:
+    *   $1\text{ bar} = 10^5\text{ Pa}$
+    *   $1\text{ atm} = 101325\text{ Pa}$
+*   **Mass Concentration:** Supports `% w/v` (`percent_wv`), `g/L`, and `mg/mL`. These units are dimensionally consistent with $[kg/m^3]$ and automatically scale:
+    *   $1\% \text{ w/v} = 10\text{ g/L} = 10\text{ mg/mL}$
+*   **pH Calculations:** The pH value is calculated based on the logarithmic activity of free hydronium ions:
+    *   $\text{pH} = -\log_{10}([H^+])$
+    *   $[H^+] = 10^{-\text{pH}}$ (with concentration $[H^+]$ in `[M]` or `[mol/L]`).
+
 #### Built-in Chemistry & Bioinformatics Functions
 
 | Function | Signature | Description |
