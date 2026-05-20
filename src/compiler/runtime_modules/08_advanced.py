@@ -276,7 +276,18 @@ def minimize_constrained(f, x0, constraints=None, bounds=None, method="SLSQP", t
     if _cons:
         kwargs["constraints"] = _cons
     if bounds is not None:
-        kwargs["bounds"] = list(bounds)
+        # Convert any tensor/array bounds to float tuples for scipy optimize
+        bounds_cleaned = []
+        for b in bounds:
+            if hasattr(b, "tolist"):
+                b_list = b.tolist()
+            else:
+                try:
+                    b_list = [float(x) for x in b]
+                except TypeError:
+                    b_list = list(b)
+            bounds_cleaned.append((float(b_list[0]), float(b_list[1])))
+        kwargs["bounds"] = bounds_cleaned
     res = _min(_f_wrap, x0_np, **kwargs)
     return {
         "x": res.x.tolist(),

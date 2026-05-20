@@ -36,7 +36,7 @@ class KinematicChain:
         Berechnet die homogene 4x4 Transformationsmatrix des Endeffektors.
         `joint_vars` ist ein 1D Tensor/Liste für eine Konfiguration, oder 2D (Batched).
         """
-        jv = _to_tensor(joint_vars).float()
+        jv = _to_tensor(joint_vars).double()
         if jv.ndim == 1:
             jv = jv.unsqueeze(0)  # (1, num_joints)
             
@@ -44,20 +44,20 @@ class KinematicChain:
             raise ValueError(f"Erwartete {len(self.joints)} Gelenkvariablen, aber bekam {jv.shape[1]}")
 
         N = jv.shape[0]
-        T = torch.eye(4, dtype=torch.float32).unsqueeze(0).repeat(N, 1, 1)  # (N, 4, 4)
+        T = torch.eye(4, dtype=torch.float64).unsqueeze(0).repeat(N, 1, 1)  # (N, 4, 4)
         
         for i, joint in enumerate(self.joints):
             var = jv[:, i]  # shape (N,)
             
             if joint['type'] == 'revolute':
                 theta = var
-                d = torch.tensor(joint['d'], dtype=torch.float32)
+                d = torch.tensor(joint['d'], dtype=torch.float64)
             else:
-                theta = torch.tensor(joint['theta'], dtype=torch.float32)
+                theta = torch.tensor(joint['theta'], dtype=torch.float64)
                 d = var
                 
-            a = torch.tensor(joint['a'], dtype=torch.float32)
-            alpha = torch.tensor(joint['alpha'], dtype=torch.float32)
+            a = torch.tensor(joint['a'], dtype=torch.float64)
+            alpha = torch.tensor(joint['alpha'], dtype=torch.float64)
             
             ct = torch.cos(theta)
             st = torch.sin(theta)

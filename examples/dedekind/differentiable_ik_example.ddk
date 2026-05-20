@@ -1,11 +1,14 @@
-// Inverse Kinematics (IK) via Gradientenabstieg
-// Zeigt die wahre Macht des Differentiable Engineering in Dedekind v2.1
+// Inverse Kinematics (IK) via Gradientenabstieg mit Gelenklimits
+// Vergleicht zwei Ansätze in Dedekind v2.1:
+// 1. Soft Constraints (Penalty Terms in der Loss-Funktion) via L-BFGS (minimize)
+// 2. Hard Constraints via SLSQP (minimize_constrained)
 
 use robotics
 
 fn main() {
-    print("Differentiable Robotics: Inverse Kinematik (IK)")
-    print("-----------------------------------------------")
+    print("==================================================================")
+    print("Differentiable Robotics: Inverse Kinematik (IK) mit Gelenklimits")
+    print("==================================================================")
     
     // 1. Definition des Roboterarms (3-Gelenk planar)
     arm = kinematic_chain()
@@ -13,45 +16,91 @@ fn main() {
     arm.add_revolute_joint(0.0[m], 1.0[m], 0.0[rad])
     arm.add_revolute_joint(0.0[m], 1.0[m], 0.0[rad])
     
-    // 2. Definition des Ziels im 3D-Raum (wo der Greifer hin soll)
+    // 2. Definition des Ziels (wo der Greifer hin soll)
     target_pos = [1.5, 1.5, 0.0]
     print("Zielkoordinate (x, y, z):", target_pos)
     
-    // 3. Loss-Funktion für die Inverse Kinematik
-    // Diese Funktion berechnet den Fehler zwischen aktueller und Ziel-Position
-    fn ik_loss(q) {
+    // Start-Pose (initiale Gelenkwinkel)
+    q_init = [0.1, 0.2, 0.3]
+    print("Start-Pose (q_init):", q_init)
+    
+    // Gelenklimits festlegen: Wir wählen sehr enge Limits von -0.5 bis 0.5 rad (ca. -28.6° bis 28.6°),
+    // um den Einfluss der Beschränkungen drastisch zu demonstrieren.
+    // (Ohne Limits würde die unbeschränkte IK Winkel von ca. [-0.13, 0.85, 1.10] finden)
+    q_min_val = -0.5
+    q_max_val = 0.5
+    print("Gelenklimits: [", q_min_val, ", ", q_max_val, "] rad für alle Gelenke.")
+    print("")
+
+    // ==================================================================
+    // ANSATZ 1: Soft Constraints (Penalty Terms / Weiche Schranken)
+    // ==================================================================
+    print("--- Ansatz 1: Soft Constraints via Penalty Term (L-BFGS / minimize) ---")
+    
+    fn ik_loss_soft(q) {
         T = arm.forward_kinematics(q)
         pos = end_effector_pos(T)
         
-        // Mean Squared Error (MSE)
         err_x = pos[0] - target_pos[0]
         err_y = pos[1] - target_pos[1]
         err_z = pos[2] - target_pos[2]
+        pos_err = err_x^2 + err_y^2 + err_z^2
         
+        // Bestrafung, wenn Gelenkwinkel außerhalb von [q_min_val, q_max_val] liegen
+        p0 = relu(q[0] - q_max_val)^2 + relu(q_min_val - q[0])^2
+        p1 = relu(q[1] - q_max_val)^2 + relu(q_min_val - q[1])^2
+        p2 = relu(q[2] - q_max_val)^2 + relu(q_min_val - q[2])^2
+        
+        return pos_err + 1000.0 * (p0 + p1 + p2)
+    }
+    
+    res_soft = minimize(ik_loss_soft, q_init)
+    q_opt_soft = res_soft[0]
+    
+    T_soft = arm.forward_kinematics(q_opt_soft)
+    pos_soft = end_effector_pos(T_soft)
+    
+    print("Gefundene Gelenkwinkel (Soft):", q_opt_soft)
+    print("Erreichte Position (Soft):    ", pos_soft)
+    print("Maximale Limit-Überschreitung: ", max(abs(q_opt_soft) - q_max_val))
+    print("")
+
+    // ==================================================================
+    // ANSATZ 2: Hard Constraints (Harte Schranken via SLSQP)
+    // ==================================================================
+    print("--- Ansatz 2: Hard Constraints via SLSQP (minimize_constrained) ---")
+    
+    // Standard-Loss ohne Penalty-Term
+    fn ik_loss_pure(q) {
+        T = arm.forward_kinematics(q)
+        pos = end_effector_pos(T)
+        
+        err_x = pos[0] - target_pos[0]
+        err_y = pos[1] - target_pos[1]
+        err_z = pos[2] - target_pos[2]
         return err_x^2 + err_y^2 + err_z^2
     }
     
-    // 4. Initiale Gelenkwinkel (Start-Pose)
-    q_init = [0.1, 0.2, 0.3]
+    // Bounds-Format für scipy.optimize: [[low, high], [low, high], ...]
+    bnds = [[q_min_val, q_max_val], [q_min_val, q_max_val], [q_min_val, q_max_val]]
     
-    print("Starte Optimierung der Gelenkwinkel via Autograd...")
+    res_hard = minimize_constrained(ik_loss_pure, q_init, bounds=bnds)
+    print("Full minimize_constrained result:", res_hard)
+    q_opt_hard = res_hard["x"]
     
-    // 5. Gradientenabstieg mit L-BFGS (minimize ist nativer Teil von Dedekind)
-    res = minimize(ik_loss, q_init)
-    q_opt = res[0]
+    T_hard = arm.forward_kinematics(q_opt_hard)
+    pos_hard = end_effector_pos(T_hard)
     
+    print("Gefundene Gelenkwinkel (Hard):", q_opt_hard)
+    print("Erreichte Position (Hard):    ", pos_hard)
+    print("Maximale Limit-Überschreitung: ", max(abs(q_opt_hard) - q_max_val))
     print("")
-    print("Gefundene Gelenkwinkel (im Bogenmaß):")
-    print(q_opt)
     
-    // Verifikation
-    T_final = arm.forward_kinematics(q_opt)
-    pos_final = end_effector_pos(T_final)
-    print("Erreichte Position:", pos_final)
-    print("")
-    print("Wie man sieht, ist Dedekind in der Lage, hochkomplexe Inverse Kinematik")
-    print("ohne manuellen Jacobian oder externe Solver (wie KDL/MoveIt) zu lösen,")
-    print("rein basierend auf der PyTorch-Autograd Engine!")
+    print("Fazit:")
+    print("- Soft Constraints erlauben minimale Verletzungen (z.B. im Mikrorad-Bereich),")
+    print("  sind dafür aber extrem schnell und nutzen reinen PyTorch-Gradientenabstieg.")
+    print("- Hard Constraints garantieren die exakte Einhaltung der Limits, benötigen")
+    print("  jedoch einen Constrained Solver (SLSQP via SciPy).")
 }
 
 main()

@@ -8606,7 +8606,18 @@ def minimize_constrained(f, x0, constraints=None, bounds=None, method="SLSQP", t
     if _cons:
         kwargs["constraints"] = _cons
     if bounds is not None:
-        kwargs["bounds"] = list(bounds)
+        # Convert any tensor/array bounds to float tuples for scipy optimize
+        bounds_cleaned = []
+        for b in bounds:
+            if hasattr(b, "tolist"):
+                b_list = b.tolist()
+            else:
+                try:
+                    b_list = [float(x) for x in b]
+                except TypeError:
+                    b_list = list(b)
+            bounds_cleaned.append((float(b_list[0]), float(b_list[1])))
+        kwargs["bounds"] = bounds_cleaned
     res = _min(_f_wrap, x0_np, **kwargs)
     return {
         "x": res.x.tolist(),
@@ -9892,7 +9903,7 @@ class KinematicChain:
         Berechnet die homogene 4x4 Transformationsmatrix des Endeffektors.
         `joint_vars` ist ein 1D Tensor/Liste für eine Konfiguration, oder 2D (Batched).
         """
-        jv = _to_tensor(joint_vars).float()
+        jv = _to_tensor(joint_vars).double()
         if jv.ndim == 1:
             jv = jv.unsqueeze(0)  # (1, num_joints)
             
@@ -9900,20 +9911,20 @@ class KinematicChain:
             raise ValueError(f"Erwartete {len(self.joints)} Gelenkvariablen, aber bekam {jv.shape[1]}")
 
         N = jv.shape[0]
-        T = torch.eye(4, dtype=torch.float32).unsqueeze(0).repeat(N, 1, 1)  # (N, 4, 4)
+        T = torch.eye(4, dtype=torch.float64).unsqueeze(0).repeat(N, 1, 1)  # (N, 4, 4)
         
         for i, joint in enumerate(self.joints):
             var = jv[:, i]  # shape (N,)
             
             if joint['type'] == 'revolute':
                 theta = var
-                d = torch.tensor(joint['d'], dtype=torch.float32)
+                d = torch.tensor(joint['d'], dtype=torch.float64)
             else:
-                theta = torch.tensor(joint['theta'], dtype=torch.float32)
+                theta = torch.tensor(joint['theta'], dtype=torch.float64)
                 d = var
                 
-            a = torch.tensor(joint['a'], dtype=torch.float32)
-            alpha = torch.tensor(joint['alpha'], dtype=torch.float32)
+            a = torch.tensor(joint['a'], dtype=torch.float64)
+            alpha = torch.tensor(joint['alpha'], dtype=torch.float64)
             
             ct = torch.cos(theta)
             st = torch.sin(theta)
