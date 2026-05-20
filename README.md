@@ -29,6 +29,11 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
 
+### What's New in v1.6.1
+
+- **Modularisierung der Laufzeitumgebung:** Die über 250 KB große `ml_runtime.py` wurde in 10 thematisch getrennte Module (z. B. `01_classes.py`, `03_solvers.py`, `07_dataframes.py`) unter `src/compiler/runtime_modules/` aufgeteilt. Ein neues Build-Skript (`src/compiler/build_runtime.py`) fügt diese bei Bedarf nahtlos zusammen. Dies verbessert die Wartbarkeit massiv und senkt die Hürde für Open-Source-Kontributoren, ohne den bestehenden Transpiler (`codegen.py`) zu beeinträchtigen.
+- **Bugfixes:** Behebung von hartkodierten `/tmp/`-Pfaden in den Beispielen `notebook_export_demo.ddk` und `v1_4_features_showcase.ddk` für plattformübergreifende Kompatibilität.
+
 ### What's New in v1.6.0
 
 - **Tiefere Symbolik:** `solve_sym(equation, var)` löst Gleichungen (auch Systeme mit Listen) symbolisch via SymPy; `"x^2 - 5*x + 6"` → `["2", "3"]`. `simplify_sym(expr)` vereinfacht Ausdrücke (`"sin(x)^2 + cos(x)^2"` → `"1"`). `series(expr, var, x0, n)` liefert Taylor-Entwicklungen. Ergänzt `diff_sym`/`integrate_sym`.

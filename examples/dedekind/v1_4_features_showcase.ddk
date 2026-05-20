@@ -36,8 +36,8 @@ fn main() {
     // DataFrame mit Einheiten + CSV-Roundtrip
     df = DataFrame({"t": [0.0, 1.0, 2.0, 3.0], "T": [20.0, 21.5, 23.0, 25.0]},
                    units={"t": "s", "T": "K"})
-    write_csv("/tmp/temp_messung.csv", df)
-    df2 = read_csv("/tmp/temp_messung.csv")
+    write_csv("./temp_messung.csv", df)
+    df2 = read_csv("./temp_messung.csv")
     print("CSV-Header trägt Einheiten:")
     print(df2)
     print("Datenintegritäts-Hash:")

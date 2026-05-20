@@ -23,9 +23,9 @@ fn main() {
 
     // Export der .ddk-Datei selbst als Standalone-HTML- und Markdown-Notebook.
     src = "examples/dedekind/notebook_export_demo.ddk"
-    html_path = export_notebook(src, output_path="/tmp/notebook_export_demo.html", format="html",
+    html_path = export_notebook(src, output_path="./notebook_export_demo.html", format="html",
                                 title="Gedämpfter Oszillator – Mess-Notizen")
-    md_path = export_notebook(src, output_path="/tmp/notebook_export_demo.md", format="md",
+    md_path = export_notebook(src, output_path="./notebook_export_demo.md", format="md",
                               title="Gedämpfter Oszillator – Mess-Notizen")
     print("HTML-Notebook geschrieben:")
     print(html_path)
