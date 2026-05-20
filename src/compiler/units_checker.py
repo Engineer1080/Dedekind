@@ -229,9 +229,9 @@ def _check_stmt(stmt: Node, env: Environment, filepath: Optional[str]) -> None:
     if isinstance(stmt, Assignment):
         _check_expr(stmt.value, env, filepath)
         # Type Inference für Variablenzuweisung
-        if isinstance(stmt.target, Identifier):
+        if isinstance(stmt.target, str):
             inferred_unit = _infer_unit(stmt.value, env)
-            env.set(stmt.target.name, inferred_unit)
+            env.set(stmt.target, inferred_unit)
         return
     if isinstance(stmt, ItemAssignment):
         _check_expr(stmt.value, env, filepath)

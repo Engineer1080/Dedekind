@@ -591,6 +591,13 @@ def _to_grad(data):
         tensor.requires_grad = True
     return tensor
 
+def _has_tensor_like(x):
+    if isinstance(x, (torch.Tensor, Quantity, UncertainQuantity)):
+        return True
+    if isinstance(x, (list, tuple)):
+        return any(_has_tensor_like(item) for item in x)
+    return False
+
 def _to_tensor(data):
     """Internal helper to convert nested lists/NumPy to PyTorch tensors.
     Lists that contain non-tensor items (e.g. functions, nn.Modules) are returned unchanged
@@ -605,10 +612,11 @@ def _to_tensor(data):
     if isinstance(data, (list, tuple)):
         if not data:
             return torch.tensor([], dtype=torch.float32)
-        try:
-            return torch.as_tensor(data)
-        except (TypeError, ValueError, RuntimeError):
-            pass
+        if not _has_tensor_like(data):
+            try:
+                return torch.as_tensor(data)
+            except (TypeError, ValueError, RuntimeError):
+                pass
         # Recursively convert; if any element is not a tensor (e.g. function, module), return list unchanged
         converted = []
         for x in data:

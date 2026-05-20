@@ -1,0 +1,103 @@
+// Differentiable Aerodynamik & CFD via LBM (use fluid_dynamics)
+//
+// Dieses Beispiel demonstriert, wie Dedekinds differenzierbarer Lattice
+// Boltzmann Solver genutzt werden kann, um die geometrische Form einer
+// Tragfläche (Dicke t und Wölbung c) autonom so zu optimieren, dass der
+// Luftwiderstand (Drag) im Strömungskanal minimiert wird.
+//
+// Die gesamte Strömungssimulation und die Kraftberechnung sind als
+// PyTorch-Graph repräsentiert, wodurch der Compiler die exakten Ableitungen
+// nach der Flügelform berechnet.
+
+use fluid_dynamics
+
+fn main() {
+    print("==================================================================")
+    print("Differentiable CFD: Tragflächen-Formoptimierung via Autograd LBM")
+    print("==================================================================")
+    
+    nx = 80    // Kanal-Länge
+    ny = 40    // Kanal-Breite
+    
+    // 1. Definition des Optimierungs-Loss
+    // Parameter-Vektor p = [t, c]
+    // t: relative Dicke (Thickness)
+    // c: relative Wölbung (Camber)
+    
+    fn airfoil_loss(p) {
+        t = p[0]
+        c = p[1]
+        
+        // Soft Constraints zur Begrenzung der physikalischen Geometrie
+        penalty = 0.0
+        if t < 0.05 {
+            penalty = penalty + 10.0 * (0.05 - t)^2
+        }
+        if t > 0.25 {
+            penalty = penalty + 10.0 * (t - 0.25)^2
+        }
+        if c < -0.10 {
+            penalty = penalty + 10.0 * (-0.10 - c)^2
+        }
+        if c > 0.15 {
+            penalty = penalty + 10.0 * (c - 0.15)^2
+        }
+        
+        // Wir verlangen eine Ziel-Flügeldicke von ca. 0.12 (verhindert t -> 0)
+        penalty = penalty + 5.0 * (t - 0.12)^2
+        
+        // Erzeuge kontinuierliche Tragflächen-Maske
+        // Chord von x=20 bis x=55, y-Mitte bei 20
+        mask = soft_airfoil_mask(nx, ny, t, c, 0.0, 20.0, 55.0, 20.0, 0.8)
+        
+        // Wände oben und unten hinzufügen für den Strömungskanal (Windkanal)
+        sim_mask = add_wind_tunnel_walls(mask)
+        
+        // Simulation initialisieren mit Gitter und Maske
+        sim = lbm_simulation_with_mask(nx, ny, 1.0, sim_mask)
+        
+        // 25 Zeitschritte simulieren bei Einströmgeschwindigkeit u = 0.06
+        simulation_run(sim, 25, 0.06)
+        
+        // Widerstandskraft (Drag) speziell auf die Tragfläche (mask) berechnen
+        forces = simulation_get_drag_lift_for_mask(sim, mask)
+        drag = forces[0]
+        
+        return drag + penalty
+    }
+    
+    // 2. Startwerte festlegen (Dickere, stark gewölbte Tragfläche -> viel Drag)
+    p_init = [0.18, 0.08]
+    
+    print("Initialer Tragflächen-Entwurf:")
+    print("- Dicke (t):    ", p_init[0])
+    print("- Wölbung (c):  ", p_init[1])
+    
+    // Berechne initialen Widerstand
+    loss_init = airfoil_loss(p_init)
+    print("- Initialer Drag-Loss (inkl. Penalty): ", loss_init)
+    print("")
+    
+    // 3. Optimierung starten
+    print("Optimiere Tragflächenform via L-BFGS (Autograd durch LBM-Iterationen)...")
+    res_opt = minimize(airfoil_loss, p_init, "lbfgs")
+    p_opt = res_opt[0]
+    loss_opt = res_opt[1]
+    
+    print("")
+    print("Optimierung abgeschlossen!")
+    print("Optimierter Tragflächen-Entwurf:")
+    print("- Dicke (t_opt):    ", p_opt[0], "  (Erwartet: nah an Ziel-Dicke 0.12)")
+    print("- Wölbung (c_opt):  ", p_opt[1], "  (Erwartet: minimierte Wölbung zur Drag-Reduktion)")
+    print("- End-Drag-Loss:      ", loss_opt)
+    
+    // 4. Verifikation der Drag-Reduktion
+    reduction = 100.0 * (loss_init - loss_opt) / loss_init
+    print("")
+    print("Ergebnis der Optimierung:")
+    print("- Drag-Reduktion: ", reduction, " %")
+    
+    assert(loss_opt < loss_init)
+}
+
+main()

@@ -1,0 +1,50 @@
+// --- Computational Fluid Dynamics (CFD) Module ---
+// Aktivierung: `use fluid_dynamics`
+
+pub fn lbm_simulation(nx, ny, tau) {
+    return lbm_simulation_impl(nx, ny, tau, [0.0])
+}
+
+pub fn lbm_simulation_with_mask(nx, ny, tau, mask) {
+    return lbm_simulation_impl(nx, ny, tau, mask)
+}
+
+pub fn simulation_step(sim, inlet_u) {
+    return simulation_step_impl(sim, inlet_u)
+}
+
+pub fn simulation_run(sim, steps, inlet_u) {
+    return simulation_run_impl(sim, steps, inlet_u)
+}
+
+pub fn simulation_get_velocity(sim) {
+    return simulation_get_velocity_impl(sim)
+}
+
+pub fn simulation_get_density(sim) {
+    return simulation_get_density_impl(sim)
+}
+
+pub fn simulation_get_drag_lift(sim) {
+    return simulation_get_drag_lift_impl(sim)
+}
+
+pub fn simulation_get_drag_lift_for_mask(sim, target_mask) {
+    return simulation_get_drag_lift_impl(sim, target_mask)
+}
+
+pub fn simulation_set_obstacle(sim, mask) {
+    return simulation_set_obstacle_impl(sim, mask)
+}
+
+pub fn soft_cylinder_mask(nx, ny, cx, cy, r, alpha) {
+    return lbm_soft_cylinder_mask_impl(nx, ny, cx, cy, r, alpha)
+}
+
+pub fn soft_airfoil_mask(nx, ny, t, c, beta, x_start, x_end, y_center, alpha) {
+    return lbm_soft_airfoil_mask_impl(nx, ny, t, c, beta, x_start, x_end, y_center, alpha)
+}
+
+pub fn add_wind_tunnel_walls(mask) {
+    return add_wind_tunnel_walls_impl(mask)
+}

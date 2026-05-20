@@ -1,0 +1,79 @@
+use fluid_dynamics
+
+fn test_lbm_init() {
+    print("Testing LBM Initialization...")
+    sim = lbm_simulation(30, 20, 0.8)
+    
+    rho = simulation_get_density(sim)
+    vel = simulation_get_velocity(sim)
+    
+    print("Density shape:", rho.shape)
+    print("Velocity shape:", vel.shape)
+    
+    assert(rho.shape[0] == 30)
+    assert(rho.shape[1] == 20)
+    assert(vel.shape[0] == 2)
+    assert(vel.shape[1] == 30)
+    assert(vel.shape[2] == 20)
+    
+    print("[OK] LBM Initialization")
+}
+
+fn test_lbm_step() {
+    print("Testing LBM Step & Run...")
+    sim = lbm_simulation(30, 20, 0.8)
+    
+    simulation_step(sim, 0.05)
+    simulation_run(sim, 5, 0.05)
+    
+    rho = simulation_get_density(sim)
+    print("Mean density after 6 steps:", mean(rho))
+    assert(mean(rho) > 0.0)
+    
+    print("[OK] LBM Step & Run")
+}
+
+fn test_lbm_autograd() {
+    print("Testing LBM Autograd (Gradient flow from Drag to Radius)...")
+    
+    nx = 20
+    ny = 10
+    
+    fn get_drag_from_radius(r_arr) {
+        r = r_arr[0]
+        
+        // Erzeuge Zylindermaske mit Radius r
+        mask = soft_cylinder_mask(nx, ny, 8.0, 5.0, r, 0.5)
+        
+        // Initialisiere Simulation mit Maske
+        sim = lbm_simulation_with_mask(nx, ny, 0.8, mask)
+        
+        // Lasse Simulation für 4 Schritte laufen
+        simulation_run(sim, 4, 0.05)
+        
+        // Berechne Widerstandskraft
+        forces = simulation_get_drag_lift(sim)
+        drag = forces[0]
+        return [drag]
+    }
+    
+    // Initialer Radius als 1-elementiger Vektor für jacobian
+    r_init = [1.5]
+    
+    // Berechne Ableitung der Drag-Kraft nach dem Radius r
+    deriv = jacobian(get_drag_from_radius, r_init)
+    print("Derivative of drag w.r.t radius r:", deriv)
+    
+    // Die Ableitung muss ungleich Null sein, da größerer Radius mehr Widerstand erzeugt
+    // d(drag)/d(r) sollte positiv sein!
+    assert(deriv[0][0] > 0.0)
+    
+    print("[OK] LBM Autograd")
+}
+
+fn main() {
+    test_lbm_init()
+    test_lbm_step()
+    test_lbm_autograd()
+}
+main()
