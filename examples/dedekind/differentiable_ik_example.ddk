@@ -1,0 +1,57 @@
+// Inverse Kinematics (IK) via Gradientenabstieg
+// Zeigt die wahre Macht des Differentiable Engineering in Dedekind v2.1
+
+use robotics
+
+fn main() {
+    print("Differentiable Robotics: Inverse Kinematik (IK)")
+    print("-----------------------------------------------")
+    
+    // 1. Definition des Roboterarms (3-Gelenk planar)
+    arm = kinematic_chain()
+    arm.add_revolute_joint(0.0[m], 1.0[m], 0.0[rad])
+    arm.add_revolute_joint(0.0[m], 1.0[m], 0.0[rad])
+    arm.add_revolute_joint(0.0[m], 1.0[m], 0.0[rad])
+    
+    // 2. Definition des Ziels im 3D-Raum (wo der Greifer hin soll)
+    target_pos = [1.5, 1.5, 0.0]
+    print("Zielkoordinate (x, y, z):", target_pos)
+    
+    // 3. Loss-Funktion für die Inverse Kinematik
+    // Diese Funktion berechnet den Fehler zwischen aktueller und Ziel-Position
+    fn ik_loss(q) {
+        T = arm.forward_kinematics(q)
+        pos = end_effector_pos(T)
+        
+        // Mean Squared Error (MSE)
+        err_x = pos[0] - target_pos[0]
+        err_y = pos[1] - target_pos[1]
+        err_z = pos[2] - target_pos[2]
+        
+        return err_x^2 + err_y^2 + err_z^2
+    }
+    
+    // 4. Initiale Gelenkwinkel (Start-Pose)
+    q_init = [0.1, 0.2, 0.3]
+    
+    print("Starte Optimierung der Gelenkwinkel via Autograd...")
+    
+    // 5. Gradientenabstieg mit L-BFGS (minimize ist nativer Teil von Dedekind)
+    res = minimize(ik_loss, q_init)
+    q_opt = res[0]
+    
+    print("")
+    print("Gefundene Gelenkwinkel (im Bogenmaß):")
+    print(q_opt)
+    
+    // Verifikation
+    T_final = arm.forward_kinematics(q_opt)
+    pos_final = end_effector_pos(T_final)
+    print("Erreichte Position:", pos_final)
+    print("")
+    print("Wie man sieht, ist Dedekind in der Lage, hochkomplexe Inverse Kinematik")
+    print("ohne manuellen Jacobian oder externe Solver (wie KDL/MoveIt) zu lösen,")
+    print("rein basierend auf der PyTorch-Autograd Engine!")
+}
+
+main()

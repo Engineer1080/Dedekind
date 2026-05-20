@@ -1,0 +1,16 @@
+// --- Differentiable Robotics Module ---
+// Konstruktor für eine neue kinematische Kette (Roboterarm)
+pub fn kinematic_chain() {
+    return KinematicChain()
+}
+
+// Extrahiert die [x, y, z] Position aus einer 4x4 Transformationsmatrix
+// Wir vermeiden [:, :] Syntax, falls der Parser sie nicht unterstützt,
+// und rufen stattdessen native Dedekind-Tensormethoden auf oder nutzen Listen
+pub fn end_effector_pos(T) {
+    return end_effector_pos_batched(T)
+}
+
+pub fn end_effector_rot(T) {
+    return end_effector_rot_backend(T)
+}
