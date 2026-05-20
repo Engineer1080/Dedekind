@@ -20,7 +20,7 @@ def _normalize_unit_for_compare(unit):
 DIMENSION_TO_BASE = {
     # SI-Basis
     "length": ("m", {"m": 1.0, "cm": 0.01, "km": 1000.0, "mm": 0.001, "um": 1e-6, "nm": 1e-9, "angstrom": 1e-10, "pm": 1e-12, "dm": 0.1, "AU": 149597870700.0, "ly": 9460730472580800.0, "pc": 3.085677581e16}),
-    "mass": ("kg", {"kg": 1.0, "g": 0.001, "t": 1000.0, "mg": 1e-6, "ug": 1e-9, "Da": 1.66053906660e-27, "amu": 1.66053906660e-27}),
+    "mass": ("kg", {"kg": 1.0, "g": 0.001, "t": 1000.0, "mg": 1e-6, "ug": 1e-9, "Da": 1.66053906660e-27, "amu": 1.66053906660e-27, "M_sun": 1.98847e30}),
     "time": ("s", {"s": 1.0, "min": 60.0, "h": 3600.0, "d": 86400.0, "yr": 31557600.0, "a": 31557600.0, "ms": 0.001, "us": 1e-6, "ns": 1e-9}),
     "current": ("A", {"A": 1.0, "mA": 0.001, "kA": 1000.0, "uA": 1e-6, "muA": 1e-6}),
     "temperature": ("K", {"K": 1.0, "mK": 0.001}),
@@ -36,7 +36,7 @@ DIMENSION_TO_BASE = {
     "frequency": ("Hz", {"Hz": 1.0, "kHz": 1000.0, "MHz": 1e6, "GHz": 1e9}),
     "charge": ("C", {"C": 1.0, "mC": 0.001, "uC": 1e-6}),
     "resistance": ("ohm", {"ohm": 1.0, "kohm": 1000.0, "Mohm": 1e6}),
-    "power": ("W", {"W": 1.0, "kW": 1000.0, "MW": 1e6}),
+    "power": ("W", {"W": 1.0, "kW": 1000.0, "MW": 1e6, "L_sun": 3.828e26}),
     "magnetic_flux_density": ("T", {"T": 1.0, "G": 1e-4}),
     "magnetic_flux": ("Wb", {"Wb": 1.0}),
     "inductance": ("H", {"H": 1.0, "mH": 0.001, "uH": 1e-6}),
@@ -4902,6 +4902,94 @@ def protein_structure_parse(path_or_content):
     return DataFrame(data, units={"x": "angstrom", "y": "angstrom", "z": "angstrom"})
 
 
+# --- Standard Library: Astrophysik & Kosmologie ---
+
+def solve_kepler(M, e):
+    """
+    Löst die Kepler-Gleichung E - e * sin(E) = M für die exzentrische Anomalie E.
+    M: Mittlere Anomalie (Skalar, Tensor oder Quantity; in rad oder deg).
+    e: Exzentrizität (Skalar, Tensor oder Quantity; 0 <= e < 1).
+    Rückgabe: Exzentrische Anomalie E (rad, voll differenzierbar).
+    """
+    if isinstance(M, Quantity):
+        M_val = _convert_to_base(M.value, M.unit, "angle")
+    else:
+        M_val = M
+    if isinstance(e, Quantity):
+        e_val = e.value
+    else:
+        e_val = e
+    M_t = _to_tensor(M_val).float()
+    e_t = _to_tensor(e_val).float()
+    E = M_t.clone()
+    for _ in range(6):
+        E = E - (E - e_t * torch.sin(E) - M_t) / (1.0 - e_t * torch.cos(E))
+    return E
+
+
+def redshift_to_velocity(z):
+    """
+    Berechnet die Fluchtgeschwindigkeit v aus der Rotverschiebung z (relativistisch).
+    z: Rotverschiebung (dimensionslos; Skalar, Tensor oder Quantity).
+    Rückgabe: Fluchtgeschwindigkeit als Quantity [m/s] (wenn Skalar) oder Tensor.
+    """
+    if isinstance(z, Quantity):
+        z_val = z.value
+    else:
+        z_val = z
+    z_t = _to_tensor(z_val).float()
+    c_val = float(c.value)  # 299792458.0 m/s
+    v_val = c_val * (((1.0 + z_t)**2 - 1.0) / ((1.0 + z_t)**2 + 1.0))
+    if v_val.numel() == 1:
+        return Quantity(float(v_val.item()), "m/s")
+    return v_val
+
+
+def schwarzschild_radius(M):
+    """
+    Berechnet den Schwarzschild-Radius Rs für eine Masse M.
+    M: Masse (Skalar, Tensor oder Quantity [kg] / [M_sun]).
+    Rückgabe: Schwarzschild-Radius als Quantity [m] (wenn Skalar) oder Tensor.
+    """
+    if isinstance(M, Quantity):
+        M_val = _convert_to_base(M.value, M.unit, "mass")
+    else:
+        M_val = M
+    M_t = _to_tensor(M_val).float()
+    G_val = float(G.value)  # 6.6743e-11
+    c_val = float(c.value)  # 299792458.0
+    r_val = (2.0 * G_val * M_t) / (c_val ** 2)
+    if r_val.numel() == 1:
+        return Quantity(float(r_val.item()), "m")
+    return r_val
+
+
+def stellar_luminosity(M_solar):
+    """
+    Berechnet die Leuchtkraft L (in solaren Leuchtkräften L_sun) aus der Masse M (in solaren Massen M_sun oder kg).
+    M_solar: Masse des Hauptreihensterns (Skalar, Tensor oder Quantity).
+    Rückgabe: Leuchtkraft L als Quantity [L_sun] (wenn Skalar) oder Tensor.
+    """
+    if isinstance(M_solar, Quantity):
+        # Konvertiere erst in kg (Basis) und dann in M_sun
+        M_kg = _convert_to_base(M_solar.value, M_solar.unit, "mass")
+        M_val = M_kg / 1.98847e30
+    else:
+        M_val = M_solar
+    M_t = _to_tensor(M_val).float()
+    cond1 = M_t < 0.43
+    cond2 = (M_t >= 0.43) & (M_t < 2.0)
+    cond3 = (M_t >= 2.0) & (M_t < 20.0)
+    
+    L_val = torch.where(cond1, 0.23 * torch.pow(M_t, 2.3),
+            torch.where(cond2, torch.pow(M_t, 4.0),
+            torch.where(cond3, 1.4 * torch.pow(M_t, 3.5),
+            32000.0 * M_t)))
+    if L_val.numel() == 1:
+        return Quantity(float(L_val.item()), "L_sun")
+    return L_val
+
+
 def read_file(path):
     """
     Liest eine Datei als Text (UTF-8).
@@ -6054,6 +6142,7 @@ _DERIVED_UNIT_TO_BASE = {
     "W":   {"kg": 1, "m": 2, "s": -3},
     "kW":  {"kg": 1, "m": 2, "s": -3},
     "MW":  {"kg": 1, "m": 2, "s": -3},
+    "L_sun": {"kg": 1, "m": 2, "s": -3},
     "V":   {"kg": 1, "m": 2, "s": -3, "A": -1},
     "mV":  {"kg": 1, "m": 2, "s": -3, "A": -1},
     "kV":  {"kg": 1, "m": 2, "s": -3, "A": -1},
@@ -6094,6 +6183,7 @@ _DERIVED_UNIT_TO_BASE = {
     "ug":  {"kg": 1},
     "Da":  {"kg": 1},
     "amu": {"kg": 1},
+    "M_sun": {"kg": 1},
     "us":  {"s": 1},
     "ns":  {"s": 1},
     "d":   {"s": 1},

@@ -40,8 +40,15 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 
 ### What's New in v1.7.0 (May 2026)
 
-- **Life Sciences Extension (Phase 1, 2 & 3):**
-  - **Differentiable PK/PD Solver:** `two_compartment_pk(C0, k12, k21, ke, t)` simulates a two-compartment pharmacokinetic model, supporting full auto-differentiation via PyTorch.
+- **Life Sciences & Astrophysics Extension (Phase 1, 2, 3 & Astrophysics):**
+  - **Astrophysics & Cosmology Suite:**
+    - **Differentiable Kepler Solver:** `solve_kepler(M, e)` solves the Kepler equation $E - e \sin(E) = M$ using a PyTorch-differentiable Newton-Raphson method (6 iterations), supporting unit-aware mean anomaly input in radians or degrees.
+    - **Relativistic Redshift to Velocity:** `redshift_to_velocity(z)` computes relativistic recession velocity $v = c \frac{(1+z)^2 - 1}{(1+z)^2 + 1}$, returning a `Quantity [m/s]` or a tensor.
+    - **Schwarzschild Radius:** `schwarzschild_radius(M)` calculates the event horizon $R_s = \frac{2GM}{c^2}$ for any mass $M$ (accepts `kg` or solar masses `M_sun`), returning a `Quantity [m]` or a tensor.
+    - **Stellar Mass-Luminosity Relation:** `stellar_luminosity(M_solar)` calculates main-sequence stellar luminosity $L$ in solar luminosities `L_sun` given a mass in solar masses `M_sun` or `kg`, using a PyTorch-differentiable piecewise function.
+    - **Astrophysical Units:** Full support for solar mass `M_sun` (mass dimension) and solar luminosity `L_sun` (power/luminosity dimension) with automatic compiler verification.
+  - **Life Sciences Suite (Phase 1, 2 & 3):**
+    - **Differentiable PK/PD Solver:** `two_compartment_pk(C0, k12, k21, ke, t)` simulates a two-compartment pharmacokinetic model, supporting full auto-differentiation via PyTorch.
   - **Zero-Dependency SMILES Parsing:** Pure-Python parsing of SMILES notation to build chemical graphs and resolve aromaticity.
   - **Molecular Weight & Lipinski Descriptors:** `smiles_molecular_weight(smiles)` calculates molecular weight, and `lipinski_descriptors(smiles)` checks Lipinski's Rule of Five (HBD, HBA, MW, logP).
   - **Online Database Access:** `pubchem_get_molecular_formula(name)` and `chembl_get_ic50(target, compound)` query official scientific APIs with robust, offline-safe mock fallbacks.

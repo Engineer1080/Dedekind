@@ -734,6 +734,44 @@ main()
 
 ---
 
+### 15.20 Astrophysics & Cosmology (v1.7.0)
+
+Version 1.7.0 adds first-class support for astrophysics, cosmology, and stellar physics calculations.
+
+#### Domain Functions
+
+| Function | Signature | Description |
+|:---|:---|:---|
+| `solve_kepler(M, e)` | `solve_kepler(M: float/Tensor/Quantity, e: float/Tensor/Quantity) -> Tensor` | Solves Kepler's equation $E - e \sin(E) = M$ using a PyTorch-differentiable Newton-Raphson solver. Accepts mean anomaly `M` in radians (`rad`) or degrees (`deg`). |
+| `redshift_to_velocity(z)` | `redshift_to_velocity(z: float/Tensor/Quantity) -> Quantity/Tensor` | Calculates the relativistic recession velocity $v = c \cdot \frac{(1+z)^2 - 1}{(1+z)^2 + 1}$ for a cosmological redshift $z$. |
+| `schwarzschild_radius(M)` | `schwarzschild_radius(M: float/Tensor/Quantity) -> Quantity/Tensor` | Computes the event horizon radius $R_s = \frac{2GM}{c^2}$ for a mass $M$ (accepts `kg` or solar masses `M_sun`). |
+| `stellar_luminosity(M_solar)` | `stellar_luminosity(M_solar: float/Tensor/Quantity) -> Quantity/Tensor` | Calculates main-sequence stellar luminosity $L$ (in `L_sun`) given stellar mass $M$ (in `M_sun` or `kg`) using a piecewise differentiable function. |
+
+#### New Units
+- `M_sun` (solar mass): $\approx 1.98847 \times 10^{30} \text{ kg}$
+- `L_sun` (solar luminosity): $\approx 3.828 \times 10^{26} \text{ W}$
+
+#### Code Example
+
+```dedekind
+fn main() {
+    // 1. Kepler orbits: Solve ecc anomaly E for M = 90[deg], e = 0.5
+    E = solve_kepler(90.0[deg], 0.5)
+    print(E) // ~1.96 rad (E - 0.5*sin(E) = pi/2)
+
+    // 2. Event horizon of a 10 solar mass black hole
+    Rs = schwarzschild_radius(10.0[M_sun])
+    print(Rs) // ~29532.5[m]
+
+    // 3. Main-sequence stellar luminosity
+    L = stellar_luminosity(1.0[M_sun])
+    print(L) // 1.0[L_sun]
+}
+main()
+```
+
+---
+
 ## Related Documentation and Artifacts
 
 For more details on specific aspects of the Dedekind language, compiler architecture, and feature statuses, see:

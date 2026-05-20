@@ -46,6 +46,17 @@
 
 ---
 
+## Astrophysik & Kosmologie
+
+- **Einheiten:** Solare Masse `[M_sun]` (Masse, $1 M_\odot \approx 1.98847 \times 10^{30} \text{ kg}$) und solare Leuchtkraft `[L_sun]` (Leistung, $1 L_\odot \approx 3.828 \times 10^{26} \text{ W}$). Vollständige statische Compile-Zeit- und Runtime-Prüfung.
+- **Modelle & Dynamik:**
+  - `solve_kepler(M, e)`: Löst die Kepler-Gleichung $E - e \sin(E) = M$ für die exzentrische Anomalie $E$ (rad) mittels differenzierbarem Newton-Raphson-Verfahren (6 Schritte), unterstützt Mean Anomaly `M` in `[rad]` oder `[deg]`.
+  - `redshift_to_velocity(z)`: Berechnet die relativistische Fluchtgeschwindigkeit $v = c \frac{(1+z)^2 - 1}{(1+z)^2 + 1}$ aus der Rotverschiebung $z$, liefert ein `Quantity [m/s]`.
+  - `schwarzschild_radius(M)`: Berechnet den Schwarzschild-Radius $R_s = \frac{2GM}{c^2}$ für eine gegebene Masse `M` (unterstützt `[kg]` oder `[M_sun]`), liefert ein `Quantity [m]`.
+  - `stellar_luminosity(M_solar)`: Berechnet die Hauptreihen-Leuchtkraft $L$ in `[L_sun]` aus der Sternenmasse $M$ in `[M_sun]` oder `[kg]` mittels stückweise differenzierbarer Näherung.
+
+---
+
 ## Stochastik & Fitting
 
 - **Verteilungen:** `Normal(mu, sigma)`, `Uniform(low, high)`, `Bernoulli(p)`, `Exponential(rate)`, `Gamma`, `Beta`, `Poisson`, `Dirichlet(alpha)`; `sample(dist)`, `log_prob(dist, value)`. **Binomialkoeffizient:** `binom(n, k)` (n über k). **t-Test:** `ttest_one_sample(x, mu0)`, `ttest_two_sample(x, y)` (Welch) — Rückgabe (t_statistik, p_value).
