@@ -1,0 +1,77 @@
+// Test: Meteorology, Climatology & Geosciences Extension
+
+fn test_coriolis() {
+    f0 = coriolis_parameter(0.0[deg])
+    assert(abs(f0.value) < 1e-7)
+    assert(f0.unit == "s^-1")
+
+    f45 = coriolis_parameter(45.0[deg])
+    // 2 * 7.2921159e-5 * sin(45 deg) ≈ 1.03125e-4 s^-1
+    assert(abs(f45.value - 1.03125e-4) < 1e-6)
+    assert(f45.unit == "s^-1")
+
+    print("test_coriolis: bestanden.")
+}
+
+fn test_humidity() {
+    es0 = saturated_vapor_pressure(273.15[K])
+    assert(abs(es0.value - 611.2) < 0.1)
+    assert(es0.unit == "Pa")
+
+    Td = dew_point(293.15[K], 100.0)
+    assert(abs(Td.value - 293.15) < 0.05)
+    assert(Td.unit == "K")
+
+    // RH = 50.0% -> Td ≈ 282.42 K (9.27 °C)
+    Td2 = dew_point(293.15[K], 50.0)
+    assert(abs(Td2.value - 282.42) < 0.1)
+
+    print("test_humidity: bestanden.")
+}
+
+fn test_seismology() {
+    // Elastic parameters for granite
+    K = 40.0[GPa]
+    G = 30.0[GPa]
+    rho = 2.7[g/cm^3] // Density (2700 kg/m^3)
+    
+    vels = seismic_wave_velocities(K, G, rho)
+    vp = vels[0]
+    vs = vels[1]
+    
+    assert(vp.unit == "m/s")
+    assert(vs.unit == "m/s")
+    
+    // vp_expected = sqrt((40e9 + 4/3 * 30e9) / 2700) = sqrt(80e9 / 2700) = 5443.31 m/s
+    // vs_expected = sqrt(30e9 / 2700) = 3333.33 m/s
+    assert(abs(vp.value - 5443.31) < 1.0)
+    assert(abs(vs.value - 3333.33) < 1.0)
+
+    print("test_seismology: bestanden.")
+}
+
+fn test_geosciences_autograd() {
+    fn dew_point_helper(x) {
+        // x[0] is Temp [K], x[1] is RH [0-100]
+        return dew_point(x[0], x[1])
+    }
+    x_val = [293.15, 50.0]
+    J = jacobian(dew_point_helper, x_val)
+    
+    assert(J.shape[0] == 1)
+    assert(J.shape[1] == 2)
+    // Positive derivative with respect to temperature and relative humidity
+    assert(J[0][0] > 0.0)
+    assert(J[0][1] > 0.0)
+
+    print("test_geosciences_autograd: bestanden.")
+}
+
+fn main() {
+    test_coriolis()
+    test_humidity()
+    test_seismology()
+    test_geosciences_autograd()
+    print("geosciences_test: Alle Tests bestanden!")
+}
+main()

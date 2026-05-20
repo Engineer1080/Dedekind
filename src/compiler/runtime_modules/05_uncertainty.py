@@ -1365,6 +1365,8 @@ def redshift_to_velocity(z):
     z_t = _to_tensor(z_val).float()
     c_val = float(c.value)  # 299792458.0 m/s
     v_val = c_val * (((1.0 + z_t)**2 - 1.0) / ((1.0 + z_t)**2 + 1.0))
+    if z_t.requires_grad:
+        return v_val
     if v_val.numel() == 1:
         return Quantity(float(v_val.item()), "m/s")
     return v_val
@@ -1384,6 +1386,8 @@ def schwarzschild_radius(M):
     G_val = float(G.value)  # 6.6743e-11
     c_val = float(c.value)  # 299792458.0
     r_val = (2.0 * G_val * M_t) / (c_val ** 2)
+    if M_t.requires_grad:
+        return r_val
     if r_val.numel() == 1:
         return Quantity(float(r_val.item()), "m")
     return r_val
@@ -1410,8 +1414,123 @@ def stellar_luminosity(M_solar):
             torch.where(cond2, torch.pow(M_t, 4.0),
             torch.where(cond3, 1.4 * torch.pow(M_t, 3.5),
             32000.0 * M_t)))
+    if M_t.requires_grad:
+        return L_val
     if L_val.numel() == 1:
         return Quantity(float(L_val.item()), "L_sun")
     return L_val
+
+
+# --- Standard Library: Meteorologie, Klimatologie & Geowissenschaften ---
+
+def coriolis_parameter(latitude):
+    """
+    Berechnet den Coriolis-Parameter f = 2 * Omega * sin(lat) für eine Breite.
+    latitude: Geographische Breite (Skalar, Tensor oder Quantity [deg]/[rad]).
+    Rückgabe: f als Quantity [s^-1] oder Tensor.
+    """
+    if isinstance(latitude, Quantity):
+        lat_val = _convert_to_base(latitude.value, latitude.unit, "angle")
+    else:
+        lat_val = latitude
+    lat_t = _to_tensor(lat_val).float()
+    omega = 7.2921159e-5  # rad/s, Winkelgeschwindigkeit der Erdrotation
+    f_val = 2.0 * omega * torch.sin(lat_t)
+    if lat_t.requires_grad:
+        return f_val
+    if f_val.numel() == 1:
+        return Quantity(float(f_val.item()), "s^-1")
+    return f_val
+
+
+def saturated_vapor_pressure(T):
+    """
+    Berechnet den Sättigungsdampfdruck von Wasserdampf über flüssigem Wasser nach der Magnus-Formel.
+    T: Temperatur (Skalar, Tensor oder Quantity; K).
+    Rückgabe: Sättigungsdampfdruck als Quantity [Pa] oder Tensor.
+    """
+    if isinstance(T, Quantity):
+        T_val = _convert_to_base(T.value, T.unit, "temperature")
+    else:
+        T_val = T
+    T_t = _to_tensor(T_val).float()
+    T_c = T_t - 273.15  # Umrechnung in Grad Celsius für Magnus-Formel
+    es_val = 611.2 * torch.exp(17.67 * T_c / (T_c + 243.5))
+    if T_t.requires_grad:
+        return es_val
+    if es_val.numel() == 1:
+        return Quantity(float(es_val.item()), "Pa")
+    return es_val
+
+
+def dew_point(T, RH):
+    """
+    Berechnet den Taupunkt T_d aus der Temperatur T und der relativen Luftfeuchtigkeit RH.
+    T: Temperatur (Skalar, Tensor oder Quantity [K]).
+    RH: Relative Luftfeuchtigkeit (Skalar, Tensor; 0 bis 100).
+    Rückgabe: Taupunkt als Quantity [K] oder Tensor.
+    """
+    if isinstance(T, Quantity):
+        T_val = _convert_to_base(T.value, T.unit, "temperature")
+    else:
+        T_val = T
+    if isinstance(RH, Quantity):
+        RH_val = RH.value
+    else:
+        RH_val = RH
+    T_t = _to_tensor(T_val).float()
+    RH_t = _to_tensor(RH_val).float()
+    
+    T_c = T_t - 273.15
+    RH_clamped = torch.clamp(RH_t, min=1e-5)
+    y = torch.log(RH_clamped / 100.0) + (17.67 * T_c) / (T_c + 243.5)
+    Td_c = (243.5 * y) / (17.67 - y)
+    Td_val = Td_c + 273.15
+    if T_t.requires_grad or RH_t.requires_grad:
+        return Td_val
+    if Td_val.numel() == 1:
+        return Quantity(float(Td_val.item()), "K")
+    return Td_val
+
+
+def seismic_wave_velocities(K, G, rho):
+    """
+    Berechnet die Ausbreitungsgeschwindigkeiten von P-Wellen (Kompressionswellen) und S-Wellen (Scherwellen).
+    K: Kompressionsmodul (Bulk modulus, Pa oder Quantity).
+    G: Schermodul (Shear modulus, Pa oder Quantity).
+    rho: Dichte (Density, kg/m^3 oder Quantity; unterstützt auch g/cm^3).
+    Rückgabe: Liste [v_p, v_s] als Quantities [m/s] oder Tensoren.
+    """
+    if isinstance(K, Quantity):
+        K_val = _convert_to_base(K.value, K.unit, "pressure")
+    else:
+        K_val = K
+    if isinstance(G, Quantity):
+        G_val = _convert_to_base(G.value, G.unit, "pressure")
+    else:
+        G_val = G
+    if isinstance(rho, Quantity):
+        u = str(rho.unit).strip()
+        if u in ("g/cm^3", "g/cm^3"):
+            rho_val = rho.value * 1000.0
+        else:
+            rho_val = rho.value
+    else:
+        rho_val = rho
+        
+    K_t = _to_tensor(K_val).float()
+    G_t = _to_tensor(G_val).float()
+    rho_t = _to_tensor(rho_val).float()
+    
+    vp_val = torch.sqrt((K_t + 4.0/3.0 * G_t) / rho_t)
+    vs_val = torch.sqrt(G_t / rho_t)
+    
+    if K_t.requires_grad or G_t.requires_grad or rho_t.requires_grad:
+        return [vp_val, vs_val]
+    if vp_val.numel() == 1:
+        return [Quantity(float(vp_val.item()), "m/s"), Quantity(float(vs_val.item()), "m/s")]
+    return [vp_val, vs_val]
+
+
 
 

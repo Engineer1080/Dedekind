@@ -772,6 +772,47 @@ main()
 
 ---
 
+### 15.21 Meteorology, Climatology & Geosciences (v1.7.0)
+
+Version 1.7.0 introduces specialized functions and units for atmospheric physics, weather modeling, climate simulation, and geodynamics.
+
+#### Domain Functions
+
+| Function | Signature | Description |
+|:---|:---|:---|
+| `coriolis_parameter(latitude)` | `coriolis_parameter(latitude: float/Tensor/Quantity) -> Quantity/Tensor` | Calculates the Coriolis parameter $f = 2 \Omega \sin(\phi)$ in `[s^-1]`. Accepts latitude in degrees (`deg`) or radians (`rad`). |
+| `saturated_vapor_pressure(T)` | `saturated_vapor_pressure(T: float/Tensor/Quantity) -> Quantity/Tensor` | Computes the saturation vapor pressure $e_s(T)$ of water vapor over liquid water via the Magnus-Tetens formula. Input temperature is in Kelvin (`K`), output pressure is in Pascals (`Pa`). |
+| `dew_point(T, RH)` | `dew_point(T: float/Tensor/Quantity, RH: float/Tensor/Quantity) -> Quantity/Tensor` | Computes dew point temperature $T_d$ (in Kelvin `K`) from ambient temperature $T$ (in Kelvin `K`) and relative humidity $RH$ (range 0 to 100). |
+| `seismic_wave_velocities(K, G, rho)` | `seismic_wave_velocities(K: float/Tensor/Quantity, G: float/Tensor/Quantity, rho: float/Tensor/Quantity) -> [Quantity/Tensor, Quantity/Tensor]` | Computes compressional P-wave and shear S-wave velocities $[v_p, v_s]$ (in `[m/s]`) from bulk modulus $K$, shear modulus $G$, and density $\rho$. Supports density units `kg/m^3` and `g/cm^3`. |
+
+#### New Units
+- `hPa` (hectopascal): $1 \text{ hPa} = 100 \text{ Pa}$ (pressure dimension)
+- `GPa` (gigapascal): $1 \text{ GPa} = 10^9 \text{ Pa}$ (pressure dimension)
+
+#### Code Example
+
+```dedekind
+fn main() {
+    // 1. Earth Coriolis parameter at 45 degrees latitude
+    f = coriolis_parameter(45.0[deg])
+    print(f) // ~1.03125e-4[s^-1]
+
+    // 2. Dew point calculation at 20 °C (293.15 K) and 50% relative humidity
+    Td = dew_point(293.15[K], 50.0)
+    print(Td) // ~282.42[K] (9.27 °C)
+
+    // 3. Seismic wave speeds in granite rock (K = 40 GPa, G = 30 GPa, rho = 2.7 g/cm^3)
+    vels = seismic_wave_velocities(40.0[GPa], 30.0[GPa], 2.7[g/cm^3])
+    vp = vels[0]
+    vs = vels[1]
+    print(vp) // ~5443.31[m/s] (P-wave)
+    print(vs) // ~3333.33[m/s] (S-wave)
+}
+main()
+```
+
+---
+
 ## Related Documentation and Artifacts
 
 For more details on specific aspects of the Dedekind language, compiler architecture, and feature statuses, see:

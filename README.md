@@ -40,13 +40,19 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 
 ### What's New in v1.7.0 (May 2026)
 
-- **Life Sciences & Astrophysics Extension (Phase 1, 2, 3 & Astrophysics):**
+- **Life Sciences, Astrophysics & Geosciences Extension (Phase 1, 2, 3, Astrophysics & Geosciences):**
   - **Astrophysics & Cosmology Suite:**
     - **Differentiable Kepler Solver:** `solve_kepler(M, e)` solves the Kepler equation $E - e \sin(E) = M$ using a PyTorch-differentiable Newton-Raphson method (6 iterations), supporting unit-aware mean anomaly input in radians or degrees.
     - **Relativistic Redshift to Velocity:** `redshift_to_velocity(z)` computes relativistic recession velocity $v = c \frac{(1+z)^2 - 1}{(1+z)^2 + 1}$, returning a `Quantity [m/s]` or a tensor.
     - **Schwarzschild Radius:** `schwarzschild_radius(M)` calculates the event horizon $R_s = \frac{2GM}{c^2}$ for any mass $M$ (accepts `kg` or solar masses `M_sun`), returning a `Quantity [m]` or a tensor.
     - **Stellar Mass-Luminosity Relation:** `stellar_luminosity(M_solar)` calculates main-sequence stellar luminosity $L$ in solar luminosities `L_sun` given a mass in solar masses `M_sun` or `kg`, using a PyTorch-differentiable piecewise function.
     - **Astrophysical Units:** Full support for solar mass `M_sun` (mass dimension) and solar luminosity `L_sun` (power/luminosity dimension) with automatic compiler verification.
+  - **Meteorology, Climatology & Geosciences Suite:**
+    - **Coriolis Parameter:** `coriolis_parameter(latitude)` computes the Coriolis parameter $f = 2 \Omega \sin(\phi)$ in `[s^-1]` (reciprocal seconds), supporting latitude input in `[deg]` or `[rad]`.
+    - **Saturated Vapor Pressure:** `saturated_vapor_pressure(T)` computes saturation vapor pressure $e_s(T)$ of water vapor over liquid water via the Magnus-Tetens formula, returning a pressure `Quantity [Pa]` or a tensor.
+    - **Dew Point:** `dew_point(T, RH)` computes dew point temperature $T_d$ given temperature $T$ and relative humidity $RH$ (0 to 100), returning a temperature `Quantity [K]` or a tensor.
+    - **Seismic Wave Velocities:** `seismic_wave_velocities(K, G, rho)` computes compressional (P-wave) and shear (S-wave) velocities $[v_p, v_s]$ in elastodynamic media from bulk modulus $K$, shear modulus $G$, and density $\rho$ (supports `kg/m^3` and `g/cm^3`), returning a list of `Quantity [m/s]` or tensors.
+    - **New Pressure Unit:** Added hectopascal `hPa` ($1 \text{ hPa} = 100 \text{ Pa}$) under the pressure dimension for meteorology and atmospheric applications.
   - **Life Sciences Suite (Phase 1, 2 & 3):**
     - **Differentiable PK/PD Solver:** `two_compartment_pk(C0, k12, k21, ke, t)` simulates a two-compartment pharmacokinetic model, supporting full auto-differentiation via PyTorch.
   - **Zero-Dependency SMILES Parsing:** Pure-Python parsing of SMILES notation to build chemical graphs and resolve aromaticity.

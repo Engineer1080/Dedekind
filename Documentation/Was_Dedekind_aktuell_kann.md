@@ -57,6 +57,17 @@
 
 ---
 
+## Meteorologie, Klimatologie & Geowissenschaften
+
+- **Einheiten:** Hectopascal `[hPa]` ($1 \text{ hPa} = 100 \text{ Pa}$) als Druckeinheit für Luftdruckmessungen. Druckeinheit Gigapascal `[GPa]` ($1 \text{ GPa} = 10^9 \text{ Pa}$) für geowissenschaftliche Spannungs- und Modulberechnungen.
+- **Modelle & Berechnungen:**
+  - `coriolis_parameter(latitude)`: Berechnet den Coriolis-Parameter $f = 2 \Omega \sin(\phi)$ in `[s^-1]` (reziproke Sekunden) für eine geographische Breite `latitude` (in `[deg]` oder `[rad]`).
+  - `saturated_vapor_pressure(T)`: Berechnet den Sättigungsdampfdruck von Wasserdampf über flüssigem Wasser in `[Pa]` bei Temperatur `T` (in `[K]`) nach der Magnus-Formel.
+  - `dew_point(T, RH)`: Berechnet den Taupunkt $T_d$ in `[K]` aus Temperatur `T` und relativer Luftfeuchtigkeit `RH` ($0 \dots 100$).
+  - `seismic_wave_velocities(K, G, rho)`: Berechnet die Ausbreitungsgeschwindigkeiten $[v_p, v_s]$ von Kompressionswellen (P-Wellen) und Scherwellen (S-Wellen) in `[m/s]` aus Kompressionsmodul `K`, Schermodul `G` und Dichte `rho` (unterstützt `[kg/m^3]` und `[g/cm^3]`).
+
+---
+
 ## Stochastik & Fitting
 
 - **Verteilungen:** `Normal(mu, sigma)`, `Uniform(low, high)`, `Bernoulli(p)`, `Exponential(rate)`, `Gamma`, `Beta`, `Poisson`, `Dirichlet(alpha)`; `sample(dist)`, `log_prob(dist, value)`. **Binomialkoeffizient:** `binom(n, k)` (n über k). **t-Test:** `ttest_one_sample(x, mu0)`, `ttest_two_sample(x, y)` (Welch) — Rückgabe (t_statistik, p_value).

@@ -27,7 +27,7 @@ DIMENSION_TO_BASE = {
     "amount_of_substance": ("mol", {"mol": 1.0, "mmol": 0.001, "umol": 1e-6, "nmol": 1e-9, "kmol": 1000.0}),
     "luminous_intensity": ("cd", {"cd": 1.0, "mcd": 0.001}),
     # Abgeleitet / häufig
-    "pressure": ("Pa", {"Pa": 1.0, "kPa": 1000.0, "MPa": 1e6, "bar": 1e5, "atm": 101325.0}),
+    "pressure": ("Pa", {"Pa": 1.0, "hPa": 100.0, "kPa": 1000.0, "MPa": 1e6, "GPa": 1e9, "bar": 1e5, "atm": 101325.0}),
     "force": ("N", {"N": 1.0, "kN": 1000.0, "MN": 1e6}),
     "permeability": ("m^2", {"m^2": 1.0, "D": 9.869233e-13, "mD": 9.869233e-16}),  # Darcy: 1 D ≈ 9.87e-13 m²
     "volume": ("L", {"L": 1.0, "mL": 0.001, "dm^3": 1.0, "m^3": 1000.0}),  # dm³ = 1 L, m³ = 1000 L
