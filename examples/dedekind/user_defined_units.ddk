@@ -1,0 +1,72 @@
+// user_defined_units.ddk — `unit NAME = NUMBER[base]` registriert eigene Einheiten.
+//
+// Voraussetzung: die Basiseinheit (rechte Seite) ist Dedekind bereits bekannt
+// (Länge m/cm/km, Masse kg/g/t, Zeit s/min/h, Energie J/kJ, Druck Pa/bar/MPa,
+// Volumen L/mL/m^3, Konzentration M/mol, Permeabilität m^2/D/mD, ...).
+// Mischrechnungen mit Built-in-Einheiten werden automatisch umgerechnet.
+
+// --- Längen aus dem angloamerikanischen System ------------------------------
+unit Foot = 0.3048[m]
+unit Inch = 0.0254[m]
+unit Mile = 1609.344[m]
+unit Yard = 0.9144[m]
+
+// --- Astronomie & Atomphysik -------------------------------------------------
+unit AU       = 1.495978707e11[m]      // astronomische Einheit
+unit ly       = 9.4607304725808e15[m]  // Lichtjahr
+unit Bohr     = 5.29177210903e-11[m]   // Bohr-Radius
+
+// --- Energie / Physik --------------------------------------------------------
+unit eV       = 1.602176634e-19[J]     // Elektronenvolt
+unit calorie  = 4.184[J]               // thermochemische Kalorie
+
+// --- Verkettung: neue Einheit kann auf einer benutzerdefinierten Einheit basieren
+unit MicroInch = 1.0e-6[Inch]
+unit kcal      = 1000.0[calorie]
+unit uDarcy    = 1.0e-6[D]            // Mikro-Darcy (Permeabilität)
+
+fn main() {
+    print("=== Benutzerdefinierte Einheiten (v1.7) ===")
+
+    // 1) Längen mit Mix-Einheiten
+    height = 6[Foot] + 2[Inch]
+    print("Hoehe 6ft 2in = " + str(height))
+
+    // Mile + m: Ergebnis bleibt in der Einheit der LINKEN Seite
+    route = 1[Mile] + 1500[m]
+    print("Route 1 Mile + 1500 m = " + str(route))
+
+    distance_m = 1[Mile] - 100[Foot]
+    print("1 Mile - 100 ft = " + str(distance_m))
+
+    // 2) Astronomische Distanzen
+    sun_neptune = 30.07[AU]
+    print("Sonne-Neptun ~ " + str(sun_neptune))
+
+    proxima = 4.246[ly]
+    print("Proxima Centauri = " + str(proxima))
+
+    // 3) Energien
+    ionisation_H = 13.6[eV]
+    print("H-Ionisation = " + str(ionisation_H))
+
+    food = 250[kcal]
+    print("Mahlzeit = " + str(food))
+
+    // 4) Verkettete Einheiten
+    micron = 100[MicroInch]
+    print("100 microinch = " + str(micron))
+
+    // 5) Bohr-Radius mit SI-Anfrage mischen
+    atom_box = 5[Bohr] + 1e-10[m]
+    print("5 Bohr + 1 Aengstrom = " + str(atom_box))
+
+    // 6) Permeabilität: D und mD sind Built-in, uDarcy ist user-defined
+    perm = 50[mD] + 1[D]
+    print("50 mD + 1 D = " + str(perm))
+
+    fine_perm = 2000[uDarcy] + 1[mD]
+    print("2000 uDarcy + 1 mD = " + str(fine_perm))
+}
+
+main()

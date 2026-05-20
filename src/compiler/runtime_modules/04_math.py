@@ -940,3 +940,297 @@ def pappus_volume_horizontal(f, a, b, y0, n=100):
 # --- Standard Library: Uncertainty Propagation (Gaussian) ---
 # Fehlerfortpflanzung für Wissenschaftler: value ± std; Gauß'sche Näherung für +, -, *, /, ^.
 
+
+
+def partial(u, x, order=1):
+    """Berechnet partielle Ableitung(en) von `u` nach `x` via Autograd.
+
+    Anders als `grad(fn, x)` (das eine Funktion an einer Stelle differenziert)
+    arbeitet `partial` mit BEREITS BERECHNETEN Tensoren: `u = net(x)` wurde
+    ausgewertet, `x` traegt `requires_grad=True`. Liefert Ôêéu/Ôêéx.
+
+    - `u`: torch.Tensor (Skalar oder beliebige Form); wird ggf. summiert fuer
+       skalare Backward-Aggregation, sodass der Gradient elementweise Ôêéu_i/Ôêéx bleibt.
+    - `x`: Leaf-Tensor mit requires_grad=True (typisch via `.with_grad()`).
+    - `order`: Ableitungsordnung (1, 2, ...). Rekursive Anwendung.
+
+    Beispiel ÔÇö Heat-Equation Residuum:
+        x = linspace(0, 1, 100).reshape(-1, 1).with_grad()
+        u = net(x)
+        u_x  = partial(u, x)
+        u_xx = partial(u, x, order=2)
+        residual = u_t - alpha * u_xx
+    """
+    if not isinstance(u, torch.Tensor):
+        raise TypeError(f"partial: u muss torch.Tensor sein, bekam {type(u).__name__}.")
+    if not isinstance(x, torch.Tensor):
+        raise TypeError(f"partial: x muss torch.Tensor sein, bekam {type(x).__name__}.")
+    if not x.requires_grad:
+        raise ValueError(
+            "partial: x.requires_grad ist False. Markiere den Eingabe-Tensor mit "
+            "`.with_grad()` (z. B. `x = linspace(0,1,N).reshape(-1,1).with_grad()`)."
+        )
+    cur = u
+    for _ in range(int(order)):
+        target = cur if cur.dim() == 0 else cur.sum()
+        grads = torch.autograd.grad(
+            target, x, create_graph=True, retain_graph=True, allow_unused=False
+        )[0]
+        if grads is None:
+            raise ValueError(
+                "partial: Ableitung ist None. `u` haengt vermutlich nicht von `x` ab "
+                "(z. B. Konstante uebergeben, oder Vorwaerts-Pass hat den Graph verloren)."
+            )
+        cur = grads
+    return cur
+
+class MultiVector:
+    """3D Geometric Algebra G(3,0) Multivector mit 8 reellen Komponenten.
+
+    Komponenten-Indizes (Bit-Pattern, kanonisch):
+        0 = Skalar (1)
+        1 = e1     2 = e2     4 = e3        (Vektoren)
+        3 = e12    5 = e13    6 = e23       (Bivektoren ÔÇö orientierte Flaechen)
+        7 = e123                              (Pseudoskalar ÔÇö orientiertes Volumen)
+
+    Operationen:
+        a + b, a - b, -a                  : komponentenweise
+        a * b                              : geometrisches Produkt (zentrale GA-Operation)
+        scalar * a, a * scalar             : Skalar-Multiplikation
+        a.wedge(b)                         : outer/wedge product (Grad-Erhoehung)
+        a.dot(b)                           : inner/dot product (Grad-Reduktion)
+        a.reverse()                        : Reverse ÔÇö Sign pro Grad k: (-1)^(k(k-1)/2)
+        a.grade(n)                         : Extrahiert nur Grad-n-Teil
+        a.norm()                           : sqrt(<a * ~a>_0)
+    """
+    BASIS_NAMES = ["", "e1", "e2", "e12", "e3", "e13", "e23", "e123"]
+    GRADES = [0, 1, 1, 2, 1, 2, 2, 3]  # Anzahl Bits pro Index = Grad
+
+    __slots__ = ("c",)
+
+    def __init__(self, components=None):
+        if components is None:
+            self.c = [0.0] * 8
+        elif isinstance(components, MultiVector):
+            self.c = list(components.c)
+        else:
+            comps = list(components)
+            if len(comps) != 8:
+                raise ValueError(
+                    f"MultiVector erwartet 8 Komponenten, bekam {len(comps)}."
+                )
+            self.c = [float(x) for x in comps]
+
+    @staticmethod
+    def _gp_basis(a_bits, b_bits):
+        """Geometrisches Produkt zweier Basis-Blades in G(3,0):
+        Liefert (sign, result_bits). In G(3,0) annihilieren sich identische
+        Faktoren (e_i * e_i = +1), daher result = a XOR b. Vorzeichen aus
+        der Anzahl noetiger Swaps."""
+        sign = 1
+        for i in range(2, -1, -1):
+            if a_bits & (1 << i):
+                for j in range(i):
+                    if b_bits & (1 << j):
+                        sign = -sign
+        return sign, a_bits ^ b_bits
+
+    def __add__(self, other):
+        if isinstance(other, (int, float)):
+            r = MultiVector(self.c)
+            r.c[0] += float(other)
+            return r
+        if isinstance(other, MultiVector):
+            return MultiVector([a + b for a, b in zip(self.c, other.c)])
+        return NotImplemented
+    def __radd__(self, other): return self.__add__(other)
+
+    def __sub__(self, other):
+        if isinstance(other, (int, float)):
+            r = MultiVector(self.c)
+            r.c[0] -= float(other)
+            return r
+        if isinstance(other, MultiVector):
+            return MultiVector([a - b for a, b in zip(self.c, other.c)])
+        return NotImplemented
+    def __rsub__(self, other):
+        if isinstance(other, (int, float)):
+            r = MultiVector()
+            r.c[0] = float(other)
+            return r - self
+        return NotImplemented
+
+    def __neg__(self):
+        return MultiVector([-x for x in self.c])
+
+    def __mul__(self, other):
+        if isinstance(other, (int, float)):
+            return MultiVector([x * float(other) for x in self.c])
+        if isinstance(other, MultiVector):
+            r = [0.0] * 8
+            for i in range(8):
+                ai = self.c[i]
+                if ai == 0.0:
+                    continue
+                for j in range(8):
+                    bj = other.c[j]
+                    if bj == 0.0:
+                        continue
+                    sign, k = MultiVector._gp_basis(i, j)
+                    r[k] += sign * ai * bj
+            return MultiVector(r)
+        return NotImplemented
+    def __rmul__(self, other):
+        if isinstance(other, (int, float)):
+            return self.__mul__(other)
+        return NotImplemented
+
+    def grade(self, n):
+        """Extrahiert den Grad-n-Teil (0..3)."""
+        n = int(n)
+        return MultiVector([c if g == n else 0.0
+                            for c, g in zip(self.c, MultiVector.GRADES)])
+
+    def reverse(self):
+        """Reverse: kehrt die Reihenfolge aller Basisvektoren um.
+        Sign pro Grad k: (-1)^(k(k-1)/2). Fuer 3D: Grad 0,1: +, Grad 2,3: -."""
+        signs = [(-1) ** (g * (g - 1) // 2) for g in MultiVector.GRADES]
+        return MultiVector([s * c for s, c in zip(signs, self.c)])
+
+    def wedge(self, other):
+        """Outer (wedge) product: nur Grad-erhoehende Anteile des geom. Produkts.
+        a ^ b hat Grad |grade(a) + grade(b)| (sofern nicht reduzierend)."""
+        if isinstance(other, (int, float)):
+            return MultiVector([c * float(other) for c in self.c])
+        if not isinstance(other, MultiVector):
+            return NotImplemented
+        r = [0.0] * 8
+        for i in range(8):
+            ai = self.c[i]
+            if ai == 0.0:
+                continue
+            for j in range(8):
+                bj = other.c[j]
+                if bj == 0.0:
+                    continue
+                sign, k = MultiVector._gp_basis(i, j)
+                if MultiVector.GRADES[k] == MultiVector.GRADES[i] + MultiVector.GRADES[j]:
+                    r[k] += sign * ai * bj
+        return MultiVector(r)
+
+    def dot(self, other):
+        """Inner (dot) product: Grad-reduzierende Anteile des geom. Produkts.
+        a . b hat Grad ||grade(a) - grade(b)||."""
+        if isinstance(other, (int, float)):
+            r = MultiVector(self.c)
+            return r * float(other) if False else MultiVector([float(other) * self.c[0] if i == 0 else 0.0 for i in range(8)])
+        if not isinstance(other, MultiVector):
+            return NotImplemented
+        r = [0.0] * 8
+        for i in range(8):
+            ai = self.c[i]
+            if ai == 0.0:
+                continue
+            for j in range(8):
+                bj = other.c[j]
+                if bj == 0.0:
+                    continue
+                gi, gj = MultiVector.GRADES[i], MultiVector.GRADES[j]
+                if gi == 0 or gj == 0:
+                    continue  # Skalar . X ist nur Multiplikation, nicht inner
+                sign, k = MultiVector._gp_basis(i, j)
+                if MultiVector.GRADES[k] == abs(gi - gj):
+                    r[k] += sign * ai * bj
+        return MultiVector(r)
+
+    def norm(self):
+        """Magnitude = sqrt(<a * ~a>_0)."""
+        s = (self * self.reverse()).c[0]
+        if s < 0:
+            return 0.0
+        return s ** 0.5
+
+    def scalar_part(self):
+        """Reine Skalar-Komponente als float."""
+        return float(self.c[0])
+
+    def __repr__(self):
+        parts = []
+        for i, c in enumerate(self.c):
+            if abs(c) < 1e-12:
+                continue
+            name = MultiVector.BASIS_NAMES[i]
+            if not name:
+                parts.append(f"{c:g}")
+            elif abs(c - 1.0) < 1e-12:
+                parts.append(name)
+            elif abs(c + 1.0) < 1e-12:
+                parts.append(f"-{name}")
+            else:
+                parts.append(f"{c:g}*{name}")
+        if not parts:
+            return "MultiVector(0)"
+        return " + ".join(parts).replace("+ -", "- ")
+
+def scalar(s):
+    """Konstruktor: skalarer Multivector."""
+    mv = MultiVector()
+    mv.c[0] = float(s)
+    return mv
+
+def vector(x, y, z):
+    """Konstruktor: 3D-Vektor als Multivector (x*e1 + y*e2 + z*e3)."""
+    mv = MultiVector()
+    mv.c[1] = float(x)  # e1
+    mv.c[2] = float(y)  # e2
+    mv.c[4] = float(z)  # e3
+    return mv
+
+def bivector(b12, b13, b23):
+    """Konstruktor: Bivektor (orientierte Flaeche) b12*e12 + b13*e13 + b23*e23."""
+    mv = MultiVector()
+    mv.c[3] = float(b12)
+    mv.c[5] = float(b13)
+    mv.c[6] = float(b23)
+    return mv
+
+def pseudoscalar(s):
+    """Konstruktor: Pseudoskalar (orientiertes Volumen) s*e123."""
+    mv = MultiVector()
+    mv.c[7] = float(s)
+    return mv
+
+def multivector(s, e1, e2, e3, e12, e13, e23, e123):
+    """Konstruktor: vollstaendiger Multivector mit allen 8 Komponenten."""
+    return MultiVector([s, e1, e2, e12, e3, e13, e23, e123])
+
+def rotor(angle, b12, b13, b23):
+    """Konstruiert einen Rotor R = exp(-angle/2 * B) fuer Rotation in der durch
+    B = b12*e12 + b13*e13 + b23*e23 gegebenen Ebene.
+
+    Der Bivektor sollte normalisiert sein (||B|| = 1) ÔÇö typisch:
+      e12-Ebene (xy):  rotor(angle, 1, 0, 0)
+      e13-Ebene (xz):  rotor(angle, 0, 1, 0)
+      e23-Ebene (yz):  rotor(angle, 0, 0, 1)
+
+    Anwendung via `rotate(v, R)`: v' = R v ~R.
+    """
+    import math as _math
+    half = float(angle) / 2.0
+    cos_h = _math.cos(half)
+    sin_h = _math.sin(half)
+    r = MultiVector()
+    r.c[0] = cos_h
+    r.c[3] = -sin_h * float(b12)
+    r.c[5] = -sin_h * float(b13)
+    r.c[6] = -sin_h * float(b23)
+    return r
+
+def rotate(v, R):
+    """Rotation eines Multivectors via Sandwich-Produkt: v' = R v ~R.
+    Fuer einen Unit-Rotor (||R|| = 1) ist ~R = R^{-1}."""
+    if not isinstance(v, MultiVector):
+        raise TypeError(f"rotate: v muss MultiVector sein, bekam {type(v).__name__}.")
+    if not isinstance(R, MultiVector):
+        raise TypeError(f"rotate: R muss MultiVector sein, bekam {type(R).__name__}.")
+    return R * v * R.reverse()

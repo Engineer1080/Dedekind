@@ -6,10 +6,10 @@ from typing import Optional, Dict, Any, List
 from .ast_nodes import (
     Node, Program, BinaryOp, Literal, Quantity, Identifier,
     Call, MemberAccess, ReturnStmt, Assignment, ItemAssignment, FunctionDef,
-    IfStmt, WhileStmt, ForStmt, VectorLiteral, Subscript,
+    IfStmt, WhileStmt, ForStmt, VectorLiteral, Subscript, UnitDef,
     CompileError,
 )
-from .ml_runtime import ADDITIVE_DIMENSION_UNIT_SETS, _parse_unit_to_base_dims
+from .ml_runtime import ADDITIVE_DIMENSION_UNIT_SETS, _parse_unit_to_base_dims, _register_user_unit
 
 # Bekannte Konstanten und ihre Einheiten (wie in ml_runtime)
 KNOWN_UNITS: Dict[str, str] = {
@@ -210,9 +210,10 @@ def _check_expr(node: Node, env: Environment, filepath: Optional[str]) -> None:
     if isinstance(node, FunctionDef):
         env.push()
         arg_units = getattr(node, "arg_units", None)
+        type_params = set(getattr(node, "type_params", []) or [])
         if arg_units:
             for arg_name, u in zip(node.args, arg_units):
-                if u is not None:
+                if u is not None and u not in type_params:
                     env.set(arg_name, u)
         for stmt in node.body:
             _check_stmt(stmt, env, filepath)
@@ -223,6 +224,8 @@ def _check_expr(node: Node, env: Environment, filepath: Optional[str]) -> None:
 def _check_stmt(stmt: Node, env: Environment, filepath: Optional[str]) -> None:
     if stmt is None:
         return
+    if isinstance(stmt, UnitDef):
+        return  # bereits in check_units() vorab registriert
     if isinstance(stmt, Assignment):
         _check_expr(stmt.value, env, filepath)
         # Type Inference für Variablenzuweisung
@@ -247,6 +250,17 @@ def check_units(ast: Program, filepath: Optional[str] = None) -> None:
     Durchläuft das AST und wirft CompileError, wenn bei + oder -
     zwei Größen mit inkompatiblen Einheiten verwendet werden.
     """
+    # Pre-Pass: alle UnitDef-Statements registrieren, damit Checker neue Units kennt
+    for stmt in ast.statements:
+        if isinstance(stmt, UnitDef):
+            try:
+                _register_user_unit(stmt.name, stmt.factor, stmt.base_unit)
+            except Exception as e:
+                raise CompileError(
+                    f"Einheit registrieren fehlgeschlagen: {e}",
+                    line=getattr(stmt, "line", None),
+                    filepath=filepath,
+                )
     global_env = Environment()
     for stmt in ast.statements:
         _check_stmt(stmt, global_env, filepath)

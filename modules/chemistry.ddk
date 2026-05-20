@@ -1,0 +1,111 @@
+// modules/chemistry.ddk — Dedekind-Standardbibliothek: Chemie-Convenience.
+// Aktivierung: `use chemistry`
+//
+// Ergänzt die eingebauten chemischen Konstanten (R_gas, N_A, F_faraday) und
+// Funktionen (michaelis_menten, arrhenius, chemical_equilibrium, ...) um
+// Säure-Base, Verdünnung, Gasgesetze und Elektrochemie.
+
+// Numerische Werte ohne Einheiten — vermeidet Einheiten-Fehler in Mischrechnungen.
+// Für unit-tracked Rechnungen bitte die globalen R_gas, F_faraday als Quantity nutzen.
+R_GAS_NUM = 8.314462618        // J/(K*mol)
+F_FARADAY_NUM = 96485.33212    // C/mol
+
+// --- Säure / Base ------------------------------------------------------------
+
+fn pH_from_concentration(H) {
+    // pH = -log10([H+])
+    return -log10(H)
+}
+
+fn pOH_from_concentration(OH) {
+    return -log10(OH)
+}
+
+fn henderson_hasselbalch(pKa, base_conc, acid_conc) {
+    // pH = pKa + log10([A-]/[HA])
+    return pKa + log10(base_conc / acid_conc)
+}
+
+fn ka_from_pka(pKa) {
+    return pow(10.0, -pKa)
+}
+
+fn pka_from_ka(Ka) {
+    return -log10(Ka)
+}
+
+// --- Verdünnung & Mischung ---------------------------------------------------
+
+fn dilution_volume(c1, v1, c2) {
+    // c1*v1 = c2*v2 -> v2 = c1*v1/c2
+    return c1 * v1 / c2
+}
+
+fn molarity(mol, volume_L) {
+    return mol / volume_L
+}
+
+fn molality(mol_solute, mass_solvent_kg) {
+    return mol_solute / mass_solvent_kg
+}
+
+fn mass_fraction(mass_solute, mass_total) {
+    return mass_solute / mass_total
+}
+
+// --- Gasgesetze --------------------------------------------------------------
+
+fn boyle_volume(p1, v1, p2) {
+    // p1*v1 = p2*v2  (isotherm)
+    return p1 * v1 / p2
+}
+
+fn charles_volume(v1, t1, t2) {
+    // v1/t1 = v2/t2  (isobar, T in K)
+    return v1 * t2 / t1
+}
+
+fn gay_lussac_pressure(p1, t1, t2) {
+    // p1/t1 = p2/t2  (isochor)
+    return p1 * t2 / t1
+}
+
+fn combined_gas_law_v2(p1, v1, t1, p2, t2) {
+    // p1*v1/t1 = p2*v2/t2 -> v2 = (p1*v1*t2)/(t1*p2)
+    return (p1 * v1 * t2) / (t1 * p2)
+}
+
+fn van_der_waals_pressure(n, T, V, a, b) {
+    // (P + a*n^2/V^2) * (V - n*b) = n*R*T  ->  P
+    // R_GAS_NUM ist dimensionslos; rufende Seite ist für konsistente Einheiten verantwortlich.
+    return (n * R_GAS_NUM * T) / (V - n * b) - a * (n * n) / (V * V)
+}
+
+// --- Elektrochemie -----------------------------------------------------------
+
+fn nernst_potential(E0, n, Q, T) {
+    // E = E0 - (R*T)/(n*F) * ln(Q); dimensionslose Konstanten, Aufrufer sorgt für Konsistenz.
+    return E0 - (R_GAS_NUM * T) / (n * F_FARADAY_NUM) * log(Q)
+}
+
+fn nernst_potential_25C(E0, n, Q) {
+    // bei 298.15 K: -(R*T)/F ≈ -0.0257 V; mit log10: -0.0592/n * log10(Q)
+    return E0 - 0.0592 / n * log10(Q)
+}
+
+fn faraday_mass(I, t, M, n_e) {
+    // m = I*t*M / (n_e * F) - Elektrolyse, abgeschiedene Masse
+    return I * t * M / (n_e * F_FARADAY_NUM)
+}
+
+// --- Reaktionsordnungen ------------------------------------------------------
+
+fn half_life_first_order(k) {
+    // t_{1/2} = ln(2) / k
+    return log(2.0) / k
+}
+
+fn half_life_second_order(k, c0) {
+    // t_{1/2} = 1/(k*c0)
+    return 1.0 / (k * c0)
+}

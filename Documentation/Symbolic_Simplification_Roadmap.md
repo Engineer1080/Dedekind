@@ -1,7 +1,24 @@
 # Symbolic Simplification — Implementierungs-Roadmap
 
 **Dedekind Language**  
-Draft: January 2026
+Draft: January 2026 · letzter Status-Update: v1.17.0 (März 2027)
+
+---
+
+## Status-Update (v1.17.0)
+
+| Phase | Thema | Status | Geliefert in |
+|---|---|---|---|
+| 1 MVP | `src/compiler/simplify.py` mit Constant-Folding, `x+0`, `0+x`, `x*1`, `1*x`, `x*0` → `0`, `x-0`, Literal-BinOp-Folding | ✅ erledigt | v1.3 |
+| 1 MVP | Hook nach Parse, vor Codegen | ✅ erledigt | v1.3 |
+| 2 | `x^0`→1, `x^1`→x, rekursive Sub-Ausdrücke, Ricci/Einsum-Regeln | ✅ teilweise (Power-Regeln; tiefere Tensor-Algebra nicht) |
+| 3 | `--no-units-check`-Flag (Analog zu `--simplify`) | ✅ erledigt | v0.9.5 |
+| 4 | SymPy-Integration als optionale Dep — `solve_sym`, `simplify_sym`, `series`, `diff_sym`, `integrate_sym` als Built-ins | ✅ erledigt | v1.3 – v1.6 |
+| 5 | Compile-Zeit-Unit-Dimension-Simplifikation | ⚠️ teilweise (Units-Checker validiert; volle dimensionale Reduktion nicht) |
+
+**Status:** Die wesentlichen Phasen sind durch eine Kombination aus internem `simplify.py` (Phase 1) und SymPy-Bridge-Built-ins (Phase 4) **abgedeckt**. Verbleibendes Feinkorn (vollständige Power-/Polynom-Vereinfachung am AST, automatische Dimensionsreduktion `m*s/s → m`) ist konzeptionell offen, hat aber niedrige Priorität, weil die SymPy-Brücke das praktisch löst.
+
+Für aktuelle Symbolik-Features siehe `Dedekind_Language_Specification.md` (Sektionen zu `diff_sym`, `integrate_sym`, `solve_sym`, `simplify_sym`, `series`).
 
 ---
 

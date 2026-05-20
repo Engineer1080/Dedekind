@@ -1,0 +1,58 @@
+// quantum_vqe.ddk — Variationeller Quanteneigensolver (VQE) in Dedekind (v1.21)
+// Demonstriert: vqe_circuit(), statevec_expectation(), vqe_energy()
+// Problem: Minimiere ⟨H⟩ fuer H = 0.5*ZI - 0.5*IZ + 0.3*XX
+// Kleinster Eigenwert: analytisch ca. -0.866 (Singlett-Zustand)
+
+// Hamiltonian als Pauli-Terme: [(Koeffizient, Pauli-String)]
+// H = 0.5 ZI - 0.5 IZ + 0.3 XX  (2-Qubit-System)
+
+n_qubits = 2
+n_layers = 2
+
+// Initiale Parameter (alle Null -> Produktzustand |00⟩)
+params_init = [0.1, 0.2, 0.3, 0.4]
+
+// Manuelle VQE-Schleife mit Gradient-Descent
+learning_rate = 0.1
+params = params_init
+
+print("VQE-Optimierung fuer H = 0.5*ZI - 0.5*IZ + 0.3*XX")
+print("Initiale Parameter:", params)
+
+i = 0
+while i < 20 {
+    qc = vqe_circuit(n_qubits, n_layers, params)
+    terms = [[0.5, "ZI"], [-0.5, "IZ"], [0.3, "XX"]]
+    e0 = vqe_energy(params, n_qubits, n_layers, terms)
+
+    // Numerischer Gradient via Parametershift
+    grad_params = [0.0, 0.0, 0.0, 0.0]
+    shift = 0.1
+    j = 0
+    while j < 4 {
+        p_plus = [params[0], params[1], params[2], params[3]]
+        p_minus = [params[0], params[1], params[2], params[3]]
+        p_plus[j]  = params[j] + shift
+        p_minus[j] = params[j] - shift
+        e_plus  = vqe_energy(p_plus,  n_qubits, n_layers, terms)
+        e_minus = vqe_energy(p_minus, n_qubits, n_layers, terms)
+        grad_params[j] = (e_plus - e_minus) / (2.0 * shift)
+        j = j + 1
+    }
+
+    params[0] = params[0] - learning_rate * grad_params[0]
+    params[1] = params[1] - learning_rate * grad_params[1]
+    params[2] = params[2] - learning_rate * grad_params[2]
+    params[3] = params[3] - learning_rate * grad_params[3]
+
+    if i == 0 or i == 9 or i == 19 {
+        print("Iteration", i + 1, "Energie:", e0)
+    }
+    i = i + 1
+}
+
+qc_final = vqe_circuit(n_qubits, n_layers, params)
+terms_final = [[0.5, "ZI"], [-0.5, "IZ"], [0.3, "XX"]]
+e_final = vqe_energy(params, n_qubits, n_layers, terms_final)
+print("Finale Energie:", e_final)
+print("Optimierte Parameter:", params)

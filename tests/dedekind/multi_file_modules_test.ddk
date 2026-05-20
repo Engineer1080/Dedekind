@@ -1,0 +1,60 @@
+// Tests fuer Multi-File-Module mit Sichtbarkeit (v1.19).
+//
+// Voraussetzung: modules/geometry/area.ddk und modules/geometry/volume.ddk
+// existieren mit pub-Annotationen.
+
+use geometry.area
+use geometry.volume
+use math      // Backward-Kompatibilitaet: kein pub -> alles public
+
+fn approx(a, b, tol) {
+    d = a - b
+    if d < 0 { d = -d }
+    return d < tol
+}
+
+fn main() {
+    // --- 1. Gepunktete Modulpfade resolven ---
+    assert(approx(circle_area(1.0), 3.14159265, 1e-6), "circle_area aus geometry.area")
+    assert(approx(triangle_area(4.0, 3.0), 6.0, 1e-9), "triangle_area aus geometry.area")
+
+    // --- 2. Zweites Modul aus gleichem Pfad ---
+    assert(approx(cube_volume(3.0), 27.0, 1e-9), "cube_volume aus geometry.volume")
+    assert(approx(sphere_volume(1.0), 4.18879, 1e-4), "sphere_volume aus geometry.volume")
+
+    // --- 3. Sichtbarkeits-Check: private Funktionen unsichtbar ---
+    private_inaccessible = false
+    try {
+        bad = priv_pi()
+        private_inaccessible = false
+    } catch e {
+        private_inaccessible = true
+    }
+    assert(private_inaccessible, "priv_pi() ist von aussen unsichtbar")
+
+    private_inaccessible2 = false
+    try {
+        bad2 = priv_four_thirds()
+        private_inaccessible2 = false
+    } catch e {
+        private_inaccessible2 = true
+    }
+    assert(private_inaccessible2, "priv_four_thirds() ist unsichtbar")
+
+    private_inaccessible3 = false
+    try {
+        bad3 = priv_half(10.0)
+        private_inaccessible3 = false
+    } catch e {
+        private_inaccessible3 = true
+    }
+    assert(private_inaccessible3, "priv_half() ist unsichtbar")
+
+    // --- 4. Backward-Kompatibilitaet: Modul ohne pub -> alles public ---
+    assert(fibonacci(10) == 55, "fibonacci aus math (Legacy-Modus)")
+    assert(approx(hypotenuse(3.0, 4.0), 5.0, 1e-6), "hypotenuse aus math")
+    assert(approx(PHI, 1.618033, 1e-4), "PHI aus math")
+
+    print("multi_file_modules_test: 10 Asserts bestanden")
+}
+main()

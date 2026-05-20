@@ -2,7 +2,7 @@
 
 **Language Specification v0.2**  
 Mario Michael Heinrich · github.com/Engineer1080  
-Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit), v0.9.6 (Math-Funktionen), v0.9.7 (Chemie/Biologie: mol, L, M, ppm), v0.9.8 (Convenience, Elemente, Datei-I/O, Netzwerk, JSON), v1.0.0 (Release), v1.0.1–v1.0.6 (Patch), v1.2.6 (Winkel rad/deg, deg_to_rad, rad_to_deg), v1.2.7 (Dirichlet-Verteilung, dirichlet_function), v1.2.8 (Dedekind-Schnitte, Dedekind-Ringe, Riemann-Zeta, Riemann-Summen), v1.2.9 (Betragsstriche, Rotationskörper, logische Operatoren), v1.3.0 (integrate_sym, Lagrange/Hamilton, Lotka-Volterra, chemisches Gleichgewicht), v1.3.1 (Medizin, Pharmakologie, Epidemiologie), v1.4.0 (Modul-System `use`, Seed/data_hash, DataFrame+CSV/Parquet/HDF5/NetCDF, Unit-aware Plots, `@units`-Signaturen mit `fn f(x: [m]) -> [J]`, Dict-Literale), v1.5.0 (benchmark/profile/time_block, jit (torch.compile), sde_solve (Euler-Maruyama, Milstein), least_squares, minimize_constrained, milp, FEM-Primitiven mesh_unit_square/fem_assemble_*/fem_poisson_2d, `arange` int64), v1.6.0 (solve_sym/simplify_sym/series, cg/gmres/bicgstab + jacobi_/ilu_preconditioner, export_notebook (HTML/MD), print_table (markdown/latex/csv/plain) mit UncertainQuantity-±), v1.6.3 (Hardware-Beschleunigung & JIT-Optimierung (torch.compile), statischer Compile-Time Unit Checker, Runtime-Konsolidierung in ml_runtime.py)
+Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Probabilistic, PDE), v0.9 (Distributions, Integration), v0.9.1 (Dokumentation, Run-Examples), v0.9.2 (pi, e, CODATA), v0.9.3 (Uncertainty, Fitting), v0.9.4 (HMC, LaTeX-Export), v0.9.5 (Bessere Fehlermeldungen, Einheiten Compile-Zeit), v0.9.6 (Math-Funktionen), v0.9.7 (Chemie/Biologie: mol, L, M, ppm), v0.9.8 (Convenience, Elemente, Datei-I/O, Netzwerk, JSON), v1.0.0 (Release), v1.0.1–v1.0.6 (Patch), v1.2.6 (Winkel rad/deg, deg_to_rad, rad_to_deg), v1.2.7 (Dirichlet-Verteilung, dirichlet_function), v1.2.8 (Dedekind-Schnitte, Dedekind-Ringe, Riemann-Zeta, Riemann-Summen), v1.2.9 (Betragsstriche, Rotationskörper, logische Operatoren), v1.3.0 (integrate_sym, Lagrange/Hamilton, Lotka-Volterra, chemisches Gleichgewicht), v1.3.1 (Medizin, Pharmakologie, Epidemiologie), v1.4.0 (Modul-System `use`, Seed/data_hash, DataFrame+CSV/Parquet/HDF5/NetCDF, Unit-aware Plots, `@units`-Signaturen mit `fn f(x: [m]) -> [J]`, Dict-Literale), v1.5.0 (benchmark/profile/time_block, jit (torch.compile), sde_solve (Euler-Maruyama, Milstein), least_squares, minimize_constrained, milp, FEM-Primitiven mesh_unit_square/fem_assemble_*/fem_poisson_2d, `arange` int64), v1.6.0 (solve_sym/simplify_sym/series, cg/gmres/bicgstab + jacobi_/ilu_preconditioner, export_notebook (HTML/MD), print_table (markdown/latex/csv/plain) mit UncertainQuantity-±), v1.7.0 (Standardbibliothek-Module physics/stats/chemistry/biology/math/ml via `use`, benutzerdefinierte Einheiten `unit NAME = FAKTOR[basis]` mit Verkettung & Compile-Zeit-Registrierung, Quantity-Vergleichsoperatoren `<` `<=` `>` `>=` `==` `!=` mit Auto-Konvertierung), v1.8.0 (Source-Mapping fuer Runtime-Fehler — Tracebacks zeigen `.ddk`-Zeilen + Code-Auszug; `pyimport <mod[.sub]> [as alias]` als Fluchtluke in PyPI; `dedekind_exec` Helper in `compiler.py`), v1.8.1 (Purity-Check: `print`/`plot`/`write_file`/`http_*`/I/O-Built-ins in `jit`/`grad`/`fit`/`metropolis`/`hmc`/`sde_solve`-Argumenten werden zur Compile-Zeit transitiv erkannt und blockiert; Opt-Out via `--no-purity-check`), v1.9.0 (Shape-Annotationen `Scalar`/`Vector[n]`/`Matrix[m,n]`/`Tensor[...]` mit symbolischen Dimensionen, gebunden und konsistenzgeprueft pro Call; `unwrap(x)` strippt Quantity/UncertainQuantity-Wrapper fuer Hot-Path-Performance), v1.10.0 (PINN-Primitive `partial(u, x, order=n)` fuer ∂u/∂x via Autograd, ergaenzend zu `grad(fn, x)`; `fit()`-Hardening fuer PINN-Data-Listen mit gemischten Shapes und Collocation-grad-Reset), v1.11.0 (`graph_laplacian(adj, normalized=False)` fuer kombinatorische und normalisierte Laplace-Matrix; dichte/sparse Eingabe, direkt einsetzbar in cg/gmres/bicgstab/eigh), v1.12.0 (`Graph[N, E]` als Shape-Annotation fuer torch_geometric.data.Data-aehnliche Objekte; symbolische Knoten/Kanten-Konsistenz; kombinierbar mit Unit-Annotationen auf anderen Argumenten), v1.13.0 (deklarative MILP-DSL via `Variable(name, lower, upper, integer)` und `optimize_milp(objective, constraints, sense)` mit Operator-Overloading und unit-aware Constraints), v1.14.0 (Molekulardynamik-Bruecke `md_simulate_lj(...)` via OpenMM mit dimensionsvalidierten Force-Field-Parametern; neue MD-Einheiten nm/Angstrom/pm, amu, fs/ps/ns, sowie neue Dimension molar_energy mit kJ/mol/kcal/mol/eV/Hartree), v1.15.0 (`LabeledTensor[lat, lon, time]` als Shape-Annotation fuer xarray.DataArray; `labeled_tensor(data, dims, coords, attrs)` zur Konstruktion; Achsen-Namen-Validierung Reihenfolge-irrelevant), v1.16.0 (Bioinformatik-Quick-Wins: `Sequence[DNA]/Sequence[RNA]/Sequence[Protein]` mit Alphabet-Validierung, native Bio-Built-ins gc_content/transcribe/translate/reverse_complement/k_mer_count, Cheminformatik via pyimport rdkit mit smiles_descriptors/lipinski_rule_of_five), v1.17.0 (Sprachreife: `try { ... } catch e { ... }` Error-Handling, Python-Style Slicing `x[a:b]/x[:b]/x[a:]/x[::s]/x[a:b:s]/x[:]`), v1.18.0 (3D Geometric/Clifford Algebra G(3,0) nativ: `MultiVector`-Klasse mit 8 Komponenten, Konstruktoren `scalar/vector/bivector/pseudoscalar/rotor`, Operationen `wedge/dot/reverse/grade/norm`, `rotate(v, R)`-Sandwich-Produkt), v1.19.0 (Multi-File-Module: `use foo.bar.baz` -> `modules/foo/bar/baz.ddk`; `pub fn` fuer Export-Kontrolle mit backward-kompatiblem Legacy-Modus), v1.20.0 (Generics / Typ-Parameter `fn name<T, U, ...>(args)` mit polymorphen Einheits-Variablen, Auto-Konvertierung bei kompatibler Dimension, durchgesetzt vom Compiler — anders als Pythons rein dokumentarische `typing.TypeVar`), v1.21.0 (Quantum Computing Bruecke: native QuantumCircuit-Klasse, reiner Statevector-Simulator, Bell/GHZ/Grover Convenience, VQE-Optimizer, Quanten-Informatik-Utilities fidelity/entropy_von_neumann/schmidt_rank, Shape-Annotationen Qubit[N]/StateVec[N], Einheiten eV/meV/THz, optionaler Qiskit-Export)
 
 ---
 
@@ -22,16 +22,7 @@ Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Prob
 12. [Implementation Roadmap](#12-implementation-roadmap)
 13. [Technical Foundation](#13-technical-foundation)
 14. [Conclusion](#14-conclusion)
-15. [**Physical Units and Universal Constants (v0.6)**](#15-physical-units-and-universal-constants-v06) (incl. §15.7 ODE, §15.8 Probabilistic, §15.9 PDE, §15.10 Integration & Math v0.9, §15.11 Uncertainty & Fitting)
-    - [15.12 LaTeX-Export & Unicode Console](#1512-latex-export--unicode-console)
-    - [15.13 Chemistry & Biology Elements](#1513-chemistry--biology-elements)
-    - [15.14 File I/O, Network & JSON APIs](#1514-file-io-network--json-apis)
-    - [15.15 Medicine, Pharmacology & Epidemiology](#1515-medicine-pharmacology--epidemiology)
-    - [15.16 Modul-System, Reproduzierbarkeit & DataFrames](#1516-modul-system-reproduzierbarkeit--dataframes)
-    - [15.17 Benchmarking, JIT, SDEs & FEM](#1517-benchmarking-jit-sdes--fem)
-    - [15.18 Symbolics, Sparse Krylov Solvers & Publishing](#1518-symbolics-sparse-krylov-solvers--publishing)
-    - [15.19 Hardware-Beschleunigung & Unit Checking (v1.6.3)](#1519-hardware-beschleunigung--unit-checking-v163)
-
+15. [**Physical Units and Universal Constants (v0.6)**](#15-physical-units-and-universal-constants-v06) (incl. §15.7 ODE, §15.8 Probabilistic, §15.9 PDE, §15.10 Integration & Math v0.9)
 
 ---
 
@@ -302,524 +293,798 @@ Examples: \(\int_0^1 x^2\,dx = 1/3\), \(\int_0^\pi \sin(x)\,dx = 2\); see `examp
 - **`fit(loss_fn, params_init, data, method="gd"|"mcmc", lr=0.01, steps=500)`**: Minimizes `loss_fn(params, data)` with respect to `params`. `params_init` is the initial parameter tensor (or list); `data` is passed to `loss_fn`. With `method="gd"` (default), gradient descent is used (in-place updates); with `method="mcmc"`, Metropolis-Hastings is used (returns posterior samples). Returns the optimal parameters (tensor) for GD, or samples tensor for MCMC.
 - Example: linear regression \(y = a\,x + b\); see `examples/dedekind/curve_fitting.ddk`.
 
-### 15.12 LaTeX-Export & Unicode Console
+### 15.12 Standard Library Modules and User-Defined Units (v1.7)
 
-Dedekind prioritizes publication-quality output and scientific presentation. Math formulas can be automatically compiled into LaTeX notation or displayed as beautiful Unicode glyphs in compatible consoles.
+**Standard library modules** live in `modules/` as plain `.ddk` files and are loaded with `use NAME`. Built-ins (`sin`, `pi`, `ode_solve`, `michaelis_menten`, `c`, `R_gas`, …) remain globally available without any import; modules are strictly additive.
 
-#### Functions and Options
+- **`use physics`** — `kinetic_energy`, `momentum`, `pendulum_period`, `spring_period`, `newton_gravity`, `escape_velocity`, `orbital_period`, `relativistic_gamma`/`relativistic_energy`, `coulomb_force`, `capacitor_energy`, `ohms_law_voltage`, `ideal_gas_pressure`/`ideal_gas_volume`, `rms_speed`, `blackbody_radiance`, `wave_speed`, `doppler_classical`, plus dimensionless numeric constants `C_NUM`, `G_NUM`, `K_B_NUM`, `HBAR_NUM`, `K_E_NUM`, `R_GAS_NUM`, `SIGMA_SB_NUM`.
+- **`use stats`** — `z_score`, `cohens_d`, `pooled_std`, `hedges_g`, `glass_delta`, `standard_error_mean`, `ci_normal_mean`, `ci_proportion`, `r_squared`, `mse`/`rmse`/`mae`, `coefficient_of_variation`, `standardize`, `relative_error`.
+- **`use chemistry`** — `pH_from_concentration`, `pOH_from_concentration`, `henderson_hasselbalch`, `ka_from_pka`/`pka_from_ka`, `dilution_volume`, `molarity`, `molality`, `mass_fraction`, `boyle_volume`, `charles_volume`, `gay_lussac_pressure`, `combined_gas_law_v2`, `van_der_waals_pressure`, `nernst_potential`/`nernst_potential_25C`, `faraday_mass`, `half_life_first_order`/`half_life_second_order`; dimensionless `R_GAS_NUM`, `F_FARADAY_NUM`.
+- **`use biology`** — `exponential_growth`, `doubling_time`, `growth_rate_from_doubling`, `gompertz_growth`, `von_bertalanffy`, `population_change_logistic`, `carrying_capacity`, `kleibers_law`, `allometric_scaling`, `bmr_harris_benedict`, `bmi`, `hardy_weinberg_freq`, `fitness_selection_coefficient`, `mutation_drift_balance`, `r_naught_sir`, `herd_immunity_threshold`.
+- **`use math`** — constants `PHI`, `TAU`; sequences `fibonacci`, `harmonic_sum`, `geometric_sum`; number theory `lcm`, `is_perfect_square`, `digital_root`; geometry `circle_area`, `circle_circumference`, `sphere_volume`, `sphere_surface`, `cylinder_volume`, `cone_volume`, `hypotenuse`, `law_of_cosines_c`; helpers `lerp`, `clamp_scalar`, `sigmoid`, `softplus`.
+- **`use ml`** — activations `leaky_relu`, `elu`, `swish`, `gelu_approx`; losses `mse_loss`, `mae_loss`, `binary_crossentropy`; metrics `accuracy`, `precision_binary`, `recall_binary`, `f1_score`.
 
-| Function / CLI Option | Signature / Usage | Description |
-|:---|:---|:---|
-| `export_to_latex(source)` | `export_to_latex(source: string) -> string` | Parses a Dedekind source code string and transpiles the mathematical equations into standard LaTeX math blocks. |
-| `--latex` | CLI option: `python -m src.compiler.compiler <file.ddk> --latex` | Instructs the compiler to output a transpiled LaTeX representation of the code's mathematical expressions to standard output. |
-| `print_latex(s)` | `print_latex(s: string) -> nil` | Renders mathematical LaTeX expressions directly in compatible scientific consoles (e.g., Dedekind Studio or Jupyter QtConsole) using Unicode characters and symbols. |
-
-#### Code Example
-
-```dedekind
-fn main() {
-    // Renders as a beautiful formula in the console
-    print_latex("Integral von a bis b: \\int_a^b f(x) \\, dx")
-    
-    source_expr = "y = (sin(x)^2 + cos(x)^2) / sqrt(x^2 + y^2)"
-    latex_out = export_to_latex(source_expr)
-    print(latex_out) // y = \frac{\sin^{2}\left(x\right) + \cos^{2}\left(x\right)}{\sqrt{x^{2} + y^{2}}}
-}
-main()
-```
-
----
-
-### 15.13 Chemistry, Biology & Bioinformatics
-
-Dedekind contains built-in domain-specific APIs for chemistry, biology, and bioinformatics, supporting molar mass calculations, chemical stoichiometry, sequence alignments, and structural parsing.
-
-#### Extended Units & Chemical Conventions
-
-*   **Pressure Units:** `bar` and `atm` are fully integrated into the physical units engine. They auto-convert to standard Pascals (`Pa`) during compile-time verification and runtime calculations:
-    *   $1\text{ bar} = 10^5\text{ Pa}$
-    *   $1\text{ atm} = 101325\text{ Pa}$
-*   **Mass Concentration:** Supports `% w/v` (`percent_wv`), `g/L`, and `mg/mL`. These units are dimensionally consistent with $[kg/m^3]$ and automatically scale:
-    *   $1\% \text{ w/v} = 10\text{ g/L} = 10\text{ mg/mL}$
-*   **pH Calculations:** The pH value is calculated based on the logarithmic activity of free hydronium ions:
-    *   $\text{pH} = -\log_{10}([H^+])$
-    *   $[H^+] = 10^{-\text{pH}}$ (with concentration $[H^+]$ in `[M]` or `[mol/L]`).
-
-#### Built-in Chemistry & Bioinformatics Functions
-
-| Function | Signature | Description |
-|:---|:---|:---|
-| `atomic_mass(symbol)` | `atomic_mass(symbol: string) -> Quantity [g/mol]` | Returns the IUPAC standard atomic mass of a chemical element by its symbol. Over 50 common elements are supported. |
-| `atomic_number(symbol)` | `atomic_number(symbol: string) -> int` | Returns the atomic number (number of protons) of the specified chemical element. |
-| `concentration_to_pH(c)` | `concentration_to_pH(c: Quantity) -> float` | Converts hydronium ion concentration $[H^+]$ in $[M]$ (or $[mol/L]$) to pH value. |
-| `pH_to_concentration(pH)` | `pH_to_concentration(pH: float) -> Quantity [M]` | Converts a pH value into hydronium ion concentration in $[M]$. |
-| `balance_equation(reactants, products)` | `balance_equation(reactants: string, products: string) -> (list[int], list[int])` | Balances a chemical reaction equation using singular value decomposition (SVD) on the stoichiometry matrix. Returns lists of stoichiometric coefficients for reactants and products. |
-| `smiles_molecular_weight(smiles)` | `smiles_molecular_weight(smiles: string) -> Quantity [g/mol]` | Computes the molecular weight of a molecule from its SMILES representation. |
-| `lipinski_descriptors(smiles)` | `lipinski_descriptors(smiles: string) -> dict` | Evaluates Lipinski's Rule of Five. Returns a dictionary with keys `"molecular_weight"`, `"logp"`, `"hbd"`, `"hba"`, `"violations"`, and `"pass"`. |
-| `pubchem_get_molecular_formula(name)` | `pubchem_get_molecular_formula(name: string) -> string` | Retrieves the chemical molecular formula for a compound name from PubChem. |
-| `chembl_get_ic50(target, compound)` | `chembl_get_ic50(target: string, compound: string) -> Quantity [nM]` | Queries the ChEMBL database for the IC50 activity value of a compound against a specific target. |
-| `smith_waterman_alignment(seq1, seq2, match_score, mismatch_penalty, gap_penalty)` | `smith_waterman_alignment(seq1: string \| Tensor, seq2: string \| Tensor, match_score: float, mismatch_penalty: float, gap_penalty: float) -> dict` | Computes local sequence alignment using PyTorch. Returns a dictionary with keys `"score"`, `"aligned_seq1"`, and `"aligned_seq2"`. |
-| `protein_structure_parse(path_or_content)` | `protein_structure_parse(path_or_content: string) -> DataFrame` | Parses a PDB or mmCIF protein structure file (or content) into a unit-aware `DataFrame` with `"angstrom"` units for `"x"`, `"y"`, and `"z"` columns. |
-
-#### Code Example
+**User-defined units** are declared at top level with the `unit` keyword (a *soft* keyword — `q.unit` member access and `unit="V"` kwargs remain valid):
 
 ```dedekind
-fn main() {
-    // 1. Molare Massen bestimmen
-    c_mass = atomic_mass("C")
-    h_mass = atomic_mass("H")
-    print(c_mass) // 12.011[g/mol]
-    
-    // 2. pH-Wert Berechnungen
-    h_conc = 1.0e-3[M]
-    ph_val = concentration_to_pH(h_conc)
-    print(ph_val) // 3.0
-    
-    h_back = pH_to_concentration(7.0)
-    print(h_back) // 1.0e-7[M]
-    
-    // 3. Stöchiometrie ausgleichen: Photosynthese
-    // CO2 + H2O -> C6H12O6 + O2
-    coeffs = balance_equation("CO2 + H2O", "C6H12O6 + O2")
-    react_coeffs = coeffs[0]
-    prod_coeffs  = coeffs[1]
-    
-    print(react_coeffs) // [6, 6]
-    print(prod_coeffs)  // [1, 6]
-
-    // 4. Chemoinformatics & Databases
-    mw = smiles_molecular_weight("CCO")
-    print(mw) // 46.068[g/mol]
-
-    lip = lipinski_descriptors("CCO")
-    print(lip["pass"]) // 1.0 (True)
-
-    formula = pubchem_get_molecular_formula("aspirin")
-    print(formula) // "C9H8O4"
-
-    ic50 = chembl_get_ic50("COX-1", "aspirin")
-    print(ic50) // e.g. 100000.0[nM]
-
-    // 5. Sequence & Structural Biology
-    align = smith_waterman_alignment("TGCATG", "GGCA", 2.0, -1.0, -1.0)
-    print(align["score"]) // 6.0
-    print(align["aligned_seq1"]) // "GCA"
-
-    pdb_data = "ATOM      1  N   ALA A   1      11.111  22.222  33.333  1.00 15.00           N"
-    df = protein_structure_parse(pdb_data)
-    x_coords = df.column_with_unit("x")
-    print(x_coords[0]) // 11.111[angstrom]
-}
-main()
+unit Foot      = 0.3048[m]
+unit Mile      = 1609.344[m]
+unit eV        = 1.602176634e-19[J]
+unit kcal      = 1000.0[calorie]      // chaining: calorie must be declared first
+unit Bohr      = 5.29177210903e-11[m]
+unit Darcy     = 9.869233e-13[m^2]    // permeability
 ```
 
----
+Rules:
 
-### 15.14 File I/O, Network & JSON APIs
+- The base unit (right-hand side bracket) must already be known to Dedekind: either an SI/derived base unit or a previously-declared user unit.
+- The unit is registered in `DIMENSION_TO_BASE` under the dimension that owns the base unit. `Foot`, `Mile` join `length`; `eV`, `calorie`, `kcal` join `energy`; `Darcy` joins `permeability`.
+- Arithmetic with built-in units in the same dimension is automatic: `1[Mile] + 1500[m]` ⇒ `1.93[Mile]` (result follows left-hand unit).
+- Chains (`unit MicroInch = 1e-6[Inch]`) are resolved transitively, so the factor stored is `1e-6 * 0.0254` against the SI base `m`.
+- Pre-pass in `check_units()` registers all `UnitDef` statements before any expression check; `_rebuild_additive_unit_sets()` mutates the shared `ADDITIVE_DIMENSION_UNIT_SETS` list in-place so the compile-time checker and the runtime stay consistent.
 
-To facilitate building robust data pipelines, Dedekind provides built-in utilities for interacting with the filesystem, making HTTP requests, and parsing/generating JSON documents.
+**Quantity comparison operators** (v1.7): `Quantity` supports `<`, `<=`, `>`, `>=`, `==`, `!=`, `__hash__`. Same-dimension operands (e.g. `cm` vs `m`) are converted to the dimension's base unit before comparison; mixed dimensions raise `ValueError`. Enables `if pressure < 1[atm] { ... }`.
 
-#### API Reference
+Examples: `examples/dedekind/stdlib_modules_demo.ddk`, `examples/dedekind/user_defined_units.ddk`. Tests: `tests/dedekind/user_defined_units_test.ddk`, `tests/dedekind/stdlib_{physics,stats,chemistry,biology_math_ml}_test.ddk`.
 
-| Function | Signature | Description |
-|:---|:---|:---|
-| `read_file(path)` | `read_file(path: string) -> string` | Reads the full text of a file in UTF-8 encoding. |
-| `write_file(path, content)` | `write_file(path: string, content: string) -> nil` | Writes the specified string content to a file in UTF-8 encoding. |
-| `file_exists(path)` | `file_exists(path: string) -> bool` | Checks if a file exists at the specified path. |
-| `http_get(url)` | `http_get(url: string) -> string` | Performs a synchronous HTTP GET request and returns the response body as a string. |
-| `http_post(url, data)` | `http_post(url: string, data: string \| dict \| list) -> string` | Performs a synchronous HTTP POST request, encoding dictionary/list data as JSON if necessary, and returns the response. |
-| `json_parse(s)` | `json_parse(s: string) -> dict \| list \| primitive` | Parses a JSON-formatted string into native Dedekind types (Dict, List, etc.). |
-| `json_stringify(obj)` | `json_stringify(obj: any) -> string` | Formats a Dedekind object (e.g., Dict, List, Quantity) into a standard JSON string. |
+### 15.13 Python Interop and Source-Mapped Tracebacks (v1.8)
 
-#### Code Example
+**`pyimport`** — direct access to the PyPI ecosystem. Syntax:
 
 ```dedekind
-fn main() {
-    file_path = "dedekind_test_data.json"
-    
-    // Check, create, and read file
-    if not file_exists(file_path) {
-        config = {"api_url": "https://api.github.com", "version": 1.6}
-        write_file(file_path, json_stringify(config))
-    }
-    
-    content_str = read_file(file_path)
-    parsed = json_parse(content_str)
-    print(parsed["api_url"]) // https://api.github.com
-    
-    // Simple HTTP integration
-    response = http_get("https://api.github.com/zen")
-    print(response)
-}
-main()
+pyimport scipy.special as sp
+pyimport numpy as np
+pyimport math                  // alias defaults to "math"
+pyimport scipy.stats as st
 ```
 
----
+The codegen emits `import MODULE as ALIAS` at the statement position; values are accessed as `alias.name(...)` and mix freely with Dedekind built-ins. `pyimport` is a *soft* keyword (only recognized at statement start; existing identifiers named `pyimport` remain valid). No dimension/shape inference is applied to returned values — the caller is responsible for unit consistency.
 
-### 15.15 Medicine, Pharmacology & Epidemiology
+**Source-mapped runtime tracebacks** — every runtime exception originating from generated Python code is rewritten so the traceback points to the original `.ddk` file and line, including a snippet of the user's source. Example:
 
-Dedekind exposes specialized, lightweight tools for mathematical biology, pharmacokinetic models, epidemiological simulations, and biostatistics.
+```
+Traceback (most recent call last):
+  File "demo.ddk", line 16, in <module>
+    main()
+  File "demo.ddk", line 12, in main
+    s = outer(data)
+  File "demo.ddk", line 7, in inner
+    return arr[0] + arr[1] + arr[99]
+IndexError: index 99 is out of bounds for dimension 0 with size 3
+```
 
-#### Domain Functions
+Implementation:
 
-| Function | Signature | Description |
-|:---|:---|:---|
-| `hill_equation(dose, Emax, EC50, n)` | `hill_equation(dose: float, Emax: float, EC50: float, n: float) -> float` | Computes the pharmacodynamic response using the Hill equation: $E = \frac{E_{max} \cdot \text{dose}^n}{EC_{50}^n + \text{dose}^n}$. |
-| `one_compartment_pk(C0, ke, t)` | `one_compartment_pk(C0: float, ke: float, t: Tensor) -> Tensor` | Evaluates a single-compartment intravenous bolus pharmacokinetic model: $C(t) = C_0 \cdot e^{-k_e \cdot t}$. |
-| `two_compartment_pk(C0, k12, k21, ke, t)` | `two_compartment_pk(C0: float, k12: float, k21: float, ke: float, t: Tensor) -> Tensor` | Evaluates a two-compartment intravenous bolus pharmacokinetic model (with central and peripheral compartments) over a time grid. Fully differentiable. |
-| `half_life(ke)` | `half_life(ke: float) -> float` | Returns the biological half-life calculated as $t_{1/2} = \frac{\ln(2)}{k_e}$. |
-| `sir_model(S0, I0, R0, beta, gamma, t)` | `sir_model(S0: float, I0: float, R0: float, beta: float, gamma: float, t: Tensor) -> (Tensor, Tensor, Tensor)` | Simulates the classical SIR compartmental epidemic model over a time grid using Runge-Kutta numerical integration. Returns grids for Susceptible (S), Infectious (I), and Recovered (R). |
-| `basic_reproduction_number(beta, gamma)` | `basic_reproduction_number(beta: float, gamma: float) -> float` | Computes the basic reproduction ratio $R_0 = \frac{\beta}{\gamma}$. |
-| `confidence_interval(x, alpha)` | `confidence_interval(x: Tensor, alpha: float) -> (float, float)` | Computes the $1 - \alpha$ confidence interval for the mean of sample tensor `x` using a Student-t distribution. |
-| `odds_ratio(a, b, c, d)` | `odds_ratio(a: int, b: int, c: int, d: int) -> float` | Calculates the odds ratio from a $2 \times 2$ contingency table with counts representing true/false exposure and outcome groups. |
-| `sensitivity_specificity(TP, FN, FP, TN)` | `sensitivity_specificity(TP: int, FN: int, FP: int, TN: int) -> dict` | Returns a dictionary containing `"sensitivity"`, `"specificity"`, `"ppv"`, and `"npv"` based on classification counts. |
+- The codegen writes `# ddk:<line>` markers before every statement (top-level, `if`/`else`, `while`, `for`, function body).
+- `dedekind_exec(generated_code, ddk_file, exec_globals, ddk_source)` in `src/compiler/compiler.py` compiles with a virtual filename, runs the code, and on any `BaseException` rewrites `exc.args` to a translated multi-line traceback before re-raising the *original* exception type. So `except AssertionError`, `except ValueError`, `except IndexError` etc. continue to work — only the user-visible message is enriched.
+- Frames inside the inlined runtime are shown as `<dedekind-runtime>` (so users see the call chain but not the implementation noise); frames from external libraries (scipy, torch) keep their real filenames.
+- Used by `run_tests.py`, `run_examples.py`, `python -m compiler` and the Jupyter kernel.
 
-#### Code Example
+Examples: `examples/dedekind/pyimport_demo.ddk`, `examples/dedekind/source_mapping_demo.ddk`. Test: `tests/dedekind/pyimport_test.ddk`.
+
+### 15.14 Purity Check for Pure-Context Calls (v1.8.1)
+
+A new compile-time pass `src/compiler/purity_check.py` rejects programs that pass impure functions into contexts that require purity. Concretely, the first (or first two) argument(s) of these built-ins must be pure:
+
+| Built-in | Pure args | Reason |
+|----------|-----------|--------|
+| `jit(fn)` | `fn` | `torch.compile` traces a graph; side effects cause graph breaks |
+| `grad(fn, x)` | `fn` | Autograd tape; side effects are recorded but not differentiable |
+| `fit(loss_fn, ...)` | `loss_fn` | Called many times per training step |
+| `metropolis(log_prior, log_likelihood, ...)` | both | Called thousands of times per chain |
+| `hmc(log_prior, log_likelihood, ...)` | both | Same |
+| `sde_solve(drift, diffusion, ...)` | both | Called at every Euler-Maruyama / Milstein step |
+
+A function is *impure* if its body — transitively through any helper function it calls — invokes any of these built-ins:
+
+```
+print, plot, scatter, contour, print_latex, print_table,
+write_file, read_file, file_exists,
+http_get, http_post,
+read_csv, write_csv, read_parquet, write_parquet,
+read_hdf5, write_hdf5, read_netcdf,
+export_notebook
+```
+
+The check is transitive via a function table: if `loss` calls `helper` and `helper` calls `print`, the error reports `"... ruft 'print()' ... in 'helper'"`. Cycle protection via a `visited` set. Calls via `pyimport`ed modules (e.g. `np.savetxt(...)`) are not analyzed — the caller is responsible.
+
+Opt-out for special cases (debug builds, code migration):
+
+- API: `compile_source(source, check_purity=False)`
+- CLI: `python -m compiler datei.ddk --no-purity-check`
+
+Example: `examples/dedekind/purity_check_demo.ddk`. Test: `tests/dedekind/purity_check_test.ddk`.
+
+### 15.15 Shape Annotations and Quantity Stripping (v1.9)
+
+**Shape annotations** declare tensor ranks and dimensions in function signatures, catching broadcasting bugs and shape mismatches that silently produce wrong results in plain NumPy/PyTorch:
 
 ```dedekind
-fn main() {
-    // 1. Pharmacology: PK Profile and Half-life
-    ke = 0.15 // Elimination rate [1/h]
-    t_halflife = half_life(ke)
-    print(t_halflife) // ~4.62 hours
-    
-    t_grid = linspace(0.0, 24.0, 10)
-    c_profile = one_compartment_pk(100.0, ke, t_grid)
-    print(c_profile)
-
-    c_profile_2comp = two_compartment_pk(100.0, 0.05, 0.02, ke, t_grid)
-    print(c_profile_2comp)
-    
-    // 2. Epidemiology: SIR Simulation
-    t_sir = linspace(0.0, 30.0, 30)
-    sir_out = sir_model(0.99, 0.01, 0.0, 0.3, 0.1, t_sir)
-    S = sir_out[0]
-    I = sir_out[1]
-    R = sir_out[2]
-    
-    r0 = basic_reproduction_number(0.3, 0.1)
-    print(r0) // 3.0
-    
-    // 3. Biostatistics: Diagnostics
-    metrics = sensitivity_specificity(95, 5, 10, 890)
-    print(metrics["sensitivity"]) // 0.95
-    print(metrics["specificity"]) // 0.9888
-}
-main()
+fn dot_product(a: Vector[3], b: Vector[3]) -> Scalar { ... }
+fn matvec(M: Matrix[2, 3], v: Vector[3]) -> Vector[2] { ... }
+fn weighted_dot(x: Vector[N], w: Vector[N]) -> Scalar { ... }
+fn forward(x: Tensor[batch, 28, 28]) -> Tensor[batch, 10] { ... }
 ```
 
----
+Four type constructors:
 
-### 15.16 Modul-System, Reproduzierbarkeit & DataFrames
+| Type | Rank | Example |
+|------|------|---------|
+| `Scalar` | 0-D | `Scalar` |
+| `Vector[n]` | 1-D | `Vector[3]`, `Vector[N]` |
+| `Matrix[m, n]` | 2-D | `Matrix[2, 3]`, `Matrix[M, N]` |
+| `Tensor[d1, d2, ...]` | N-D | `Tensor[batch, 28, 28]` |
 
-To support structured modular programming, reproducible scientific studies, and structured data manipulation, Dedekind v1.4.0 introduced modules, global seeds, unit-aware DataFrames, and plotting integrations.
+Dimensions are either integer literals (`3`) or identifiers (`N`, `batch`). Identifiers are **symbolic dimensions** bound at call time: the first argument using `N` sets the value, subsequent arguments with the same `N` must match. Mismatch raises `ValueError` with the `.ddk` file and line (via the source-mapped traceback infrastructure from v1.8).
 
-#### Keywords, Modifiers and Functions
+Implementation:
 
-##### `use` Module Loading
-Modules are loaded dynamically using the `use <module_name>` statement. The compiler searches for module files in the current folder, a global `modules/` folder, or `examples/dedekind/`. It instantiates function scopes and constants under the loaded namespace.
+- Parser extends `_parse_signature_annotation()` to dispatch between `[unit]` (existing) and shape (new) annotations after `:` or `->`.
+- AST: `FunctionDef` gains `arg_shapes: Optional[List[Optional[List]]]` and `return_shape: Optional[List]` fields. Each shape is a list mixing `int` (literal dim) and `str` (symbolic dim).
+- Codegen emits at function entry:
+  ```python
+  _shape_env = {}
+  _check_shape(arg1, [3], "fn", "arg1", _shape_env)
+  _check_shape(arg2, ['N', 2], "fn", "arg2", _shape_env)
+  ```
+  and wraps each `return val` as `return _check_return_shape(val, [...], "fn", _shape_env)`.
+- Runtime `_check_shape` calls `_shape_of(value)` which works on `torch.Tensor` (`.shape`), Python lists/tuples (recursive consistency check), and scalars (`()`); returns `None` for unrecognized types (no check).
+- Unit annotations and shape annotations can be combined: unit-coercion runs first, then shape validation.
 
-##### `@units` Annotations
-Functions can rigorously define physical unit signatures for parameters and return types:
-```dedekind
-@units
-fn kinetic_energy(m: [kg], v: [m/s]) -> [J] {
-    return 0.5 * m * v^2
-}
-```
-At runtime, inputs are automatically converted to the declared units (e.g. `2000[g]` is converted to `2.0[kg]`), and the return expression is validated to guarantee dimensional correctness (in this case, $\text{kg} \cdot \text{m}^2/\text{s}^2 \equiv \text{J}$).
-
-##### Reproducibility Built-ins
-- `seed(n)`: Sets a uniform, reproducible seed across the random number generators of Python (`random`), NumPy, and PyTorch.
-- `data_hash(x)`: Computes a deterministic SHA-256 hash of any data structure (tensor, list, dataframe, quantity, or dictionary) to verify data pipeline integrity.
-
-##### DataFrames and Tabular I/O
-- `DataFrame(data, units=None)`: Constructs a column-oriented table. The `data` argument is a dictionary mapping column keys to lists/tensors. `units` can specify a list or dictionary of expected column physical units.
-- `read_csv(path, units=None, has_header=True)`: Parses CSV files. If headers contain brackets (e.g. `Time [s]`, `Temp [K]`), units are extracted automatically.
-- `write_csv(path, df, include_units_in_header=True)`: Exports DataFrames to disk.
-- Custom high-performance IO connectors for Parquet (`read_parquet`/`write_parquet`), HDF5 (`read_hdf5`/`write_hdf5`), and NetCDF (`read_netcdf`) are supported when respective optional libraries are present.
-
-##### Unit-Aware Plotting
-Built-in functions `plot(x, y, ...)`, `scatter(x, y, ...)`, and `contour(X, Y, Z, ...)` automatically check if input lists contain `Quantity` values. They dynamically extract unit dimensions and append them to axis labels (e.g. producing label `Time [s]`).
-
-#### Code Example
+**Quantity stripping** for hot paths — new built-in `unwrap(x)` that strips unit/uncertainty wrappers, returning raw values:
 
 ```dedekind
-use physics_helpers // loads modules/physics_helpers.ddk
-
-@units
-fn power_dissipated(v: [V], r: [ohm]) -> [W] {
-    return (v^2) / r
+fn pure_loss(params, data) {
+    a = unwrap(params[0])   // Quantity(2.0, "m") -> 2.0
+    b = unwrap(params[1])
+    x = unwrap(data[0])
+    y = unwrap(data[1])
+    diff = a * x + b - y    // all-float arithmetic
+    return diff * diff
 }
-
-fn main() {
-    // 1. Seed & Hash
-    seed(42)
-    t_rand = random_matrix(3, 3)
-    h_val = data_hash(t_rand)
-    print(h_val)
-    
-    // 2. Unit-aware Functions
-    p = power_dissipated(12[V], 4[ohm])
-    print(p) // 36.0[W]
-    
-    // 3. DataFrame and CSV I/O
-    df_data = {
-        "Zeit": [0.0, 1.0, 2.0],
-        "Geschwindigkeit": [0.0, 9.81, 19.62]
-    }
-    df = DataFrame(df_data, {"Zeit": [s], "Geschwindigkeit": [m/s]})
-    
-    write_csv("fall_data.csv", df)
-    
-    df_read = read_csv("fall_data.csv")
-    print(df_read.column_with_unit("Geschwindigkeit"))
-}
-main()
+fast_loss = jit(pure_loss)
 ```
 
----
+Behavior of `unwrap`:
 
-### 15.17 Benchmarking, JIT, SDEs & FEM
+| Input | Output |
+|-------|--------|
+| `Quantity(value, unit)` | `value` (float) |
+| `UncertainQuantity(value, std, unit)` | `value` (std discarded) |
+| 0-D `torch.Tensor` | `.item()` |
+| `list`/`tuple` | element-wise `unwrap` (recursive) |
+| anything else | passthrough |
 
-Introduced in v1.5.0, these features expand Dedekind into high-performance computing, stochastics, PDE discretizations, and JIT compilation.
+Rationale: the compile-time units checker has already validated dimensions; at runtime the wrapper adds overhead — invisible for a handful of calls, but significant in MCMC chains with 10 000+ samples or in `torch.compile`-d graphs where Python objects force graph breaks. Calling `unwrap()` at function entry gives the compiler clean Python floats / numpy arrays to optimize.
 
-#### High-Performance Built-ins
+Examples: `examples/dedekind/shape_annotations_demo.ddk`, `examples/dedekind/quantity_stripping_demo.ddk`. Tests: `tests/dedekind/shape_annotations_test.ddk`, `tests/dedekind/quantity_stripping_test.ddk`.
 
-##### Benchmarking & Profiling
-- `benchmark(fn, n=10, warmup=2, label=None)`: Measures execution wall time of function `fn` over `n` iterations, reporting mean, standard deviation, and range.
-- `profile(fn, label=None, top=5)`: Monitors call counts, CPU time, and peak memory allocations.
-- `time_block(label, fn)`: Wraps an arbitrary block of execution or function call for ad-hoc time logging.
-- `jit(fn)`: Wraps `fn` via `torch.compile` (using PyTorch's TorchInductor/Triton backend), translating standard PyTorch/tensor calls into optimized execution paths.
+### 15.16 Physics-Informed Neural Networks (v1.10)
 
-##### Stochastic Differential Equations (SDE)
-- `sde_solve(drift, diffusion, y0, t, method="euler_maruyama", seed_value=None)`: Solves an Itô stochastic differential equation:
-  $$dY = \mu(t, Y)\,dt + \sigma(t, Y)\,dW$$
-  Methods: `"euler_maruyama"` (order 0.5) or `"milstein"` (order 1.0, utilizing central differences for the spatial derivative of the diffusion term).
+PINNs train a neural network so that its output respects a differential equation in addition to (or instead of) data. Dedekind exposes the one primitive that was missing for this workflow:
 
-##### Optimization & Mathematical Programming
-- `least_squares(residuals, x0, jacobian=None, bounds=None, method="trf")`: Standard non-linear least-squares solver.
-- `minimize_constrained(f, x0, constraints=None, bounds=None, method="SLSQP", tol=1e-8)`: General constrained minimization.
-- `milp(c, A_ub=None, b_ub=None, A_eq=None, b_eq=None, bounds=None, integrality=None)`: Solves mixed-integer linear programs using SciPy's high-performance solvers.
+```
+partial(u, x, order=1)
+```
 
-##### Finite Element Method (FEM) 2D Poisson Solver
-- `mesh_unit_square(n)`: Generates a structured triangular finite element mesh on $[0,1]^2$ with $(n+1)^2$ nodes. Returns a dictionary with keys `"nodes"`, `"elements"`, and `"boundary_nodes"`.
-- `fem_assemble_stiffness(mesh)`: Assembles the global Galerkin stiffness matrix $K$ using linear Lagrangian basis functions.
-- `fem_assemble_load(mesh, f_source)`: Assembles the global load/force vector $F$ using function `f_source(x, y)`.
-- `fem_poisson_2d(mesh, f_source, dirichlet_value=0.0)`: Resolves the Poisson boundary value problem $-\Delta u = f$ with constant Dirichlet boundary condition $u|_{\partial \Omega} = u_{Dirichlet}$. Returns a node value tensor of shape $(n+1)^2$.
+Computes ∂u/∂x via `torch.autograd.grad`, where `u` is an already-evaluated tensor and `x` is a leaf tensor with `requires_grad=True` (typically via `.with_grad()`). Complementary to `grad(fn, x)`, which differentiates a *function* at a point.
 
-#### Code Example
+Typical PINN pattern:
 
 ```dedekind
-fn drift_fn(t, y) { return -0.5 * y }
-fn diff_fn(t, y) { return 0.2 * y }
-
-fn compute_poisson() {
-    mesh = mesh_unit_square(10)
-    // -Δu = 1.0 in unit square, u = 0.0 on boundary
-    u_sol = fem_poisson_2d(mesh, fn(x, y) => 1.0, 0.0)
-    print(u_sol)
+fn mlp_eval(params, x) {
+    W1 = params.narrow(0, 0, 10).reshape(1, 10)
+    b1 = params.narrow(0, 10, 10)
+    W2 = params.narrow(0, 20, 10).reshape(10, 1)
+    b2 = params.narrow(0, 30, 1)
+    h = tanh(x @ W1 + b1)
+    return h @ W2 + b2
 }
 
-fn main() {
-    // 1. SDE Simulation
-    t = linspace(0.0, 5.0, 100)
-    y_path = sde_solve(drift_fn, diff_fn, 1.0, t, "milstein", 42)
-    print(y_path)
-    
-    // 2. Optimization: Non-linear Least Squares
-    residuals = fn(x) => [x[0]**2 + x[1] - 11.0, x[0] + x[1]**2 - 7.0]
-    opt_x = least_squares(residuals, [1.0, 1.0])
-    print(opt_x) // [3.0, 2.0]
-    
-    // 3. JIT & Benchmarking
-    fem_jit = jit(compute_poisson)
-    benchmark(fem_jit, 5, 2, "FEM Poisson Solution")
+fn pinn_loss(params, data) {
+    x_bc = data[0]; u_bc = data[1]; x_coll = data[2]
+    u_pred_bc = mlp_eval(params, x_bc)
+    diff_bc = u_pred_bc - u_bc
+    bc_loss = (diff_bc * diff_bc).sum()
+
+    u_coll = mlp_eval(params, x_coll)
+    u_x = partial(u_coll, x_coll)           // first-order: y'
+    u_xx = partial(u_coll, x_coll, order=2) // second-order: y''
+    residual = u_x + u_coll                  // example: y' + y = 0
+    phys_loss = (residual * residual).mean()
+    return bc_loss + phys_loss
 }
-main()
+
+x_coll = linspace(0.0, 1.0, 20).reshape(-1, 1).with_grad()
+params_opt = fit(pinn_loss, random_vector(31) * 0.1, [x_bc, u_bc, x_coll],
+                 method="gd", lr=0.02, steps=2000)
 ```
 
----
+This trains a network to satisfy `y' + y = 0` with `y(0) = 1` — pure physics, no solution data. The analytical answer `exp(-x)` is matched to ~1% accuracy in 2000 steps with a single 10-neuron hidden layer.
 
-### 15.18 Symbolics, Sparse Krylov Solvers & Publishing
+Supporting infrastructure added in v1.10:
 
-Added in v1.6.0, these systems provide symbolic solvers, advanced sparse iterative linear algebra, reproducible notebooks, and publication-ready reporting.
+- `_to_tensor` now tolerates `torch.stack` failures on mixed-shape tensor lists (PINN `data=[x_data, u_data, x_coll]` has different shapes per element); returns the list unchanged in that case.
+- `fit()` zeroes `.grad` on every `requires_grad` tensor in `data` between training steps, preventing memory accumulation on collocation tensors over long PINN runs.
 
-#### API Reference
+What v1.10 **deliberately does not provide** (Stage 3 of the PINN roadmap, future releases):
 
-##### Symbolic Computations (via SymPy)
-- `solve_sym(equation, var)`: Symbolically solves algebraic equations or multi-variable systems (given as strings or equation lists) for `var`. Returns a list of solution strings (or dictionaries for systems).
-- `simplify_sym(expr)`: Performs extensive algebraic, trigonometric, and exponential simplifications on a formula string (e.g. `"sin(x)^2 + cos(x)^2"` $\rightarrow$ `"1"`).
-- `series(expr, var, x0=0, n=6)`: Computes the symbolical Taylor series expansion of `expr` with respect to `var` around point `x0` up to order `n` (returns expansion string without $O$-term).
+- No `.with_physics_loss(pde_fn)` modifier. PINN loss balancing (NTK-based, self-adaptive) is an active research field; a naive built-in would over-promise.
+- No automatic collocation sampling. Users choose `linspace`, `random_vector`, or Latin-hypercube; this is problem-specific.
+- No spectral-bias-mitigation (SIREN, Fourier features). Important for high-frequency PDEs; can be implemented manually in `mlp_eval`.
 
-##### Sparse Krylov Solvers & Preconditioners
-Highly efficient solvers for massive linear systems $A x = b$:
-- `cg(A, b, x0=None, tol=1e-8, max_iter=1000, preconditioner=None)`: Conjugate Gradient for symmetric positive-definite operators.
-- `gmres(A, b, x0=None, tol=1e-8, max_iter=1000, restart=None, preconditioner=None)`: Generalized Minimal Residual for general linear systems.
-- `bicgstab(A, b, x0=None, tol=1e-8, max_iter=1000, preconditioner=None)`: Biconjugate Gradient Stabilized.
-- `jacobi_preconditioner(A)`: Computes a diagonal Jacobi preconditioner $M^{-1} = \text{diag}(A)^{-1}$ to accelerate convergence.
-- `ilu_preconditioner(A, drop_tol=1e-4, fill_factor=10)`: Computes an Incomplete LU factorized preconditioner for general sparse matrices, reducing iteration count by 2 to 10 times.
+Examples: `examples/dedekind/pinn_ode_demo.ddk` (`y' + y = 0`), `examples/dedekind/pinn_oscillator_demo.ddk` (`u'' + u = 0` on [0, π/2], demonstrates `order=2`). Test: `tests/dedekind/partial_test.ddk`.
 
-##### Notebook & Publishing Tools
-- `export_notebook(source_path, output_path=None, format="html", title=None, include_hash=True, capture_plots=True)`: Compiles and runs a `.ddk` script, captures standard output and generated plots, and bundles them into an HTML or Markdown report along with a SHA-256 hash of the code for full auditability.
-- `print_table(rows, headers=None, format="markdown", precision=4, caption=None, label=None)`: Renders tabular arrays/DataFrames. Support formats: `"markdown"`, `"latex"` (generates standard professional publication `booktabs` blocks), `"csv"`, or `"plain"`. `UncertainQuantity` types are formatted as `val ± std [unit]` (or `$val \pm std\,[\mathrm{unit}]$` in LaTeX).
+### 15.17 Graph Laplacian and Spectral Methods (v1.11)
 
-#### Code Example
+The graph Laplacian is the discrete equivalent of the continuous Laplace-Beltrami operator and the entry point to spectral methods on graphs (heat diffusion, clustering, dimensionality reduction, effective resistance, etc.).
 
 ```dedekind
-fn main() {
-    // 1. Symbolics
-    sol = solve_sym("x^2 - 5*x + 6", "x")
-    print(sol) // ["2", "3"]
-    
-    taylor = series("sin(x)", "x", 0, 5)
-    print(taylor) // x - x^3/6
-    
-    // 2. Iterative Solvers
-    A = [[4.0, 1.0], [1.0, 3.0]]
-    b = [1.0, 2.0]
-    M = jacobi_preconditioner(A)
-    x = cg(A, b, preconditioner=M)
-    print(x)
-    
-    // 3. Table Formatting
-    val = uncertain(5.12, 0.03, "m/s")
-    table_rows = [
-        ["Messung 1", val],
-        ["Messung 2", uncertain(4.98, 0.05, "m/s")]
-    ]
-    print_table(table_rows, ["ID", "Wert"], "latex")
-}
-main()
+L = graph_laplacian(adj)                    // combinatorial: L = D - A
+L_sym = graph_laplacian(adj, normalized=true) // symmetric: I - D^{-1/2} A D^{-1/2}
 ```
 
----
+Properties:
 
-### 15.19 Hardware-Beschleunigung & Unit Checking (v1.6.3)
+| Variant | Diagonal | Off-diagonal | Eigenvalues |
+|---------|----------|--------------|-------------|
+| combinatorial | `deg(i)` | `-A[i,j]` | `[0, 2 * max_deg]` |
+| normalized sym | `1` if `deg(i) > 0` | `-A[i,j] / sqrt(deg(i)*deg(j))` | `[0, 2]` |
 
-Version 1.6.3 completes hardware-native and compile-time semantic validation features.
+Input: dense `torch.Tensor` of shape `(N, N)`, sparse COO `torch.Tensor`, or nested Python list. Return follows input sparsity. The resulting Laplacian plugs directly into Dedekind's existing iterative solvers (`cg`, `gmres`, `bicgstab` from v1.6) and eigensolver (`eigh`) — no external graph library required for the core spectral pipeline.
 
-#### Execution Modifiers
-Dedekind compiles expressions using AST-level modifiers to control placement and acceleration strategy:
-- `.gpu()`: Offloads computation to the PyTorch CUDA/Triton backend.
-- `.cpu()`: Explicitly forces execution on the host CPU.
-- `.single()`: Bypasses multi-threaded parallelization for serial debugging.
-- `.sparse()`: Instructs the tensor engine to construct the backing tensor as a sparse Coordinate (COO) or Compressed Sparse Row (CSR) matrix.
-- `.fast()`: Compiles the target block or expression using `torch.compile` / native Triton GPU kernel generators.
-
-#### Static Compile-Time Unit Checker
-The units analyzer (`units_checker.py`) runs as a static compiler pass. Key properties:
-1. **Scope-based Environment Stack**: Track definitions, assignments, and scoping rules across nested blocks (`if`, `while`, `for`, `fn`).
-2. **Canonical Dimensional Analysis**: Reduces compound units to canonical physical representations (e.g. `(m/s)*s` simplifies to `m`), detecting and throwing unit compilation errors (e.g. `1[m] + 1[s]`) at compile-time before any Python execution occurs.
-
-#### Code Example
+**Heat diffusion on a graph** via implicit Euler:
 
 ```dedekind
-@units
-fn fast_diffusion(t: [s], alpha: [m^2/s]) -> [m^2] {
-    // Static compile-time units pass verifies: [s] * [m^2/s] -> [m^2]
-    return t * alpha
+M = I_mat + dt * L
+for step in arange(num_steps) {
+    res = cg(M, u, tol=1e-10)
+    u = res["x"]
 }
-
-fn main() {
-    a = 10.0[m/s]
-    b = 2.0[s]
-    
-    // Automatic inference matches dimensions
-    distance = (a * b).fast() // Compiles via PyTorch Triton kernel generator
-    print(distance) // 20.0[m]
-}
-main()
 ```
 
----
-
-### 15.20 Astrophysics & Cosmology (v1.7.0)
-
-Version 1.7.0 adds first-class support for astrophysics, cosmology, and stellar physics calculations.
-
-#### Domain Functions
-
-| Function | Signature | Description |
-|:---|:---|:---|
-| `solve_kepler(M, e)` | `solve_kepler(M: float/Tensor/Quantity, e: float/Tensor/Quantity) -> Tensor` | Solves Kepler's equation $E - e \sin(E) = M$ using a PyTorch-differentiable Newton-Raphson solver. Accepts mean anomaly `M` in radians (`rad`) or degrees (`deg`). |
-| `redshift_to_velocity(z)` | `redshift_to_velocity(z: float/Tensor/Quantity) -> Quantity/Tensor` | Calculates the relativistic recession velocity $v = c \cdot \frac{(1+z)^2 - 1}{(1+z)^2 + 1}$ for a cosmological redshift $z$. |
-| `schwarzschild_radius(M)` | `schwarzschild_radius(M: float/Tensor/Quantity) -> Quantity/Tensor` | Computes the event horizon radius $R_s = \frac{2GM}{c^2}$ for a mass $M$ (accepts `kg` or solar masses `M_sun`). |
-| `stellar_luminosity(M_solar)` | `stellar_luminosity(M_solar: float/Tensor/Quantity) -> Quantity/Tensor` | Calculates main-sequence stellar luminosity $L$ (in `L_sun`) given stellar mass $M$ (in `M_sun` or `kg`) using a piecewise differentiable function. |
-
-#### New Units
-- `M_sun` (solar mass): $\approx 1.98847 \times 10^{30} \text{ kg}$
-- `L_sun` (solar luminosity): $\approx 3.828 \times 10^{26} \text{ W}$
-
-#### Code Example
+**Spectral partitioning** via the Fiedler vector (eigenvector of the second-smallest eigenvalue):
 
 ```dedekind
-fn main() {
-    // 1. Kepler orbits: Solve ecc anomaly E for M = 90[deg], e = 0.5
-    E = solve_kepler(90.0[deg], 0.5)
-    print(E) // ~1.96 rad (E - 0.5*sin(E) = pi/2)
-
-    // 2. Event horizon of a 10 solar mass black hole
-    Rs = schwarzschild_radius(10.0[M_sun])
-    print(Rs) // ~29532.5[m]
-
-    // 3. Main-sequence stellar luminosity
-    L = stellar_luminosity(1.0[M_sun])
-    print(L) // 1.0[L_sun]
-}
-main()
+res = eigh(L)
+eigvals = res[0]
+eigvecs = res[1]
+fiedler = eigvecs.narrow(1, 1, 1).reshape(-1)
+// sign(fiedler[i]) labels the two clusters
 ```
 
----
+Example: `examples/dedekind/graph_spectral_demo.ddk` (two-cluster graph with bridge edge, demonstrates both heat diffusion asymmetry and Fiedler partitioning). Test: `tests/dedekind/graph_laplacian_test.ddk`.
 
-### 15.21 Meteorology, Climatology & Geosciences (v1.7.0)
+### 15.18 Graph Shape Annotations for GNNs (v1.12)
 
-Version 1.7.0 introduces specialized functions and units for atmospheric physics, weather modeling, climate simulation, and geodynamics.
-
-#### Domain Functions
-
-| Function | Signature | Description |
-|:---|:---|:---|
-| `coriolis_parameter(latitude)` | `coriolis_parameter(latitude: float/Tensor/Quantity) -> Quantity/Tensor` | Calculates the Coriolis parameter $f = 2 \Omega \sin(\phi)$ in `[s^-1]`. Accepts latitude in degrees (`deg`) or radians (`rad`). |
-| `saturated_vapor_pressure(T)` | `saturated_vapor_pressure(T: float/Tensor/Quantity) -> Quantity/Tensor` | Computes the saturation vapor pressure $e_s(T)$ of water vapor over liquid water via the Magnus-Tetens formula. Input temperature is in Kelvin (`K`), output pressure is in Pascals (`Pa`). |
-| `dew_point(T, RH)` | `dew_point(T: float/Tensor/Quantity, RH: float/Tensor/Quantity) -> Quantity/Tensor` | Computes dew point temperature $T_d$ (in Kelvin `K`) from ambient temperature $T$ (in Kelvin `K`) and relative humidity $RH$ (range 0 to 100). |
-| `seismic_wave_velocities(K, G, rho)` | `seismic_wave_velocities(K: float/Tensor/Quantity, G: float/Tensor/Quantity, rho: float/Tensor/Quantity) -> [Quantity/Tensor, Quantity/Tensor]` | Computes compressional P-wave and shear S-wave velocities $[v_p, v_s]$ (in `[m/s]`) from bulk modulus $K$, shear modulus $G$, and density $\rho$. Supports density units `kg/m^3` and `g/cm^3`. |
-
-#### New Units
-- `hPa` (hectopascal): $1 \text{ hPa} = 100 \text{ Pa}$ (pressure dimension)
-- `GPa` (gigapascal): $1 \text{ GPa} = 10^9 \text{ Pa}$ (pressure dimension)
-
-#### Code Example
+Extends the v1.9 shape-annotation system with a new `Graph[N, E]` type that wraps `torch_geometric.data.Data`-like objects:
 
 ```dedekind
-fn main() {
-    // 1. Earth Coriolis parameter at 45 degrees latitude
-    f = coriolis_parameter(45.0[deg])
-    print(f) // ~1.03125e-4[s^-1]
+pyimport torch_geometric.data as pyg_data
+pyimport torch_geometric.nn as pyg_nn
 
-    // 2. Dew point calculation at 20 °C (293.15 K) and 50% relative humidity
-    Td = dew_point(293.15[K], 50.0)
-    print(Td) // ~282.42[K] (9.27 °C)
-
-    // 3. Seismic wave speeds in granite rock (K = 40 GPa, G = 30 GPa, rho = 2.7 g/cm^3)
-    vels = seismic_wave_velocities(40.0[GPa], 30.0[GPa], 2.7[g/cm^3])
-    vp = vels[0]
-    vs = vels[1]
-    print(vp) // ~5443.31[m/s] (P-wave)
-    print(vs) // ~3333.33[m/s] (S-wave)
+fn coordination(g: Graph[N, E]) -> Scalar {
+    return g.num_edges / g.num_nodes
 }
-main()
+
+fn pair_match(g1: Graph[N, E1], g2: Graph[N, E2]) -> Scalar {
+    // beide Graphen muessen die gleiche Knotenzahl N haben
+    return g1.num_nodes + g2.num_nodes
+}
+
+fn gcn_forward(g: Graph[N, E]) {
+    conv = pyg_nn.GCNConv(1, 4)
+    return conv.forward(g.x, g.edge_index)
+}
 ```
 
----
+Implementation:
 
-## Related Documentation and Artifacts
+- Parser: `Graph[N, E]` is added to `_SHAPE_TYPES`. `_parse_shape_annotation` returns `(kind, dims)` tuples; the codegen dispatches `_check_shape` (tensor kinds) vs. `_check_graph_shape` (graph kind).
+- Runtime `_check_graph_shape(value, expected_dims, fn_name, arg_name, shape_env)`: reads `(num_nodes, num_edges)` via `value.num_nodes`/`value.num_edges` (PyG API) with a fallback to `value.x.shape[0]`/`value.edge_index.shape[1]`. Both dims must be `int` or symbolic. Symbolic dims bind into the same `_shape_env` as tensor dims, so a function can require multiple graphs to share a node-count.
+- Validates at call time and at return; mismatch raises `ValueError` with source-mapped traceback (v1.8 infrastructure).
 
-For more details on specific aspects of the Dedekind language, compiler architecture, and feature statuses, see:
-- [Was_Dedekind_aktuell_kann.md](file:///c:/Users/Matrix/AntigravityProjects/Dedekind/Documentation/Was_Dedekind_aktuell_kann.md) - German language status and features checklist.
-- [README.md](file:///c:/Users/Matrix/AntigravityProjects/Dedekind/README.md) - Root language introduction and "What's New" history.
-- [implementation_plan.md](file:///C:/Users/Matrix/.gemini/antigravity/brain/e2d4c92b-811a-45a7-b24a-cd43b2aa2d4e/implementation_plan.md) - Documentation alignment plan details.
-- [task.md](file:///C:/Users/Matrix/.gemini/antigravity/brain/e2d4c92b-811a-45a7-b24a-cd43b2aa2d4e/task.md) - Checklist of the alignment tasks.
+**The USP vs. plain PyG**: combinable with unit annotations on other arguments and return types:
+
+```dedekind
+fn molecular_mass(g: Graph[N, E]) -> [g/mol] {
+    raw = g.x.sum().item()
+    return Quantity(raw, "g/mol")
+}
+
+fn add_mass(m1: [g/mol], m2: [g/mol]) -> [g/mol] {
+    return m1 + m2
+}
+```
+
+PyTorch Geometric has no concept of physical units; mixing `eV` and `kcal/mol` on edge weights is a silent bug there. Dedekind catches it at compile time (via the existing units checker) and at runtime (via the Quantity arithmetic).
+
+What v1.12 **deliberately does not provide** (Stage 3 of the graph roadmap):
+
+- No native message-passing primitive. PyG covers 30+ Conv variants (GCN, GAT, GIN, SAGE, MPNN, EGNN, SchNet, DimeNet, …), three pooling strategies, and dozens of benchmark datasets — a multi-week reimplementation budget for a worse result. `pyimport torch_geometric.nn` is the honest answer for production GNN workflows.
+- Dedekind's contribution to v1.12 is the annotation and unit layer **over** PyG, not a replacement.
+
+Examples: `examples/dedekind/gnn_molecule_demo.ddk` (drug discovery: water molecule with atomic masses in `[g/mol]`, GCNConv), `examples/dedekind/gnn_materials_demo.ddk` (materials: 4-atom FCC unit cell with bond lengths in `[pm]` and binding energy in `[eV]`, GraphConv). Test: `tests/dedekind/graph_shape_test.ddk`.
+
+### 15.19 Declarative MILP DSL with Units (v1.13)
+
+A declarative DSL for (mixed-)integer linear programming. Users write constraints and objective in natural arithmetic notation; Dedekind builds the scipy.optimize.milp problem matrix and validates dimensions.
+
+```dedekind
+x      = Variable("strecke", lower=0[km])
+trucks = Variable("trucks",  lower=1, integer=true)
+
+cost = 2.5 * x + 1000 * trucks
+res  = optimize_milp(cost, [
+    x >= 500[km],
+    trucks * 200[km] >= x
+])
+print(res["strecke"], res["trucks"], res["objective"])
+// 500.0 km, 3 trucks, 4250 EUR
+```
+
+**Variable** parameters:
+
+| Argument | Type | Meaning |
+|----------|------|---------|
+| `name`   | str  | Result key |
+| `lower`  | number or Quantity, optional | Lower bound |
+| `upper`  | number or Quantity, optional | Upper bound |
+| `integer`| bool, default false | Force integer values |
+
+**Operator overloads**:
+
+- `Variable + Variable`, `Quantity * Variable`, `scalar * Variable` → `_MILPExpression`
+- `_MILPExpression + _MILPExpression`, etc. → `_MILPExpression`
+- `Variable >= Quantity`, `_MILPExpression <= number`, etc. → `_MILPConstraint`
+- `Variable * Variable` raises `ValueError` (non-linear)
+
+**optimize_milp** parameters:
+
+| Argument | Type | Meaning |
+|----------|------|---------|
+| `objective` | `_MILPVariable` or `_MILPExpression` | Linear cost function |
+| `constraints` | list of `_MILPConstraint`, optional | Inequality/equality constraints |
+| `sense` | `"minimize"` (default) or `"maximize"` | Optimization direction |
+
+Returns a `dict`:
+
+```python
+{
+    "<var_name>": optimal_value,   # one entry per variable
+    ...,
+    "objective": optimal_objective,
+    "status":    scipy_status_message,
+}
+```
+
+**Unit-awareness as the USP** vs. Gurobi/cvxpy/pyomo/PuLP: every constraint runs through `_milp_units_compat` (which uses the existing v1.7 dimension system). `x >= 500[km]` with `x: Variable(lower=0[km])` validates; `x >= 500[kg]` raises `ValueError: MILP-Einheiten passen nicht in Constraint: [km] vs [kg]`. No other MILP toolkit catches dimensional errors before the solver runs.
+
+The low-level `milp(c, A_ub, b_ub, A_eq, b_eq, bounds, integrality)` from v1.5 stays unchanged; the v1.13 DSL is an additive convenience layer.
+
+Examples: `examples/dedekind/optimize_milp_demo.ddk` (Vehicle Routing, Production Mix, Energy Mix). Test: `tests/dedekind/optimize_milp_test.ddk`.
+
+### 15.20 Molecular Dynamics Bridge to OpenMM (v1.14)
+
+A typed Lennard-Jones MD wrapper around OpenMM with full unit validation of force-field parameters before the C++ kernel runs.
+
+```dedekind
+res = md_simulate_lj(
+    n_particles=27,
+    sigma=3.4[Angstrom],         // alternative input in Å
+    epsilon=0.238[kcal/mol],     // or kJ/mol
+    mass=39.948[amu],
+    temperature=85[K],
+    dt=1[fs],
+    n_steps=200,
+    box_size=2.0[nm],
+    seed=42
+)
+// res["potential_energy"] : Quantity in [kJ/mol]
+// res["kinetic_energy"]   : Quantity in [kJ/mol]
+// res["temperature"]      : Quantity in [K]
+// res["positions"]        : torch.Tensor (n_particles, 3) in nm
+```
+
+Parameters:
+
+| Name | Type | Notes |
+|------|------|-------|
+| `n_particles` | int | |
+| `sigma` | Quantity, length | nm, Å, pm, m |
+| `epsilon` | Quantity, molar energy | kJ/mol, kcal/mol, eV/atom, Hartree/mol |
+| `mass` | Quantity, mass | amu, Da, g, kg |
+| `temperature` | Quantity in K | Langevin bath |
+| `dt` | Quantity, time | fs, ps, ns |
+| `n_steps` | int | integration steps |
+| `box_size` | optional Quantity, length | cubic periodic box |
+| `friction` | float | Langevin friction in 1/ps |
+| `seed` | optional int | reproducible trajectory |
+
+**The USP vs. raw `pyimport openmm`:** every input passes through the v1.7 dimension system before reaching the C++ kernel. `epsilon=0.238[eV]` raises `ValueError: epsilon=0.238[eV] hat falsche Dimension; erwartet kompatibel zu [kJ/mol] (molar_energy)` — in raw OpenMM, mixing eV with kcal/mol is a silent bug that costs hours to diagnose.
+
+Supporting extensions to the dimension system in v1.14:
+
+- **length**: added `nm`, `Angstrom`, `pm`, `fm` to the length dimension table.
+- **mass**: added `amu`, `Da` (1.66053906660e-27 kg).
+- **time**: added `fs`, `ps`, `ns`, `us`.
+- **new dimension** `molar_energy`: `kJ/mol` (base), `kcal/mol` (4.184), `J/mol`, `eV/atom` (96.485), `Hartree/mol` (2625.5).
+
+Initial positions are placed on a regular 3D grid with spacing ≥ 1.05·σ, then perturbed by 2% of grid spacing — avoids NaN energies from random overlaps (LJ-r⁻¹² explodes as r → 0) without losing thermalization stochasticity.
+
+**What v1.14 deliberately does not provide:** no protein force fields (AMBER, CHARMM, OPLS), no implicit solvent, no REMD/free-energy/umbrella-sampling methods. For those, `pyimport openmm.app as omm_app` directly — Dedekind's role is the unit-aware bridge for the canonical LJ workflow, not a re-implementation of OpenMM.
+
+Example: `examples/dedekind/md_lennard_jones_demo.ddk` (Argon cluster: 200 fs equilibration at 85 K, then 1 ps production at 150 K). Test: `tests/dedekind/md_simulate_lj_test.ddk`.
+
+### 15.21 Labeled Tensors for Earth Science (v1.15)
+
+A new shape-annotation kind for tensors whose axes have *names* rather than just sizes — the standard data model in climate, geosciences, and earth-system simulations. Built on top of `xarray.DataArray`.
+
+```dedekind
+pyimport numpy as np
+
+fn temporal_mean(t: LabeledTensor[lat, lon, time]) -> LabeledTensor[lat, lon] {
+    return t.mean(dim="time")
+}
+
+fn zonal_mean(t: LabeledTensor[lat, lon, time]) -> LabeledTensor[lat, time] {
+    return t.mean(dim="lon")
+}
+
+T = labeled_tensor(raw_data,
+    dims=["lat", "lon", "time"],
+    coords={"lat": lats, "lon": lons, "time": times},
+    attrs={"units": "K", "crs": "EPSG:4326"}
+)
+```
+
+The annotation:
+
+| Form | Meaning |
+|------|---------|
+| `LabeledTensor[a, b, c]` | DataArray with **exactly** the dim names `{a, b, c}` |
+
+Order in the annotation is documentation only — xarray operates name-based, so validation is set-based. Mismatch raises `ValueError` with the specific missing/extra dims.
+
+**The USP vs. raw xarray:** xarray has no type system. The classic climate bug `data.mean(axis=2)` instead of `data.mean(dim="time")` produces a silent wrong result; `LabeledTensor[...]` annotations catch this at the function boundary.
+
+**`labeled_tensor` parameters:**
+
+| Argument | Type | Notes |
+|----------|------|-------|
+| `data` | tensor / numpy / list | underlying values |
+| `dims` | list of str | axis names, same order as `data.shape` |
+| `coords` | dict[str → 1D array], optional | coordinate axes |
+| `name` | str, optional | DataArray name |
+| `attrs` | dict, optional | metadata (units, CRS, source, ...) |
+
+**What v1.15 deliberately does not provide:** no re-implementation of xarray operations (regridding, interp_like, groupby_bins, rolling means, etc.). Users call those directly on the DataArray (`da.coarsen(time=12).mean()` etc.). No Dask-/distributed-aware annotations — chunked DataArrays work via `pyimport xarray`, but only dim-name validation runs. Dedekind's role is the annotation-and-type layer over xarray, not a competitor to it.
+
+Example: `examples/dedekind/labeled_tensors_demo.ddk` (4×8×12 synthetic climate dataset: temporal mean, zonal mean, anomaly, `.sel`-slicing by coordinate value). Test: `tests/dedekind/labeled_tensors_test.ddk`.
+
+### 15.22 Bioinformatics Quick-Wins (v1.16)
+
+Typed bioinformatics primitives layered on top of the existing annotation system, with one cheminformatics bridge via `pyimport rdkit`.
+
+```dedekind
+fn dna_to_protein(dna: Sequence[DNA]) -> Sequence[Protein] {
+    rna = transcribe(dna)
+    return translate(rna)
+}
+protein = dna_to_protein("ATGGCCCTGTGGATGCGCCTCCTGCCCCTGCTG")
+// "MALWMRLLPL" — first 10 AA of insulin signal peptide
+```
+
+**`Sequence[kind]`-Annotation:**
+
+| Kind | Alphabet |
+|------|----------|
+| `DNA` | A, C, G, T, N (= unknown) |
+| `RNA` | A, C, G, U, N |
+| `Protein` | 20 standard amino acids + B, Z, X (ambiguity), `*` (stop) |
+
+Mismatch raises `ValueError: Sequence[DNA]-Check in fn(seq): ungueltiges Zeichen 'U' an Position 3 (erlaubt: ACGNT).` — catches the classic Python/Biopython bug of passing an RNA string into a DNA-only function and silently miscomputing GC content.
+
+**Native bio built-ins** (no pyimport):
+
+| Built-in | Returns |
+|----------|---------|
+| `gc_content(dna)` | float 0..1 |
+| `reverse_complement(dna)` | str |
+| `transcribe(dna)` | RNA str (T→U) |
+| `translate(rna, stop_at_stop=True)` | protein str |
+| `k_mer_count(seq, k)` | dict {k-mer: count} |
+
+**Cheminformatics via `pyimport rdkit`:**
+
+| Built-in | Returns |
+|----------|---------|
+| `smiles_descriptors(smiles)` | dict with `mw` ([g/mol]), `logp`, `num_atoms`, `num_heavy_atoms`, `num_rings`, `num_aromatic_rings`, `hbd`, `hba`, `tpsa`, `num_rotatable_bonds` |
+| `lipinski_rule_of_five(smiles)` | dict with `mw`, `logp`, `hbd`, `hba`, `checks` (four bool flags), `violations` (count), `passes` (bool) |
+
+MW and TPSA come back as `Quantity` — directly usable in unit-aware arithmetic.
+
+**What v1.16 deliberately does not provide:** no sequence alignment (Smith-Waterman, Needleman-Wunsch), no PDB/structure parsing, no phylogenetic trees, no multiple sequence alignment. For those, `pyimport Bio.Align`, `pyimport Bio.PDB`, etc. Dedekind's role here is typed quick-wins where native implementation is small, plus the annotated cheminformatics bridge with unit-aware descriptors.
+
+Example: `examples/dedekind/bioinformatics_demo.ddk` (insulin signal peptide via central dogma, k-mer analysis, Aspirin/Caffeine/Ibuprofen Lipinski). Test: `tests/dedekind/bioinformatics_test.ddk`.
+
+### 15.23 try/catch and Slicing Syntax (v1.17)
+
+Two small but long-overdue language features that turn Dedekind from a notebook-DSL into a proper scripting language.
+
+**Exception handling:**
+
+```dedekind
+try {
+    content = read_file("/maybe/exists.json")
+    data = json_parse(content)
+} catch e {
+    print("Falling back to default:", e)
+    data = {}
+}
+```
+
+- New AST node `TryCatch(body, catch_var, handler)`; lexer keywords `try` and `catch`.
+- Codegen emits standard Python `try: ... except Exception as e: ...`. DDK markers are emitted inside the catch block, so source-mapped tracebacks (v1.8) still resolve to the correct `.ddk` line.
+- Nested blocks supported; each catch binds the exception to a freely-named variable.
+- Not yet in v1.17: type filters (`catch e: ValueError`) and `finally` — both reachable, ask if needed.
+
+**Python-style slicing:**
+
+```dedekind
+x = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+head    = x[:5]            // [10..50]
+tail    = x[5:]            // [60..100]
+middle  = x[3:7]           // [40..70]
+every2  = x[::2]           // [10, 30, 50, 70, 90]
+window  = x[2:8:2]         // [30, 50, 70]
+full    = x[:]             // copy
+```
+
+- New AST node `Slice(start, stop, step)`, each component optional (`None` = open bound).
+- Parser extension in subscript parsing: after `[`, collects up to three `:`-separated components. A single component (no `:`) stays a regular `Subscript(value, index)`; one or more `:` produces a `Slice`.
+- Codegen `visit_Slice` renders Python slice notation with empty components for open bounds.
+- Works on lists, `torch.Tensor`, numpy arrays — anything supporting `__getitem__(slice)`.
+- **PyTorch limitation:** negative step (`x[::-1]` for reverse) raises a runtime error. Use `torch.flip(x, [0])` instead.
+
+Example: `examples/dedekind/try_catch_slicing_demo.ddk` (7 slice variants, `safe_divide` helper, file-read with fallback, nested try blocks). Test: `tests/dedekind/try_catch_slicing_test.ddk`.
+
+### 15.24 Geometric / Clifford Algebra G(3,0) (v1.18)
+
+A native implementation of 3D Euclidean Geometric Algebra — the unified framework that subsumes complex numbers, quaternions, vector calculus and bivector mechanics into a single algebraic system.
+
+```dedekind
+e1 = vector(1, 0, 0)
+e2 = vector(0, 1, 0)
+e3 = vector(0, 0, 1)
+
+// Geometric product = inner + outer
+print(e1 * e2)              // e12 (bivector — orthogonal vectors)
+print(e1 * e1)              // 1 (basis vectors square to +1 in (3,0))
+
+// Rotor for 90° rotation in the e1-e2 plane
+R = rotor(1.5707963, 1, 0, 0)
+print(rotate(e1, R))        // ~ e2
+print(rotate(e2, R))        // ~ -e1
+print(rotate(e3, R))        // e3 (axis-aligned, unchanged)
+
+// Pseudoscalar squares to -1 — same algebraic role as imaginary unit
+I = pseudoscalar(1)
+print(I * I)                // -1
+```
+
+**Storage layout** (bit-pattern indexed):
+
+| Index | Bits | Blade | Grade |
+|-------|------|-------|-------|
+| 0 | 000 | scalar | 0 |
+| 1 | 001 | e1 | 1 |
+| 2 | 010 | e2 | 1 |
+| 3 | 011 | e12 | 2 |
+| 4 | 100 | e3 | 1 |
+| 5 | 101 | e13 | 2 |
+| 6 | 110 | e23 | 2 |
+| 7 | 111 | e123 | 3 |
+
+**Geometric product** of basis blades `a` and `b`: result blade = `a XOR b` (identical factors annihilate in G(3,0)), sign from the number of swaps needed to put `b`'s indices in canonical order.
+
+**API summary:**
+
+| Constructor | Returns |
+|-------------|---------|
+| `scalar(s)` | scalar multivector |
+| `vector(x, y, z)` | grade-1 multivector |
+| `bivector(b12, b13, b23)` | grade-2 multivector |
+| `pseudoscalar(s)` | grade-3 multivector |
+| `multivector(s, e1, e2, e3, e12, e13, e23, e123)` | full multivector |
+| `rotor(angle, b12, b13, b23)` | unit rotor `exp(-angle/2 * B)` |
+
+| Operation | Description |
+|-----------|-------------|
+| `a + b`, `a - b`, `-a` | componentwise |
+| `a * b` | geometric product |
+| `a.wedge(b)` | outer (grade-raising) |
+| `a.dot(b)` | inner (grade-reducing) |
+| `a.reverse()` | reverse: sign `(-1)^(k(k-1)/2)` per grade k |
+| `a.grade(n)` | extract grade-n part |
+| `a.norm()` | `sqrt(<a * ~a>_0)` |
+| `a.scalar_part()` | grade-0 component as float |
+| `rotate(v, R)` | sandwich product `R v ~R` |
+
+**What v1.18 deliberately does not provide:** no signatures beyond G(3,0). No spacetime algebra G(3,1) or G(1,3), no conformal geometric algebra G(4,1) with points/lines/circles/spheres as primitives. For those, `pyimport clifford` directly. Dedekind's contribution is the canonical 3D cases (robotics, computer graphics, classical physics) as typed native built-ins without an extra dependency.
+
+Example: `examples/dedekind/geometric_algebra_demo.ddk`. Test: `tests/dedekind/geometric_algebra_test.ddk`.
+
+### 15.25 Multi-File Modules with Visibility (v1.19)
+
+Two language features that turn `use` from a single-file include into a real module system.
+
+**Dotted module paths:**
+
+```dedekind
+use geometry.area       // -> modules/geometry/area.ddk
+use geometry.volume     // -> modules/geometry/volume.ddk
+use math                // -> modules/math.ddk  (still works, flat)
+```
+
+`_resolve_module` splits the name on `.` and treats each segment as a directory level (`os.path.join(*parts) + ".ddk"`). Lets you organize larger codebases thematically instead of as a flat directory.
+
+**Public/private functions:**
+
+```dedekind
+// modules/geometry/area.ddk
+
+fn priv_pi() { return 3.14159265358979 }      // private
+fn priv_half(x) { return x / 2.0 }            // private
+
+pub fn circle_area(r) {
+    return priv_pi() * r * r                  // private functions still callable within
+}
+
+pub fn triangle_area(base, height) {
+    return priv_half(base * height)
+}
+```
+
+After import, `circle_area` and `triangle_area` are visible; `priv_pi` and `priv_half` are not. The compile-time pass `_apply_module_visibility` renames every private function to `__ddk_<flat_modpath>_<name>` and rewrites all call sites inside the module accordingly. Attempting to call a private function from outside raises `NameError`.
+
+**Backward compatibility:** modules that have **no** `pub` declarations run in *legacy mode* — every function stays public, matching pre-v1.19 behavior. The seven stdlib modules (`physics`, `stats`, `chemistry`, `biology`, `math`, `ml`, `mathlib`) continue to work unchanged. Adding a single `pub fn` to any of them flips the file into opt-in mode, where everything else becomes private.
+
+**Constraint:** `use` statements must remain at the top level — they are expanded in the `_expand_uses` pre-pass before parsing function bodies. Inline `use` inside a function body is not supported.
+
+Example: `examples/dedekind/multi_file_modules_demo.ddk` (uses two submodules `geometry.area` and `geometry.volume`, plus the legacy `math` module to show backward compatibility). Test: `tests/dedekind/multi_file_modules_test.ddk`.
+
+### 15.26 Generics / Type Parameters (v1.20)
+
+Function signatures may now declare explicit type parameters:
+
+```dedekind
+fn add_same<U>(a: [U], b: [U]) -> [U] {
+    return a + b
+}
+
+fn pair<A, B>(a: [A], b: [B]) -> [B] { return b }
+```
+
+**Polymorphic unit variables.** A unit annotation `[U]` where `U` is declared in `<...>` is bound at the first argument's actual unit and checked for consistency on subsequent arguments and the return value. Same-dimension-different-scale arguments are auto-converted to the bound unit; dimensional mismatch raises `ValueError`.
+
+```dedekind
+add_same(2[m], 3[m])        // U = m         -> 5[m]
+add_same(10[kg], 5[kg])     // U = kg        -> 15[kg]
+add_same(2[m], 100[cm])     // U = m, auto-convert -> 3[m]
+add_same(2[m], 3[kg])       // ValueError: U already bound to [m], here [kg]
+```
+
+**Shape parameters.** `<N>` with `Vector[N]`/`Matrix[M, N]`/`Tensor[batch, N, F]` makes the symbolic-dimension mechanism from §15.15 explicit. Behavior is unchanged: symbolic dims bind in a per-call `_shape_env` and enforce cross-argument consistency.
+
+**Implementation.**
+
+- Parser accepts optional `LT ID (COMMA ID)* GT` between the function name and the parameter list.
+- AST: `FunctionDef.type_params: List[str]`.
+- Codegen initializes a per-call `_unit_env = {}` when type params are declared. Argument-unit annotations matching a type param dispatch to `_check_param_unit(value, "U", fn_name, arg_name, _unit_env)`; other unit annotations keep the classic `_check_signature_unit` path. Same dispatch for the return value (`_check_return_param_unit` vs `_check_return_unit`).
+- Runtime `_check_param_unit` binds the parameter to the actual unit on first occurrence, then for subsequent occurrences checks dimensional compatibility, auto-converts via `_coerce_to_expected_unit` if possible, or raises `ValueError` otherwise.
+- Static units checker skips concrete-unit comparisons for type-parameter units (they are validated at runtime instead).
+
+**Backward compatibility.** Functions without `<...>` are unaffected — `type_params` defaults to empty and all checks take the classic path.
+
+**Difference from Python's `typing.TypeVar`.** Python's generics are documentary; the interpreter ignores them. Dedekind's type parameters are actively enforced by the compiler. Dimensionally inconsistent calls abort; dimensionally compatible-but-differently-scaled calls are auto-converted. This makes Dedekind's static-feeling type system actually meaningful at runtime.
+
+Example: `examples/dedekind/generics_demo.ddk`. Test: `tests/dedekind/generics_test.ddk`.
+
+### 15.27 Quantum Computing Bridge (v1.21)
+
+Dedekind v1.21 provides a native, zero-dependency quantum computing layer. A Qiskit bridge is available for exporting to real hardware (`pyimport qiskit`), but all simulation runs within the Dedekind runtime.
+
+#### 15.27.1 QuantumCircuit
+
+```dedekind
+qc = quantum_circuit(2)    // 2-qubit circuit
+qc.h(0)                    // Hadamard on qubit 0
+qc.cx(0, 1)               // CNOT: control=0, target=1
+```
+
+Gate methods: `.h(q)`, `.x(q)`, `.y(q)`, `.z(q)`, `.t(q)`, `.s(q)`, `.cx(ctrl, tgt)`, `.cz(ctrl, tgt)`, `.rx(θ, q)`, `.ry(θ, q)`, `.rz(θ, q)`, `.swap(q0, q1)`, `.measure(q)`, `.measure_all()`.
+
+Properties: `.n_qubits`, `.n_gates()`, `.depth()`.
+
+**Qubit convention:** qubit 0 is the least significant bit (LSB) of the state index. State |q_{n-1}...q_1 q_0> has integer index sum q_i * 2^i.
+
+#### 15.27.2 Statevector Simulation
+
+```dedekind
+sv = statevec_sim(qc)           // returns list[complex], length 2^n
+sv = statevec_sim(qc, 1000)    // 1000 shots -> dict[bitstring, count]
+probs = statevec_probs(qc)      // probabilities |psi_i|^2
+exp_zz = statevec_expectation(qc, "ZZ")   // <psi|ZZ|psi>
+```
+
+The Pauli-string observable must have exactly `n_qubits` characters from {I, X, Y, Z, H}.
+
+#### 15.27.3 Convenience Constructors
+
+```dedekind
+phi_plus = bell_state(0)    // |Phi+> = (|00>+|11>)/sqrt(2); which in {0,1,2,3}
+ghz = ghz_state(3)          // (|000>+|111>)/sqrt(2) for n qubits
+grover = grover_circuit(3, 5)  // Grover search for |101> in 3-qubit space
+```
+
+#### 15.27.4 VQE (Variational Quantum Eigensolver)
+
+```dedekind
+// Hardware-efficient ansatz: Ry layers + linear CNOT chain
+qc = vqe_circuit(2, 2, params)         // n_qubits=2, n_layers=2
+terms = [[0.5, "ZI"], [-0.5, "IZ"]]   // Hamiltonian as (coeff, Pauli-string) pairs
+e = vqe_energy(params, 2, 2, terms)   // <psi(theta)|H|psi(theta)>
+```
+
+#### 15.27.5 Quantum Information Utilities
+
+```dedekind
+f = fidelity(sv1, sv2)             // |<psi1|psi2>|^2
+s = entropy_von_neumann(probs)     // -sum p_i log2 p_i (from probability list)
+r = schmidt_rank(sv, n_a)         // Schmidt rank for A|B bipartition
+```
+
+#### 15.27.6 Physical Unit Validation
+
+Quantum hardware parameters carry SI units:
+
+```dedekind
+freq = 5.1[GHz]
+freq_ok = qubit_frequency_check(freq)  // Validates [GHz/MHz/THz], returns in GHz
+
+t1 = 100.0[us]
+t1_ok = coherence_time_check(t1)       // Validates [us/ns/ms/s]
+
+gap = 10.5[meV]
+gap_ok = energy_gap_check(gap)         // Validates [eV/meV/J]
+```
+
+New energy units: `eV` (1.602e-19 J), `meV` (1.602e-22 J), `MeV` (1.602e-13 J). New frequency unit: `THz` (1e12 Hz).
+
+#### 15.27.7 Shape Annotations
+
+```dedekind
+fn apply_h(qc: Qubit[N]) -> Qubit[N] { qc.h(0); return qc }
+fn check_fid(sv1: StateVec[2], sv2: StateVec[2]) { return fidelity(sv1, sv2) }
+```
+
+| Annotation | Validates | Symbolic dim? |
+|-----------|-----------|---------------|
+| `Qubit[N]` | `QuantumCircuit` with `n_qubits == N` | Yes |
+| `Circuit[N, G]` | `QuantumCircuit` with `n_qubits == N` | Yes |
+| `StateVec[N]` | `list[complex]` with length `2^N` | Yes |
+
+#### 15.27.8 Qiskit Bridge (Optional)
+
+```dedekind
+pyimport qiskit as qk
+qc = quantum_circuit(2)
+qc.h(0).cx(0, 1)
+qk_circuit = qc.to_qiskit()   // Requires: pip install qiskit
+```
+
+Examples: `quantum_bell.ddk`, `quantum_grover.ddk`, `quantum_vqe.ddk`, `quantum_units.ddk`, `quantum_shapes.ddk`. Tests: `quantum_circuit_test.ddk`, `quantum_units_test.ddk`.
 
 ---
 

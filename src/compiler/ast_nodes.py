@@ -36,12 +36,33 @@ class FunctionDef(Node):
     body: List[Node]
     arg_units: Optional[List[Optional[str]]] = None  # Per-arg unit annotations ([m], [kg], …); None per slot = not annotated
     return_unit: Optional[str] = None  # Return unit annotation
+    arg_shapes: Optional[List[Optional[List]]] = None  # Per-arg shape annotations (Vector[2], Tensor[batch,N]); None per slot = not annotated
+    return_shape: Optional[List] = None  # Return shape annotation
+    is_pub: bool = False  # `pub fn` -> True; nur fuer Modul-Sichtbarkeit relevant
+    type_params: List[str] = field(default_factory=list)  # `fn name<T, U>(...)`: polymorphe Typ-Parameter
 
 
 @dataclass
 class UseStmt(Node):
     """Modul-/Import-Anweisung: `use mathlib` lädt mathlib.ddk in den aktuellen Kompilier-Pass."""
     module: str
+
+
+@dataclass
+class UnitDef(Node):
+    """Benutzerdefinierte Einheit: `unit Foot = 0.3048[m]` registriert Foot als Längeneinheit
+    mit Umrechnungsfaktor 0.3048 zur Basis. base_unit muss bereits einer bekannten Dimension angehören."""
+    name: str
+    factor: float
+    base_unit: str
+
+
+@dataclass
+class PyImport(Node):
+    """Importiert ein Python-Modul aus dem PyPI-Ökosystem: `pyimport scipy.special as ss`.
+    Erzeugt im generierten Code ein `import MODULE as ALIAS`."""
+    module: str
+    alias: str
 
 @dataclass
 class ReturnStmt(Node):
@@ -137,6 +158,23 @@ class IndexedVariable(Node):
 class Subscript(Node):
     value: Node
     index: Node
+
+
+@dataclass
+class Slice(Node):
+    """Python-Style Slice fuer Subscript-Indizes: x[start:stop:step].
+    Jede Komponente kann None sein (offene Schranke)."""
+    start: Optional[Node] = None
+    stop: Optional[Node] = None
+    step: Optional[Node] = None
+
+
+@dataclass
+class TryCatch(Node):
+    """try { body } catch var { handler } — faengt jede Exception und bindet sie an var."""
+    body: List[Node]
+    catch_var: str
+    handler: List[Node]
 
 @dataclass
 class ItemAssignment(Node):

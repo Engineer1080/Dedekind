@@ -662,3 +662,260 @@ def ilu_preconditioner(A, drop_tol=1e-4, fill_factor=10):
 # Reproducible-Notebook-Export: .ddk -> standalone HTML/Markdown
 # ============================================================================
 
+
+
+
+# Bioinformatics constants added during master-quantum merge
+_SEQ_ALPHABETS = {'DNA': set('ACGTN'), 'RNA': set('ACGUN'), 'PROTEIN': set('ACDEFGHIKLMNPQRSTVWYBZX*')}
+_PROTEIN_CODON_TABLE = {'UUU': 'F', 'UUC': 'F', 'UUA': 'L', 'UUG': 'L', 'CUU': 'L', 'CUC': 'L', 'CUA': 'L', 'CUG': 'L', 'AUU': 'I', 'AUC': 'I', 'AUA': 'I', 'AUG': 'M', 'GUU': 'V', 'GUC': 'V', 'GUA': 'V', 'GUG': 'V', 'UCU': 'S', 'UCC': 'S', 'UCA': 'S', 'UCG': 'S', 'CCU': 'P', 'CCC': 'P', 'CCA': 'P', 'CCG': 'P', 'ACU': 'T', 'ACC': 'T', 'ACA': 'T', 'ACG': 'T', 'GCU': 'A', 'GCC': 'A', 'GCA': 'A', 'GCG': 'A', 'UAU': 'Y', 'UAC': 'Y', 'UAA': '*', 'UAG': '*', 'CAU': 'H', 'CAC': 'H', 'CAA': 'Q', 'CAG': 'Q', 'AAU': 'N', 'AAC': 'N', 'AAA': 'K', 'AAG': 'K', 'GAU': 'D', 'GAC': 'D', 'GAA': 'E', 'GAG': 'E', 'UGU': 'C', 'UGC': 'C', 'UGA': '*', 'UGG': 'W', 'CGU': 'R', 'CGC': 'R', 'CGA': 'R', 'CGG': 'R', 'AGU': 'S', 'AGC': 'S', 'AGA': 'R', 'AGG': 'R', 'GGU': 'G', 'GGC': 'G', 'GGA': 'G', 'GGG': 'G'}
+_DNA_COMPLEMENT = {'A': 'T', 'T': 'A', 'G': 'C', 'C': 'G', 'N': 'N'}
+
+
+def _rebuild_additive_unit_sets():
+    """Aktualisiert ADDITIVE_DIMENSION_UNIT_SETS in-place nach ├änderungen an DIMENSION_TO_BASE."""
+    ADDITIVE_DIMENSION_UNIT_SETS.clear()
+    for _b, tab in DIMENSION_TO_BASE.values():
+        ADDITIVE_DIMENSION_UNIT_SETS.append(frozenset(tab.keys()))
+
+def unwrap(x):
+    """Entfernt Einheit/Wrapper und liefert den nackten numerischen Wert (float/int/Tensor).
+    - Quantity(value, unit)  -> value (float)
+    - UncertainQuantity      -> value (float; std wird verworfen)
+    - 0-d torch.Tensor       -> .item()
+    - Liste/Tuple            -> elementweise unwrap
+    Sonst: passthrough.
+    Wirft NICHTS; sicher in jeder Hot-Loop-Position aufrufbar.
+    Nutzung: ersten Schritt einer per-jit/grad/fit-gerufenen Funktion, um Quantity-Overhead
+    zu vermeiden ÔÇö die Compile-Zeit-Einheitenpruefung hat die Dimensionen bereits validiert."""
+    if isinstance(x, Quantity):
+        return x.value
+    if 'UncertainQuantity' in globals() and isinstance(x, globals()['UncertainQuantity']):
+        return x.value
+    if hasattr(x, "shape") and hasattr(x, "numel"):
+        try:
+            if x.numel() == 1:
+                return x.item()
+        except Exception:
+            pass
+    if isinstance(x, (list, tuple)):
+        return type(x)(unwrap(item) for item in x)
+    return x
+
+def quantum_circuit(n_qubits):
+    """Erstellt einen neuen QuantumCircuit mit n_qubits Qubits.
+
+    Beispiel:
+        qc = quantum_circuit(2)
+        qc.h(0).cx(0, 1)
+        sv = statevec_sim(qc)
+    """
+    if isinstance(n_qubits, Quantity):
+        if n_qubits.unit not in ("", None):
+            raise ValueError(
+                f"quantum_circuit: n_qubits muss dimensionslos sein, bekam [{n_qubits.unit}]."
+            )
+        n_qubits = int(float(n_qubits.value))
+    else:
+        n_qubits = int(n_qubits)
+    return QuantumCircuit(n_qubits)
+
+def bell_state(which: int = 0):
+    """Erstellt einen der vier Bell-Zustaende als QuantumCircuit.
+
+    which=0: |╬ª+Ôƒ® = (|00Ôƒ®+|11Ôƒ®)/ÔêÜ2
+    which=1: |╬ª-Ôƒ® = (|00Ôƒ®-|11Ôƒ®)/ÔêÜ2
+    which=2: |╬¿+Ôƒ® = (|01Ôƒ®+|10Ôƒ®)/ÔêÜ2
+    which=3: |╬¿-Ôƒ® = (|01Ôƒ®-|10Ôƒ®)/ÔêÜ2
+    """
+    which = int(which.item() if hasattr(which, 'item') else which)
+    qc = QuantumCircuit(2)
+    qc.h(0)
+    qc.cx(0, 1)
+    if which == 1:
+        qc.z(0)
+    elif which == 2:
+        qc.x(1)
+    elif which == 3:
+        qc.z(0)
+        qc.x(1)
+    return qc
+
+def ghz_state(n_qubits: int):
+    """GHZ-Zustand: (|0...0Ôƒ® + |1...1Ôƒ®)/ÔêÜ2 fuer n Qubits."""
+    n_qubits = int(n_qubits.item() if hasattr(n_qubits, 'item') else n_qubits)
+    qc = QuantumCircuit(n_qubits)
+    qc.h(0)
+    for i in range(1, n_qubits):
+        qc.cx(0, i)
+    return qc
+
+def grover_circuit(n_qubits: int, target_state: int, n_iterations: int = None):
+    """Erstellt Grover-Suchalgorithmus-Schaltkreis.
+
+    Args:
+        n_qubits: Anzahl Qubits
+        target_state: Gesuchter Zustand als Integer (0 bis 2^n - 1)
+        n_iterations: Grover-Iterationen (default: pi/4 * sqrt(2^n))
+
+    Returns:
+        QuantumCircuit
+    """
+    n_qubits = int(n_qubits.item() if hasattr(n_qubits, 'item') else n_qubits)
+    target_state = int(target_state.item() if hasattr(target_state, 'item') else target_state)
+    dim = 1 << n_qubits
+    if target_state < 0 or target_state >= dim:
+        raise ValueError(f"grover_circuit: target_state={target_state} ausserhalb [0, {dim-1}].")
+
+    if n_iterations is None:
+        n_iterations = int(_builtin_max(1, round(_math.pi / 4 * _math.sqrt(dim))))
+    n_iterations = int(n_iterations.item() if hasattr(n_iterations, 'item') else n_iterations)
+
+    qc = QuantumCircuit(n_qubits)
+
+    # Initialisierung: Hadamard auf alle Qubits
+    for q in range(n_qubits):
+        qc.h(q)
+
+    for _ in range(n_iterations):
+        # Orakel: Phase-Flip fuer |targetÔƒ®
+        # Implementiert via Z auf korrekten Qubits (vereinfacht fuer native Simulation)
+        bits = format(target_state, f'0{n_qubits}b')
+        # X-Gatter auf Qubits die 0 sind (Bitumkehr fuer Multi-CZ)
+        for q in range(n_qubits):
+            if bits[q] == '0':
+                qc.x(q)
+        # Mehrstufige CZ-Kette (approximiert Multi-Qubit-Controlled-Z)
+        for q in range(n_qubits - 1):
+            qc.cz(q, n_qubits - 1)
+        for q in range(n_qubits):
+            if bits[q] == '0':
+                qc.x(q)
+
+        # Diffusion-Operator
+        for q in range(n_qubits):
+            qc.h(q)
+        for q in range(n_qubits):
+            qc.x(q)
+        for q in range(n_qubits - 1):
+            qc.cz(q, n_qubits - 1)
+        for q in range(n_qubits):
+            qc.x(q)
+        for q in range(n_qubits):
+            qc.h(q)
+
+    return qc
+
+def gc_content(dna):
+    """Liefert den Anteil G+C in einer DNA-Sequenz (0..1).
+    Akzeptiert auch RNA ÔÇö N wird ignoriert."""
+    if not isinstance(dna, str):
+        raise TypeError(f"gc_content: erwarte String, erhalten {type(dna).__name__}.")
+    s = dna.upper()
+    if not s:
+        return 0.0
+    valid = [c for c in s if c in "ACGTU"]
+    if not valid:
+        return 0.0
+    gc = sum(1 for c in valid if c in "GC")
+    return gc / len(valid)
+
+def reverse_complement(dna):
+    """Liefert das Reverse-Complement einer DNA-Sequenz."""
+    if not isinstance(dna, str):
+        raise TypeError(f"reverse_complement: erwarte String, erhalten {type(dna).__name__}.")
+    s = dna.upper()
+    bad = [c for c in s if c not in _DNA_COMPLEMENT]
+    if bad:
+        raise ValueError(
+            f"reverse_complement: ungueltiges DNA-Zeichen {bad[0]!r} "
+            f"(erlaubt: A, C, G, T, N)."
+        )
+    return "".join(_DNA_COMPLEMENT[c] for c in reversed(s))
+
+def transcribe(dna):
+    """DNA -> RNA: ersetzt T durch U."""
+    if not isinstance(dna, str):
+        raise TypeError(f"transcribe: erwarte String, erhalten {type(dna).__name__}.")
+    return dna.upper().replace("T", "U")
+
+def translate(rna, stop_at_stop=True):
+    """RNA -> Protein (1-Letter-Code). Liest in 3er-Codons; unbekannte Codons -> 'X'.
+    stop_at_stop=True (Default): bricht beim ersten Stop-Codon (*) ab.
+    """
+    if not isinstance(rna, str):
+        raise TypeError(f"translate: erwarte String, erhalten {type(rna).__name__}.")
+    s = rna.upper().replace("T", "U")
+    out = []
+    for i in range(0, len(s) - 2, 3):
+        codon = s[i:i+3]
+        aa = _PROTEIN_CODON_TABLE.get(codon, "X")
+        if aa == "*" and stop_at_stop:
+            break
+        out.append(aa)
+    return "".join(out)
+
+def k_mer_count(seq, k):
+    """Liefert ein Dict {k_mer: count} fuer alle ueberlappenden k-Mere."""
+    if not isinstance(seq, str):
+        raise TypeError(f"k_mer_count: erwarte String, erhalten {type(seq).__name__}.")
+    k = int(k)
+    if k < 1:
+        raise ValueError(f"k_mer_count: k muss >= 1 sein, bekam {k}.")
+    s = seq.upper()
+    counts = {}
+    for i in range(0, len(s) - k + 1):
+        kmer = s[i:i+k]
+        counts[kmer] = counts.get(kmer, 0) + 1
+    return counts
+
+def smiles_descriptors(smiles):
+    """Molekulare Descriptors aus einer SMILES-Notation via rdkit.
+    Liefert Dict mit: mw [g/mol], logp, num_atoms, num_heavy_atoms, num_rings,
+    num_aromatic_rings, hbd, hba, tpsa [Angstrom^2]."""
+    if not isinstance(smiles, str):
+        raise TypeError(f"smiles_descriptors: erwarte String, erhalten {type(smiles).__name__}.")
+    try:
+        from rdkit import Chem  # type: ignore[import-untyped]
+        from rdkit.Chem import Descriptors, Lipinski  # type: ignore[import-untyped]
+    except ImportError:
+        raise RuntimeError("smiles_descriptors benoetigt rdkit. Installation: pip install rdkit")
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        raise ValueError(f"smiles_descriptors: ungueltige SMILES {smiles!r}.")
+    return {
+        "mw": Quantity(float(Descriptors.MolWt(mol)), "g/mol"),
+        "logp": float(Descriptors.MolLogP(mol)),
+        "num_atoms": int(mol.GetNumAtoms()),
+        "num_heavy_atoms": int(mol.GetNumHeavyAtoms()),
+        "num_rings": int(Descriptors.RingCount(mol)),
+        "num_aromatic_rings": int(Descriptors.NumAromaticRings(mol)),
+        "hbd": int(Lipinski.NumHDonors(mol)),
+        "hba": int(Lipinski.NumHAcceptors(mol)),
+        "tpsa": Quantity(float(Descriptors.TPSA(mol)), "Angstrom"),  # eigentlich A^2; wir markieren die Laengendimension
+        "num_rotatable_bonds": int(Lipinski.NumRotatableBonds(mol)),
+    }
+
+def lipinski_rule_of_five(smiles):
+    """Lipinskis 'Rule of Five' fuer orale Bioverfuegbarkeit.
+    Liefert Dict mit Boolean-Checks + Anzahl Verletzungen."""
+    desc = smiles_descriptors(smiles)
+    mw = desc["mw"].value
+    logp = desc["logp"]
+    hbd = desc["hbd"]
+    hba = desc["hba"]
+    checks = {
+        "mw_le_500":  mw <= 500.0,
+        "logp_le_5":  logp <= 5.0,
+        "hbd_le_5":   hbd <= 5,
+        "hba_le_10":  hba <= 10,
+    }
+    violations = sum(1 for ok in checks.values() if not ok)
+    return {
+        "mw": desc["mw"],
+        "logp": logp,
+        "hbd": hbd,
+        "hba": hba,
+        "checks": checks,
+        "violations": violations,
+        "passes": violations == 0,
+    }

@@ -85,8 +85,9 @@ def _dedekind_assert(condition, message=None):
     assert(condition) oder assert(condition, "Fehlermeldung").
     """
     val = condition
-    if hasattr(val, "item"):
-        val = val.item() if val.numel() == 1 else bool(val.all().item())
+    if hasattr(val, "item") and (hasattr(val, "numel") or hasattr(val, "size")):
+        size = val.numel() if hasattr(val, "numel") else val.size
+        val = val.item() if size == 1 else bool(val.all().item())
     elif hasattr(val, "__len__") and len(val) == 1:
         val = val[0]
     if not bool(val):

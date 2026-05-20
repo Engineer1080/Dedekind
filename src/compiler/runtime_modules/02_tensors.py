@@ -242,3 +242,40 @@ def sequence(f, n):
     return torch.stack(out)
 
 
+
+
+def labeled_tensor(data, dims, coords=None, name=None, attrs=None):
+    """Erzeugt ein xarray.DataArray fuer Klima-/Geo-/Earth-Science-Workflows.
+
+    Im Gegensatz zu nackten Tensoren tragen Labeled Tensors die *Namen* ihrer
+    Achsen mit ('lat', 'lon', 'time', ...), und xarray-Operationen koennen
+    namens-basiert (statt indexbasiert) arbeiten. Das verhindert die klassische
+    Verwechslung 'mean ueber lat vs. mean ueber time'.
+
+    Parameter:
+      data:   Tensor/numpy-Array/Liste ÔÇö die Werte.
+      dims:   Liste/Tuple von Strings ÔÇö Namen der Achsen, gleiche Reihenfolge wie data.shape.
+      coords: Optional Dict {dim_name: 1D-Werte} ÔÇö Koordinaten-Achsen.
+      name:   Optional Name fuer das DataArray.
+      attrs:  Optional Dict ÔÇö Metadaten (z. B. {"units": "K", "crs": "EPSG:4326"}).
+
+    Rueckgabe: xarray.DataArray.
+    """
+    try:
+        import xarray as _xr  # type: ignore[import-untyped]
+    except ImportError:
+        raise RuntimeError("labeled_tensor benoetigt xarray. Installation: pip install xarray")
+    import numpy as _np  # type: ignore[reportMissingImports]
+    if hasattr(data, "detach"):
+        arr = data.detach().cpu().numpy()
+    else:
+        arr = _np.asarray(data)
+    dims_t = tuple(str(d) for d in dims)
+    if len(dims_t) != arr.ndim:
+        raise ValueError(
+            f"labeled_tensor: data hat {arr.ndim} Achsen, dims hat {len(dims_t)} "
+            f"({dims_t!r}). Anzahl muss uebereinstimmen."
+        )
+    coords_dict = dict(coords) if coords else {}
+    return _xr.DataArray(arr, dims=dims_t, coords=coords_dict if coords_dict else None,
+                          name=name, attrs=attrs or {})

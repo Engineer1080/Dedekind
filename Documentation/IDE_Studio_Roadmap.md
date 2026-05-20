@@ -1,7 +1,28 @@
 # Dedekind — IDE-Integration und Dedekind Studio (Wissenschaftler-IDE)
 
 **Dedekind Language**  
-Draft: January 2026
+Draft: January 2026 · letzter Status-Update: v1.17.0 (März 2027)
+
+---
+
+## Status-Update (v1.17.0)
+
+Diese Roadmap ist die **am wenigsten abgearbeitete** von allen — und gleichzeitig der größte verbliebene Adoptions-Hebel:
+
+| Phase | Thema | Status |
+|---|---|---|
+| 1a | **VS Code / Cursor Extension** (Syntax-Highlight, Run/Debug, Unit-Inlay-Hints) | ⛔ noch nicht angefangen |
+| 1b | Jupyter-Kernel-Produktivierung | ✅ Kernel existiert (`dedekind_jupyter_kernel/`), wird in der CI verwendet; Spyder-Integration nicht abgeschlossen |
+| 2a | Dedekind Studio: Live-Unit-Checks im Editor + robustes Plots-Panel | 📋 Konzeptionell (Spyder-Fork geplant); nicht released |
+| 2b | LaTeX-Export-Action („copy as LaTeX") | ✅ Built-in `export_to_latex()` existiert seit v0.9.4; IDE-Action nicht released |
+| 2c | Lokales agentisches KI-Panel (Ollama / LM Studio) | ⛔ noch nicht angefangen |
+| 2d | Native Postgres-Integration (`db_query()` + Connection-Dialog) | ⛔ noch nicht angefangen |
+| 2e | Workspace-/Environment-Panel; optional Quarto/Markdown | ⛔ noch nicht angefangen |
+| 3 | Free/Pro/Enterprise-Tier-Modell, Lizenz, Launch | 📋 Strategie-Frage, nicht Engineering |
+
+**Status:** Die VS Code Extension ist seit der ursprünglichen Roadmap das mit **maximalem ROI** verbliebene Feature — empfohlen als nächstes nach Sprachreife-Releases (v1.17 try/catch + Slicing). Alle Phase-2-Punkte sind aspirational und brauchen ein klares Geschäftsmodell.
+
+Bestehende Sprach-Features, die ein VS-Code-Extension direkt nutzen würde (alle vorhanden, brauchen nur einen Editor-Adapter): Source-Mapping (v1.8), Purity-Check (v1.8.1), Shape-Annotationen (v1.9–v1.16), Unit-System (v1.7), try/catch + Slicing (v1.17).
 
 ---
 

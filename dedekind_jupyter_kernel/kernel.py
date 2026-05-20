@@ -83,15 +83,15 @@ def _latex_to_unicode(s):
 
 class DedekindKernel(Kernel):
     implementation = "Dedekind"
-    implementation_version = "1.6.3"
+    implementation_version = "1.22.0"
     language = "dedekind"
-    language_version = "1.6.3"
+    language_version = "1.22.0"
     language_info = {
         "name": "dedekind",
         "mimetype": "text/x-dedekind",
         "file_extension": ".ddk",
     }
-    banner = "Dedekind Kernel – compile and run Dedekind code (Dedekind Language v1.6.3)"
+    banner = "Dedekind Kernel – compile and run Dedekind code (Dedekind Language v1.22.0)"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -118,7 +118,7 @@ class DedekindKernel(Kernel):
         sys.stdout, sys.stderr = stdout_capture, stderr_capture
 
         try:
-            from src.compiler.compiler import compile_source
+            from src.compiler.compiler import compile_source, dedekind_exec
         except ImportError as e:
             sys.stdout, sys.stderr = old_stdout, old_stderr
             msg = (
@@ -159,7 +159,7 @@ class DedekindKernel(Kernel):
                 stdout_capture.write((console_text if console_text else s) + '\n')
             self._globals['_dedekind_display_image'] = _dedekind_display_image
             self._globals['_dedekind_display_latex'] = _dedekind_display_latex
-            exec(python_code, self._globals)
+            dedekind_exec(python_code, ddk_file=None, exec_globals=self._globals, ddk_source=code)
         except CompileError as e:
             sys.stdout, sys.stderr = old_stdout, old_stderr
             err_msg = str(e)

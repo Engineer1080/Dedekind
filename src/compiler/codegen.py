@@ -70,6 +70,19 @@ _RUNTIME_BUILTIN_NAMES = frozenset({
     'export_notebook',
     'print_table',
     'assert', 'diff_sym', 'integrate_sym', 'jacobian', 'hessian',
+    '_register_user_unit', 'unwrap', 'partial', 'graph_laplacian',
+    'Variable', 'optimize_milp', 'md_simulate_lj', 'labeled_tensor',
+    'gc_content', 'reverse_complement', 'transcribe', 'translate', 'k_mer_count',
+    'smiles_descriptors', 'lipinski_rule_of_five',
+    'MultiVector', 'scalar', 'vector', 'bivector', 'pseudoscalar',
+    'multivector', 'rotor', 'rotate',
+    # Quantum Computing (v1.21)
+    'QuantumCircuit', 'quantum_circuit', 'statevec_sim', 'statevec_probs',
+    'statevec_expectation', 'vqe_circuit', 'vqe_energy',
+    'bell_state', 'ghz_state', 'grover_circuit',
+    'qubit_frequency_check', 'coherence_time_check', 'energy_gap_check',
+    'fidelity', 'entropy_von_neumann', 'schmidt_rank',
+    'PAULI_I', 'PAULI_X', 'PAULI_Y', 'PAULI_Z', 'PAULI_H',
     # Constants (from ml_runtime)
     'pi', 'e', 'c', 'G', 'h', 'k_B', 'k_e', 'hbar', 'e_charge', 'epsilon_0', 'mu_0',
     'm_e', 'm_p', 'N_A', 'R_gas', 'alpha', 'sigma_SB', 'F_faraday',
@@ -90,6 +103,8 @@ def _program_uses_torch(node: Node) -> bool:
         return True
     if type(node).__name__ == 'PostfixFactorial':
         return True  # factorial() requires runtime
+    if type(node).__name__ == 'UnitDef':
+        return True  # user-defined unit needs runtime registration
     if type(node).__name__ == 'Identifier':
         if getattr(node, 'name', None) in _RUNTIME_BUILTIN_NAMES:
             return True
@@ -179,6 +194,8 @@ class CodeGenerator:
         self.code = []
         self.indent_level = 0
         self._return_unit_stack = []  # Active function's declared return unit ("" = dimensionless, None = unchecked)
+        self._return_shape_stack = []  # Active function's declared return shape (list of int|str) or None
+        self._type_param_stack = []   # Active function's declared type params (List[str])
         self._fn_name_stack = []
 
     def generate(self, node: Node) -> str:
@@ -233,6 +250,7 @@ class CodeGenerator:
 
     def visit_Program(self, node: Program):
         for stmt in node.statements:
+            self._emit_ddk_marker(stmt)
             res = self.visit(stmt)
             if isinstance(res, str):
                 self.add_line(res)
@@ -242,6 +260,7 @@ class CodeGenerator:
         self.add_line(f"if {cond}:")
         self.indent_level += 1
         for stmt in node.then_branch:
+            self._emit_ddk_marker(stmt)
             res = self.visit(stmt)
             if isinstance(res, str): self.add_line(res)
         self.indent_level -= 1
@@ -249,6 +268,7 @@ class CodeGenerator:
             self.add_line("else:")
             self.indent_level += 1
             for stmt in node.else_branch:
+                self._emit_ddk_marker(stmt)
                 res = self.visit(stmt)
                 if isinstance(res, str): self.add_line(res)
             self.indent_level -= 1
@@ -258,6 +278,7 @@ class CodeGenerator:
         self.add_line(f"while {cond}:")
         self.indent_level += 1
         for stmt in node.body:
+            self._emit_ddk_marker(stmt)
             res = self.visit(stmt)
             if isinstance(res, str): self.add_line(res)
         self.indent_level -= 1
@@ -267,6 +288,7 @@ class CodeGenerator:
         self.add_line(f"for {node.variable} in {collection}:")
         self.indent_level += 1
         for stmt in node.body:
+            self._emit_ddk_marker(stmt)
             res = self.visit(stmt)
             if isinstance(res, str): self.add_line(res)
         self.indent_level -= 1
@@ -277,21 +299,66 @@ class CodeGenerator:
         self.indent_level += 1
         arg_units = getattr(node, "arg_units", None)
         return_unit = getattr(node, "return_unit", None)
+        arg_shapes = getattr(node, "arg_shapes", None)
+        return_shape = getattr(node, "return_shape", None)
+        type_params = getattr(node, "type_params", []) or []
+        type_param_set = set(type_params)
+        # Typ-Parameter: lokales _unit_env fuer polymorphe Einheiten-Variablen
+        if type_params:
+            self.add_line("_unit_env = {}")
         if arg_units:
             for arg_name, unit in zip(node.args, arg_units):
-                if unit:
-                    safe_unit = unit.replace('"', '\\"')
+                if not unit:
+                    continue
+                safe_unit = unit.replace('"', '\\"')
+                if unit in type_param_set:
+                    # Polymorphe Einheit (Typ-Parameter): bindet im _unit_env beim
+                    # ersten Auftreten, danach Konsistenz-Check
+                    self.add_line(
+                        f'{arg_name} = _check_param_unit({arg_name}, "{safe_unit}", "{node.name}", "{arg_name}", _unit_env)'
+                    )
+                else:
                     self.add_line(
                         f'{arg_name} = _check_signature_unit({arg_name}, "{safe_unit}", "{node.name}", "{arg_name}")'
                     )
+        # Shape-Checks: lokales shape_env fuer symbolische Dimensionen
+        if arg_shapes is not None or return_shape is not None:
+            self.add_line("_shape_env = {}")
+        if arg_shapes:
+            for arg_name, shape in zip(node.args, arg_shapes):
+                if shape is None:
+                    continue
+                kind, dims = shape if isinstance(shape, tuple) else ('tensor', shape)
+                if kind == 'graph':
+                    check_fn = '_check_graph_shape'
+                elif kind == 'labeledtensor':
+                    check_fn = '_check_labeled_shape'
+                elif kind == 'sequence':
+                    check_fn = '_check_sequence_shape'
+                elif kind == 'qubit':
+                    check_fn = '_check_qubit_shape'
+                elif kind == 'statevec':
+                    check_fn = '_check_statevec_shape'
+                elif kind == 'circuit':
+                    check_fn = '_check_qubit_shape'  # Circuit[N,G] treated as qubit[N]
+                else:
+                    check_fn = '_check_shape'
+                self.add_line(
+                    f'{check_fn}({arg_name}, {dims!r}, "{node.name}", "{arg_name}", _shape_env)'
+                )
         self._return_unit_stack.append(return_unit)
+        self._return_shape_stack.append(return_shape)
+        self._type_param_stack.append(type_param_set)
         self._fn_name_stack.append(node.name)
         try:
             for stmt in node.body:
+                self._emit_ddk_marker(stmt)
                 res = self.visit(stmt)
                 if isinstance(res, str): self.add_line(res)
         finally:
             self._return_unit_stack.pop()
+            self._return_shape_stack.pop()
+            self._type_param_stack.pop()
             self._fn_name_stack.pop()
         self.indent_level -= 1
         self.add_line("")
@@ -299,15 +366,52 @@ class CodeGenerator:
     def visit_UseStmt(self, node):
         return f"# use {node.module} (already inlined at compile time)"
 
+    def visit_UnitDef(self, node):
+        safe_name = node.name.replace('"', '\\"')
+        safe_base = node.base_unit.replace('"', '\\"')
+        return f'_register_user_unit("{safe_name}", {node.factor!r}, "{safe_base}")'
+
+    def visit_PyImport(self, node):
+        # Emittiert ein echtes Python-Import-Statement, damit Forscher PyPI direkt nutzen können.
+        # Beispiel: `pyimport scipy.special as ss` -> `import scipy.special as ss`.
+        return f"import {node.module} as {node.alias}"
+
+    def _emit_ddk_marker(self, node):
+        """Schreibt `# ddk:<line>` vor jedes Statement, sofern Zeilenangabe vorhanden.
+        Wird vom Runtime-Fehler-Translator gelesen, um Tracebacks auf die .ddk-Quelle zurückzumappen."""
+        ln = getattr(node, "line", None)
+        if isinstance(ln, int):
+            self.add_line(f"# ddk:{ln}")
+
     def visit_ReturnStmt(self, node: ReturnStmt):
         val = self.visit_expression(node.value)
         ret_unit = self._return_unit_stack[-1] if self._return_unit_stack else None
+        ret_shape = self._return_shape_stack[-1] if self._return_shape_stack else None
+        type_params = self._type_param_stack[-1] if self._type_param_stack else set()
+        fn_name = self._fn_name_stack[-1] if self._fn_name_stack else ""
+        safe_fn = fn_name.replace('"', '\\"')
+        # Reihenfolge: erst Unit-Konvertierung, dann Shape-Check (Shape wirkt auf umgerechneten Wert).
         if ret_unit is not None:
-            fn_name = self._fn_name_stack[-1] if self._fn_name_stack else ""
             safe_unit = ret_unit.replace('"', '\\"')
-            safe_fn = fn_name.replace('"', '\\"')
-            self.add_line(f'return _check_return_unit({val}, "{safe_unit}", "{safe_fn}")')
-            return
+            if ret_unit in type_params:
+                val = f'_check_return_param_unit({val}, "{safe_unit}", "{safe_fn}", _unit_env)'
+            else:
+                val = f'_check_return_unit({val}, "{safe_unit}", "{safe_fn}")'
+        if ret_shape is not None:
+            kind, dims = ret_shape if isinstance(ret_shape, tuple) else ('tensor', ret_shape)
+            if kind == 'graph':
+                check_fn = '_check_return_graph_shape'
+            elif kind == 'labeledtensor':
+                check_fn = '_check_return_labeled_shape'
+            elif kind == 'sequence':
+                check_fn = '_check_return_sequence_shape'
+            elif kind in ('qubit', 'circuit'):
+                check_fn = '_check_return_qubit_shape'
+            elif kind == 'statevec':
+                check_fn = '_check_return_statevec_shape'
+            else:
+                check_fn = '_check_return_shape'
+            val = f'{check_fn}({val}, {dims!r}, "{safe_fn}", _shape_env)'
         self.add_line(f"return {val}")
 
     def visit_Assignment(self, node: Assignment):
@@ -470,6 +574,39 @@ class CodeGenerator:
         val = self.visit_expression(node.value)
         idx = self.visit_expression(node.index)
         return f"{val}[{idx}]"
+
+    def visit_Slice(self, node):
+        """Python-Slice: start:stop:step (jede Komponente optional)."""
+        start = self.visit_expression(node.start) if node.start is not None else ""
+        stop = self.visit_expression(node.stop) if node.stop is not None else ""
+        if node.step is not None:
+            step = self.visit_expression(node.step)
+            return f"{start}:{stop}:{step}"
+        return f"{start}:{stop}"
+
+    def visit_TryCatch(self, node):
+        self.add_line("try:")
+        self.indent_level += 1
+        if not node.body:
+            self.add_line("pass")
+        else:
+            for stmt in node.body:
+                self._emit_ddk_marker(stmt)
+                res = self.visit(stmt)
+                if isinstance(res, str):
+                    self.add_line(res)
+        self.indent_level -= 1
+        self.add_line(f"except Exception as {node.catch_var}:")
+        self.indent_level += 1
+        if not node.handler:
+            self.add_line("pass")
+        else:
+            for stmt in node.handler:
+                self._emit_ddk_marker(stmt)
+                res = self.visit(stmt)
+                if isinstance(res, str):
+                    self.add_line(res)
+        self.indent_level -= 1
 
     def visit_ItemAssignment(self, node: ItemAssignment):
         target = self.visit_Subscript(node.target)

@@ -375,6 +375,16 @@ _DERIVED_UNIT_TO_BASE = {
     "lx":   {"cd": 1, "m": -2},
     "kat":  {"mol": 1, "s": -1},
     "U":    {"mol": 1, "s": -1},
+    "Angstrom": {"m": 1},
+    "fm":   {"m": 1},
+    "ps":   {"s": 1},
+    "fs":   {"s": 1},
+    "THz":  {"s": -1},
+    "kJ/mol": {"kg": 1, "m": 2, "s": -2, "mol": -1},
+    "kcal/mol": {"kg": 1, "m": 2, "s": -2, "mol": -1},
+    "J/mol": {"kg": 1, "m": 2, "s": -2, "mol": -1},
+    "eV/atom": {"kg": 1, "m": 2, "s": -2, "mol": -1},
+    "Hartree/mol": {"kg": 1, "m": 2, "s": -2, "mol": -1},
 }
 
 

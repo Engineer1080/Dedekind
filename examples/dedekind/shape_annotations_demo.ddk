@@ -1,0 +1,77 @@
+// shape_annotations_demo.ddk — Tensoren-Shape-Annotationen mit Symbolic Dimensions.
+//
+// Syntax:  fn name(arg: TYPE, ...) -> TYPE { ... }
+//
+//   Scalar          0-D  (Skalar, Quantity, einzelne Zahl)
+//   Vector[N]       1-D  Liste/Tensor der Länge N
+//   Matrix[M, N]    2-D
+//   Tensor[a, b, c, ...]   beliebige Dimension
+//
+// Dimensionen können Integer-Literale ODER Identifier (symbolisch, Caller-bound) sein.
+// Bei Aufruf bindet sich jeder symbolische Name an die tatsächliche Größe; folgende
+// Argumente mit demselben Namen müssen konsistent sein. Mismatch -> ValueError zur
+// Laufzeit, mit auf die `.ddk`-Datei zurückgemappter Zeilennummer.
+
+fn dot_product(a: Vector[3], b: Vector[3]) -> Scalar {
+    return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]
+}
+
+fn matvec(M: Matrix[2, 3], v: Vector[3]) -> Vector[2] {
+    return [
+        M[0][0]*v[0] + M[0][1]*v[1] + M[0][2]*v[2],
+        M[1][0]*v[0] + M[1][1]*v[1] + M[1][2]*v[2]
+    ]
+}
+
+fn project_xy(p: Vector[3]) -> Vector[2] {
+    return [p[0], p[1]]
+}
+
+// Symbolische Dimension N — gebunden via erstem Argument
+fn first_two_diffs(xs: Vector[N]) -> Vector[2] {
+    return [xs[1] - xs[0], xs[2] - xs[1]]
+}
+
+// Zwei Argumente mit derselben symbolischen Dimension -> Konsistenz erzwungen
+fn weighted_dot(x: Vector[N], w: Vector[N]) -> Scalar {
+    return x[0]*w[0] + x[1]*w[1] + x[2]*w[2]
+}
+
+fn main() {
+    print("=== Shape-Annotationen v1.9 ===")
+
+    // Vector[3] x Vector[3] -> Scalar
+    a = [1.0, 2.0, 3.0]
+    b = [4.0, 5.0, 6.0]
+    print("dot([1,2,3], [4,5,6]) = " + str(dot_product(a, b)))
+
+    // Matrix[2,3] x Vector[3] -> Vector[2]
+    M = [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]
+    print("M*v = " + str(matvec(M, a)))
+
+    // Vector[3] -> Vector[2] (Projektion)
+    print("project = " + str(project_xy(a)))
+
+    // Symbolische Dimension N=4, gebunden via xs
+    longer = [10.0, 20.0, 30.0, 40.0]
+    print("diffs = " + str(first_two_diffs(longer)))
+
+    // Zwei Argumente mit demselben N (=3, konsistent)
+    w = [0.1, 0.2, 0.7]
+    print("weighted_dot = " + str(weighted_dot(a, w)))
+
+    print("Alle Shape-Checks bestanden.")
+
+    // --- VERBOTENE Beispiele (auskommentiert; wuerden ValueError werfen) ---
+    //
+    // bad1 = dot_product([1.0, 2.0], b)
+    // // ValueError: Shape-Mismatch in dot_product(a): Dim 0 erwartet 3, erhalten 2.
+    //
+    // bad2 = matvec([[1.0, 2.0], [3.0, 4.0]], a)
+    // // ValueError: Dimension 1 erwartet 3, erhalten 2.
+    //
+    // bad3 = weighted_dot([1.0, 2.0, 3.0], [0.5, 0.5])
+    // // ValueError: Symbolische Shape-Dimension 'N' in weighted_dot(w):
+    // //            bereits als 3 gebunden, hier 2.
+}
+main()

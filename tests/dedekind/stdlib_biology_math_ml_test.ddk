@@ -1,0 +1,63 @@
+// Tests für modules/biology.ddk, modules/math.ddk, modules/ml.ddk
+use biology
+use math
+use ml
+
+fn approx(a, b, tol) {
+    d = a - b
+    if d < 0 { d = -d }
+    return d < tol
+}
+
+fn main() {
+    // --- biology ---
+    // Exponentialwachstum N0=1, r=ln(2), t=1 ⇒ N=2
+    N1 = exponential_growth(1.0, log(2.0), 1.0)
+    assert(approx(N1, 2.0, 1e-6), "exp_growth")
+
+    td = doubling_time(log(2.0))
+    assert(approx(td, 1.0, 1e-6), "doubling_time")
+
+    R0 = r_naught_sir(0.6, 0.1)
+    assert(approx(R0, 6.0, 1e-9), "R0")
+
+    p_c = herd_immunity_threshold(2.0)
+    assert(approx(p_c, 0.5, 1e-9), "herd immunity")
+
+    // BMI 80kg, 2m ⇒ 20
+    assert(approx(bmi(80.0, 2.0), 20.0, 1e-9), "BMI")
+
+    // Hardy-Weinberg p=0.5: alle drei = 0.25, 0.5, 0.25
+    hw = hardy_weinberg_freq(0.5)
+    assert(approx(hw[0], 0.25, 1e-9), "HW AA")
+    assert(approx(hw[1], 0.5, 1e-9), "HW Aa")
+
+    // --- math ---
+    assert(fibonacci(10) == 55, "fib(10)")
+    assert(fibonacci(15) == 610, "fib(15)")
+    assert(approx(harmonic_sum(4), 1.0 + 0.5 + 1.0/3.0 + 0.25, 1e-9), "H_4")
+    assert(approx(geometric_sum(1.0, 0.5, 100), 2.0, 1e-9), "geom_sum konvergiert")
+    assert(approx(hypotenuse(3.0, 4.0), 5.0, 1e-9), "Pythagoras")
+    assert(approx(sphere_volume(1.0), 4.0/3.0 * pi.value, 1e-6), "Kugelvolumen r=1")
+    assert(approx(sigmoid(0.0), 0.5, 1e-9), "sigmoid(0)=0.5")
+    assert(approx(lerp(0.0, 10.0, 0.5), 5.0, 1e-9), "lerp 50%")
+    assert(clamp_scalar(15.0, 0.0, 10.0) == 10.0, "clamp obere Grenze")
+    assert(lcm(12, 8) == 24, "lcm(12,8)")
+    assert(is_perfect_square(144), "144 ist Quadrat")
+    assert(digital_root(987) == 6, "digital_root(987)")
+
+    // --- ml ---
+    assert(approx(leaky_relu(2.0, 0.1), 2.0, 1e-9), "leaky_relu positiv")
+    assert(approx(leaky_relu(-2.0, 0.1), -0.2, 1e-9), "leaky_relu negativ")
+    assert(approx(swish(0.0), 0.0, 1e-9), "swish(0)=0")
+    assert(approx(elu(-1.0, 1.0), exp(-1.0) - 1.0, 1e-6), "elu(-1)")
+
+    yt = [1, 1, 0, 0]
+    yp = [1, 0, 0, 0]
+    assert(approx(accuracy(yt, yp), 0.75, 1e-9), "accuracy")
+    assert(approx(recall_binary(yt, yp), 0.5, 1e-9), "recall")
+
+    print("stdlib_biology_math_ml_test: 20 Asserts bestanden")
+}
+
+main()

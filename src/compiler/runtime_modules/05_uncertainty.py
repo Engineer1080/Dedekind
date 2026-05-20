@@ -1534,3 +1534,123 @@ def seismic_wave_velocities(K, G, rho):
 
 
 
+
+
+def fidelity(sv1, sv2):
+    """Fidelitaet |Ôƒ¿¤ê1|¤ê2Ôƒ®|┬▓ zwischen zwei Statevektoren."""
+    if len(sv1) != len(sv2):
+        raise ValueError(f"fidelity: Vektoren muessen gleiche Laenge haben, bekam {len(sv1)} und {len(sv2)}.")
+    inner = sum(a.conjugate() * b for a, b in zip(sv1, sv2))
+    return abs(inner) ** 2
+
+def entropy_von_neumann(probs):
+    """Von-Neumann-Entropie S = -╬ú p_i log2(p_i) (aus Wahrscheinlichkeiten)."""
+    if hasattr(probs, 'tolist'):
+        probs = probs.tolist()
+    s = 0.0
+    for p in probs:
+        p = abs(float(p))
+        if p > 1e-15:
+            s -= p * _math.log2(p)
+    return s
+
+def schmidt_rank(sv, n_a):
+    """Schmidt-Rang des Statevektors fuer bipartite Zerlegung A|B.
+
+    Args:
+        sv: Statevector (Liste komplexer Zahlen, Laenge 2^n)
+        n_a: Anzahl Qubits in Teilsystem A
+
+    Returns:
+        Schmidt-Rang (int)
+    """
+    import math
+    n = int(math.log2(len(sv)))
+    n_b = n - n_a
+    dim_a = 1 << n_a
+    dim_b = 1 << n_b
+    # Reshape als Matrix dim_a x dim_b
+    mat = [[0+0j] * dim_b for _ in range(dim_a)]
+    for idx, amp in enumerate(sv):
+        i = idx >> n_b
+        j = idx & (dim_b - 1)
+        mat[i][j] = amp
+    # SVD via Python (kein scipy/numpy noetig fuer kleine Systeme)
+    try:
+        import torch as _t
+        T = _t.tensor([[mat[i][j] for j in range(dim_b)] for i in range(dim_a)],
+                      dtype=_t.complex64)
+        sv_vals = _t.linalg.svdvals(T)
+        return int((sv_vals > 1e-8).sum().item())
+    except Exception:
+        # Fallback: Rang der Matrix via Gauss
+        return _matrix_rank_approx(mat, dim_a, dim_b)
+
+def _matrix_rank_approx(mat, rows, cols, tol=1e-8):
+    """Naiver Gauss-Rank (fuer kleine Matrizen wenn torch fehlt)."""
+    m = [row[:] for row in mat]
+    rank = 0
+    for col in range(cols):
+        pivot = None
+        for row in range(rank, rows):
+            if abs(m[row][col]) > tol:
+                pivot = row
+                break
+        if pivot is None:
+            continue
+        m[rank], m[pivot] = m[pivot], m[rank]
+        for row in range(rows):
+            if row != rank and abs(m[row][col]) > tol:
+                factor = m[row][col] / m[rank][col]
+                m[row] = [m[row][j] - factor * m[rank][j] for j in range(cols)]
+        rank += 1
+    return rank
+
+def qubit_frequency_check(freq):
+    """Prueft, dass freq eine Frequenz-Einheit ([GHz], [MHz], [THz]) hat.
+
+    Gibt den Wert in GHz zurueck.
+    """
+    if not isinstance(freq, Quantity):
+        raise TypeError(
+            f"qubit_frequency_check: Erwartet Quantity mit Frequenz-Einheit ([GHz]), "
+            f"bekam {type(freq).__name__}."
+        )
+    freq_units = {"Hz", "kHz", "MHz", "GHz", "THz"}
+    if freq.unit not in freq_units:
+        raise TypeError(
+            f"qubit_frequency_check: Einheit [{freq.unit}] ist keine Frequenzeinheit. "
+            f"Erlaubt: {freq_units}."
+        )
+    # Konvertiere zu GHz
+    dim_info = DIMENSION_TO_BASE["frequency"]
+    base_val = float(freq.value) * dim_info[1].get(freq.unit, 1.0)  # -> Hz
+    return Quantity(base_val / 1e9, "GHz")
+
+def coherence_time_check(t):
+    """Prueft Kohaerenzzeit (muss [us], [ns], [ms] oder [s] sein)."""
+    if not isinstance(t, Quantity):
+        raise TypeError(
+            f"coherence_time_check: Erwartet Quantity mit Zeit-Einheit ([us]), "
+            f"bekam {type(t).__name__}."
+        )
+    time_units = {"s", "ms", "us", "ns", "ps", "fs"}
+    if t.unit not in time_units:
+        raise TypeError(
+            f"coherence_time_check: Einheit [{t.unit}] ist keine Zeiteinheit."
+        )
+    return t
+
+def energy_gap_check(E):
+    """Prueft Energieluecke (muss [eV], [meV], [J] sein)."""
+    if not isinstance(E, Quantity):
+        raise TypeError(
+            f"energy_gap_check: Erwartet Quantity mit Energie-Einheit ([eV]), "
+            f"bekam {type(E).__name__}."
+        )
+    energy_units = {"J", "kJ", "MJ", "eV", "meV", "MeV"}
+    if E.unit not in energy_units:
+        raise TypeError(
+            f"energy_gap_check: Einheit [{E.unit}] ist keine Energieeinheit."
+        )
+    return E

@@ -1,0 +1,42 @@
+// Test fuer Graph[N, E]-Shape-Annotation gegen torch_geometric.data.Data.
+// Negative Faelle (Mismatch) sind in den Demo-Files dokumentiert.
+
+pyimport torch
+pyimport torch_geometric.data as pyg_data
+
+fn count_atoms(g: Graph[N, E]) -> Scalar {
+    return g.num_nodes
+}
+
+fn count_bonds(g: Graph[N, E]) -> Scalar {
+    return g.num_edges
+}
+
+// Konsistenz-Test: zwei Graphen mit demselben symbolischen N
+fn both_graphs_same_n(g1: Graph[N, E1], g2: Graph[N, E2]) -> Scalar {
+    return g1.num_nodes + g2.num_nodes
+}
+
+fn main() {
+    // Pfad-Graph 4 Knoten, 3 Bindungen (6 gerichtet)
+    x = torch.tensor([1.0, 2.0, 3.0, 4.0]).reshape(4, 1)
+    edge_index = torch.tensor([0, 1, 1, 2, 2, 3, 1, 0, 2, 1, 3, 2]).reshape(2, 6)
+    g = pyg_data.Data(x=x, edge_index=edge_index)
+
+    assert(g.num_nodes == 4, "PyG sees 4 atoms")
+    assert(g.num_edges == 6, "PyG sees 6 directed bonds")
+
+    // Graph[N, E] mit symbolischen Dims: bindet N=4, E=6
+    assert(count_atoms(g) == 4, "count_atoms via Graph[N,E]")
+    assert(count_bonds(g) == 6, "count_bonds via Graph[N,E]")
+
+    // Zwei Graphen, beide mit N=4 (symbolisch konsistent)
+    x2 = torch.tensor([10.0, 20.0, 30.0, 40.0]).reshape(4, 1)
+    ei2 = torch.tensor([0, 1, 2, 3]).reshape(2, 2)
+    g2 = pyg_data.Data(x=x2, edge_index=ei2)
+    total = both_graphs_same_n(g, g2)
+    assert(total == 8, "both N=4 graphs sum to 8 nodes")
+
+    print("graph_shape_test: 5 Asserts bestanden")
+}
+main()

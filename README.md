@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-1.7.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-1.20.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -12,15 +12,7 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **Sparse Tensors**: Efficient `.sparse()` support for FEM/CFD simulations.
 - **Fundamental Constants**: Mathematical `pi`, `e`; physical CODATA constants: `c`, `G`, `h`, `hbar`, `k_B`, `k_e`, `e_charge`, `epsilon_0`, `mu_0`, `m_e`, `m_p`, `N_A`, `R_gas`, `alpha`, `sigma_SB`, `F_faraday` — all as **Quantity** with SI units.
 - **Physical Units**: SI base m, kg, s, A, K, mol, **cd** (candela); literals (`10[m]`, `5[m/s]`, `1.0[kg]`, `1[cd]`); **automatische Umrechnung** bei Addition/Subtraktion für gleiche Dimension — **SI-Basis**: Länge (m, cm, km, mm, dm), Masse (kg, g, t, mg), Zeit (s, min, h, ms), Strom (A, mA, kA, uA), Temperatur (K, mK), Stoffmenge (mol, mmol, kmol), Lichtstärke (cd, mcd); **abgeleitet**: Druck (Pa, bar, atm), Volumen (L, mL, dm³, m³), Energie (J, kJ, MJ, Wh, kWh), Spannung (V, mV, kV), Frequenz (Hz, kHz, MHz, GHz), Ladung (C, mC, uC), Widerstand (ohm, kohm, Mohm), Leistung (W, kW, MW); **Winkel**: rad, deg. Ergebnis = Einheit des ersten Operanden; z. B. `1[m] + 100[cm]` → `2[m]`, `90[deg] + (pi/2)*1[rad]` → `180[deg]`. `deg_to_rad(x)`, `rad_to_deg(x)` für Konvertierung. Sonst add/sub gleiche Einheit; multiply/divide kombinieren Einheiten; `^` für Potenzen; Anzeige vereinfacht (J, N, Pa, W, Hz, …). **Chemie**: mol, L, M (= mol/L), ppm, **bar**, **atm**, **g**; **Radioaktivität**: **Bq**, **Sv**, Gy.
-- **Modulsystem & `@units`-Signaturen**: Modul-Einbindung über das `use`-Statement. Formale Typprüfung und automatische Umrechnung über Funktionsparameter- und Return-Signaturen (z. B. `fn kinetic_energy(m: [kg], v: [m/s]) -> [J]`).
-- **DataFrames & Tabellen-I/O**: Spaltenorientierte Tabellenklasse `DataFrame` mit Einheiten und automatischem Einheiten-Lookup. Nativer I/O über `read_csv`/`write_csv` (unterstützt `name [unit]` im Header) und optionale Anbindung an Parquet, HDF5 und NetCDF.
-- **Advanced Numerik, Optimierung & SDEs**: JIT-Ausführung via `jit(fn)` (torch.compile); stochastische DGL-Löser `sde_solve(...)` (Euler-Maruyama/Milstein); nichtlineare optimierte Solver `least_squares`, `minimize_constrained` (SLSQP/trust-constr) und (gemischt-)ganzzahlige Optimierung `milp`.
-- **Finite-Elemente-Methode (FEM)**: 2D-Gittergenerierung `mesh_unit_square(n)` und Assemblierungsfunktionen `fem_assemble_stiffness`/`fem_assemble_load` zum Lösen partieller DGLs via `fem_poisson_2d`.
 - **4D Rotational Math**: Native Quaternion support (`i`, `j`, `k` suffixes) and `.rotate()` method; unary minus supported (`-1.0 + 0i`).
-- **Tiefere Symbolik**: Nativer symbolischer Gleichungslöser `solve_sym(equation, var)` (auch für komplexe lineare und nichtlineare Systeme); algebraische Vereinfachung `simplify_sym(expr)`; Taylor-Reihenentwicklung `series(expr, var, x0, n)`. Ergänzt `diff_sym`/`integrate_sym` (Ableitungen und Stammfunktionen).
-- **Sparse iterative Solver & Vorkonditionierung**: Krylov-Löser `cg`, `gmres` und `bicgstab` für extrem große/dünnbesetzte Systeme; diagonaler `jacobi_preconditioner` und Incomplete-LU `ilu_preconditioner` für signifikante Konvergenzbeschleunigung.
-- **Reproduzierbarer Notebook-Export**: `export_notebook(...)` kompiliert und führt Dedekind-Code aus, sammelt Stdout und erzeugte Plots und exportiert ein eigenständiges HTML/Markdown-Dokument inklusive SHA-256-Quellcode-Hash zur vollständigen Reproduzierbarkeit.
-- **Wissenschaftliches Publizieren**: `print_table(...)` erzeugt publikationsreife Tabellen in LaTeX (Booktabs), Markdown, CSV oder ASCII, inklusive vollautomatischer Formatierung von standardmäßigen Abweichungen und Einheiten aus `UncertainQuantity` (`val ± std [unit]`).
 - **Differentiable ODE Solvers**: `ode_solve(fun, y0, t)` (RK4/Euler); gradients via `grad()` for physics-informed ML; `linspace(start, stop, steps)` for time grids.
 - **Differentiable PDE Solvers**: `pde_heat_1d`, `pde_heat_2d` (heat); `pde_advection_1d`, `pde_advection_2d` (advection); `pde_wave_1d`, `pde_wave_2d` (wave); `pde_burgers_1d`, `pde_burgers_2d` (Burgers); `pde_reaction_diffusion_1d`, `pde_reaction_diffusion_2d`; `pde_advection_diffusion_1d`, `pde_advection_diffusion_2d`; `pde_maxwell_1d`, `pde_maxwell_2d` (Maxwell FDTD); `pde_navier_stokes_2d` (Navier-Stokes 2D incompressible, Chorin projection); finite differences + `ode_solve`; gradients through `u0` and parameters.
 - **Probabilistic Programming**: First-class distributions `Normal(mu, sigma)`, `Uniform(low, high)`, `Bernoulli(p)`, `Exponential(rate)`, `Gamma(concentration, rate)`, `Beta(alpha, beta)`, `Poisson(rate)`, `Dirichlet(alpha)`; `sample(dist)`, `log_prob(dist, value)`; Bayesian inference via `metropolis(log_prior, log_likelihood, data, init, steps)`.
@@ -28,9 +20,8 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **Math Functions**: `sin`, `cos`, `tan`, `exp`, `log`, `log10`, `sqrt`, `abs`; `asin`, `acos`, `atan`, `atan2(y,x)`; `sinh`, `cosh`, `tanh` — element-wise, differentiable; Tensor or scalar. **Reductions**: `min(x)`, `max(x)`, `argmin(x)`, `argmax(x)` (optional `dim`). **Rounding**: `round(x)`, `floor(x)`, `ceil(x)`. **Linear algebra**: `norm(x)`, `det(A)`, `trace(A)`.
 - **Uncertainty Propagation**: `uncertain(value, std)` bzw. `UncertainQuantity` — Gauß'sche Fehlerfortpflanzung für +, -, *, /, ^; optional mit Einheit.
 - **Fitting / Regression**: `fit(loss_fn, params_init, data, method="gd"|"mcmc"|"hmc", lr=0.01, steps=500)` — minimiert `loss_fn(params, data)` via Gradient Descent, Metropolis-Hastings oder **HMC** (Hamiltonian Monte Carlo).
-- **Life Sciences Extension**: Differentiable two-compartment pharmacokinetics (`two_compartment_pk`), SMILES/molecular tools (`smiles_molecular_weight`, `lipinski_descriptors`), online databases (`pubchem_get_molecular_formula`, `chembl_get_ic50`), **PyTorch local sequence alignment** (`smith_waterman_alignment`), and **unit-aware PDB/mmCIF protein coordinate parser** (`protein_structure_parse`).
 - **LaTeX-Export**: `export_to_latex(source)` bzw. CLI `--latex` — Formeln aus Dedekind-Code als LaTeX (für Papers/Notizen). **Wissenschaftliche Konsole**: `print_latex(s)` rendert LaTeX in der Dedekind-Studio-/Jupyter-Konsole (z. B. Formeln, griechische Buchstaben).
-- **Bessere Fehlermeldungen**: Compiler-Fehler mit Zeile (`CompileError`); Parser setzt `line` im AST; Runtime-Quantity-Meldungen with Kontext.
+- **Bessere Fehlermeldungen**: Compiler-Fehler mit Zeile (`CompileError`); Parser setzt `line` im AST; Runtime-Quantity-Meldungen mit Kontext.
 - **Einheiten zur Compile-Zeit**: `1[m] + 1[s]` → Compiler-Fehler mit Zeile; `compile_source(..., check_units=True)` (Default), CLI `--no-units-check`.
 - **Datei-I/O**: `read_file(path)` (Text UTF-8), `write_file(path, content)`, `file_exists(path)`.
 - **Netzwerk**: `http_get(url)`, `http_post(url, data)` (data String oder Dict/List als JSON); Antworttext UTF-8.
@@ -38,43 +29,297 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
 
-### What's New in v1.7.0 (May 2026)
+### What's New in v1.20.0
 
-- **Life Sciences, Astrophysics & Geosciences Extension (Phase 1, 2, 3, Astrophysics & Geosciences):**
-  - **Astrophysics & Cosmology Suite:**
-    - **Differentiable Kepler Solver:** `solve_kepler(M, e)` solves the Kepler equation $E - e \sin(E) = M$ using a PyTorch-differentiable Newton-Raphson method (6 iterations), supporting unit-aware mean anomaly input in radians or degrees.
-    - **Relativistic Redshift to Velocity:** `redshift_to_velocity(z)` computes relativistic recession velocity $v = c \frac{(1+z)^2 - 1}{(1+z)^2 + 1}$, returning a `Quantity [m/s]` or a tensor.
-    - **Schwarzschild Radius:** `schwarzschild_radius(M)` calculates the event horizon $R_s = \frac{2GM}{c^2}$ for any mass $M$ (accepts `kg` or solar masses `M_sun`), returning a `Quantity [m]` or a tensor.
-    - **Stellar Mass-Luminosity Relation:** `stellar_luminosity(M_solar)` calculates main-sequence stellar luminosity $L$ in solar luminosities `L_sun` given a mass in solar masses `M_sun` or `kg`, using a PyTorch-differentiable piecewise function.
-    - **Astrophysical Units:** Full support for solar mass `M_sun` (mass dimension) and solar luminosity `L_sun` (power/luminosity dimension) with automatic compiler verification.
-  - **Meteorology, Climatology & Geosciences Suite:**
-    - **Coriolis Parameter:** `coriolis_parameter(latitude)` computes the Coriolis parameter $f = 2 \Omega \sin(\phi)$ in `[s^-1]` (reciprocal seconds), supporting latitude input in `[deg]` or `[rad]`.
-    - **Saturated Vapor Pressure:** `saturated_vapor_pressure(T)` computes saturation vapor pressure $e_s(T)$ of water vapor over liquid water via the Magnus-Tetens formula, returning a pressure `Quantity [Pa]` or a tensor.
-    - **Dew Point:** `dew_point(T, RH)` computes dew point temperature $T_d$ given temperature $T$ and relative humidity $RH$ (0 to 100), returning a temperature `Quantity [K]` or a tensor.
-    - **Seismic Wave Velocities:** `seismic_wave_velocities(K, G, rho)` computes compressional (P-wave) and shear (S-wave) velocities $[v_p, v_s]$ in elastodynamic media from bulk modulus $K$, shear modulus $G$, and density $\rho$ (supports `kg/m^3` and `g/cm^3`), returning a list of `Quantity [m/s]` or tensors.
-    - **New Pressure Unit:** Added hectopascal `hPa` ($1 \text{ hPa} = 100 \text{ Pa}$) under the pressure dimension for meteorology and atmospheric applications.
-  - **Life Sciences Suite (Phase 1, 2 & 3):**
-    - **Differentiable PK/PD Solver:** `two_compartment_pk(C0, k12, k21, ke, t)` simulates a two-compartment pharmacokinetic model, supporting full auto-differentiation via PyTorch.
-  - **Zero-Dependency SMILES Parsing:** Pure-Python parsing of SMILES notation to build chemical graphs and resolve aromaticity.
-  - **Molecular Weight & Lipinski Descriptors:** `smiles_molecular_weight(smiles)` calculates molecular weight, and `lipinski_descriptors(smiles)` checks Lipinski's Rule of Five (HBD, HBA, MW, logP).
-  - **Online Database Access:** `pubchem_get_molecular_formula(name)` and `chembl_get_ic50(target, compound)` query official scientific APIs with robust, offline-safe mock fallbacks.
-  - **Tensor-based Smith-Waterman Alignment:** `smith_waterman_alignment(seq1, seq2, match_score, mismatch_penalty, gap_penalty)` performs local sequence alignment in PyTorch, supporting strings and 1D tensors with tracebacks.
-  - **Unit-aware PDB/mmCIF Coordinate Parser:** `protein_structure_parse(path_or_content)` parses standard PDB and mmCIF crystallographic structures into first-class `DataFrame` tables with automatic `"angstrom"` units for spatial coordinates.
-  - **Extended Chemical & Physical Units:** Full support for pressure units `bar` and `atm` (with auto-conversions to `Pa`), mass concentration `% w/v` (where $1\% \text{ w/v} = 10 \text{ g/L}$), and native compiler verification for concentration variables.
+- **Generics / Typ-Parameter** mit echter Durchsetzung — `fn name<T, U, ...>(...)`.
+  ```dedekind
+  fn add_same<U>(a: [U], b: [U]) -> [U] { return a + b }
 
-### What's New in v1.6.3
+  add_same(2[m], 3[m])        // U bindet auf m -> 5[m]
+  add_same(10[kg], 5[kg])     // U bindet auf kg -> 15[kg]
+  add_same(2[m], 100[cm])     // U bindet auf m, 100[cm] auto-konvertiert -> 3[m]
+  add_same(2[m], 3[kg])       // ValueError: Dimensions-Mismatch
+  ```
+- **Polymorphe Einheits-Variablen:** `[U]` mit `<U>` deklariert erzwingt Einheits-Konsistenz ueber Argumente und Return-Wert. Erstes Argument bindet U; weitere Argumente werden auf dieselbe Dimension geprueft und ggf. automatisch konvertiert (m vs cm). Mismatch (m vs kg) wirft `ValueError: Typ-Param-Einheit 'U' in fn(b): bereits an [m] gebunden, hier [kg].`
+- **Shape-Parameter:** `<N>` mit `Vector[N]` macht den symbolischen-Dimensions-Mechanismus aus v1.9 explizit. Bereits funktionierende cross-arg-Konsistenz (`dot<N>(a: Vector[N], b: Vector[N])`) ist jetzt im Funktionskopf deklariert.
+- **Mehrere Typ-Parameter:** `fn pair<A, B>(a: [A], b: [B])` haelt A und B unabhaengig — jeder bindet separat.
+- **Units-Checker-Patch:** Einheiten, die Typ-Parameter sind, werden zur Compile-Zeit als "polymorph" behandelt und ueberspringen den statischen Check; die Konsistenz-Validierung passiert per Laufzeit via `_unit_env`-Dict.
+- **Unterschied zu Python's `typing.TypeVar`:** Pythons Generics sind rein dokumentarisch — der Interpreter ignoriert sie. Dedekind erzwingt sie aktiv: dimensional inkonsistente Aufrufe brechen ab, dimensional kompatible aber unterschiedlich-skalierte Aufrufe werden automatisch konvertiert. Das macht Dedekind in puncto Typsicherheit Python tatsaechlich ueberlegen.
+- Beispiel: `generics_demo.ddk`. Test: `generics_test.ddk` (9 Asserts: gleiche Einheit, Auto-Konvertierung, Mismatch, Multi-Parameter, Shape). 46/46 Tests gruen, 102/102 Beispiele kompilieren.
 
-- **Hardware-Beschleunigung & JIT-Optimierung (torch.compile):** Vollständige und fehlerfreie Auswertung von AST-Aufrufmodifikatoren (`.fast()`, `.gpu()`, `.cpu()`) im Code-Generator, wodurch Berechnungen jetzt nativ als hocheffiziente Triton-GPU-Kernels ausgeführt werden.
-- **Runtime-Konsolidierung:** Konsolidierung aller Tensor-Hilfsfunktionen (`_to_tensor`, `_to_gpu`, `_to_cpu`) zur Verringerung von Code-Redundanz und zur Optimierung der JIT-Kompilierungszeit.
+### What's New in v1.19.0
 
-### What's New in v1.6.2
+- **Multi-File-Module mit Sichtbarkeit.** Zwei zusammengehoerende Sprach-Features fuer reale Projekt-Strukturen.
+- **Gepunktete Modul-Pfade:** `use foo.bar.baz` resolved auf `modules/foo/bar/baz.ddk`. Verschachtelte Verzeichnis-Struktur fuer thematische Gliederung statt einem flachen `modules/`-Ordner.
+  ```dedekind
+  use geometry.area       // -> modules/geometry/area.ddk
+  use geometry.volume     // -> modules/geometry/volume.ddk
+  ```
+- **`pub fn` fuer Export-Kontrolle:** Nur als `pub fn name()` deklarierte Funktionen sind ausserhalb des Moduls sichtbar; alle anderen Funktionen werden zur Compile-Zeit mit `__ddk_<modpath>_<name>` umbenannt und sind damit von aussen nicht erreichbar.
+  ```dedekind
+  // modules/geometry/area.ddk
+  fn priv_pi() { return 3.14159265358979 }   // privat
+  pub fn circle_area(r) {                     // exportiert
+      return priv_pi() * r * r
+  }
+  ```
+- **Backward-Kompatibel:** Module ohne jede `pub`-Deklaration laufen im **Legacy-Modus** — alle Funktionen bleiben oeffentlich. Damit bleiben die bestehenden 7 Standardbibliotheks-Module (`physics`, `stats`, `chemistry`, `biology`, `math`, `ml`, `mathlib`) ohne Aenderung funktionsfaehig. Wer Sichtbarkeit haben will, deklariert mindestens eine Funktion als `pub` — ab dann gilt der Opt-In-Modus.
+- **Visibility-Mangling** zur Compile-Zeit via `_apply_module_visibility(mod_ast, module_name)`: AST-Walker (`_rename_in_ast`) ersetzt sowohl `FunctionDef.name` als auch jeden `Identifier`-Reference auf private Funktionen — Aufrufe innerhalb des Moduls werden konsistent mit-renamed.
+- Beispiel: `multi_file_modules_demo.ddk` mit zwei Submodulen `geometry.area` und `geometry.volume`, plus Legacy-Modul `math`. Test: `multi_file_modules_test.ddk` (10 Asserts: gepunktete Pfade, private Funktionen unsichtbar via try/catch aus v1.17, Backward-Kompatibilitaet). 45/45 Tests gruen, 101/101 Beispiele kompilieren.
 
-- **Statischer Compile-Time Unit Checker:** Der Einheiten-Checker (`units_checker.py`) wurde zu einem echten statischen Typen-Analysator ausgebaut. Er verwendet nun einen *Environment-Stack* zur Scope-basierten Verfolgung lokaler Variablenzuweisungen (Type Inference) und führt eine kanonische Dimensionsanalyse zur Kompilierzeit durch. Das bedeutet, dass komplexe Ausdrücke wie `(m/s)*s` automatisch zu `m` gekürzt und typgeprüft werden, bevor der Code überhaupt ausgeführt wird.
+### What's New in v1.18.0
 
-### What's New in v1.6.1
+- **3D Geometric / Clifford Algebra G(3,0) nativ.** Neue `MultiVector`-Klasse mit 8 reellen Komponenten (Skalar, e1, e2, e3, e12, e13, e23, e123) und nativem Operator-Overloading. Vereinheitlicht Skalare, Vektoren, Bivektoren (orientierte Flaechen) und Pseudoskalare in einer Algebra — Rotationen werden zu Sandwich-Produkten, komplexe Zahlen sind eine Subalgebra, Quaternionen sind die gerade Subalgebra.
+  ```dedekind
+  e1 = vector(1, 0, 0)
+  e2 = vector(0, 1, 0)
+  print(e1 * e2)                      // e12 (Bivektor)
 
-- **Modularisierung der Laufzeitumgebung:** Die über 250 KB große `ml_runtime.py` wurde in 10 thematisch getrennte Module (z. B. `01_classes.py`, `03_solvers.py`, `07_dataframes.py`) unter `src/compiler/runtime_modules/` aufgeteilt. Ein neues Build-Skript (`src/compiler/build_runtime.py`) fügt diese bei Bedarf nahtlos zusammen. Dies verbessert die Wartbarkeit massiv und senkt die Hürde für Open-Source-Kontributoren, ohne den bestehenden Transpiler (`codegen.py`) zu beeinträchtigen.
-- **Bugfixes:** Behebung von hartkodierten `/tmp/`-Pfaden in den Beispielen `notebook_export_demo.ddk` und `v1_4_features_showcase.ddk` für plattformübergreifende Kompatibilität.
+  R = rotor(1.5707963, 1, 0, 0)       // 90 deg in der e1-e2-Ebene
+  print(rotate(e1, R))                // ~ e2 (Rotation via Sandwich-Produkt)
+  ```
+- **Konstruktoren:** `scalar(s)`, `vector(x,y,z)`, `bivector(b12,b13,b23)`, `pseudoscalar(s)`, `multivector(8 args)`, `rotor(angle, b12, b13, b23)`.
+- **Operationen:** `+`, `-`, `*` (geometrisches Produkt), Skalar-Multiplikation; Methoden `.wedge(b)` (outer/Grad-Erhoehung), `.dot(b)` (inner/Grad-Reduktion), `.reverse()`, `.grade(n)`, `.norm()`, `.scalar_part()`.
+- **Funktion `rotate(v, R)`** macht das Sandwich-Produkt `R v ~R` explizit.
+- **Multiplikationstabelle** (8×8) ueber Bit-Pattern berechnet: result_blade = `a XOR b`, Vorzeichen aus der Anzahl Swaps. Numerisch stabil, keine externen Abhaengigkeiten.
+- **Bewusst NICHT geliefert:** keine Signaturen jenseits G(3,0) (kein Spacetime G(3,1), keine Conformal Geometric Algebra G(4,1)). Wer die braucht: `pyimport clifford` direkt. Dedekinds Beitrag: die kanonischen 3D-Faelle (Robotik, Graphik, klassische Physik) als typisierte native Built-ins, ohne Extra-Dependency.
+- Beispiel: `geometric_algebra_demo.ddk` (8 Demos: Basis, geom. Produkt, Quadrate, Rotor, Rotor-Komposition, Bivektor-Orientierung, Pseudoskalar, komplexe Zahlen als Subalgebra). Test: `geometric_algebra_test.ddk` (16 Asserts). 44/44 Tests gruen, 100/100 Beispiele kompilieren.
+
+### What's New in v1.17.0
+
+- **`try { ... } catch e { ... }` — natives Error-Handling.** Bisher konnten Forscher Exceptions nicht im `.ddk`-Code abfangen. Jetzt:
+  ```dedekind
+  try {
+      content = read_file("/maybe/exists.json")
+      return json_parse(content)
+  } catch e {
+      print("Datei nicht lesbar:", e)
+      return {}
+  }
+  ```
+  Verschachtelbar. Codegen emittiert standardmaessiges Python `try: ... except Exception as e: ...`. Damit ist Dedekind von einem Skript-DSL zu einer echten Anwendungs-Sprache geworden — defensive Programmierung und Fallback-Pfade sind ab v1.17 erstklassig.
+- **Python-Style Slicing-Syntax `x[a:b]`, `x[:b]`, `x[a:]`, `x[::s]`, `x[a:b:s]`, `x[:]`.** Vorher musste man `x.narrow(0, a, b-a)` schreiben — jetzt:
+  ```dedekind
+  x = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+  head = x[:5]            // [10..50]
+  tail = x[5:]            // [60..100]
+  every2nd = x[::2]       // [10, 30, 50, 70, 90]
+  middle = x[2:8:2]       // [30, 50, 70]
+  ```
+  Funktioniert auf Listen, Tensoren, allem was `__getitem__` mit `slice` versteht. Neuer `Slice(start, stop, step)`-AST-Knoten; jede Komponente ist optional.
+- **Hinweis: PyTorch-Limitierung.** Negativer Step (`x[::-1]` fuer Reverse) wird von PyTorch nicht unterstuetzt — nutze `torch.flip(x, [0])`. Slice mit positivem Step funktioniert unveraendert.
+- Beispiel: `try_catch_slicing_demo.ddk`. Test: `try_catch_slicing_test.ddk` (18 Asserts: 7 Slice-Varianten, try/catch flat und verschachtelt, kombinierte try+Slice). 43/43 Tests gruen, 99/99 Beispiele kompilieren.
+
+### What's New in v1.16.0
+
+- **`Sequence[DNA]` / `Sequence[RNA]` / `Sequence[Protein]`-Shape-Annotation:** Typsichere Sequenz-Validierung. Akzeptiert genau die Zeichen des jeweiligen Alphabets — sonst `ValueError: Sequence[DNA]-Check in fn(seq): ungueltiges Zeichen 'U' an Position 3 (erlaubt: ACGNT)`. Verhindert klassische Bioinformatik-Bugs wie RNA-statt-DNA-Verwechselung, die in Python/Biopython still falsche GC-Counts produzieren.
+- **Native Bio-Built-ins** (kein `pyimport` noetig):
+  - `gc_content(dna)` — Anteil G+C (0..1)
+  - `reverse_complement(dna)` — DNA reverse-complement
+  - `transcribe(dna)` — DNA → RNA (T → U)
+  - `translate(rna, stop_at_stop=true)` — RNA → Protein via Standard-Codon-Tabelle
+  - `k_mer_count(seq, k)` — alle ueberlappenden k-Mere mit Counts
+- **Cheminformatik via `pyimport rdkit`:**
+  - `smiles_descriptors(smiles)` liefert Dict mit `mw` ([g/mol]), `logp`, `num_atoms`, `num_heavy_atoms`, `num_rings`, `num_aromatic_rings`, `hbd`, `hba`, `tpsa`, `num_rotatable_bonds`. MW kommt als `Quantity` zurueck — direkt nutzbar in unit-aware Berechnungen.
+  - `lipinski_rule_of_five(smiles)` prueft die vier Drug-Likeness-Kriterien (MW≤500, LogP≤5, HBD≤5, HBA≤10) und liefert `{checks, violations, passes}`.
+- **Zentrales Dogma als Beispiel:**
+  ```dedekind
+  fn dna_to_protein(dna: Sequence[DNA]) -> Sequence[Protein] {
+      rna = transcribe(dna)
+      return translate(rna)
+  }
+  protein = dna_to_protein("ATGGCCCTGTGGATGCGCCTCCTGCCCCTGCTG")
+  // "MALWMRLLPL" (Insulin-Signalpeptid-Anfang)
+  ```
+- **Bewusst NICHT geliefert:** kein Sequence-Alignment (Smith-Waterman, Needleman-Wunsch) als nativen Built-in — Forscher rufen `pyimport Bio.Align as aln` direkt auf. Kein PDB-/Strukturen-Parsing — `pyimport Bio.PDB`. Keine phylogenetischen Baeume. Dedekinds Rolle: Typsicherheit + Quick-Wins, nicht Replacement von Biopython/rdkit.
+- Beispiel: `bioinformatics_demo.ddk` (DNA-Pipeline, k-Mer-Analyse, Aspirin/Coffein/Ibuprofen SMILES + Lipinski). Test: `bioinformatics_test.ddk` (18 Asserts). 42/42 Tests gruen, 98/98 Beispiele kompilieren.
+
+### What's New in v1.15.0
+
+- **`LabeledTensor[lat, lon, time]`-Shape-Annotation:** Tensoren mit Achsen-NAMEN statt Groessen — fuer Klima-, Geo- und Earth-Science-Workflows. Validiert zur Laufzeit, dass ein xarray.DataArray genau diese Dimension-Namen traegt (Reihenfolge irrelevant, weil xarray namens-basiert operiert):
+  ```dedekind
+  fn temperature_anomaly(t: LabeledTensor[lat, lon, time]) -> LabeledTensor[lat, lon, time] {
+      return t - t.mean(dim="time")
+  }
+  fn zonal_mean(t: LabeledTensor[lat, lon, time]) -> LabeledTensor[lat, time] {
+      return t.mean(dim="lon")
+  }
+  ```
+  Fehlt eine Dimension oder ist eine zusaetzliche da: `ValueError: LabeledTensor-Shape-Mismatch ... fehlende Dimensionen: ['time']; zusaetzliche Dimensionen: ['level']`.
+- **`labeled_tensor(data, dims, coords, name, attrs)`-Built-in:** erzeugt ein `xarray.DataArray` direkt in Dedekind. Akzeptiert Tensoren, numpy-Arrays oder Listen; haengt Achsen-Namen, Koordinaten und Meta-Attribute (units, CRS, source, ...) an:
+  ```dedekind
+  T = labeled_tensor(raw_data,
+      dims=["lat", "lon", "time"],
+      coords={"lat": lats, "lon": lons, "time": times},
+      attrs={"units": "K", "crs": "EPSG:4326"}
+  )
+  ```
+- **Der USP gegenueber rohem xarray:** xarray hat selbst kein Typsystem — `data_array.mean(axis=2)` statt `dim="time"` ist ein klassischer Bug in der Klimaforschung. `LabeledTensor[...]` erzwingt die richtigen Achsen-Namen am Funktions-Eingang und Return.
+- **Bewusst NICHT geliefert:** kein Re-Implementieren von xarray-Operationen (regridding, interp_like, groupby_bins, etc.) — wer das braucht, ruft sie direkt ueber `da.regrid(...)` auf. Dedekinds Rolle ist die Annotations-Schicht. **Kein Dask-/distributed support** — zarr-/Dask-Backed-DataArrays funktionieren via `pyimport xarray` weiterhin, aber wir validieren nur die dim-Namen, nicht Chunk-Topologie.
+- Beispiel: `labeled_tensors_demo.ddk` (4 x 8 x 12 Klima-Datensatz: temporal mean, zonal mean, Anomalie, `.sel`-Slicing nach Koordinate). Test: `labeled_tensors_test.ddk` (9 Asserts: Shape, Dim-Namen, Reihenfolge-Insensitivitaet, Coords, Attrs). 41/41 Tests gruen, 97/97 Beispiele kompilieren.
+
+### What's New in v1.14.0
+
+- **Molekulardynamik via OpenMM-Bruecke:** Neue Built-in `md_simulate_lj(n_particles, sigma, epsilon, mass, temperature, dt, n_steps, box_size, friction, seed)` startet eine Lennard-Jones NVT-Simulation (Langevin-Integrator) auf dem OpenMM-C++-Kernel — **mit erzwungener Dimensionssicherheit** vor dem Aufruf.
+  ```dedekind
+  res = md_simulate_lj(
+      n_particles=27,
+      sigma=3.4[Angstrom],         // alternative Eingabe in A
+      epsilon=0.238[kcal/mol],     // oder kJ/mol
+      mass=39.948[amu],
+      temperature=85[K],
+      dt=1[fs],
+      n_steps=200,
+      box_size=2.0[nm],
+      seed=42
+  )
+  // res["potential_energy"] : Quantity in [kJ/mol]
+  // res["kinetic_energy"]   : Quantity in [kJ/mol]
+  // res["temperature"]      : Quantity in [K]
+  // res["positions"]        : torch.Tensor (n_particles, 3) in nm
+  ```
+- **USP gegenueber rohem `pyimport openmm`:** Dedekind validiert die Dimensionen ALLER Force-Field-Parameter, bevor der C++-Kernel laeuft. `epsilon=0.238[eV]` wirft `ValueError: epsilon=0.238[eV] hat falsche Dimension; erwartet kompatibel zu [kJ/mol] (molar_energy)`. In rohem OpenMM ist eV-vs-kcal/mol-Verwechselung ein stiller Bug.
+- **Neue MD-Einheiten im Dimensionssystem:**
+  - Laenge: `nm`, `Angstrom`, `pm`, `fm`
+  - Masse: `amu`, `Da` (Dalton)
+  - Zeit: `fs`, `ps`, `ns`, `us`
+  - Neue Dimension `molar_energy`: `kJ/mol` (Basis), `kcal/mol` (4.184), `J/mol`, `eV/atom`, `Hartree/mol`
+- **Gitter-Initialisierung statt Random-Placement:** vermeidet NaN-Energien durch Teilchen-Ueberlappungen (LJ-r⁻¹² explodiert bei r → 0). Leichte Stoerung gegen perfekte Gitter-Symmetrie.
+- **Bewusst NICHT geliefert:** keine Protein-Force-Fields (AMBER, CHARMM, OPLS), kein implicit solvent, keine REMD/free-energy-Methoden. Wer das braucht: `pyimport openmm.app as omm_app` — wir bauen die einfache LJ-Routine als Brueckenkopf, nicht als Replacement von OpenMM.
+- Beispiel: `md_lennard_jones_demo.ddk` (Argon-Cluster, Equilibrierung + Produktion). Test: `md_simulate_lj_test.ddk` (8 Asserts: Shape, Energien, Temperatur, Angstrom/kcal-Alternativeingabe). 40/40 Tests gruen, 96/96 Beispiele kompilieren.
+
+### What's New in v1.13.0
+
+- **Operations Research mit deklarativer MILP-DSL:** Neue Built-ins `Variable(name, lower, upper, integer)` und `optimize_milp(objective, constraints, sense)`. Constraints werden ueber Operator-Overloading direkt geschrieben — keine A_ub/b_ub-Matrizen mehr selber bauen. Beispiel:
+  ```dedekind
+  x = Variable("strecke", lower=0[km])
+  trucks = Variable("trucks", lower=1, integer=true)
+  cost = 2.5 * x + 1000 * trucks
+  res = optimize_milp(cost, [
+      x >= 500[km],
+      trucks * 200[km] >= x
+  ])
+  // res = {strecke: 500.0, trucks: 3.0, objective: 4250.0, status: "..."}
+  ```
+- **Unit-Awareness in Constraints — der USP:** `x >= 500[km]` mit `x: Variable(lower=0[km])` passt; `x >= 500[kg]` wirft `ValueError: MILP-Einheiten passen nicht in Constraint: [km] vs [kg]`. Keine andere MILP-Bibliothek (Gurobi, cvxpy, pyomo, PuLP) hat das.
+- **Operator-Overloading:** `_MILPVariable` ueberlaedt `+`, `-`, `*`, `/`, `>=`, `<=` mit Linearitaets-Check (nichtlineares `x * y` wirft sofort `ValueError`). Variablen sind Identitaets-hashbar, damit Coefficient-Dicts intern funktionieren.
+- **Drei Demos in `optimize_milp_demo.ddk`:** Vehicle Routing (Strecke + Truck-Anzahl), Produktions-Mix (max Profit unter Ressourcen-Constraints), Energie-Mix (billigste Quelle zuerst unter Bedarfs-Constraint).
+- **Bestehender `milp(c, A_ub, b_ub, ...)`-Aufruf (v1.5) bleibt unveraendert** — die DSL ist eine Komfort-Schicht, kein Replacement.
+- Test: `optimize_milp_test.ddk` (13 Asserts: LP-Min/Max, Integer-Variablen, Vehicle Routing mit km, Energie-Mix mit kW). 39/39 Tests gruen, 95/95 Beispiele kompilieren.
+
+### What's New in v1.12.0
+
+- **`Graph[N, E]` als Shape-Annotation:** Funktionssignaturen erkennen jetzt einen Graph-Typ ueber den bereits in v1.9 etablierten Annotations-Mechanismus:
+  ```dedekind
+  pyimport torch_geometric.data as pyg_data
+  fn coordination(g: Graph[N, E]) -> Scalar { return g.num_edges / g.num_nodes }
+  fn pair_match(g1: Graph[N, E1], g2: Graph[N, E2]) -> Scalar { ... }
+  ```
+  Validiert zur Laufzeit, dass das uebergebene Objekt `num_nodes`/`num_edges`-Attribute hat (typisch `torch_geometric.data.Data`) und dass die Dimensionen passen. Symbolische Dimensionen werden gebunden und konsistent gehalten — zwei Graphen mit `Graph[N, ...]` und `Graph[N, ...]` muessen die gleiche Knotenzahl haben.
+- **Kombinierbar mit Unit-Annotationen:** Knoten-Features in `[g/mol]`, Kanten-Energien in `[eV]`, Bindungslaengen in `[pm]` — die dimensionale Sicherheit, die `torch_geometric` strukturell nicht hat. Beispiel:
+  ```dedekind
+  fn molecular_mass(g: Graph[N, E]) -> [g/mol] { ... }
+  fn add_mass(m1: [g/mol], m2: [g/mol]) -> [g/mol] { ... }
+  ```
+- **Zwei GNN-Demos via `pyimport torch_geometric`:**
+  - `gnn_molecule_demo.ddk` — Wirkstoffdomaene: H2O-Molekuel mit atomarer Masse in `[g/mol]` auf Knoten, GCNConv-Forward.
+  - `gnn_materials_demo.ddk` — Materialdomaene: 4-Atom-FCC-Einheitszelle mit Bindungslaengen in `[pm]` und Bindungsenergien in `[eV]`, GraphConv.
+- **Bewusst NICHT geliefert** (Stufe 3 der Graph-Roadmap): Kein natives Message-Passing. Die ehrliche Antwort fuer produktive GNNs bleibt `pyimport torch_geometric` — dort sind 30+ Conv-Varianten, Pooling-Strategien und Benchmark-Datasets. Dedekinds Rolle: Unit-Awareness, Shape-Annotation, Source-Mapping ueber den PyG-Aufruf legen.
+- Test: `graph_shape_test.ddk` (5 Asserts: Knoten-/Kanten-Counts, symbolische N-Konsistenz ueber zwei Graphen). 38/38 Tests gruen, 94/94 Beispiele kompilieren.
+
+### What's New in v1.11.0
+
+- **`graph_laplacian(adj, normalized=False)` — Spektrale Graph-Methoden:** Neue Built-in fuer die diskrete Laplace-Matrix eines Graphen. Akzeptiert dichte Matrizen, sparse `torch.Tensor` und verschachtelte Listen als Adjazenz; gibt sparse zurueck wenn die Eingabe sparse ist, sonst dicht.
+  - **Kombinatorisch** (Default): `L = D - A`  (Zeilensummen = 0, alle Eigenwerte >= 0).
+  - **Normalisiert symmetrisch**: `L_sym = I - D^{-1/2} A D^{-1/2}`  (Eigenwerte in `[0, 2]`).
+  - Direkt einsetzbar in `cg`, `gmres`, `bicgstab` und `eigh` aus den vorhandenen v1.6-Solvern — kein zusaetzliches Framework noetig.
+- **Demo `graph_spectral_demo.ddk`:** zwei klassische Anwendungen auf einem 8-Knoten-Zwei-Cluster-Graphen:
+  - **Heat-Diffusion** ueber implizites Euler-Verfahren: `cg(I + dt*L, u_prev)`. Zeigt deutlich asymmetrische Diffusion ueber die schmale Brueckenkante.
+  - **Spektrale Partitionierung** via Fiedler-Vektor (zweitkleinster Eigenwert): trennt die zwei Cluster sauber an der Bruecke (Vorzeichen-Aufteilung).
+- **Bewusst NICHT geliefert** (Stufe 2+3 der Graph-Roadmap):
+  - Kein `Graph[N, E]`-Shape-Typ. Kommt in v1.12 als Wrapper um `torch_geometric.data` mit Unit-Annotationen — das ist der echte USP gegenueber PyG.
+  - Kein natives Message-Passing. Anti-Muster: ein halb-fertiges PyG-Rebuild waere schlechter als `pyimport torch_geometric`. Wenn nativ, dann mit dem ganzen Forschungs-Budget (Stufe 3, mehrere Wochen).
+- Test: `graph_laplacian_test.ddk` (Pfad-Graph, Zwei-Cluster, normalisierte Variante, Fiedler-Partitionierung). 37/37 Tests gruen, 92/92 Beispiele kompilieren.
+
+### What's New in v1.10.0
+
+- **`partial(u, x, order=n)` — Physics-Informed Neural Networks (PINNs):** Neue Built-in fuer die Ableitung von Netz-Outputs nach Netz-Inputs via Autograd. Anders als das bestehende `grad(fn, x)` (das eine *Funktion* an einer Stelle differenziert) arbeitet `partial` mit bereits berechneten Tensoren: `u = net(x)` wird ausgewertet, dann `du_dx = partial(u, x)`. Damit lassen sich PDE-Residuen (u_t - α·u_xx, u_x + u, ...) direkt in der Loss-Funktion ausdruecken. Funktioniert mit `create_graph=True` und `retain_graph=True`, sodass `fit()` ueber das Residuum optimieren kann — das ist genau der Mechanismus, der Forschern in PyTorch sonst wochenlange Custom-Loop-Implementierung kostet.
+- **`fit()`-Patch fuer PINNs:** `_to_tensor` faengt nun gemischte Tensor-Listen ab (PINN-Daten + Collocation-Tensoren mit unterschiedlichen Shapes); `fit()` zeroed pro Schritt die `.grad`-Akkumulatoren aller `requires_grad`-Tensoren in `data` (verhindert Speicher-Leak bei langen MCMC/PINN-Trainings).
+- **Zwei PINN-Beispiele:**
+  - `pinn_ode_demo.ddk` — 1. Ordnung ODE `y' + y = 0, y(0)=1`. PINN lernt exp(-x) in 2000 Schritten mit ~1% Fehler ohne je einen Loesungswert zu sehen.
+  - `pinn_oscillator_demo.ddk` — 2. Ordnung ODE `u'' + u = 0, u(0)=1, u'(0)=0` auf [0, π/2]. Demonstriert `partial(u, x, order=2)`. Fehler < 1% in 5000 Schritten.
+- **Beide Beispiele transparent zu Hyperparameter-Limits:** Auf groesseren Intervallen oder mit groesseren Frequenzen scheitern naive PINNs — das ist Stage 3 der Roadmap (NTK-basierte Loss-Balancierung, adaptives Sampling, Fourier-Features), nicht v1.10. Wir liefern bewusst kein „magisches" `.with_physics_loss(pde)`, das bei Forschern Erwartungen weckt, die wir nicht halten koennen.
+- Test: `partial_test.ddk` (17 Asserts: x², sin, kubisch, 2-D-Eingang); 36/36 Tests gruen, 91/91 Beispiele kompilieren.
+
+### What's New in v1.9.0
+
+- **Shape-Annotationen fuer Tensoren:** Funktionssignaturen erlauben jetzt explizite Tensor-Shapes — als statische Garantie fuer Forschungs-Code, der sonst still unter Broadcasting leidet:
+  ```dedekind
+  fn dot_product(a: Vector[3], b: Vector[3]) -> Scalar { ... }
+  fn matvec(M: Matrix[2, 3], v: Vector[3]) -> Vector[2] { ... }
+  fn weighted_dot(x: Vector[N], w: Vector[N]) -> Scalar { ... }  // symbolisches N
+  fn forward(x: Tensor[batch, 28, 28]) -> Tensor[batch, 10] { ... }
+  ```
+  Vier Typkonstruktoren: `Scalar` (0-D), `Vector[n]` (1-D), `Matrix[m, n]` (2-D), `Tensor[d1, d2, ...]` (N-D). Dimensionen sind Integer-Literale **oder** Identifier (symbolisch, an den Caller gebunden). Symbolische Dims werden beim ersten Auftreten gebunden und auf Konsistenz geprueft — `weighted_dot(Vector[3], Vector[2])` wirft `ValueError: Symbolische Shape-Dimension 'N' in weighted_dot(w): bereits als 3 gebunden, hier 2.` Funktioniert auf Listen, Tuples und `torch.Tensor`. Return-Shape wird automatisch nach jeder `return`-Anweisung geprueft. Erkennt fehlerhafte Broadcasts und Form-Mismatches, die in reinem NumPy/PyTorch still falsche Ergebnisse produzieren.
+- **`unwrap(x)` — Quantity-Stripping fuer Hot-Paths:** Neue Built-in entfernt Einheits-Wrapper am Eingang von pure-context-Funktionen, damit `jit`/`grad`/`fit`/`metropolis`/`hmc`/`sde_solve` mit nackten Floats arbeiten koennen:
+  ```dedekind
+  fn pure_loss(params, data) {
+      a = unwrap(params[0])   // Quantity(2.0, "m") -> 2.0
+      b = unwrap(params[1])
+      x = unwrap(data[0])
+      diff = a * x + b - unwrap(data[1])
+      return diff * diff
+  }
+  ```
+  Verarbeitet `Quantity`, `UncertainQuantity` (std verworfen), 0-d `torch.Tensor` (via `.item()`), Listen/Tuples (elementweise) und beliebige andere Werte (passthrough). Die Compile-Zeit-Einheitenpruefung hat die Dimensionen bereits validiert; zur Laufzeit erzeugt der nackte Float keinen Wrapper-Overhead — wichtig bei 10 000+ Iterationen in MCMC-Loops oder JIT-kompilierten Graphen, wo `torch.compile` Python-Objekte als Graph-Break behandelt.
+- Beispiele: `shape_annotations_demo.ddk`, `quantity_stripping_demo.ddk`. Tests: `shape_annotations_test.ddk`, `quantity_stripping_test.ddk` (35/35 gruen; alle 89 Beispiele kompilieren).
+
+### What's New in v1.8.1
+
+- **Purity-Check fuer pure-context-Aufrufe:** Neuer Compile-Zeit-Pass `purity_check.py`. Funktionen, die an `jit(fn)`, `grad(fn, x)`, `fit(loss, ...)`, `metropolis(log_prior, log_likelihood, ...)`, `hmc(...)` oder `sde_solve(drift, diffusion, ...)` uebergeben werden, duerfen **keine I/O-/Konsolen-Built-ins** mehr aufrufen — sonst `CompileError` mit Datei + Zeile.
+- Blockierte Built-ins (transitive Erkennung): `print`, `plot`, `scatter`, `contour`, `print_latex`, `print_table`, `write_file`, `read_file`, `file_exists`, `http_get`, `http_post`, `read_csv`/`write_csv`, `read_parquet`/`write_parquet`, `read_hdf5`/`write_hdf5`, `read_netcdf`, `export_notebook`.
+- Transitive Aufloesung: ruft `loss` eine Hilfsfunktion `helper` auf und `helper` ruft `print`, wird der gesamte Pfad gemeldet (`"... ruft 'print()' ... in 'helper'"`).
+- Opt-Out: `compile_source(..., check_purity=False)` bzw. CLI `python -m compiler datei.ddk --no-purity-check`.
+- Verhindert eine ganze Bug-Klasse: stille `torch.compile`-Graph-Breaks, Tape-Recording-Anomalien in Autograd, mehrfache Datei-Writes in MCMC-Loops mit 10 000 Samples.
+- Beispiel: `purity_check_demo.ddk`. Test: `purity_check_test.ddk` (33/33 gruen).
+
+### What's New in v1.8.0
+
+- **Source-Mapping fuer Runtime-Fehler:** Wenn der generierte Python-Code (oder eine darunter liegende NumPy/SciPy/Torch-Funktion) zur Laufzeit eine Exception wirft, zeigt der Traceback nun direkt die Original-Zeilen aus der `.ddk`-Datei inkl. Code-Auszug:
+  ```
+  Traceback (most recent call last):
+    File "demo.ddk", line 16, in <module>
+      main()
+    File "demo.ddk", line 12, in main
+      s = outer(data)
+    File "demo.ddk", line 7, in inner
+      return arr[0] + arr[1] + arr[99]
+  IndexError: index 99 is out of bounds for dimension 0 with size 3
+  ```
+  Implementiert via `# ddk:<line>`-Marker im generierten Code + neuer Helper `dedekind_exec(generated_code, ddk_file, ddk_source)` in `src/compiler/compiler.py`. Der Exception-Typ bleibt erhalten (`except AssertionError:` etc. funktioniert weiter), nur die Nachricht wird mit dem zurueckgemappten Traceback ersetzt. Frames innerhalb der inlinierten Runtime werden als `<dedekind-runtime>` markiert; externe Library-Frames (scipy, torch) zeigen weiterhin ihre echten Pfade fuer Stack-Analyse. Genutzt in `run_tests.py`, `run_examples.py`, `compiler.py` CLI und dem Jupyter-Kernel.
+- **`pyimport` — Python-Fluchtluke ins PyPI-Oekosystem:** Neue Top-Level-Syntax `pyimport scipy.special as sp` (oder `pyimport math` mit Auto-Alias = letztes Segment). Beliebige Python-Module sind als `alias.name(...)` aufrufbar, mischen sich mit Dedekind-Built-ins. Beispiel:
+  ```dedekind
+  pyimport scipy.stats as st
+  pyimport numpy as np
+  p = st.norm.cdf(1.96)
+  arr_mean = np.mean(np.array([1.0, 2.0, 3.0]))
+  ```
+  `pyimport` ist Soft-Keyword (bestehender Code mit `pyimport` als Variablenname bleibt gueltig). Codegen emittiert `import MODULE as ALIAS` an der Stelle des Statements. Damit ist Dedekind ab v1.8 nicht mehr „walled garden": jedes PyPI-Paket (`rdkit`, `astropy`, `qiskit`, `polars`, ...) ist sofort verfuegbar.
+- **`_dedekind_assert`-Fix:** Korrekte Behandlung von numpy-Skalaren (`numpy.bool_`, `numpy.float64`). Vorher kollidierte der Tensor-Check (`numel()`) mit numpy-Werten aus `pyimport`-Aufrufen.
+- Beispiele: `pyimport_demo.ddk`, `source_mapping_demo.ddk`. Tests: `pyimport_test.ddk` (32/32 gruen; alle 86 Beispiele kompilieren).
+
+### What's New in v1.7.0
+
+- **Standardbibliothek aus echten Modulen:** Sechs kuratierte `.ddk`-Module unter `modules/` ergänzen die globalen Built-ins um Convenience-Funktionen. **Wichtig:** Alle bestehenden Built-ins (`sin`, `ode_solve`, `michaelis_menten`, `pi`, `c`, ...) bleiben **weiterhin global** verfügbar – `use` ist rein additiv und macht weder Imports verpflichtend noch verschwindet etwas hinter Namespaces.
+  - `use physics` — `kinetic_energy`, `pendulum_period`, `escape_velocity`, `orbital_period`, `relativistic_gamma`, `coulomb_force`, `ideal_gas_pressure`, `rms_speed`, `blackbody_radiance`, `doppler_classical`, … (+ dimensionslose Numerik-Konstanten `C_NUM`, `G_NUM`, `K_B_NUM`, `R_GAS_NUM`, `SIGMA_SB_NUM`)
+  - `use stats` — `z_score`, `cohens_d`, `pooled_std`, `hedges_g`, `glass_delta`, `r_squared`, `mse`/`rmse`/`mae`, `standard_error_mean`, `ci_normal_mean`, `ci_proportion`, `coefficient_of_variation`, `standardize`
+  - `use chemistry` — `pH_from_concentration`, `henderson_hasselbalch`, `ka_from_pka`, `dilution_volume`, `boyle_volume`, `charles_volume`, `combined_gas_law_v2`, `van_der_waals_pressure`, `nernst_potential`, `faraday_mass`, `half_life_first_order`/`half_life_second_order`
+  - `use biology` — `exponential_growth`, `doubling_time`, `gompertz_growth`, `von_bertalanffy`, `kleibers_law`, `allometric_scaling`, `bmr_harris_benedict`, `bmi`, `hardy_weinberg_freq`, `mutation_drift_balance`, `r_naught_sir`, `herd_immunity_threshold`
+  - `use math` — `PHI`, `TAU`, `fibonacci`, `harmonic_sum`, `geometric_sum`, `lcm`, `is_perfect_square`, `digital_root`, `circle_area`, `sphere_volume`, `hypotenuse`, `law_of_cosines_c`, `lerp`, `clamp_scalar`, `sigmoid`, `softplus`
+  - `use ml` — `leaky_relu`, `elu`, `swish`, `gelu_approx`, `mse_loss`, `mae_loss`, `binary_crossentropy`, `accuracy`, `precision_binary`, `recall_binary`, `f1_score`
+- **Benutzerdefinierte Einheiten:** `unit NAME = FAKTOR[basis]` registriert eine neue Einheit zur Compile- und Laufzeit. Beispiele: `unit Foot = 0.3048[m]`, `unit Mile = 1609.344[m]`, `unit eV = 1.602176634e-19[J]`, `unit kcal = 4184.0[J]`. Verkettung erlaubt (`unit MicroInch = 1e-6[Inch]`), wird transitiv aufgelöst. Built-in und User-Units mischen sich mit automatischer Umrechnung (`1[Mile] + 1500[m]` ergibt `1.93[Mile]`). `unit` ist ein **Soft-Keyword** – bestehender Code mit `q.unit`, `unit="V"`-Kwarg etc. bleibt unverändert gültig.
+- **Quantity-Vergleichsoperatoren:** `Quantity` unterstützt jetzt `<`, `<=`, `>`, `>=`, `==`, `!=` mit automatischer Einheiten-Konvertierung bei gleicher Dimension. `10[cm] < 1[m]` → `True`. Macht Quantity-Werte in `if`/`while`-Bedingungen direkt nutzbar.
+- Beispiele: `stdlib_modules_demo.ddk` (alle 6 Module), `user_defined_units.ddk` (Foot, Mile, AU, ly, Bohr, eV, kcal, uDarcy). Tests: `stdlib_physics_test.ddk`, `stdlib_stats_test.ddk`, `stdlib_chemistry_test.ddk`, `stdlib_biology_math_ml_test.ddk`, `user_defined_units_test.ddk` (31/31 grün; alle 84 Beispiele kompilieren).
 
 ### What's New in v1.6.0
 

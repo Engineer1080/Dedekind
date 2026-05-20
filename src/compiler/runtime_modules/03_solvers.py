@@ -1409,7 +1409,12 @@ def sqrt(x):
 
 def abs(x):
     """Betrag |x|; x Tensor oder Skalar."""
-    return torch.abs(_to_tensor(x).float())
+    if isinstance(x, (int, float, complex)):
+        return builtins.abs(x)
+    t = _to_tensor(x)
+    if isinstance(t, torch.Tensor):
+        return torch.abs(t)
+    return builtins.abs(x)
 
 def asin(x):
     """Arkussinus asin(x); x im Intervall [-1, 1]."""
@@ -1694,3 +1699,795 @@ def ttest_two_sample(x, y):
 
 
 # --- Standard Library: Reduktionen (min, max, argmin, argmax) ---
+
+
+
+import cmath as _cmath
+import math as _math
+
+# Quantum constants added during master-quantum merge
+PAULI_I = [[1 + 0j, 0 + 0j], [0 + 0j, 1 + 0j]]
+PAULI_X = [[0 + 0j, 1 + 0j], [1 + 0j, 0 + 0j]]
+PAULI_Y = [[0 + 0j, -1j], [1j, 0 + 0j]]
+PAULI_Z = [[1 + 0j, 0 + 0j], [0 + 0j, -1 + 0j]]
+PAULI_H = [[1 / _math.sqrt(2) + 0j, 1 / _math.sqrt(2) + 0j], [1 / _math.sqrt(2) + 0j, -1 / _math.sqrt(2) + 0j]]
+_T_MAT = [[1 + 0j, 0 + 0j], [0 + 0j, _cmath.exp(1j * _math.pi / 4)]]
+_S_MAT = [[1 + 0j, 0 + 0j], [0 + 0j, 1j]]
+
+
+def _graph_laplacian_sparse(adj_sp, normalized):
+    """Sparse-Implementierung. Liefert COO-Tensor."""
+    adj_sp = adj_sp.coalesce()
+    N = adj_sp.shape[0]
+    idx = adj_sp.indices()
+    vals = adj_sp.values().float()
+    deg = torch.zeros(N, dtype=vals.dtype, device=vals.device)
+    deg.scatter_add_(0, idx[0], vals)
+    if normalized:
+        d_inv_sqrt = torch.where(deg > 0, deg.clamp(min=1e-12).pow(-0.5),
+                                  torch.zeros_like(deg))
+        scaled_off = -vals * d_inv_sqrt[idx[0]] * d_inv_sqrt[idx[1]]
+        diag_idx = torch.arange(N, device=vals.device)
+        diag_v = (deg > 0).to(vals.dtype)
+        all_i = torch.cat([idx[0], diag_idx])
+        all_j = torch.cat([idx[1], diag_idx])
+        all_v = torch.cat([scaled_off, diag_v])
+    else:
+        diag_idx = torch.arange(N, device=vals.device)
+        all_i = torch.cat([diag_idx, idx[0]])
+        all_j = torch.cat([diag_idx, idx[1]])
+        all_v = torch.cat([deg, -vals])
+    return torch.sparse_coo_tensor(torch.stack([all_i, all_j]), all_v, (N, N)).coalesce()
+
+def graph_laplacian(adj, normalized=False):
+    """Berechnet den Graph-Laplacian fuer eine Adjazenzmatrix.
+
+    Kombinatorisch (Default):  L = D - A
+        L[i,i] =  deg(i)
+        L[i,j] = -A[i,j]   (i != j)
+
+    Normalisiert (symmetrisch): L_sym = I - D^{-1/2} A D^{-1/2}
+        Eigenwerte in [0, 2]; nuetzlich fuer spektrale Verfahren auf Graphen
+        unterschiedlicher Dichte.
+
+    Eingabe `adj`: dichte (N,N)-Matrix, sparse torch.Tensor, oder geschachtelte
+    Liste. Quadratisch, nicht-negative Eintraege; bei ungerichteten Graphen
+    symmetrisch. Ausgabe ist sparse, wenn `adj` sparse ist, sonst dicht ÔÇö direkt
+    einsetzbar in `cg`, `gmres`, `bicgstab` (Heat-Diffusion, Eigenvektoren, etc.).
+    """
+    if hasattr(adj, "is_sparse") and adj.is_sparse:
+        return _graph_laplacian_sparse(adj, normalized)
+    adj_t = _to_tensor(adj)
+    if not isinstance(adj_t, torch.Tensor):
+        raise TypeError(f"graph_laplacian: Eingabe muss tensor-artig sein, erhielt {type(adj).__name__}.")
+    adj_t = adj_t.float()
+    if adj_t.dim() != 2 or adj_t.shape[0] != adj_t.shape[1]:
+        raise ValueError(
+            f"graph_laplacian: Adjazenz muss quadratisch (N,N) sein, "
+            f"erhalten {tuple(adj_t.shape)}."
+        )
+    deg = adj_t.sum(dim=1)
+    if normalized:
+        d_inv_sqrt = torch.where(deg > 0, deg.clamp(min=1e-12).pow(-0.5),
+                                  torch.zeros_like(deg))
+        scaled = d_inv_sqrt.unsqueeze(1) * adj_t * d_inv_sqrt.unsqueeze(0)
+        eye = torch.eye(adj_t.shape[0], dtype=adj_t.dtype, device=adj_t.device)
+        return eye - scaled
+    return torch.diag(deg) - adj_t
+
+def _milp_scalar(x):
+    """Extrahiert eine reine Zahl aus Quantity/Tensor/Skalar fuer Bounds/Constraints."""
+    if isinstance(x, Quantity):
+        return float(x.value)
+    if hasattr(x, "item"):
+        try:
+            return float(x.item())
+        except Exception:
+            pass
+    return float(x)
+
+def _milp_units_compat(u1, u2, where):
+    """Wirft ValueError, wenn u1 und u2 nicht dimensional kompatibel sind.
+    Liefert die fuehrende Einheit (Linke-Seite-Konvention)."""
+    if not u1 or not u2:
+        return u1 or u2
+    if u1 == u2:
+        return u1
+    if _normalize_unit_for_compare(u1) == _normalize_unit_for_compare(u2):
+        return u1
+    d1 = _get_dimension(u1)
+    d2 = _get_dimension(u2)
+    if d1 is not None and d1 == d2:
+        return u1
+    if _units_dimensionally_equal(u1, u2):
+        return u1
+    raise ValueError(f"MILP-Einheiten passen nicht in {where}: [{u1}] vs [{u2}].")
+
+class _MILPVariable:
+    """Entscheidungsvariable. Hashbar via Identitaet (kein __eq__-Override)."""
+    __slots__ = ("name", "lower", "upper", "integer", "unit")
+
+    def __init__(self, name, lower=None, upper=None, integer=False):
+        self.name = str(name)
+        self.lower = lower
+        self.upper = upper
+        self.integer = bool(integer)
+        u = ""
+        for v in (lower, upper):
+            if isinstance(v, Quantity) and v.unit:
+                u = v.unit
+                break
+        self.unit = u
+
+    def __repr__(self):
+        suf = f" [{self.unit}]" if self.unit else ""
+        return f"Variable({self.name!r}{suf})"
+
+    def _as_expr(self):
+        return _MILPExpression({self: 1.0}, unit=self.unit)
+
+    def __add__(self, other): return self._as_expr() + other
+    def __radd__(self, other): return self._as_expr() + other
+    def __sub__(self, other): return self._as_expr() - other
+    def __rsub__(self, other): return _MILPExpression(offset=0.0) - self._as_expr() + other if False else self._as_expr().__rsub__(other)
+    def __mul__(self, other): return self._as_expr() * other
+    def __rmul__(self, other): return self._as_expr() * other
+    def __truediv__(self, other): return self._as_expr() / other
+    def __neg__(self): return _MILPExpression({self: -1.0}, unit=self.unit)
+    def __ge__(self, other): return _MILPConstraint(self._as_expr(), ">=", other)
+    def __le__(self, other): return _MILPConstraint(self._as_expr(), "<=", other)
+
+class _MILPExpression:
+    """Lineare Kombination sum(coef * Variable) + offset, mit Einheit."""
+    __slots__ = ("coeffs", "offset", "unit")
+
+    def __init__(self, coeffs=None, offset=0.0, unit=""):
+        self.coeffs = dict(coeffs) if coeffs else {}
+        self.offset = float(offset)
+        self.unit = str(unit)
+
+    def _coerce(self, other):
+        if isinstance(other, _MILPVariable):
+            return _MILPExpression({other: 1.0}, unit=other.unit)
+        if isinstance(other, _MILPExpression):
+            return other
+        if isinstance(other, Quantity):
+            return _MILPExpression(offset=other.value, unit=other.unit or "")
+        if isinstance(other, (int, float)):
+            return _MILPExpression(offset=float(other))
+        return None
+
+    def __add__(self, other):
+        oth = self._coerce(other)
+        if oth is None: return NotImplemented
+        unit = _milp_units_compat(self.unit, oth.unit, "Addition")
+        coeffs = dict(self.coeffs)
+        for v, c in oth.coeffs.items():
+            coeffs[v] = coeffs.get(v, 0.0) + c
+        return _MILPExpression(coeffs, self.offset + oth.offset, unit)
+    def __radd__(self, other): return self.__add__(other)
+
+    def __sub__(self, other):
+        oth = self._coerce(other)
+        if oth is None: return NotImplemented
+        unit = _milp_units_compat(self.unit, oth.unit, "Subtraktion")
+        coeffs = dict(self.coeffs)
+        for v, c in oth.coeffs.items():
+            coeffs[v] = coeffs.get(v, 0.0) - c
+        return _MILPExpression(coeffs, self.offset - oth.offset, unit)
+    def __rsub__(self, other):
+        oth = self._coerce(other)
+        if oth is None: return NotImplemented
+        return oth.__sub__(self)
+
+    def __mul__(self, other):
+        if isinstance(other, (_MILPVariable, _MILPExpression)):
+            other_expr = other if isinstance(other, _MILPExpression) else other._as_expr()
+            if self.coeffs and other_expr.coeffs:
+                raise ValueError(
+                    f"MILP: Produkt zweier Variabler ist nichtlinear "
+                    f"({list(self.coeffs.keys())[0].name} * {list(other_expr.coeffs.keys())[0].name})."
+                )
+            if not self.coeffs:
+                scalar, scalar_unit = self.offset, self.unit
+                expr = other_expr
+            else:
+                scalar, scalar_unit = other_expr.offset, other_expr.unit
+                expr = self
+            new_unit = _unit_mul(expr.unit, scalar_unit) if scalar_unit else expr.unit
+            return _MILPExpression(
+                {v: c * scalar for v, c in expr.coeffs.items()},
+                expr.offset * scalar,
+                new_unit,
+            )
+        if isinstance(other, Quantity):
+            scalar = other.value
+            new_unit = _unit_mul(self.unit, other.unit) if other.unit else self.unit
+            return _MILPExpression(
+                {v: c * scalar for v, c in self.coeffs.items()},
+                self.offset * scalar,
+                new_unit,
+            )
+        if isinstance(other, (int, float)):
+            return _MILPExpression(
+                {v: c * float(other) for v, c in self.coeffs.items()},
+                self.offset * float(other),
+                self.unit,
+            )
+        return NotImplemented
+    def __rmul__(self, other): return self.__mul__(other)
+
+    def __truediv__(self, other):
+        if isinstance(other, (int, float)):
+            inv = 1.0 / float(other)
+            return _MILPExpression({v: c * inv for v, c in self.coeffs.items()},
+                                   self.offset * inv, self.unit)
+        if isinstance(other, Quantity):
+            inv = 1.0 / other.value
+            new_unit = _unit_div(self.unit, other.unit) if other.unit else self.unit
+            return _MILPExpression({v: c * inv for v, c in self.coeffs.items()},
+                                   self.offset * inv, new_unit)
+        return NotImplemented
+
+    def __neg__(self):
+        return _MILPExpression({v: -c for v, c in self.coeffs.items()}, -self.offset, self.unit)
+
+    def __ge__(self, other): return _MILPConstraint(self, ">=", other)
+    def __le__(self, other): return _MILPConstraint(self, "<=", other)
+
+class _MILPConstraint:
+    """Normalisiert: sum(coef * var) op bound, op in {<=, >=, ==}."""
+    __slots__ = ("coeffs", "bound", "op", "unit")
+
+    def __init__(self, lhs, op, rhs):
+        if isinstance(lhs, _MILPVariable):
+            lhs = lhs._as_expr()
+        if not isinstance(lhs, _MILPExpression):
+            raise TypeError(f"MILP-Constraint linke Seite: erwartet Variable/Expression, bekam {type(lhs).__name__}.")
+        rhs_expr = lhs._coerce(rhs)
+        if rhs_expr is None:
+            raise TypeError(f"MILP-Constraint rechte Seite: erwartet Variable/Expression/Quantity/Zahl, bekam {type(rhs).__name__}.")
+        _milp_units_compat(lhs.unit, rhs_expr.unit, "Constraint")
+        diff = lhs - rhs_expr
+        self.coeffs = dict(diff.coeffs)
+        self.bound = -diff.offset
+        self.op = op
+        self.unit = diff.unit
+
+    def __repr__(self):
+        terms = " + ".join(f"{c}*{v.name}" for v, c in self.coeffs.items()) or "0"
+        return f"Constraint({terms} {self.op} {self.bound} [{self.unit}])"
+
+def Variable(name, lower=None, upper=None, integer=False):
+    """Erzeugt eine MILP-Entscheidungsvariable.
+
+    Beispiel:
+        x = Variable("x", lower=0[km], upper=1000[km])
+        y = Variable("trucks", lower=1, integer=true)
+        cost = 2.5[Ôé¼/km] * x + 1000[Ôé¼] * y
+        result = optimize_milp(cost, [x + 200[km]*y >= 500[km]])
+    """
+    return _MILPVariable(name=name, lower=lower, upper=upper, integer=integer)
+
+def optimize_milp(objective, constraints=None, sense="minimize"):
+    """Loest ein (gemischt-)ganzzahliges lineares Programm in deklarativer DSL.
+
+    objective:    _MILPExpression oder _MILPVariable.
+    constraints:  Liste von _MILPConstraint (per `>=`/`<=`), optional.
+    sense:        'minimize' (default) oder 'maximize'.
+
+    Rueckgabe: dict {<var_name>: optimaler_wert, ..., "objective": Z, "status": msg}.
+    """
+    try:
+        from scipy.optimize import milp as _milp, LinearConstraint, Bounds  # type: ignore[import-untyped]
+    except ImportError:
+        raise RuntimeError("optimize_milp benoetigt scipy>=1.9.")
+    import numpy as _np  # type: ignore[reportMissingImports]
+
+    if isinstance(objective, _MILPVariable):
+        obj_expr = objective._as_expr()
+    elif isinstance(objective, _MILPExpression):
+        obj_expr = objective
+    else:
+        raise TypeError(
+            f"optimize_milp: objective muss Variable oder MILP-Expression sein, "
+            f"bekam {type(objective).__name__}."
+        )
+
+    # constraints kann eine Python-Liste sein ODER ein leerer torch.Tensor
+    # (Dedekind transpiliert `[]` zu `torch.tensor([])`). Normalisieren:
+    if constraints is None:
+        cons_list = []
+    elif hasattr(constraints, "numel"):
+        cons_list = [] if constraints.numel() == 0 else list(constraints)
+    else:
+        cons_list = list(constraints)
+    for i, con in enumerate(cons_list):
+        if not isinstance(con, _MILPConstraint):
+            raise TypeError(
+                f"optimize_milp: constraints[{i}] ist {type(con).__name__}, "
+                f"erwartet Constraint (Variable >=/<= Wert)."
+            )
+
+    var_order = []
+    var_idx = {}
+    def _reg(v):
+        if v not in var_idx:
+            var_idx[v] = len(var_order)
+            var_order.append(v)
+    for v in obj_expr.coeffs:
+        _reg(v)
+    for con in cons_list:
+        for v in con.coeffs:
+            _reg(v)
+    N = len(var_order)
+    if N == 0:
+        raise ValueError("optimize_milp: keine Variablen in objective/constraints gefunden.")
+
+    c = _np.zeros(N, dtype=float)
+    for v, coef in obj_expr.coeffs.items():
+        c[var_idx[v]] = coef
+    if sense == "maximize":
+        c = -c
+    elif sense != "minimize":
+        raise ValueError(f"optimize_milp: sense muss 'minimize'/'maximize' sein, nicht {sense!r}.")
+
+    lb = _np.full(N, -_np.inf)
+    ub = _np.full(N, _np.inf)
+    integrality = _np.zeros(N, dtype=int)
+    for i, v in enumerate(var_order):
+        if v.lower is not None:
+            lb[i] = _milp_scalar(v.lower)
+        if v.upper is not None:
+            ub[i] = _milp_scalar(v.upper)
+        if v.integer:
+            integrality[i] = 1
+    bounds = Bounds(lb=lb, ub=ub)
+
+    ub_rows, ub_b = [], []
+    eq_rows, eq_b = [], []
+    for con in cons_list:
+        row = _np.zeros(N, dtype=float)
+        for v, coef in con.coeffs.items():
+            row[var_idx[v]] = coef
+        bnd = _milp_scalar(con.bound)
+        if con.op == "<=":
+            ub_rows.append(row); ub_b.append(bnd)
+        elif con.op == ">=":
+            ub_rows.append(-row); ub_b.append(-bnd)
+        elif con.op == "==":
+            eq_rows.append(row); eq_b.append(bnd)
+        else:
+            raise ValueError(f"optimize_milp: Operator {con.op!r} nicht unterstuetzt.")
+
+    sci_constraints = []
+    if ub_rows:
+        sci_constraints.append(LinearConstraint(_np.array(ub_rows), -_np.inf, _np.array(ub_b)))
+    if eq_rows:
+        sci_constraints.append(LinearConstraint(_np.array(eq_rows), _np.array(eq_b), _np.array(eq_b)))
+
+    res = _milp(c, constraints=sci_constraints if sci_constraints else None,
+                bounds=bounds, integrality=integrality)
+    if not res.success:
+        raise RuntimeError(f"optimize_milp: keine Loesung. {res.message}")
+
+    out = {v.name: float(res.x[i]) for i, v in enumerate(var_order)}
+    obj_val = float(res.fun)
+    if sense == "maximize":
+        obj_val = -obj_val
+    obj_val += obj_expr.offset
+    out["objective"] = obj_val
+    out["status"] = res.message
+    return out
+
+def _md_convert_to_unit(q, target_unit, dimension, arg_name):
+    """Validiert Quantity-Dimension und liefert numerischen Wert in target_unit."""
+    if not isinstance(q, Quantity):
+        raise TypeError(
+            f"md_simulate_lj: {arg_name} muss Quantity sein (z. B. 0.34[nm]), "
+            f"bekam {type(q).__name__}."
+        )
+    dim = _get_dimension(q.unit)
+    expected_dim = _get_dimension(target_unit)
+    if dim is None or dim != expected_dim:
+        raise ValueError(
+            f"md_simulate_lj: {arg_name}={q} hat falsche Dimension; "
+            f"erwartet kompatibel zu [{target_unit}] ({expected_dim})."
+        )
+    base = _convert_to_base(q.value, q.unit, dim)
+    return _convert_from_base(base, target_unit, dim)
+
+def md_simulate_lj(n_particles, sigma, epsilon, mass, temperature, dt, n_steps,
+                    box_size=None, friction=1.0, seed=None):
+    """Lennard-Jones Molekulardynamik-Simulation via OpenMM, mit Unit-Validierung.
+
+    Anders als ein direkter OpenMM-Aufruf prueft diese Funktion die Dimensionen
+    aller Eingabeparameter VOR dem C++-Kernel ÔÇö kein stilles Mischen von kcal/mol
+    mit eV oder ├à mit nm.
+
+    Parameter:
+      n_particles:  int, Anzahl Teilchen.
+      sigma:        Quantity in Laengeneinheit [nm, Angstrom, pm, m, ...].
+      epsilon:      Quantity in molarer Energie [kJ/mol, kcal/mol, ...].
+      mass:         Quantity in Masse [amu, g, kg, ...].
+      temperature:  Quantity in [K] ÔÇö Langevin-Bad.
+      dt:           Quantity in Zeit [fs, ps, ns, ...] ÔÇö Integrations-Zeitschritt.
+      n_steps:      int ÔÇö Anzahl Integrationsschritte.
+      box_size:     Optional Quantity in Laenge ÔÇö kubische periodische Box.
+      friction:     float in 1/ps ÔÇö Langevin-Reibung (Default 1.0).
+      seed:         Optional int ÔÇö RNG-Seed fuer reproduzierbare Trajektorien.
+
+    Rueckgabe: dict mit
+      positions:        torch.Tensor (n_particles, 3) ÔÇö Endpositionen in nm.
+      potential_energy: Quantity in [kJ/mol].
+      kinetic_energy:   Quantity in [kJ/mol].
+      temperature:      Quantity in [K] ÔÇö gemessene End-Temperatur.
+      n_steps:          ausgefuehrte Schritte.
+    """
+    try:
+        import openmm as _mm  # type: ignore[import-untyped]
+        import openmm.unit as _ommu  # type: ignore[import-untyped]
+    except ImportError:
+        raise RuntimeError(
+            "md_simulate_lj benoetigt openmm. Installation: pip install openmm"
+        )
+    import numpy as _np  # type: ignore[reportMissingImports]
+
+    # Unit-Validierung + Konvertierung in OpenMM-Standards (nm, kJ/mol, amu, ps, K)
+    sigma_nm = _md_convert_to_unit(sigma, "nm", "length", "sigma")
+    eps_kjm = _md_convert_to_unit(epsilon, "kJ/mol", "molar_energy", "epsilon")
+    mass_g_per_mol = _md_convert_to_unit(mass, "g", "mass", "mass")
+    # OpenMM: amu numerisch gleich g/mol fuer Avogadro-Skalierung
+    mass_amu = mass_g_per_mol / 1.66053906660e-24
+    if not isinstance(temperature, Quantity) or temperature.unit != "K":
+        raise ValueError(f"md_simulate_lj: temperature muss in [K] sein, bekam {temperature}.")
+    temp_K = float(temperature.value)
+    dt_ps = _md_convert_to_unit(dt, "ps", "time", "dt")
+    box_nm = _md_convert_to_unit(box_size, "nm", "length", "box_size") if box_size is not None else None
+
+    # System aufbauen
+    system = _mm.System()
+    for _ in range(int(n_particles)):
+        system.addParticle(mass_amu * _ommu.amu)
+
+    nb = _mm.NonbondedForce()
+    cutoff = 2.5 * sigma_nm
+    for _ in range(int(n_particles)):
+        nb.addParticle(0.0, sigma_nm * _ommu.nanometer, eps_kjm * _ommu.kilojoule_per_mole)
+    if box_nm is not None:
+        box_vec = box_nm * _np.eye(3)
+        system.setDefaultPeriodicBoxVectors(*(v * _ommu.nanometer for v in box_vec))
+        nb.setNonbondedMethod(_mm.NonbondedForce.CutoffPeriodic)
+        nb.setCutoffDistance(_builtin_min(cutoff, 0.49 * box_nm) * _ommu.nanometer)
+    else:
+        nb.setNonbondedMethod(_mm.NonbondedForce.CutoffNonPeriodic)
+        nb.setCutoffDistance(cutoff * _ommu.nanometer)
+    system.addForce(nb)
+
+    # Anfangspositionen: regelmaessiges Gitter ÔÇö vermeidet Ueberlappungen
+    # und resultierende NaN-Energien (LJ-r^-12 explodiert bei r -> 0).
+    if seed is not None:
+        _np.random.seed(int(seed))
+    extent = box_nm if box_nm is not None else _builtin_max(5.0 * sigma_nm, 1.0)
+    # Gitter-Abstand >= 1.05 * sigma (LJ-Gleichgewicht ~ 2^(1/6)*sigma Ôëê 1.122*sigma)
+    side = int(_np.ceil(int(n_particles) ** (1.0 / 3.0)))
+    spacing = extent / _builtin_max(side, 1)
+    grid_min = 1.05 * sigma_nm
+    if spacing < grid_min:
+        spacing = grid_min
+        extent = spacing * side  # Box ggf. vergroessern
+    positions = _np.zeros((int(n_particles), 3), dtype=float)
+    k = 0
+    for i in range(side):
+        for j in range(side):
+            for kk in range(side):
+                if k >= int(n_particles):
+                    break
+                positions[k] = [(i + 0.5) * spacing, (j + 0.5) * spacing, (kk + 0.5) * spacing]
+                k += 1
+            if k >= int(n_particles):
+                break
+        if k >= int(n_particles):
+            break
+    # Leichte Stoerung gegen perfekte Gitter-Symmetrie
+    positions += 0.02 * spacing * (_np.random.rand(int(n_particles), 3) - 0.5)
+
+    integrator = _mm.LangevinIntegrator(
+        temp_K * _ommu.kelvin,
+        float(friction) / _ommu.picosecond,
+        dt_ps * _ommu.picosecond,
+    )
+    if seed is not None:
+        integrator.setRandomNumberSeed(int(seed))
+
+    ctx = _mm.Context(system, integrator)
+    ctx.setPositions(positions * _ommu.nanometer)
+    ctx.setVelocitiesToTemperature(temp_K * _ommu.kelvin)
+
+    integrator.step(int(n_steps))
+
+    state = ctx.getState(getPositions=True, getEnergy=True, getVelocities=True)
+    pos_nm = _np.asarray(state.getPositions(asNumpy=True).value_in_unit(_ommu.nanometer))
+    pe = float(state.getPotentialEnergy().value_in_unit(_ommu.kilojoule_per_mole))
+    ke = float(state.getKineticEnergy().value_in_unit(_ommu.kilojoule_per_mole))
+    # Kinetic Energy -> Temperatur: KE = (3/2)*N*k_B*T => T = 2*KE / (3*N*k_B)
+    # k_B = 8.314e-3 kJ/(mol*K) in molaren Einheiten
+    k_B_mol = 0.008314462618
+    T_measured = 2.0 * ke / (3.0 * n_particles * k_B_mol)
+
+    return {
+        "positions": torch.as_tensor(pos_nm, dtype=torch.float32),
+        "potential_energy": Quantity(pe, "kJ/mol"),
+        "kinetic_energy": Quantity(ke, "kJ/mol"),
+        "temperature": Quantity(T_measured, "K"),
+        "n_steps": int(n_steps),
+    }
+
+def _unwrap_q(x):
+    """Unwraps Quantity to float (dimensionslos oder rad)."""
+    if isinstance(x, Quantity):
+        if x.unit not in ("", "rad", None):
+            raise ValueError(
+                f"Rotationswinkel muss dimensionslos oder [rad] sein, bekam [{x.unit}]."
+            )
+        return float(x.value) if hasattr(x.value, 'item') else float(x.value)
+    if hasattr(x, 'item'):
+        return float(x.item())
+    return float(x)
+
+def _kron2(a, b):
+    """Kronecker-Produkt zweier komplexer 2D-Listen."""
+    ra, ca = len(a), len(a[0])
+    rb, cb = len(b), len(b[0])
+    result = [[0+0j] * (ca * cb) for _ in range(ra * rb)]
+    for i in range(ra):
+        for j in range(ca):
+            for k in range(rb):
+                for l in range(cb):
+                    result[i * rb + k][j * cb + l] = a[i][j] * b[k][l]
+    return result
+
+def _mat_vec(mat, vec):
+    """Matrix-Vektor-Multiplikation (komplexe Listen)."""
+    n = len(mat)
+    return [sum(mat[i][j] * vec[j] for j in range(n)) for i in range(n)]
+
+def _single_qubit_gate_unitary(gate_mat, qubit, n):
+    """Erstellt 2^n x 2^n Unitary fuer ein 1-Qubit-Gatter auf qubit `qubit`.
+
+    Konvention: qubit 0 = LSB (rightmost in kron product).
+    kron wird von MSB nach LSB aufgebaut (von links nach rechts).
+    Qubit q befindet sich an Kron-Position n-1-q von links.
+    """
+    result = [[1+0j]]
+    for q in range(n - 1, -1, -1):  # n-1 (MSB) down to 0 (LSB)
+        if q == qubit:
+            m = gate_mat
+        else:
+            m = PAULI_I
+        result = _kron2(result, m)
+    return result
+
+def _cx_unitary(control, target, n):
+    """CNOT-Unitary fuer gegebene Qubit-Indizes."""
+    dim = 1 << n
+    U = [[0+0j] * dim for _ in range(dim)]
+    for state in range(dim):
+        ctrl_bit = (state >> control) & 1
+        if ctrl_bit == 1:
+            new_state = state ^ (1 << target)
+        else:
+            new_state = state
+        U[new_state][state] = 1+0j
+    return U
+
+def _cz_unitary(control, target, n):
+    """CZ-Unitary."""
+    dim = 1 << n
+    U = [[complex(i == j) for j in range(dim)] for i in range(dim)]
+    for state in range(dim):
+        c_bit = (state >> control) & 1
+        t_bit = (state >> target) & 1
+        if c_bit == 1 and t_bit == 1:
+            U[state][state] = -1+0j
+    return U
+
+def _swap_unitary(q0, q1, n):
+    """SWAP-Unitary."""
+    dim = 1 << n
+    U = [[0+0j] * dim for _ in range(dim)]
+    for state in range(dim):
+        b0 = (state >> q0) & 1
+        b1 = (state >> q1) & 1
+        if b0 != b1:
+            new_state = state ^ (1 << q0) ^ (1 << q1)
+        else:
+            new_state = state
+        U[new_state][state] = 1+0j
+    return U
+
+def _rx_mat(theta):
+    c = _cmath.cos(theta / 2)
+    s = _cmath.sin(theta / 2)
+    return [[c, -1j * s], [-1j * s, c]]
+
+def _ry_mat(theta):
+    c = _cmath.cos(theta / 2)
+    s = _cmath.sin(theta / 2)
+    return [[c, -s], [s, c]]
+
+def _rz_mat(theta):
+    return [[_cmath.exp(-1j * theta / 2), 0], [0, _cmath.exp(1j * theta / 2)]]
+
+def statevec_sim(circuit, shots: int = 0):
+    """Reiner Statevector-Simulator fuer QuantumCircuit.
+
+    Args:
+        circuit: QuantumCircuit-Objekt
+        shots: 0 = gibt Statevector (Liste komplexer Amplituden) zurueck.
+               > 0 = gibt Mess-Ergebnis-Dict mit Bitstringen und Haeufigkeiten zurueck.
+
+    Returns:
+        Statevector (list[complex]) oder dict[str, int] (bei shots > 0).
+    """
+    shots = int(shots.item() if hasattr(shots, 'item') else shots)
+    if not isinstance(circuit, QuantumCircuit):
+        raise TypeError(f"statevec_sim: Erwartet QuantumCircuit, bekam {type(circuit).__name__}.")
+    n = circuit.n_qubits
+    dim = 1 << n
+    # Startzustand |0...0>
+    sv = [0+0j] * dim
+    sv[0] = 1+0j
+
+    for name, qubits, params in circuit._gates:
+        if name == "H":
+            U = _single_qubit_gate_unitary(PAULI_H, qubits[0], n)
+        elif name == "X":
+            U = _single_qubit_gate_unitary(PAULI_X, qubits[0], n)
+        elif name == "Y":
+            U = _single_qubit_gate_unitary(PAULI_Y, qubits[0], n)
+        elif name == "Z":
+            U = _single_qubit_gate_unitary(PAULI_Z, qubits[0], n)
+        elif name == "T":
+            U = _single_qubit_gate_unitary(_T_MAT, qubits[0], n)
+        elif name == "S":
+            U = _single_qubit_gate_unitary(_S_MAT, qubits[0], n)
+        elif name == "RX":
+            U = _single_qubit_gate_unitary(_rx_mat(params[0]), qubits[0], n)
+        elif name == "RY":
+            U = _single_qubit_gate_unitary(_ry_mat(params[0]), qubits[0], n)
+        elif name == "RZ":
+            U = _single_qubit_gate_unitary(_rz_mat(params[0]), qubits[0], n)
+        elif name == "CX":
+            U = _cx_unitary(qubits[0], qubits[1], n)
+        elif name == "CZ":
+            U = _cz_unitary(qubits[0], qubits[1], n)
+        elif name == "SWAP":
+            U = _swap_unitary(qubits[0], qubits[1], n)
+        else:
+            raise ValueError(f"Unbekanntes Gatter '{name}' im Simulator.")
+        sv = _mat_vec(U, sv)
+
+    if shots <= 0:
+        return sv
+
+    # Messe alle Qubits (oder nur die gemessenen)
+    probs = [abs(a) ** 2 for a in sv]
+    import random
+    counts = {}
+    measure_qubits = [q for q, _ in circuit._measurements] if circuit._measurements else list(range(n))
+    for _ in range(shots):
+        r = random.random()
+        cumsum = 0.0
+        idx = dim - 1
+        for i, p in enumerate(probs):
+            cumsum += p
+            if r <= cumsum:
+                idx = i
+                break
+        # Extrahiere gemessene Bits (MSB = Qubit 0)
+        bits = format(idx, f'0{n}b')
+        key = ''.join(bits[q] for q in sorted(measure_qubits))
+        counts[key] = counts.get(key, 0) + 1
+    return counts
+
+def statevec_probs(circuit):
+    """Gibt Wahrscheinlichkeiten |¤ê_i|┬▓ als Liste zurueck."""
+    sv = statevec_sim(circuit)
+    return [abs(a) ** 2 for a in sv]
+
+def statevec_expectation(circuit, observable):
+    """Berechnet Ôƒ¿¤ê|O|¤êÔƒ® fuer einen Pauli-String-Observable.
+
+    Args:
+        circuit: QuantumCircuit
+        observable: String wie "ZI", "XX", "ZZ" (Pauli-Produkt)
+
+    Returns:
+        Erwartungswert (float)
+    """
+    if not isinstance(circuit, QuantumCircuit):
+        raise TypeError("statevec_expectation: Erwartet QuantumCircuit.")
+    n = circuit.n_qubits
+    if not isinstance(observable, str) or len(observable) != n:
+        raise ValueError(
+            f"Observable muss ein {n}-Zeichen-Pauli-String sein (z.B. 'ZI'), bekam {observable!r}."
+        )
+    sv = statevec_sim(circuit)
+    # Baue Observ.-Matrix als Tensor-Produkt
+    obs_mat = [[1+0j]]
+    for ch in observable:
+        obs_mat = _kron2(obs_mat, _pauli(ch))
+    obs_sv = _mat_vec(obs_mat, sv)
+    return sum((a.conjugate() * b).real for a, b in zip(sv, obs_sv))
+
+def vqe_circuit(n_qubits, n_layers, params):
+    """Erstellt einen parametrisierten Ansatz-Schaltkreis fuer VQE.
+
+    Hardware-efficient Ansatz: abwechselnd Ry-Schicht und CNOT-Kette.
+    params: Liste/Tensor der Laenge n_qubits * n_layers (Ry-Winkel).
+
+    Returns:
+        QuantumCircuit (kann mit statevec_expectation ausgewertet werden)
+    """
+    if isinstance(n_qubits, Quantity):
+        n_qubits = int(float(n_qubits.value))
+    if isinstance(n_layers, Quantity):
+        n_layers = int(float(n_layers.value))
+    n_qubits = int(n_qubits)
+    n_layers = int(n_layers)
+
+    # Flatten params
+    if hasattr(params, 'tolist'):
+        flat = params.reshape(-1).tolist()
+    elif isinstance(params, list):
+        flat = params
+    else:
+        flat = list(params)
+
+    expected = n_qubits * n_layers
+    if len(flat) != expected:
+        raise ValueError(
+            f"vqe_circuit: Erwartet {expected} Parameter (n_qubits={n_qubits} * n_layers={n_layers}), "
+            f"bekam {len(flat)}."
+        )
+
+    qc = QuantumCircuit(n_qubits)
+    idx = 0
+    for layer in range(n_layers):
+        for q in range(n_qubits):
+            theta = flat[idx] if not hasattr(flat[idx], 'item') else flat[idx].item()
+            qc.ry(float(theta), q)
+            idx += 1
+        # Entangle: lineare Kette
+        for q in range(n_qubits - 1):
+            qc.cx(q, q + 1)
+    return qc
+
+def vqe_energy(params, n_qubits, n_layers, hamiltonian_terms):
+    """Berechnet Energie Ôƒ¿¤ê(╬©)|H|¤ê(╬©)Ôƒ® fuer VQE-Schleife.
+
+    Args:
+        params: Tensor der Winkel (grad() faehig via torch)
+        n_qubits: Anzahl Qubits
+        n_layers: Anzahl VQE-Schichten
+        hamiltonian_terms: Liste von (koeffizient, pauli_string) ÔÇö z.B. [(0.5, "ZI"), (-0.5, "IZ")]
+
+    Returns:
+        Energie als float
+    """
+    import torch as _torch
+    # params als Python-Liste (detachieren falls Tensor)
+    if hasattr(params, 'detach'):
+        flat = params.detach().tolist()
+        if isinstance(flat, float):
+            flat = [flat]
+    else:
+        flat = list(params) if hasattr(params, '__iter__') else [float(params)]
+
+    qc = vqe_circuit(n_qubits, n_layers, flat)
+    energy = 0.0
+    for coeff, pauli_str in hamiltonian_terms:
+        c = float(coeff.value if isinstance(coeff, Quantity) else coeff)
+        energy += c * statevec_expectation(qc, pauli_str)
+    return energy

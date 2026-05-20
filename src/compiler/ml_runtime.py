@@ -19,9 +19,9 @@ def _normalize_unit_for_compare(unit):
 # Wert in Einheit * Faktor = Wert in Basiseinheit
 DIMENSION_TO_BASE = {
     # SI-Basis
-    "length": ("m", {"m": 1.0, "cm": 0.01, "km": 1000.0, "mm": 0.001, "um": 1e-6, "nm": 1e-9, "angstrom": 1e-10, "pm": 1e-12, "dm": 0.1, "AU": 149597870700.0, "ly": 9460730472580800.0, "pc": 3.085677581e16}),
+    "length": ("m", {"m": 1.0, "cm": 0.01, "km": 1000.0, "mm": 0.001, "um": 1e-6, "nm": 1e-9, "angstrom": 1e-10, "Angstrom": 1e-10, "pm": 1e-12, "fm": 1e-15, "dm": 0.1, "AU": 149597870700.0, "ly": 9460730472580800.0, "pc": 3.085677581e16}),
     "mass": ("kg", {"kg": 1.0, "g": 0.001, "t": 1000.0, "mg": 1e-6, "ug": 1e-9, "Da": 1.66053906660e-27, "amu": 1.66053906660e-27, "M_sun": 1.98847e30}),
-    "time": ("s", {"s": 1.0, "min": 60.0, "h": 3600.0, "d": 86400.0, "yr": 31557600.0, "a": 31557600.0, "ms": 0.001, "us": 1e-6, "ns": 1e-9}),
+    "time": ("s", {"s": 1.0, "min": 60.0, "h": 3600.0, "d": 86400.0, "yr": 31557600.0, "a": 31557600.0, "ms": 0.001, "us": 1e-6, "ns": 1e-9, "ps": 1e-12, "fs": 1e-15}),
     "current": ("A", {"A": 1.0, "mA": 0.001, "kA": 1000.0, "uA": 1e-6, "muA": 1e-6}),
     "temperature": ("K", {"K": 1.0, "mK": 0.001}),
     "amount_of_substance": ("mol", {"mol": 1.0, "mmol": 0.001, "umol": 1e-6, "nmol": 1e-9, "kmol": 1000.0}),
@@ -33,7 +33,7 @@ DIMENSION_TO_BASE = {
     "volume": ("L", {"L": 1.0, "mL": 0.001, "dm^3": 1.0, "m^3": 1000.0}),  # dm³ = 1 L, m³ = 1000 L
     "energy": ("J", {"J": 1.0, "kJ": 1000.0, "MJ": 1e6, "Wh": 3600.0, "kWh": 3.6e6, "eV": 1.602176634e-19, "meV": 1.602176634e-22, "keV": 1.602176634e-16, "MeV": 1.602176634e-13, "GeV": 1.602176634e-10, "cal": 4.184, "kcal": 4184.0}),
     "electric_potential": ("V", {"V": 1.0, "mV": 0.001, "kV": 1000.0}),
-    "frequency": ("Hz", {"Hz": 1.0, "kHz": 1000.0, "MHz": 1e6, "GHz": 1e9}),
+    "frequency": ("Hz", {"Hz": 1.0, "kHz": 1000.0, "MHz": 1e6, "GHz": 1e9, "THz": 1e12}),
     "charge": ("C", {"C": 1.0, "mC": 0.001, "uC": 1e-6}),
     "resistance": ("ohm", {"ohm": 1.0, "kohm": 1000.0, "Mohm": 1e6}),
     "power": ("W", {"W": 1.0, "kW": 1000.0, "MW": 1e6, "L_sun": 3.828e26}),
@@ -47,6 +47,8 @@ DIMENSION_TO_BASE = {
     "mass_concentration": ("g/L", {"g/L": 1.0, "mg/mL": 1.0, "percent_wv": 10.0}),  # 1% w/v = 10 g/L
     # Winkel (SI-Ergänzung: rad; deg = pi/180 rad)
     "angle": ("rad", {"rad": 1.0, "deg": 0.017453292519943295}),  # 1 deg = pi/180 rad
+    # Molare Energie (MD/Chemie): Basis kJ/mol (1 kcal/mol = 4.184 kJ/mol)
+    "molar_energy": ("kJ/mol", {"kJ/mol": 1.0, "kcal/mol": 4.184, "J/mol": 0.001, "eV/atom": 96.485, "Hartree/mol": 2625.5}),
 }
 # Für Units-Checker: Liste der Einheitenmengen pro Dimension
 ADDITIVE_DIMENSION_UNIT_SETS = [frozenset(tab.keys()) for _b, tab in DIMENSION_TO_BASE.values()]
@@ -198,6 +200,60 @@ class Quantity:
             return str(self.value)
         display_unit = _unit_simplify(self.unit)
         return f"{self.value}[{display_unit}]"
+
+    def _cmp_value(self, other):
+        """Liefert (self_val, other_val) für Vergleich. Konvertiert Einheiten, wenn möglich."""
+        if isinstance(other, Quantity):
+            dim_s = _get_dimension(self.unit)
+            dim_o = _get_dimension(other.unit)
+            if dim_s is not None and dim_s == dim_o:
+                return _convert_to_base(self.value, self.unit, dim_s), \
+                       _convert_to_base(other.value, other.unit, dim_o)
+            if _normalize_unit_for_compare(self.unit) == _normalize_unit_for_compare(other.unit):
+                return self.value, other.value
+            raise ValueError(
+                f"Vergleich nicht möglich: [{self.unit}] vs [{other.unit}] (unterschiedliche Dimension)."
+            )
+        if isinstance(other, (int, float)):
+            return self.value, float(other)
+        return self.value, other
+
+    def __lt__(self, other):
+        a, b = self._cmp_value(other)
+        return a < b
+
+    def __le__(self, other):
+        a, b = self._cmp_value(other)
+        return a <= b
+
+    def __gt__(self, other):
+        a, b = self._cmp_value(other)
+        return a > b
+
+    def __ge__(self, other):
+        a, b = self._cmp_value(other)
+        return a >= b
+
+    def __eq__(self, other):
+        if isinstance(other, Quantity):
+            try:
+                a, b = self._cmp_value(other)
+                return a == b
+            except ValueError:
+                return False
+        if isinstance(other, (int, float)):
+            return self.value == float(other)
+        return NotImplemented
+
+    def __ne__(self, other):
+        eq = self.__eq__(other)
+        if eq is NotImplemented:
+            return NotImplemented
+        return not eq
+
+    def __hash__(self):
+        return hash((self.value, _normalize_unit_for_compare(self.unit)))
+
 
 def _unit_mul(u1, u2):
     if not u1: return u2
@@ -691,6 +747,581 @@ def compile_model(model):
         return DedekindCompiledModel(model)
     return model
 
+
+
+def _register_user_unit(name, factor, base_unit):
+    """Registriert eine benutzerdefinierte Einheit: 1 NAME = factor * base_unit.
+
+    Beispiele:
+        _register_user_unit("Foot", 0.3048, "m")     # 1 Foot = 0.3048 m  (length)
+        _register_user_unit("Mile", 1609.34, "m")    # 1 Mile = 1609.34 m  (length)
+        _register_user_unit("Darcy", 9.869233e-13, "m^2")  # permeability
+        _register_user_unit("MilliFoot", 0.001, "Foot")    # chaining wird aufgel├Âst
+
+    base_unit muss bereits in irgendeiner Dimensionstabelle vorkommen (Basis oder Alias).
+    """
+    name = str(name).strip()
+    base_unit = str(base_unit).strip()
+    factor = float(factor)
+    if not name:
+        raise ValueError("unit-Name darf nicht leer sein.")
+    # Dimension der base_unit suchen und Kettenaufl├Âsung durchf├╝hren
+    target_dim = None
+    base_factor = 1.0
+    for dim, (_b, tab) in DIMENSION_TO_BASE.items():
+        if base_unit in tab:
+            target_dim = dim
+            base_factor = tab[base_unit]
+            break
+    if target_dim is None:
+        raise ValueError(
+            f"`unit {name} = ...[{base_unit}]`: Basiseinheit '{base_unit}' ist keiner bekannten Dimension "
+            f"zugeordnet (L├ñnge, Masse, Zeit, Druck, Energie, ...). Bitte alias zu einer bestehenden Einheit."
+        )
+    DIMENSION_TO_BASE[target_dim][1][name] = factor * base_factor
+    _rebuild_additive_unit_sets()
+    return name
+
+def _unit_of_value(value):
+    """Liefert die Einheit eines Wertes als String. '' fuer unitless / Zahlen / Tensoren."""
+    if isinstance(value, Quantity):
+        return value.unit or ""
+    if isinstance(value, UncertainQuantity):
+        return value.unit or ""
+    return ""
+
+def _check_param_unit(value, param_name, fn_name, arg_name, unit_env):
+    """Bindet eine polymorphe Einheits-Variable konsistent ueber alle Argumente eines Calls.
+
+    Erstes Auftreten: bindet param_name -> Einheit von value.
+    Folgende Auftritte: muss die gleiche Dimension haben; bei Bedarf wird value
+    in die gebundene Einheit umgerechnet.
+
+    Beispiel:
+        fn add<U>(a: [U], b: [U]) -> [U] { return a + b }
+        add(2[m], 3[m])       # U bindet auf 'm'
+        add(2[m], 100[cm])    # U bindet auf 'm', 100[cm] wird zu 1[m]
+        add(2[m], 3[kg])      # ValueError (Dimensions-Mismatch)
+    """
+    actual = _unit_of_value(value)
+    if param_name not in unit_env:
+        unit_env[param_name] = actual
+        return value
+    bound = unit_env[param_name]
+    if bound == actual:
+        return value
+    # Beide non-empty + gleiche Einheit (durch String-Vergleich)?
+    if _normalize_unit_for_compare(bound) == _normalize_unit_for_compare(actual):
+        return value
+    # Beide non-empty + gleiche Dimension? -> in gebundene Einheit umrechnen.
+    if isinstance(value, Quantity) and bound:
+        try:
+            return _coerce_to_expected_unit(value, bound, f"{fn_name}({arg_name}) [Typ-Param {param_name}]")
+        except ValueError:
+            pass
+    # Caller gab plain number, Bindung erwartet Einheit
+    if bound and not actual and isinstance(value, (int, float)):
+        return Quantity(float(value), bound)
+    raise ValueError(
+        f"Typ-Param-Einheit '{param_name}' in {fn_name}({arg_name}): "
+        f"bereits an [{bound or 'unitless'}] gebunden, hier [{actual or 'unitless'}]."
+    )
+
+def _check_return_param_unit(value, param_name, fn_name, unit_env):
+    """Pruefe / binde polymorphe Einheits-Variable am Return-Punkt."""
+    actual = _unit_of_value(value)
+    if param_name not in unit_env:
+        # Return ist die erste Stelle, die param_name sieht ÔÇö binden, ohne Pruefung
+        unit_env[param_name] = actual
+        return value
+    bound = unit_env[param_name]
+    if bound == actual:
+        return value
+    if _normalize_unit_for_compare(bound) == _normalize_unit_for_compare(actual):
+        return value
+    if isinstance(value, Quantity) and bound:
+        try:
+            return _coerce_to_expected_unit(value, bound, f"return von {fn_name} [Typ-Param {param_name}]")
+        except ValueError:
+            pass
+    if bound and not actual and isinstance(value, (int, float)):
+        return Quantity(float(value), bound)
+    raise ValueError(
+        f"Typ-Param-Einheit '{param_name}' im Return von {fn_name}: "
+        f"erwartet [{bound or 'unitless'}], erhalten [{actual or 'unitless'}]."
+    )
+
+def _shape_of(value):
+    """Liefert die Shape eines Wertes als Tupel von ints. Skalar -> (), unbekannt -> None."""
+    if isinstance(value, (int, float, bool)):
+        return ()
+    if isinstance(value, Quantity):
+        return ()
+    if hasattr(value, "shape"):
+        try:
+            sh = tuple(int(d) for d in value.shape)
+            return sh
+        except Exception:
+            pass
+    if isinstance(value, (list, tuple)):
+        if len(value) == 0:
+            return (0,)
+        first_sub = _shape_of(value[0])
+        if first_sub is None:
+            return (len(value),)
+        # Konsistenz aller Elemente (sonst unregelm├ñ├ƒig -> nur erste Dimension)
+        for item in value[1:]:
+            if _shape_of(item) != first_sub:
+                return (len(value),)
+        return (len(value),) + first_sub
+    return None
+
+def _format_shape(dims):
+    """Liefert eine kompakte String-Darstellung einer Shape-Liste/Tupel."""
+    parts = [str(d) for d in dims]
+    return "[" + ", ".join(parts) + "]"
+
+def _check_shape(value, expected_dims, fn_name, arg_name, shape_env):
+    """Prueft, dass `value` die deklarierte Shape `expected_dims` hat.
+    Symbolische Dimensionen (Strings) werden in `shape_env` gebunden bzw. verglichen.
+    Wirft ValueError bei Mismatch. Liefert `value` unveraendert zurueck (passthrough)."""
+    actual = _shape_of(value)
+    if actual is None:
+        # Shape nicht ermittelbar (z. B. generischer Iterator) - skip
+        return value
+    if len(actual) != len(expected_dims):
+        raise ValueError(
+            f"Shape-Mismatch in {fn_name}({arg_name}): erwartet {_format_shape(expected_dims)} "
+            f"({len(expected_dims)}-D), erhalten {_format_shape(actual)} ({len(actual)}-D)."
+        )
+    for i, (want, got) in enumerate(zip(expected_dims, actual)):
+        if isinstance(want, int):
+            if want != got:
+                raise ValueError(
+                    f"Shape-Mismatch in {fn_name}({arg_name}): Dimension {i} erwartet {want}, "
+                    f"erhalten {got}. Volle Shape: erwartet {_format_shape(expected_dims)}, "
+                    f"erhalten {_format_shape(actual)}."
+                )
+        else:
+            # Symbolische Dimension: erste Begegnung bindet, danach Konsistenz pruefen
+            bound = shape_env.get(want)
+            if bound is None:
+                shape_env[want] = got
+            elif bound != got:
+                raise ValueError(
+                    f"Symbolische Shape-Dimension '{want}' in {fn_name}({arg_name}): bereits "
+                    f"als {bound} gebunden, hier {got}. Volle Shape: erwartet "
+                    f"{_format_shape(expected_dims)}, erhalten {_format_shape(actual)}."
+                )
+    return value
+
+def _check_return_shape(value, expected_dims, fn_name, shape_env):
+    actual = _shape_of(value)
+    if actual is None:
+        return value
+    if len(actual) != len(expected_dims):
+        raise ValueError(
+            f"Return-Shape-Mismatch in {fn_name}: erwartet {_format_shape(expected_dims)}, "
+            f"erhalten {_format_shape(actual)}."
+        )
+    for i, (want, got) in enumerate(zip(expected_dims, actual)):
+        if isinstance(want, int):
+            if want != got:
+                raise ValueError(
+                    f"Return-Shape-Mismatch in {fn_name}: Dim {i} erwartet {want}, erhalten {got}."
+                )
+        else:
+            bound = shape_env.get(want)
+            if bound is None:
+                shape_env[want] = got
+            elif bound != got:
+                raise ValueError(
+                    f"Symbolische Return-Dimension '{want}' in {fn_name}: bereits {bound}, "
+                    f"hier {got}."
+                )
+    return value
+
+def _graph_dims(value):
+    """Liefert (num_nodes, num_edges) fuer torch_geometric.data.Data oder
+    aehnliche Objekte. None wenn nicht ermittelbar."""
+    if hasattr(value, "num_nodes") and hasattr(value, "num_edges"):
+        try:
+            return int(value.num_nodes), int(value.num_edges)
+        except Exception:
+            pass
+    # Fallback: x.shape[0] / edge_index.shape[1]
+    n_nodes = None
+    n_edges = None
+    if hasattr(value, "x") and value.x is not None and hasattr(value.x, "shape"):
+        try:
+            n_nodes = int(value.x.shape[0])
+        except Exception:
+            pass
+    if hasattr(value, "edge_index") and value.edge_index is not None and hasattr(value.edge_index, "shape"):
+        try:
+            n_edges = int(value.edge_index.shape[1])
+        except Exception:
+            pass
+    if n_nodes is not None and n_edges is not None:
+        return n_nodes, n_edges
+    return None
+
+def _check_graph_dims_against_env(actual, expected_dims, fn_name, arg_name, shape_env, where):
+    """Pruefe (N_nodes, N_edges)-Tupel gegen erwartete Dimensionen mit Symbol-Bindung."""
+    labels = ("Knoten", "Kanten")
+    for i, (want, got, label) in enumerate(zip(expected_dims, actual, labels)):
+        if isinstance(want, int):
+            if want != got:
+                raise ValueError(
+                    f"Graph-Shape-Mismatch in {where} {fn_name}({arg_name}): "
+                    f"{label}-Anzahl erwartet {want}, erhalten {got}."
+                )
+        else:
+            bound = shape_env.get(want)
+            if bound is None:
+                shape_env[want] = got
+            elif bound != got:
+                raise ValueError(
+                    f"Symbolische Graph-Dimension '{want}' in {where} {fn_name}({arg_name}): "
+                    f"bereits als {bound} gebunden, hier {got} ({label})."
+                )
+
+def _check_graph_shape(value, expected_dims, fn_name, arg_name, shape_env):
+    """Validiert, dass `value` ein torch_geometric.data.Data-aehnliches Objekt mit den
+    deklarierten (N_nodes, N_edges)-Dimensionen ist. Symbolische Dimensionen werden
+    in `shape_env` gebunden bzw. konsistent gehalten."""
+    actual = _graph_dims(value)
+    if actual is None:
+        raise ValueError(
+            f"Graph-Shape-Check in {fn_name}({arg_name}): erwarte ein Graph-Objekt "
+            f"mit num_nodes/num_edges-Attributen (z. B. torch_geometric.data.Data), "
+            f"erhalten {type(value).__name__}."
+        )
+    _check_graph_dims_against_env(actual, expected_dims, fn_name, arg_name, shape_env, "Argument")
+    return value
+
+def _check_return_graph_shape(value, expected_dims, fn_name, shape_env):
+    actual = _graph_dims(value)
+    if actual is None:
+        raise ValueError(
+            f"Graph-Return-Shape-Check in {fn_name}: erwarte ein Graph-Objekt, "
+            f"erhalten {type(value).__name__}."
+        )
+    _check_graph_dims_against_env(actual, expected_dims, fn_name, "return", shape_env, "Return")
+    return value
+
+def _labeled_dims(value):
+    """Liefert tuple der dim-Namen fuer xarray.DataArray oder DataArray-aehnliche
+    Objekte. None wenn nicht ermittelbar."""
+    if hasattr(value, "dims"):
+        try:
+            return tuple(str(d) for d in value.dims)
+        except Exception:
+            pass
+    return None
+
+def _check_labeled_shape(value, expected_dims, fn_name, arg_name, shape_env):
+    """Validiert, dass `value` ein xarray.DataArray-aehnliches Objekt mit GENAU der
+    deklarierten Menge von dim-Namen ist (Reihenfolge irrelevant ÔÇö xarray operiert
+    namens-basiert)."""
+    actual = _labeled_dims(value)
+    if actual is None:
+        raise ValueError(
+            f"LabeledTensor-Shape-Check in {fn_name}({arg_name}): erwarte ein "
+            f"DataArray-aehnliches Objekt mit .dims (z. B. xarray.DataArray), "
+            f"erhalten {type(value).__name__}."
+        )
+    expected_set = set(str(d) for d in expected_dims)
+    actual_set = set(actual)
+    if expected_set != actual_set:
+        missing = expected_set - actual_set
+        extra = actual_set - expected_set
+        msgs = []
+        if missing:
+            msgs.append(f"fehlende Dimensionen: {sorted(missing)}")
+        if extra:
+            msgs.append(f"zusaetzliche Dimensionen: {sorted(extra)}")
+        raise ValueError(
+            f"LabeledTensor-Shape-Mismatch in {fn_name}({arg_name}): "
+            f"erwartet {{ {', '.join(sorted(expected_set))} }}, "
+            f"erhalten {{ {', '.join(sorted(actual_set))} }} ({'; '.join(msgs)})."
+        )
+    return value
+
+def _check_return_labeled_shape(value, expected_dims, fn_name, shape_env):
+    actual = _labeled_dims(value)
+    if actual is None:
+        raise ValueError(
+            f"LabeledTensor-Return-Check in {fn_name}: erwarte DataArray-aehnliches "
+            f"Objekt, erhalten {type(value).__name__}."
+        )
+    expected_set = set(str(d) for d in expected_dims)
+    actual_set = set(actual)
+    if expected_set != actual_set:
+        raise ValueError(
+            f"LabeledTensor-Return-Mismatch in {fn_name}: erwartet "
+            f"{{ {', '.join(sorted(expected_set))} }}, "
+            f"erhalten {{ {', '.join(sorted(actual_set))} }}."
+        )
+    return value
+
+def _validate_sequence_string(value, kind, where):
+    """Validiert: value ist ein String und enthaelt nur Zeichen aus dem Alphabet."""
+    if not isinstance(value, str):
+        raise TypeError(
+            f"Sequence[{kind}]-Check in {where}: erwarte String, erhalten {type(value).__name__}."
+        )
+    alphabet = _SEQ_ALPHABETS.get(kind.upper())
+    if alphabet is None:
+        raise ValueError(f"Sequence-Kind {kind!r} unbekannt (erlaubt: DNA, RNA, Protein).")
+    upper_val = value.upper()
+    bad = [c for c in upper_val if c not in alphabet]
+    if bad:
+        # Erstes Vorkommen mit Position
+        idx = next(i for i, c in enumerate(upper_val) if c not in alphabet)
+        raise ValueError(
+            f"Sequence[{kind}]-Check in {where}: ungueltiges Zeichen "
+            f"{value[idx]!r} an Position {idx} (erlaubt: {''.join(sorted(alphabet))})."
+        )
+
+def _check_sequence_shape(value, expected_dims, fn_name, arg_name, shape_env):
+    kind = str(expected_dims[0])
+    _validate_sequence_string(value, kind, f"{fn_name}({arg_name})")
+    return value
+
+def _check_return_sequence_shape(value, expected_dims, fn_name, shape_env):
+    kind = str(expected_dims[0])
+    _validate_sequence_string(value, kind, f"return von {fn_name}")
+    return value
+
+def _check_qubit_shape(val, dims, fn_name, arg_name, shape_env):
+    """Prueft Qubit[N] ÔÇö erwartet QuantumCircuit oder int."""
+    if isinstance(val, QuantumCircuit):
+        expected = dims[0] if dims else None
+        if expected is not None:
+            if isinstance(expected, str):
+                if expected in shape_env:
+                    if shape_env[expected] != val.n_qubits:
+                        raise TypeError(
+                            f"{fn_name}(): Argument '{arg_name}' Qubit[{expected}]={shape_env[expected]} "
+                            f"aber QuantumCircuit hat {val.n_qubits} Qubits."
+                        )
+                else:
+                    shape_env[expected] = val.n_qubits
+            elif val.n_qubits != int(expected):
+                raise TypeError(
+                    f"{fn_name}(): Argument '{arg_name}' erwartet Qubit[{expected}], "
+                    f"QuantumCircuit hat {val.n_qubits} Qubits."
+                )
+    return val
+
+def _check_statevec_shape(val, dims, fn_name, arg_name, shape_env):
+    """Prueft StateVec[N] ÔÇö erwartet Liste der Laenge 2^N."""
+    expected_n = dims[0] if dims else None
+    if isinstance(val, list):
+        actual_len = len(val)
+        if expected_n is not None:
+            if isinstance(expected_n, str):
+                if expected_n in shape_env:
+                    exp_len = 1 << shape_env[expected_n]
+                    if actual_len != exp_len:
+                        raise TypeError(
+                            f"{fn_name}(): '{arg_name}' StateVec[{expected_n}]: "
+                            f"erwartet Laenge 2^{shape_env[expected_n]}={exp_len}, bekam {actual_len}."
+                        )
+                else:
+                    import math
+                    if actual_len == 0 or (actual_len & (actual_len - 1)) != 0:
+                        raise TypeError(
+                            f"{fn_name}(): '{arg_name}' StateVec[{expected_n}]: "
+                            f"Laenge muss Potenz von 2 sein, bekam {actual_len}."
+                        )
+                    shape_env[expected_n] = int(math.log2(actual_len))
+            else:
+                exp_len = 1 << int(expected_n)
+                if actual_len != exp_len:
+                    raise TypeError(
+                        f"{fn_name}(): '{arg_name}' erwartet StateVec[{expected_n}] "
+                        f"(Laenge {exp_len}), bekam {actual_len}."
+                    )
+    return val
+
+def _check_return_qubit_shape(val, dims, fn_name, shape_env):
+    """Prueft Rueckgabe Qubit[N]/Circuit[N,G]."""
+    _check_qubit_shape(val, dims, fn_name, "return", shape_env)
+    return val
+
+def _check_return_statevec_shape(val, dims, fn_name, shape_env):
+    """Prueft Rueckgabe StateVec[N]."""
+    _check_statevec_shape(val, dims, fn_name, "return", shape_env)
+    return val
+
+def _pauli(name):
+    m = {"I": PAULI_I, "X": PAULI_X, "Y": PAULI_Y, "Z": PAULI_Z, "H": PAULI_H}
+    if name not in m:
+        raise ValueError(f"Unbekannte Pauli-Matrix '{name}'. Erlaubt: I, X, Y, Z, H.")
+    return m[name]
+
+class QuantumCircuit:
+    """Leichtgewichtiger Dedekind-Schaltkreis (kein Qiskit n├Âtig).
+
+    Speichert Gatter als Liste von (name, qubits, params). Kann via
+    `statevec_sim()` simuliert werden oder per `to_qiskit()` exportiert werden.
+    """
+
+    def __init__(self, n_qubits: int):
+        if not isinstance(n_qubits, int) or n_qubits < 1:
+            raise ValueError(f"QuantumCircuit: n_qubits muss >= 1 sein, bekam {n_qubits!r}.")
+        self.n_qubits = n_qubits
+        self._gates = []   # [(name, qubit_list, params)]
+        self._measurements = []  # [(qubit, clbit)]
+
+    def h(self, qubit: int):
+        """Hadamard-Gatter."""
+        self._validate_qubit(qubit)
+        self._gates.append(("H", [qubit], []))
+        return self
+
+    def x(self, qubit: int):
+        """Pauli-X (NOT) Gatter."""
+        self._validate_qubit(qubit)
+        self._gates.append(("X", [qubit], []))
+        return self
+
+    def y(self, qubit: int):
+        """Pauli-Y Gatter."""
+        self._validate_qubit(qubit)
+        self._gates.append(("Y", [qubit], []))
+        return self
+
+    def z(self, qubit: int):
+        """Pauli-Z Gatter."""
+        self._validate_qubit(qubit)
+        self._gates.append(("Z", [qubit], []))
+        return self
+
+    def cx(self, control: int, target: int):
+        """CNOT-Gatter."""
+        self._validate_qubit(control)
+        self._validate_qubit(target)
+        if control == target:
+            raise ValueError("CNOT: control und target d├╝rfen nicht gleich sein.")
+        self._gates.append(("CX", [control, target], []))
+        return self
+
+    def cz(self, control: int, target: int):
+        """CZ-Gatter."""
+        self._validate_qubit(control)
+        self._validate_qubit(target)
+        self._gates.append(("CZ", [control, target], []))
+        return self
+
+    def rx(self, theta, qubit: int):
+        """Rx-Rotation um Winkel theta (Bogenmass)."""
+        self._validate_qubit(qubit)
+        th = float(_unwrap_q(theta))
+        self._gates.append(("RX", [qubit], [th]))
+        return self
+
+    def ry(self, theta, qubit: int):
+        """Ry-Rotation."""
+        self._validate_qubit(qubit)
+        th = float(_unwrap_q(theta))
+        self._gates.append(("RY", [qubit], [th]))
+        return self
+
+    def rz(self, theta, qubit: int):
+        """Rz-Rotation."""
+        self._validate_qubit(qubit)
+        th = float(_unwrap_q(theta))
+        self._gates.append(("RZ", [qubit], [th]))
+        return self
+
+    def swap(self, q0: int, q1: int):
+        """SWAP-Gatter."""
+        self._validate_qubit(q0)
+        self._validate_qubit(q1)
+        self._gates.append(("SWAP", [q0, q1], []))
+        return self
+
+    def t(self, qubit: int):
+        """T-Gatter (pi/4-Phase)."""
+        self._validate_qubit(qubit)
+        self._gates.append(("T", [qubit], []))
+        return self
+
+    def s(self, qubit: int):
+        """S-Gatter (pi/2-Phase)."""
+        self._validate_qubit(qubit)
+        self._gates.append(("S", [qubit], []))
+        return self
+
+    def measure(self, qubit: int, clbit: int = None):
+        """F├╝gt Messung hinzu."""
+        self._validate_qubit(qubit)
+        self._measurements.append((qubit, clbit if clbit is not None else qubit))
+        return self
+
+    def measure_all(self):
+        """Misst alle Qubits."""
+        for i in range(self.n_qubits):
+            self.measure(i, i)
+        return self
+
+    def _validate_qubit(self, q):
+        if not isinstance(q, int) or q < 0 or q >= self.n_qubits:
+            raise ValueError(
+                f"Qubit-Index {q} ausserhalb des Bereichs [0, {self.n_qubits - 1}]."
+            )
+
+    def depth(self) -> int:
+        """Schaltkreistiefe (naiv: Anzahl Gatter-Schichten ohne Parallelisierung)."""
+        layers = [0] * self.n_qubits
+        for name, qubits, _ in self._gates:
+            d = _builtin_max(layers[q] for q in qubits) + 1
+            for q in qubits:
+                layers[q] = d
+        return _builtin_max(layers) if layers else 0
+
+    def n_gates(self) -> int:
+        """Gesamtanzahl der Gatter."""
+        return len(self._gates)
+
+    def __repr__(self):
+        lines = [f"QuantumCircuit({self.n_qubits} Qubits, {self.n_gates()} Gatter, Tiefe={self.depth()})"]
+        for name, qubits, params in self._gates:
+            pstr = f"({', '.join(f'{p:.4f}' for p in params)})" if params else ""
+            qstr = ", ".join(str(q) for q in qubits)
+            lines.append(f"  {name}{pstr}  q[{qstr}]")
+        if self._measurements:
+            lines.append(f"  MEASURE: {self._measurements}")
+        return "\n".join(lines)
+
+    def to_qiskit(self):
+        """Konvertiert zu echtem Qiskit QuantumCircuit (erfordert `pyimport qiskit`)."""
+        try:
+            import qiskit
+        except ImportError:
+            raise ImportError(
+                "Qiskit nicht gefunden. Installiere es: pip install qiskit\n"
+                "Alternativ: statevec_sim(circuit) fuer reine Simulation."
+            )
+        from qiskit import QuantumCircuit as _QC
+        qc = _QC(self.n_qubits, self.n_qubits if self._measurements else 0)
+        _QISKIT_MAP = {
+            "H": qc.h, "X": qc.x, "Y": qc.y, "Z": qc.z,
+            "CX": qc.cx, "CZ": qc.cz, "SWAP": qc.swap,
+            "T": qc.t, "S": qc.s,
+        }
+        _QISKIT_ROT = {"RX": qc.rx, "RY": qc.ry, "RZ": qc.rz}
+        for name, qubits, params in self._gates:
+            if name in _QISKIT_ROT:
+                _QISKIT_ROT[name](params[0], qubits[0])
+            elif name in _QISKIT_MAP:
+                _QISKIT_MAP[name](*qubits)
+        for qubit, clbit in self._measurements:
+            qc.measure(qubit, clbit)
+        return qc
 def random_vector(size):
     return torch.randn(size)
 
@@ -935,6 +1566,43 @@ def sequence(f, n):
     return torch.stack(out)
 
 
+
+
+def labeled_tensor(data, dims, coords=None, name=None, attrs=None):
+    """Erzeugt ein xarray.DataArray fuer Klima-/Geo-/Earth-Science-Workflows.
+
+    Im Gegensatz zu nackten Tensoren tragen Labeled Tensors die *Namen* ihrer
+    Achsen mit ('lat', 'lon', 'time', ...), und xarray-Operationen koennen
+    namens-basiert (statt indexbasiert) arbeiten. Das verhindert die klassische
+    Verwechslung 'mean ueber lat vs. mean ueber time'.
+
+    Parameter:
+      data:   Tensor/numpy-Array/Liste ÔÇö die Werte.
+      dims:   Liste/Tuple von Strings ÔÇö Namen der Achsen, gleiche Reihenfolge wie data.shape.
+      coords: Optional Dict {dim_name: 1D-Werte} ÔÇö Koordinaten-Achsen.
+      name:   Optional Name fuer das DataArray.
+      attrs:  Optional Dict ÔÇö Metadaten (z. B. {"units": "K", "crs": "EPSG:4326"}).
+
+    Rueckgabe: xarray.DataArray.
+    """
+    try:
+        import xarray as _xr  # type: ignore[import-untyped]
+    except ImportError:
+        raise RuntimeError("labeled_tensor benoetigt xarray. Installation: pip install xarray")
+    import numpy as _np  # type: ignore[reportMissingImports]
+    if hasattr(data, "detach"):
+        arr = data.detach().cpu().numpy()
+    else:
+        arr = _np.asarray(data)
+    dims_t = tuple(str(d) for d in dims)
+    if len(dims_t) != arr.ndim:
+        raise ValueError(
+            f"labeled_tensor: data hat {arr.ndim} Achsen, dims hat {len(dims_t)} "
+            f"({dims_t!r}). Anzahl muss uebereinstimmen."
+        )
+    coords_dict = dict(coords) if coords else {}
+    return _xr.DataArray(arr, dims=dims_t, coords=coords_dict if coords_dict else None,
+                          name=name, attrs=attrs or {})
 def ode_solve(fun, y0, t, method="rk4"):
     """
     Differenzierbarer ODE-Löser: dy/dt = fun(t, y).
@@ -2346,7 +3014,12 @@ def sqrt(x):
 
 def abs(x):
     """Betrag |x|; x Tensor oder Skalar."""
-    return torch.abs(_to_tensor(x).float())
+    if isinstance(x, (int, float, complex)):
+        return builtins.abs(x)
+    t = _to_tensor(x)
+    if isinstance(t, torch.Tensor):
+        return torch.abs(t)
+    return builtins.abs(x)
 
 def asin(x):
     """Arkussinus asin(x); x im Intervall [-1, 1]."""
@@ -2631,6 +3304,798 @@ def ttest_two_sample(x, y):
 
 
 # --- Standard Library: Reduktionen (min, max, argmin, argmax) ---
+
+
+
+import cmath as _cmath
+import math as _math
+
+# Quantum constants added during master-quantum merge
+PAULI_I = [[1 + 0j, 0 + 0j], [0 + 0j, 1 + 0j]]
+PAULI_X = [[0 + 0j, 1 + 0j], [1 + 0j, 0 + 0j]]
+PAULI_Y = [[0 + 0j, -1j], [1j, 0 + 0j]]
+PAULI_Z = [[1 + 0j, 0 + 0j], [0 + 0j, -1 + 0j]]
+PAULI_H = [[1 / _math.sqrt(2) + 0j, 1 / _math.sqrt(2) + 0j], [1 / _math.sqrt(2) + 0j, -1 / _math.sqrt(2) + 0j]]
+_T_MAT = [[1 + 0j, 0 + 0j], [0 + 0j, _cmath.exp(1j * _math.pi / 4)]]
+_S_MAT = [[1 + 0j, 0 + 0j], [0 + 0j, 1j]]
+
+
+def _graph_laplacian_sparse(adj_sp, normalized):
+    """Sparse-Implementierung. Liefert COO-Tensor."""
+    adj_sp = adj_sp.coalesce()
+    N = adj_sp.shape[0]
+    idx = adj_sp.indices()
+    vals = adj_sp.values().float()
+    deg = torch.zeros(N, dtype=vals.dtype, device=vals.device)
+    deg.scatter_add_(0, idx[0], vals)
+    if normalized:
+        d_inv_sqrt = torch.where(deg > 0, deg.clamp(min=1e-12).pow(-0.5),
+                                  torch.zeros_like(deg))
+        scaled_off = -vals * d_inv_sqrt[idx[0]] * d_inv_sqrt[idx[1]]
+        diag_idx = torch.arange(N, device=vals.device)
+        diag_v = (deg > 0).to(vals.dtype)
+        all_i = torch.cat([idx[0], diag_idx])
+        all_j = torch.cat([idx[1], diag_idx])
+        all_v = torch.cat([scaled_off, diag_v])
+    else:
+        diag_idx = torch.arange(N, device=vals.device)
+        all_i = torch.cat([diag_idx, idx[0]])
+        all_j = torch.cat([diag_idx, idx[1]])
+        all_v = torch.cat([deg, -vals])
+    return torch.sparse_coo_tensor(torch.stack([all_i, all_j]), all_v, (N, N)).coalesce()
+
+def graph_laplacian(adj, normalized=False):
+    """Berechnet den Graph-Laplacian fuer eine Adjazenzmatrix.
+
+    Kombinatorisch (Default):  L = D - A
+        L[i,i] =  deg(i)
+        L[i,j] = -A[i,j]   (i != j)
+
+    Normalisiert (symmetrisch): L_sym = I - D^{-1/2} A D^{-1/2}
+        Eigenwerte in [0, 2]; nuetzlich fuer spektrale Verfahren auf Graphen
+        unterschiedlicher Dichte.
+
+    Eingabe `adj`: dichte (N,N)-Matrix, sparse torch.Tensor, oder geschachtelte
+    Liste. Quadratisch, nicht-negative Eintraege; bei ungerichteten Graphen
+    symmetrisch. Ausgabe ist sparse, wenn `adj` sparse ist, sonst dicht ÔÇö direkt
+    einsetzbar in `cg`, `gmres`, `bicgstab` (Heat-Diffusion, Eigenvektoren, etc.).
+    """
+    if hasattr(adj, "is_sparse") and adj.is_sparse:
+        return _graph_laplacian_sparse(adj, normalized)
+    adj_t = _to_tensor(adj)
+    if not isinstance(adj_t, torch.Tensor):
+        raise TypeError(f"graph_laplacian: Eingabe muss tensor-artig sein, erhielt {type(adj).__name__}.")
+    adj_t = adj_t.float()
+    if adj_t.dim() != 2 or adj_t.shape[0] != adj_t.shape[1]:
+        raise ValueError(
+            f"graph_laplacian: Adjazenz muss quadratisch (N,N) sein, "
+            f"erhalten {tuple(adj_t.shape)}."
+        )
+    deg = adj_t.sum(dim=1)
+    if normalized:
+        d_inv_sqrt = torch.where(deg > 0, deg.clamp(min=1e-12).pow(-0.5),
+                                  torch.zeros_like(deg))
+        scaled = d_inv_sqrt.unsqueeze(1) * adj_t * d_inv_sqrt.unsqueeze(0)
+        eye = torch.eye(adj_t.shape[0], dtype=adj_t.dtype, device=adj_t.device)
+        return eye - scaled
+    return torch.diag(deg) - adj_t
+
+def _milp_scalar(x):
+    """Extrahiert eine reine Zahl aus Quantity/Tensor/Skalar fuer Bounds/Constraints."""
+    if isinstance(x, Quantity):
+        return float(x.value)
+    if hasattr(x, "item"):
+        try:
+            return float(x.item())
+        except Exception:
+            pass
+    return float(x)
+
+def _milp_units_compat(u1, u2, where):
+    """Wirft ValueError, wenn u1 und u2 nicht dimensional kompatibel sind.
+    Liefert die fuehrende Einheit (Linke-Seite-Konvention)."""
+    if not u1 or not u2:
+        return u1 or u2
+    if u1 == u2:
+        return u1
+    if _normalize_unit_for_compare(u1) == _normalize_unit_for_compare(u2):
+        return u1
+    d1 = _get_dimension(u1)
+    d2 = _get_dimension(u2)
+    if d1 is not None and d1 == d2:
+        return u1
+    if _units_dimensionally_equal(u1, u2):
+        return u1
+    raise ValueError(f"MILP-Einheiten passen nicht in {where}: [{u1}] vs [{u2}].")
+
+class _MILPVariable:
+    """Entscheidungsvariable. Hashbar via Identitaet (kein __eq__-Override)."""
+    __slots__ = ("name", "lower", "upper", "integer", "unit")
+
+    def __init__(self, name, lower=None, upper=None, integer=False):
+        self.name = str(name)
+        self.lower = lower
+        self.upper = upper
+        self.integer = bool(integer)
+        u = ""
+        for v in (lower, upper):
+            if isinstance(v, Quantity) and v.unit:
+                u = v.unit
+                break
+        self.unit = u
+
+    def __repr__(self):
+        suf = f" [{self.unit}]" if self.unit else ""
+        return f"Variable({self.name!r}{suf})"
+
+    def _as_expr(self):
+        return _MILPExpression({self: 1.0}, unit=self.unit)
+
+    def __add__(self, other): return self._as_expr() + other
+    def __radd__(self, other): return self._as_expr() + other
+    def __sub__(self, other): return self._as_expr() - other
+    def __rsub__(self, other): return _MILPExpression(offset=0.0) - self._as_expr() + other if False else self._as_expr().__rsub__(other)
+    def __mul__(self, other): return self._as_expr() * other
+    def __rmul__(self, other): return self._as_expr() * other
+    def __truediv__(self, other): return self._as_expr() / other
+    def __neg__(self): return _MILPExpression({self: -1.0}, unit=self.unit)
+    def __ge__(self, other): return _MILPConstraint(self._as_expr(), ">=", other)
+    def __le__(self, other): return _MILPConstraint(self._as_expr(), "<=", other)
+
+class _MILPExpression:
+    """Lineare Kombination sum(coef * Variable) + offset, mit Einheit."""
+    __slots__ = ("coeffs", "offset", "unit")
+
+    def __init__(self, coeffs=None, offset=0.0, unit=""):
+        self.coeffs = dict(coeffs) if coeffs else {}
+        self.offset = float(offset)
+        self.unit = str(unit)
+
+    def _coerce(self, other):
+        if isinstance(other, _MILPVariable):
+            return _MILPExpression({other: 1.0}, unit=other.unit)
+        if isinstance(other, _MILPExpression):
+            return other
+        if isinstance(other, Quantity):
+            return _MILPExpression(offset=other.value, unit=other.unit or "")
+        if isinstance(other, (int, float)):
+            return _MILPExpression(offset=float(other))
+        return None
+
+    def __add__(self, other):
+        oth = self._coerce(other)
+        if oth is None: return NotImplemented
+        unit = _milp_units_compat(self.unit, oth.unit, "Addition")
+        coeffs = dict(self.coeffs)
+        for v, c in oth.coeffs.items():
+            coeffs[v] = coeffs.get(v, 0.0) + c
+        return _MILPExpression(coeffs, self.offset + oth.offset, unit)
+    def __radd__(self, other): return self.__add__(other)
+
+    def __sub__(self, other):
+        oth = self._coerce(other)
+        if oth is None: return NotImplemented
+        unit = _milp_units_compat(self.unit, oth.unit, "Subtraktion")
+        coeffs = dict(self.coeffs)
+        for v, c in oth.coeffs.items():
+            coeffs[v] = coeffs.get(v, 0.0) - c
+        return _MILPExpression(coeffs, self.offset - oth.offset, unit)
+    def __rsub__(self, other):
+        oth = self._coerce(other)
+        if oth is None: return NotImplemented
+        return oth.__sub__(self)
+
+    def __mul__(self, other):
+        if isinstance(other, (_MILPVariable, _MILPExpression)):
+            other_expr = other if isinstance(other, _MILPExpression) else other._as_expr()
+            if self.coeffs and other_expr.coeffs:
+                raise ValueError(
+                    f"MILP: Produkt zweier Variabler ist nichtlinear "
+                    f"({list(self.coeffs.keys())[0].name} * {list(other_expr.coeffs.keys())[0].name})."
+                )
+            if not self.coeffs:
+                scalar, scalar_unit = self.offset, self.unit
+                expr = other_expr
+            else:
+                scalar, scalar_unit = other_expr.offset, other_expr.unit
+                expr = self
+            new_unit = _unit_mul(expr.unit, scalar_unit) if scalar_unit else expr.unit
+            return _MILPExpression(
+                {v: c * scalar for v, c in expr.coeffs.items()},
+                expr.offset * scalar,
+                new_unit,
+            )
+        if isinstance(other, Quantity):
+            scalar = other.value
+            new_unit = _unit_mul(self.unit, other.unit) if other.unit else self.unit
+            return _MILPExpression(
+                {v: c * scalar for v, c in self.coeffs.items()},
+                self.offset * scalar,
+                new_unit,
+            )
+        if isinstance(other, (int, float)):
+            return _MILPExpression(
+                {v: c * float(other) for v, c in self.coeffs.items()},
+                self.offset * float(other),
+                self.unit,
+            )
+        return NotImplemented
+    def __rmul__(self, other): return self.__mul__(other)
+
+    def __truediv__(self, other):
+        if isinstance(other, (int, float)):
+            inv = 1.0 / float(other)
+            return _MILPExpression({v: c * inv for v, c in self.coeffs.items()},
+                                   self.offset * inv, self.unit)
+        if isinstance(other, Quantity):
+            inv = 1.0 / other.value
+            new_unit = _unit_div(self.unit, other.unit) if other.unit else self.unit
+            return _MILPExpression({v: c * inv for v, c in self.coeffs.items()},
+                                   self.offset * inv, new_unit)
+        return NotImplemented
+
+    def __neg__(self):
+        return _MILPExpression({v: -c for v, c in self.coeffs.items()}, -self.offset, self.unit)
+
+    def __ge__(self, other): return _MILPConstraint(self, ">=", other)
+    def __le__(self, other): return _MILPConstraint(self, "<=", other)
+
+class _MILPConstraint:
+    """Normalisiert: sum(coef * var) op bound, op in {<=, >=, ==}."""
+    __slots__ = ("coeffs", "bound", "op", "unit")
+
+    def __init__(self, lhs, op, rhs):
+        if isinstance(lhs, _MILPVariable):
+            lhs = lhs._as_expr()
+        if not isinstance(lhs, _MILPExpression):
+            raise TypeError(f"MILP-Constraint linke Seite: erwartet Variable/Expression, bekam {type(lhs).__name__}.")
+        rhs_expr = lhs._coerce(rhs)
+        if rhs_expr is None:
+            raise TypeError(f"MILP-Constraint rechte Seite: erwartet Variable/Expression/Quantity/Zahl, bekam {type(rhs).__name__}.")
+        _milp_units_compat(lhs.unit, rhs_expr.unit, "Constraint")
+        diff = lhs - rhs_expr
+        self.coeffs = dict(diff.coeffs)
+        self.bound = -diff.offset
+        self.op = op
+        self.unit = diff.unit
+
+    def __repr__(self):
+        terms = " + ".join(f"{c}*{v.name}" for v, c in self.coeffs.items()) or "0"
+        return f"Constraint({terms} {self.op} {self.bound} [{self.unit}])"
+
+def Variable(name, lower=None, upper=None, integer=False):
+    """Erzeugt eine MILP-Entscheidungsvariable.
+
+    Beispiel:
+        x = Variable("x", lower=0[km], upper=1000[km])
+        y = Variable("trucks", lower=1, integer=true)
+        cost = 2.5[Ôé¼/km] * x + 1000[Ôé¼] * y
+        result = optimize_milp(cost, [x + 200[km]*y >= 500[km]])
+    """
+    return _MILPVariable(name=name, lower=lower, upper=upper, integer=integer)
+
+def optimize_milp(objective, constraints=None, sense="minimize"):
+    """Loest ein (gemischt-)ganzzahliges lineares Programm in deklarativer DSL.
+
+    objective:    _MILPExpression oder _MILPVariable.
+    constraints:  Liste von _MILPConstraint (per `>=`/`<=`), optional.
+    sense:        'minimize' (default) oder 'maximize'.
+
+    Rueckgabe: dict {<var_name>: optimaler_wert, ..., "objective": Z, "status": msg}.
+    """
+    try:
+        from scipy.optimize import milp as _milp, LinearConstraint, Bounds  # type: ignore[import-untyped]
+    except ImportError:
+        raise RuntimeError("optimize_milp benoetigt scipy>=1.9.")
+    import numpy as _np  # type: ignore[reportMissingImports]
+
+    if isinstance(objective, _MILPVariable):
+        obj_expr = objective._as_expr()
+    elif isinstance(objective, _MILPExpression):
+        obj_expr = objective
+    else:
+        raise TypeError(
+            f"optimize_milp: objective muss Variable oder MILP-Expression sein, "
+            f"bekam {type(objective).__name__}."
+        )
+
+    # constraints kann eine Python-Liste sein ODER ein leerer torch.Tensor
+    # (Dedekind transpiliert `[]` zu `torch.tensor([])`). Normalisieren:
+    if constraints is None:
+        cons_list = []
+    elif hasattr(constraints, "numel"):
+        cons_list = [] if constraints.numel() == 0 else list(constraints)
+    else:
+        cons_list = list(constraints)
+    for i, con in enumerate(cons_list):
+        if not isinstance(con, _MILPConstraint):
+            raise TypeError(
+                f"optimize_milp: constraints[{i}] ist {type(con).__name__}, "
+                f"erwartet Constraint (Variable >=/<= Wert)."
+            )
+
+    var_order = []
+    var_idx = {}
+    def _reg(v):
+        if v not in var_idx:
+            var_idx[v] = len(var_order)
+            var_order.append(v)
+    for v in obj_expr.coeffs:
+        _reg(v)
+    for con in cons_list:
+        for v in con.coeffs:
+            _reg(v)
+    N = len(var_order)
+    if N == 0:
+        raise ValueError("optimize_milp: keine Variablen in objective/constraints gefunden.")
+
+    c = _np.zeros(N, dtype=float)
+    for v, coef in obj_expr.coeffs.items():
+        c[var_idx[v]] = coef
+    if sense == "maximize":
+        c = -c
+    elif sense != "minimize":
+        raise ValueError(f"optimize_milp: sense muss 'minimize'/'maximize' sein, nicht {sense!r}.")
+
+    lb = _np.full(N, -_np.inf)
+    ub = _np.full(N, _np.inf)
+    integrality = _np.zeros(N, dtype=int)
+    for i, v in enumerate(var_order):
+        if v.lower is not None:
+            lb[i] = _milp_scalar(v.lower)
+        if v.upper is not None:
+            ub[i] = _milp_scalar(v.upper)
+        if v.integer:
+            integrality[i] = 1
+    bounds = Bounds(lb=lb, ub=ub)
+
+    ub_rows, ub_b = [], []
+    eq_rows, eq_b = [], []
+    for con in cons_list:
+        row = _np.zeros(N, dtype=float)
+        for v, coef in con.coeffs.items():
+            row[var_idx[v]] = coef
+        bnd = _milp_scalar(con.bound)
+        if con.op == "<=":
+            ub_rows.append(row); ub_b.append(bnd)
+        elif con.op == ">=":
+            ub_rows.append(-row); ub_b.append(-bnd)
+        elif con.op == "==":
+            eq_rows.append(row); eq_b.append(bnd)
+        else:
+            raise ValueError(f"optimize_milp: Operator {con.op!r} nicht unterstuetzt.")
+
+    sci_constraints = []
+    if ub_rows:
+        sci_constraints.append(LinearConstraint(_np.array(ub_rows), -_np.inf, _np.array(ub_b)))
+    if eq_rows:
+        sci_constraints.append(LinearConstraint(_np.array(eq_rows), _np.array(eq_b), _np.array(eq_b)))
+
+    res = _milp(c, constraints=sci_constraints if sci_constraints else None,
+                bounds=bounds, integrality=integrality)
+    if not res.success:
+        raise RuntimeError(f"optimize_milp: keine Loesung. {res.message}")
+
+    out = {v.name: float(res.x[i]) for i, v in enumerate(var_order)}
+    obj_val = float(res.fun)
+    if sense == "maximize":
+        obj_val = -obj_val
+    obj_val += obj_expr.offset
+    out["objective"] = obj_val
+    out["status"] = res.message
+    return out
+
+def _md_convert_to_unit(q, target_unit, dimension, arg_name):
+    """Validiert Quantity-Dimension und liefert numerischen Wert in target_unit."""
+    if not isinstance(q, Quantity):
+        raise TypeError(
+            f"md_simulate_lj: {arg_name} muss Quantity sein (z. B. 0.34[nm]), "
+            f"bekam {type(q).__name__}."
+        )
+    dim = _get_dimension(q.unit)
+    expected_dim = _get_dimension(target_unit)
+    if dim is None or dim != expected_dim:
+        raise ValueError(
+            f"md_simulate_lj: {arg_name}={q} hat falsche Dimension; "
+            f"erwartet kompatibel zu [{target_unit}] ({expected_dim})."
+        )
+    base = _convert_to_base(q.value, q.unit, dim)
+    return _convert_from_base(base, target_unit, dim)
+
+def md_simulate_lj(n_particles, sigma, epsilon, mass, temperature, dt, n_steps,
+                    box_size=None, friction=1.0, seed=None):
+    """Lennard-Jones Molekulardynamik-Simulation via OpenMM, mit Unit-Validierung.
+
+    Anders als ein direkter OpenMM-Aufruf prueft diese Funktion die Dimensionen
+    aller Eingabeparameter VOR dem C++-Kernel ÔÇö kein stilles Mischen von kcal/mol
+    mit eV oder ├à mit nm.
+
+    Parameter:
+      n_particles:  int, Anzahl Teilchen.
+      sigma:        Quantity in Laengeneinheit [nm, Angstrom, pm, m, ...].
+      epsilon:      Quantity in molarer Energie [kJ/mol, kcal/mol, ...].
+      mass:         Quantity in Masse [amu, g, kg, ...].
+      temperature:  Quantity in [K] ÔÇö Langevin-Bad.
+      dt:           Quantity in Zeit [fs, ps, ns, ...] ÔÇö Integrations-Zeitschritt.
+      n_steps:      int ÔÇö Anzahl Integrationsschritte.
+      box_size:     Optional Quantity in Laenge ÔÇö kubische periodische Box.
+      friction:     float in 1/ps ÔÇö Langevin-Reibung (Default 1.0).
+      seed:         Optional int ÔÇö RNG-Seed fuer reproduzierbare Trajektorien.
+
+    Rueckgabe: dict mit
+      positions:        torch.Tensor (n_particles, 3) ÔÇö Endpositionen in nm.
+      potential_energy: Quantity in [kJ/mol].
+      kinetic_energy:   Quantity in [kJ/mol].
+      temperature:      Quantity in [K] ÔÇö gemessene End-Temperatur.
+      n_steps:          ausgefuehrte Schritte.
+    """
+    try:
+        import openmm as _mm  # type: ignore[import-untyped]
+        import openmm.unit as _ommu  # type: ignore[import-untyped]
+    except ImportError:
+        raise RuntimeError(
+            "md_simulate_lj benoetigt openmm. Installation: pip install openmm"
+        )
+    import numpy as _np  # type: ignore[reportMissingImports]
+
+    # Unit-Validierung + Konvertierung in OpenMM-Standards (nm, kJ/mol, amu, ps, K)
+    sigma_nm = _md_convert_to_unit(sigma, "nm", "length", "sigma")
+    eps_kjm = _md_convert_to_unit(epsilon, "kJ/mol", "molar_energy", "epsilon")
+    mass_g_per_mol = _md_convert_to_unit(mass, "g", "mass", "mass")
+    # OpenMM: amu numerisch gleich g/mol fuer Avogadro-Skalierung
+    mass_amu = mass_g_per_mol / 1.66053906660e-24
+    if not isinstance(temperature, Quantity) or temperature.unit != "K":
+        raise ValueError(f"md_simulate_lj: temperature muss in [K] sein, bekam {temperature}.")
+    temp_K = float(temperature.value)
+    dt_ps = _md_convert_to_unit(dt, "ps", "time", "dt")
+    box_nm = _md_convert_to_unit(box_size, "nm", "length", "box_size") if box_size is not None else None
+
+    # System aufbauen
+    system = _mm.System()
+    for _ in range(int(n_particles)):
+        system.addParticle(mass_amu * _ommu.amu)
+
+    nb = _mm.NonbondedForce()
+    cutoff = 2.5 * sigma_nm
+    for _ in range(int(n_particles)):
+        nb.addParticle(0.0, sigma_nm * _ommu.nanometer, eps_kjm * _ommu.kilojoule_per_mole)
+    if box_nm is not None:
+        box_vec = box_nm * _np.eye(3)
+        system.setDefaultPeriodicBoxVectors(*(v * _ommu.nanometer for v in box_vec))
+        nb.setNonbondedMethod(_mm.NonbondedForce.CutoffPeriodic)
+        nb.setCutoffDistance(_builtin_min(cutoff, 0.49 * box_nm) * _ommu.nanometer)
+    else:
+        nb.setNonbondedMethod(_mm.NonbondedForce.CutoffNonPeriodic)
+        nb.setCutoffDistance(cutoff * _ommu.nanometer)
+    system.addForce(nb)
+
+    # Anfangspositionen: regelmaessiges Gitter ÔÇö vermeidet Ueberlappungen
+    # und resultierende NaN-Energien (LJ-r^-12 explodiert bei r -> 0).
+    if seed is not None:
+        _np.random.seed(int(seed))
+    extent = box_nm if box_nm is not None else _builtin_max(5.0 * sigma_nm, 1.0)
+    # Gitter-Abstand >= 1.05 * sigma (LJ-Gleichgewicht ~ 2^(1/6)*sigma Ôëê 1.122*sigma)
+    side = int(_np.ceil(int(n_particles) ** (1.0 / 3.0)))
+    spacing = extent / _builtin_max(side, 1)
+    grid_min = 1.05 * sigma_nm
+    if spacing < grid_min:
+        spacing = grid_min
+        extent = spacing * side  # Box ggf. vergroessern
+    positions = _np.zeros((int(n_particles), 3), dtype=float)
+    k = 0
+    for i in range(side):
+        for j in range(side):
+            for kk in range(side):
+                if k >= int(n_particles):
+                    break
+                positions[k] = [(i + 0.5) * spacing, (j + 0.5) * spacing, (kk + 0.5) * spacing]
+                k += 1
+            if k >= int(n_particles):
+                break
+        if k >= int(n_particles):
+            break
+    # Leichte Stoerung gegen perfekte Gitter-Symmetrie
+    positions += 0.02 * spacing * (_np.random.rand(int(n_particles), 3) - 0.5)
+
+    integrator = _mm.LangevinIntegrator(
+        temp_K * _ommu.kelvin,
+        float(friction) / _ommu.picosecond,
+        dt_ps * _ommu.picosecond,
+    )
+    if seed is not None:
+        integrator.setRandomNumberSeed(int(seed))
+
+    ctx = _mm.Context(system, integrator)
+    ctx.setPositions(positions * _ommu.nanometer)
+    ctx.setVelocitiesToTemperature(temp_K * _ommu.kelvin)
+
+    integrator.step(int(n_steps))
+
+    state = ctx.getState(getPositions=True, getEnergy=True, getVelocities=True)
+    pos_nm = _np.asarray(state.getPositions(asNumpy=True).value_in_unit(_ommu.nanometer))
+    pe = float(state.getPotentialEnergy().value_in_unit(_ommu.kilojoule_per_mole))
+    ke = float(state.getKineticEnergy().value_in_unit(_ommu.kilojoule_per_mole))
+    # Kinetic Energy -> Temperatur: KE = (3/2)*N*k_B*T => T = 2*KE / (3*N*k_B)
+    # k_B = 8.314e-3 kJ/(mol*K) in molaren Einheiten
+    k_B_mol = 0.008314462618
+    T_measured = 2.0 * ke / (3.0 * n_particles * k_B_mol)
+
+    return {
+        "positions": torch.as_tensor(pos_nm, dtype=torch.float32),
+        "potential_energy": Quantity(pe, "kJ/mol"),
+        "kinetic_energy": Quantity(ke, "kJ/mol"),
+        "temperature": Quantity(T_measured, "K"),
+        "n_steps": int(n_steps),
+    }
+
+def _unwrap_q(x):
+    """Unwraps Quantity to float (dimensionslos oder rad)."""
+    if isinstance(x, Quantity):
+        if x.unit not in ("", "rad", None):
+            raise ValueError(
+                f"Rotationswinkel muss dimensionslos oder [rad] sein, bekam [{x.unit}]."
+            )
+        return float(x.value) if hasattr(x.value, 'item') else float(x.value)
+    if hasattr(x, 'item'):
+        return float(x.item())
+    return float(x)
+
+def _kron2(a, b):
+    """Kronecker-Produkt zweier komplexer 2D-Listen."""
+    ra, ca = len(a), len(a[0])
+    rb, cb = len(b), len(b[0])
+    result = [[0+0j] * (ca * cb) for _ in range(ra * rb)]
+    for i in range(ra):
+        for j in range(ca):
+            for k in range(rb):
+                for l in range(cb):
+                    result[i * rb + k][j * cb + l] = a[i][j] * b[k][l]
+    return result
+
+def _mat_vec(mat, vec):
+    """Matrix-Vektor-Multiplikation (komplexe Listen)."""
+    n = len(mat)
+    return [sum(mat[i][j] * vec[j] for j in range(n)) for i in range(n)]
+
+def _single_qubit_gate_unitary(gate_mat, qubit, n):
+    """Erstellt 2^n x 2^n Unitary fuer ein 1-Qubit-Gatter auf qubit `qubit`.
+
+    Konvention: qubit 0 = LSB (rightmost in kron product).
+    kron wird von MSB nach LSB aufgebaut (von links nach rechts).
+    Qubit q befindet sich an Kron-Position n-1-q von links.
+    """
+    result = [[1+0j]]
+    for q in range(n - 1, -1, -1):  # n-1 (MSB) down to 0 (LSB)
+        if q == qubit:
+            m = gate_mat
+        else:
+            m = PAULI_I
+        result = _kron2(result, m)
+    return result
+
+def _cx_unitary(control, target, n):
+    """CNOT-Unitary fuer gegebene Qubit-Indizes."""
+    dim = 1 << n
+    U = [[0+0j] * dim for _ in range(dim)]
+    for state in range(dim):
+        ctrl_bit = (state >> control) & 1
+        if ctrl_bit == 1:
+            new_state = state ^ (1 << target)
+        else:
+            new_state = state
+        U[new_state][state] = 1+0j
+    return U
+
+def _cz_unitary(control, target, n):
+    """CZ-Unitary."""
+    dim = 1 << n
+    U = [[complex(i == j) for j in range(dim)] for i in range(dim)]
+    for state in range(dim):
+        c_bit = (state >> control) & 1
+        t_bit = (state >> target) & 1
+        if c_bit == 1 and t_bit == 1:
+            U[state][state] = -1+0j
+    return U
+
+def _swap_unitary(q0, q1, n):
+    """SWAP-Unitary."""
+    dim = 1 << n
+    U = [[0+0j] * dim for _ in range(dim)]
+    for state in range(dim):
+        b0 = (state >> q0) & 1
+        b1 = (state >> q1) & 1
+        if b0 != b1:
+            new_state = state ^ (1 << q0) ^ (1 << q1)
+        else:
+            new_state = state
+        U[new_state][state] = 1+0j
+    return U
+
+def _rx_mat(theta):
+    c = _cmath.cos(theta / 2)
+    s = _cmath.sin(theta / 2)
+    return [[c, -1j * s], [-1j * s, c]]
+
+def _ry_mat(theta):
+    c = _cmath.cos(theta / 2)
+    s = _cmath.sin(theta / 2)
+    return [[c, -s], [s, c]]
+
+def _rz_mat(theta):
+    return [[_cmath.exp(-1j * theta / 2), 0], [0, _cmath.exp(1j * theta / 2)]]
+
+def statevec_sim(circuit, shots: int = 0):
+    """Reiner Statevector-Simulator fuer QuantumCircuit.
+
+    Args:
+        circuit: QuantumCircuit-Objekt
+        shots: 0 = gibt Statevector (Liste komplexer Amplituden) zurueck.
+               > 0 = gibt Mess-Ergebnis-Dict mit Bitstringen und Haeufigkeiten zurueck.
+
+    Returns:
+        Statevector (list[complex]) oder dict[str, int] (bei shots > 0).
+    """
+    shots = int(shots.item() if hasattr(shots, 'item') else shots)
+    if not isinstance(circuit, QuantumCircuit):
+        raise TypeError(f"statevec_sim: Erwartet QuantumCircuit, bekam {type(circuit).__name__}.")
+    n = circuit.n_qubits
+    dim = 1 << n
+    # Startzustand |0...0>
+    sv = [0+0j] * dim
+    sv[0] = 1+0j
+
+    for name, qubits, params in circuit._gates:
+        if name == "H":
+            U = _single_qubit_gate_unitary(PAULI_H, qubits[0], n)
+        elif name == "X":
+            U = _single_qubit_gate_unitary(PAULI_X, qubits[0], n)
+        elif name == "Y":
+            U = _single_qubit_gate_unitary(PAULI_Y, qubits[0], n)
+        elif name == "Z":
+            U = _single_qubit_gate_unitary(PAULI_Z, qubits[0], n)
+        elif name == "T":
+            U = _single_qubit_gate_unitary(_T_MAT, qubits[0], n)
+        elif name == "S":
+            U = _single_qubit_gate_unitary(_S_MAT, qubits[0], n)
+        elif name == "RX":
+            U = _single_qubit_gate_unitary(_rx_mat(params[0]), qubits[0], n)
+        elif name == "RY":
+            U = _single_qubit_gate_unitary(_ry_mat(params[0]), qubits[0], n)
+        elif name == "RZ":
+            U = _single_qubit_gate_unitary(_rz_mat(params[0]), qubits[0], n)
+        elif name == "CX":
+            U = _cx_unitary(qubits[0], qubits[1], n)
+        elif name == "CZ":
+            U = _cz_unitary(qubits[0], qubits[1], n)
+        elif name == "SWAP":
+            U = _swap_unitary(qubits[0], qubits[1], n)
+        else:
+            raise ValueError(f"Unbekanntes Gatter '{name}' im Simulator.")
+        sv = _mat_vec(U, sv)
+
+    if shots <= 0:
+        return sv
+
+    # Messe alle Qubits (oder nur die gemessenen)
+    probs = [abs(a) ** 2 for a in sv]
+    import random
+    counts = {}
+    measure_qubits = [q for q, _ in circuit._measurements] if circuit._measurements else list(range(n))
+    for _ in range(shots):
+        r = random.random()
+        cumsum = 0.0
+        idx = dim - 1
+        for i, p in enumerate(probs):
+            cumsum += p
+            if r <= cumsum:
+                idx = i
+                break
+        # Extrahiere gemessene Bits (MSB = Qubit 0)
+        bits = format(idx, f'0{n}b')
+        key = ''.join(bits[q] for q in sorted(measure_qubits))
+        counts[key] = counts.get(key, 0) + 1
+    return counts
+
+def statevec_probs(circuit):
+    """Gibt Wahrscheinlichkeiten |¤ê_i|┬▓ als Liste zurueck."""
+    sv = statevec_sim(circuit)
+    return [abs(a) ** 2 for a in sv]
+
+def statevec_expectation(circuit, observable):
+    """Berechnet Ôƒ¿¤ê|O|¤êÔƒ® fuer einen Pauli-String-Observable.
+
+    Args:
+        circuit: QuantumCircuit
+        observable: String wie "ZI", "XX", "ZZ" (Pauli-Produkt)
+
+    Returns:
+        Erwartungswert (float)
+    """
+    if not isinstance(circuit, QuantumCircuit):
+        raise TypeError("statevec_expectation: Erwartet QuantumCircuit.")
+    n = circuit.n_qubits
+    if not isinstance(observable, str) or len(observable) != n:
+        raise ValueError(
+            f"Observable muss ein {n}-Zeichen-Pauli-String sein (z.B. 'ZI'), bekam {observable!r}."
+        )
+    sv = statevec_sim(circuit)
+    # Baue Observ.-Matrix als Tensor-Produkt
+    obs_mat = [[1+0j]]
+    for ch in observable:
+        obs_mat = _kron2(obs_mat, _pauli(ch))
+    obs_sv = _mat_vec(obs_mat, sv)
+    return sum((a.conjugate() * b).real for a, b in zip(sv, obs_sv))
+
+def vqe_circuit(n_qubits, n_layers, params):
+    """Erstellt einen parametrisierten Ansatz-Schaltkreis fuer VQE.
+
+    Hardware-efficient Ansatz: abwechselnd Ry-Schicht und CNOT-Kette.
+    params: Liste/Tensor der Laenge n_qubits * n_layers (Ry-Winkel).
+
+    Returns:
+        QuantumCircuit (kann mit statevec_expectation ausgewertet werden)
+    """
+    if isinstance(n_qubits, Quantity):
+        n_qubits = int(float(n_qubits.value))
+    if isinstance(n_layers, Quantity):
+        n_layers = int(float(n_layers.value))
+    n_qubits = int(n_qubits)
+    n_layers = int(n_layers)
+
+    # Flatten params
+    if hasattr(params, 'tolist'):
+        flat = params.reshape(-1).tolist()
+    elif isinstance(params, list):
+        flat = params
+    else:
+        flat = list(params)
+
+    expected = n_qubits * n_layers
+    if len(flat) != expected:
+        raise ValueError(
+            f"vqe_circuit: Erwartet {expected} Parameter (n_qubits={n_qubits} * n_layers={n_layers}), "
+            f"bekam {len(flat)}."
+        )
+
+    qc = QuantumCircuit(n_qubits)
+    idx = 0
+    for layer in range(n_layers):
+        for q in range(n_qubits):
+            theta = flat[idx] if not hasattr(flat[idx], 'item') else flat[idx].item()
+            qc.ry(float(theta), q)
+            idx += 1
+        # Entangle: lineare Kette
+        for q in range(n_qubits - 1):
+            qc.cx(q, q + 1)
+    return qc
+
+def vqe_energy(params, n_qubits, n_layers, hamiltonian_terms):
+    """Berechnet Energie Ôƒ¿¤ê(╬©)|H|¤ê(╬©)Ôƒ® fuer VQE-Schleife.
+
+    Args:
+        params: Tensor der Winkel (grad() faehig via torch)
+        n_qubits: Anzahl Qubits
+        n_layers: Anzahl VQE-Schichten
+        hamiltonian_terms: Liste von (koeffizient, pauli_string) ÔÇö z.B. [(0.5, "ZI"), (-0.5, "IZ")]
+
+    Returns:
+        Energie als float
+    """
+    import torch as _torch
+    # params als Python-Liste (detachieren falls Tensor)
+    if hasattr(params, 'detach'):
+        flat = params.detach().tolist()
+        if isinstance(flat, float):
+            flat = [flat]
+    else:
+        flat = list(params) if hasattr(params, '__iter__') else [float(params)]
+
+    qc = vqe_circuit(n_qubits, n_layers, flat)
+    energy = 0.0
+    for coeff, pauli_str in hamiltonian_terms:
+        c = float(coeff.value if isinstance(coeff, Quantity) else coeff)
+        energy += c * statevec_expectation(qc, pauli_str)
+    return energy
 def min(x, dim=None):
     """
     Minimum der Elemente. x: Tensor oder Skalar.
@@ -3573,6 +5038,300 @@ def pappus_volume_horizontal(f, a, b, y0, n=100):
 # --- Standard Library: Uncertainty Propagation (Gaussian) ---
 # Fehlerfortpflanzung für Wissenschaftler: value ± std; Gauß'sche Näherung für +, -, *, /, ^.
 
+
+
+def partial(u, x, order=1):
+    """Berechnet partielle Ableitung(en) von `u` nach `x` via Autograd.
+
+    Anders als `grad(fn, x)` (das eine Funktion an einer Stelle differenziert)
+    arbeitet `partial` mit BEREITS BERECHNETEN Tensoren: `u = net(x)` wurde
+    ausgewertet, `x` traegt `requires_grad=True`. Liefert Ôêéu/Ôêéx.
+
+    - `u`: torch.Tensor (Skalar oder beliebige Form); wird ggf. summiert fuer
+       skalare Backward-Aggregation, sodass der Gradient elementweise Ôêéu_i/Ôêéx bleibt.
+    - `x`: Leaf-Tensor mit requires_grad=True (typisch via `.with_grad()`).
+    - `order`: Ableitungsordnung (1, 2, ...). Rekursive Anwendung.
+
+    Beispiel ÔÇö Heat-Equation Residuum:
+        x = linspace(0, 1, 100).reshape(-1, 1).with_grad()
+        u = net(x)
+        u_x  = partial(u, x)
+        u_xx = partial(u, x, order=2)
+        residual = u_t - alpha * u_xx
+    """
+    if not isinstance(u, torch.Tensor):
+        raise TypeError(f"partial: u muss torch.Tensor sein, bekam {type(u).__name__}.")
+    if not isinstance(x, torch.Tensor):
+        raise TypeError(f"partial: x muss torch.Tensor sein, bekam {type(x).__name__}.")
+    if not x.requires_grad:
+        raise ValueError(
+            "partial: x.requires_grad ist False. Markiere den Eingabe-Tensor mit "
+            "`.with_grad()` (z. B. `x = linspace(0,1,N).reshape(-1,1).with_grad()`)."
+        )
+    cur = u
+    for _ in range(int(order)):
+        target = cur if cur.dim() == 0 else cur.sum()
+        grads = torch.autograd.grad(
+            target, x, create_graph=True, retain_graph=True, allow_unused=False
+        )[0]
+        if grads is None:
+            raise ValueError(
+                "partial: Ableitung ist None. `u` haengt vermutlich nicht von `x` ab "
+                "(z. B. Konstante uebergeben, oder Vorwaerts-Pass hat den Graph verloren)."
+            )
+        cur = grads
+    return cur
+
+class MultiVector:
+    """3D Geometric Algebra G(3,0) Multivector mit 8 reellen Komponenten.
+
+    Komponenten-Indizes (Bit-Pattern, kanonisch):
+        0 = Skalar (1)
+        1 = e1     2 = e2     4 = e3        (Vektoren)
+        3 = e12    5 = e13    6 = e23       (Bivektoren ÔÇö orientierte Flaechen)
+        7 = e123                              (Pseudoskalar ÔÇö orientiertes Volumen)
+
+    Operationen:
+        a + b, a - b, -a                  : komponentenweise
+        a * b                              : geometrisches Produkt (zentrale GA-Operation)
+        scalar * a, a * scalar             : Skalar-Multiplikation
+        a.wedge(b)                         : outer/wedge product (Grad-Erhoehung)
+        a.dot(b)                           : inner/dot product (Grad-Reduktion)
+        a.reverse()                        : Reverse ÔÇö Sign pro Grad k: (-1)^(k(k-1)/2)
+        a.grade(n)                         : Extrahiert nur Grad-n-Teil
+        a.norm()                           : sqrt(<a * ~a>_0)
+    """
+    BASIS_NAMES = ["", "e1", "e2", "e12", "e3", "e13", "e23", "e123"]
+    GRADES = [0, 1, 1, 2, 1, 2, 2, 3]  # Anzahl Bits pro Index = Grad
+
+    __slots__ = ("c",)
+
+    def __init__(self, components=None):
+        if components is None:
+            self.c = [0.0] * 8
+        elif isinstance(components, MultiVector):
+            self.c = list(components.c)
+        else:
+            comps = list(components)
+            if len(comps) != 8:
+                raise ValueError(
+                    f"MultiVector erwartet 8 Komponenten, bekam {len(comps)}."
+                )
+            self.c = [float(x) for x in comps]
+
+    @staticmethod
+    def _gp_basis(a_bits, b_bits):
+        """Geometrisches Produkt zweier Basis-Blades in G(3,0):
+        Liefert (sign, result_bits). In G(3,0) annihilieren sich identische
+        Faktoren (e_i * e_i = +1), daher result = a XOR b. Vorzeichen aus
+        der Anzahl noetiger Swaps."""
+        sign = 1
+        for i in range(2, -1, -1):
+            if a_bits & (1 << i):
+                for j in range(i):
+                    if b_bits & (1 << j):
+                        sign = -sign
+        return sign, a_bits ^ b_bits
+
+    def __add__(self, other):
+        if isinstance(other, (int, float)):
+            r = MultiVector(self.c)
+            r.c[0] += float(other)
+            return r
+        if isinstance(other, MultiVector):
+            return MultiVector([a + b for a, b in zip(self.c, other.c)])
+        return NotImplemented
+    def __radd__(self, other): return self.__add__(other)
+
+    def __sub__(self, other):
+        if isinstance(other, (int, float)):
+            r = MultiVector(self.c)
+            r.c[0] -= float(other)
+            return r
+        if isinstance(other, MultiVector):
+            return MultiVector([a - b for a, b in zip(self.c, other.c)])
+        return NotImplemented
+    def __rsub__(self, other):
+        if isinstance(other, (int, float)):
+            r = MultiVector()
+            r.c[0] = float(other)
+            return r - self
+        return NotImplemented
+
+    def __neg__(self):
+        return MultiVector([-x for x in self.c])
+
+    def __mul__(self, other):
+        if isinstance(other, (int, float)):
+            return MultiVector([x * float(other) for x in self.c])
+        if isinstance(other, MultiVector):
+            r = [0.0] * 8
+            for i in range(8):
+                ai = self.c[i]
+                if ai == 0.0:
+                    continue
+                for j in range(8):
+                    bj = other.c[j]
+                    if bj == 0.0:
+                        continue
+                    sign, k = MultiVector._gp_basis(i, j)
+                    r[k] += sign * ai * bj
+            return MultiVector(r)
+        return NotImplemented
+    def __rmul__(self, other):
+        if isinstance(other, (int, float)):
+            return self.__mul__(other)
+        return NotImplemented
+
+    def grade(self, n):
+        """Extrahiert den Grad-n-Teil (0..3)."""
+        n = int(n)
+        return MultiVector([c if g == n else 0.0
+                            for c, g in zip(self.c, MultiVector.GRADES)])
+
+    def reverse(self):
+        """Reverse: kehrt die Reihenfolge aller Basisvektoren um.
+        Sign pro Grad k: (-1)^(k(k-1)/2). Fuer 3D: Grad 0,1: +, Grad 2,3: -."""
+        signs = [(-1) ** (g * (g - 1) // 2) for g in MultiVector.GRADES]
+        return MultiVector([s * c for s, c in zip(signs, self.c)])
+
+    def wedge(self, other):
+        """Outer (wedge) product: nur Grad-erhoehende Anteile des geom. Produkts.
+        a ^ b hat Grad |grade(a) + grade(b)| (sofern nicht reduzierend)."""
+        if isinstance(other, (int, float)):
+            return MultiVector([c * float(other) for c in self.c])
+        if not isinstance(other, MultiVector):
+            return NotImplemented
+        r = [0.0] * 8
+        for i in range(8):
+            ai = self.c[i]
+            if ai == 0.0:
+                continue
+            for j in range(8):
+                bj = other.c[j]
+                if bj == 0.0:
+                    continue
+                sign, k = MultiVector._gp_basis(i, j)
+                if MultiVector.GRADES[k] == MultiVector.GRADES[i] + MultiVector.GRADES[j]:
+                    r[k] += sign * ai * bj
+        return MultiVector(r)
+
+    def dot(self, other):
+        """Inner (dot) product: Grad-reduzierende Anteile des geom. Produkts.
+        a . b hat Grad ||grade(a) - grade(b)||."""
+        if isinstance(other, (int, float)):
+            r = MultiVector(self.c)
+            return r * float(other) if False else MultiVector([float(other) * self.c[0] if i == 0 else 0.0 for i in range(8)])
+        if not isinstance(other, MultiVector):
+            return NotImplemented
+        r = [0.0] * 8
+        for i in range(8):
+            ai = self.c[i]
+            if ai == 0.0:
+                continue
+            for j in range(8):
+                bj = other.c[j]
+                if bj == 0.0:
+                    continue
+                gi, gj = MultiVector.GRADES[i], MultiVector.GRADES[j]
+                if gi == 0 or gj == 0:
+                    continue  # Skalar . X ist nur Multiplikation, nicht inner
+                sign, k = MultiVector._gp_basis(i, j)
+                if MultiVector.GRADES[k] == abs(gi - gj):
+                    r[k] += sign * ai * bj
+        return MultiVector(r)
+
+    def norm(self):
+        """Magnitude = sqrt(<a * ~a>_0)."""
+        s = (self * self.reverse()).c[0]
+        if s < 0:
+            return 0.0
+        return s ** 0.5
+
+    def scalar_part(self):
+        """Reine Skalar-Komponente als float."""
+        return float(self.c[0])
+
+    def __repr__(self):
+        parts = []
+        for i, c in enumerate(self.c):
+            if abs(c) < 1e-12:
+                continue
+            name = MultiVector.BASIS_NAMES[i]
+            if not name:
+                parts.append(f"{c:g}")
+            elif abs(c - 1.0) < 1e-12:
+                parts.append(name)
+            elif abs(c + 1.0) < 1e-12:
+                parts.append(f"-{name}")
+            else:
+                parts.append(f"{c:g}*{name}")
+        if not parts:
+            return "MultiVector(0)"
+        return " + ".join(parts).replace("+ -", "- ")
+
+def scalar(s):
+    """Konstruktor: skalarer Multivector."""
+    mv = MultiVector()
+    mv.c[0] = float(s)
+    return mv
+
+def vector(x, y, z):
+    """Konstruktor: 3D-Vektor als Multivector (x*e1 + y*e2 + z*e3)."""
+    mv = MultiVector()
+    mv.c[1] = float(x)  # e1
+    mv.c[2] = float(y)  # e2
+    mv.c[4] = float(z)  # e3
+    return mv
+
+def bivector(b12, b13, b23):
+    """Konstruktor: Bivektor (orientierte Flaeche) b12*e12 + b13*e13 + b23*e23."""
+    mv = MultiVector()
+    mv.c[3] = float(b12)
+    mv.c[5] = float(b13)
+    mv.c[6] = float(b23)
+    return mv
+
+def pseudoscalar(s):
+    """Konstruktor: Pseudoskalar (orientiertes Volumen) s*e123."""
+    mv = MultiVector()
+    mv.c[7] = float(s)
+    return mv
+
+def multivector(s, e1, e2, e3, e12, e13, e23, e123):
+    """Konstruktor: vollstaendiger Multivector mit allen 8 Komponenten."""
+    return MultiVector([s, e1, e2, e12, e3, e13, e23, e123])
+
+def rotor(angle, b12, b13, b23):
+    """Konstruiert einen Rotor R = exp(-angle/2 * B) fuer Rotation in der durch
+    B = b12*e12 + b13*e13 + b23*e23 gegebenen Ebene.
+
+    Der Bivektor sollte normalisiert sein (||B|| = 1) ÔÇö typisch:
+      e12-Ebene (xy):  rotor(angle, 1, 0, 0)
+      e13-Ebene (xz):  rotor(angle, 0, 1, 0)
+      e23-Ebene (yz):  rotor(angle, 0, 0, 1)
+
+    Anwendung via `rotate(v, R)`: v' = R v ~R.
+    """
+    import math as _math
+    half = float(angle) / 2.0
+    cos_h = _math.cos(half)
+    sin_h = _math.sin(half)
+    r = MultiVector()
+    r.c[0] = cos_h
+    r.c[3] = -sin_h * float(b12)
+    r.c[5] = -sin_h * float(b13)
+    r.c[6] = -sin_h * float(b23)
+    return r
+
+def rotate(v, R):
+    """Rotation eines Multivectors via Sandwich-Produkt: v' = R v ~R.
+    Fuer einen Unit-Rotor (||R|| = 1) ist ~R = R^{-1}."""
+    if not isinstance(v, MultiVector):
+        raise TypeError(f"rotate: v muss MultiVector sein, bekam {type(v).__name__}.")
+    if not isinstance(R, MultiVector):
+        raise TypeError(f"rotate: R muss MultiVector sein, bekam {type(R).__name__}.")
+    return R * v * R.reverse()
 class UncertainQuantity:
     """Größe mit Unsicherheit: value ± std. Gauß'sche Fehlerfortpflanzung für +, -, *, /, ^. Längen (m, cm, km, mm, dm) werden automatisch umgerechnet."""
     def __init__(self, value, std=0.0, unit=""):
@@ -5109,6 +6868,126 @@ def seismic_wave_velocities(K, G, rho):
 
 
 
+
+
+def fidelity(sv1, sv2):
+    """Fidelitaet |Ôƒ¿¤ê1|¤ê2Ôƒ®|┬▓ zwischen zwei Statevektoren."""
+    if len(sv1) != len(sv2):
+        raise ValueError(f"fidelity: Vektoren muessen gleiche Laenge haben, bekam {len(sv1)} und {len(sv2)}.")
+    inner = sum(a.conjugate() * b for a, b in zip(sv1, sv2))
+    return abs(inner) ** 2
+
+def entropy_von_neumann(probs):
+    """Von-Neumann-Entropie S = -╬ú p_i log2(p_i) (aus Wahrscheinlichkeiten)."""
+    if hasattr(probs, 'tolist'):
+        probs = probs.tolist()
+    s = 0.0
+    for p in probs:
+        p = abs(float(p))
+        if p > 1e-15:
+            s -= p * _math.log2(p)
+    return s
+
+def schmidt_rank(sv, n_a):
+    """Schmidt-Rang des Statevektors fuer bipartite Zerlegung A|B.
+
+    Args:
+        sv: Statevector (Liste komplexer Zahlen, Laenge 2^n)
+        n_a: Anzahl Qubits in Teilsystem A
+
+    Returns:
+        Schmidt-Rang (int)
+    """
+    import math
+    n = int(math.log2(len(sv)))
+    n_b = n - n_a
+    dim_a = 1 << n_a
+    dim_b = 1 << n_b
+    # Reshape als Matrix dim_a x dim_b
+    mat = [[0+0j] * dim_b for _ in range(dim_a)]
+    for idx, amp in enumerate(sv):
+        i = idx >> n_b
+        j = idx & (dim_b - 1)
+        mat[i][j] = amp
+    # SVD via Python (kein scipy/numpy noetig fuer kleine Systeme)
+    try:
+        import torch as _t
+        T = _t.tensor([[mat[i][j] for j in range(dim_b)] for i in range(dim_a)],
+                      dtype=_t.complex64)
+        sv_vals = _t.linalg.svdvals(T)
+        return int((sv_vals > 1e-8).sum().item())
+    except Exception:
+        # Fallback: Rang der Matrix via Gauss
+        return _matrix_rank_approx(mat, dim_a, dim_b)
+
+def _matrix_rank_approx(mat, rows, cols, tol=1e-8):
+    """Naiver Gauss-Rank (fuer kleine Matrizen wenn torch fehlt)."""
+    m = [row[:] for row in mat]
+    rank = 0
+    for col in range(cols):
+        pivot = None
+        for row in range(rank, rows):
+            if abs(m[row][col]) > tol:
+                pivot = row
+                break
+        if pivot is None:
+            continue
+        m[rank], m[pivot] = m[pivot], m[rank]
+        for row in range(rows):
+            if row != rank and abs(m[row][col]) > tol:
+                factor = m[row][col] / m[rank][col]
+                m[row] = [m[row][j] - factor * m[rank][j] for j in range(cols)]
+        rank += 1
+    return rank
+
+def qubit_frequency_check(freq):
+    """Prueft, dass freq eine Frequenz-Einheit ([GHz], [MHz], [THz]) hat.
+
+    Gibt den Wert in GHz zurueck.
+    """
+    if not isinstance(freq, Quantity):
+        raise TypeError(
+            f"qubit_frequency_check: Erwartet Quantity mit Frequenz-Einheit ([GHz]), "
+            f"bekam {type(freq).__name__}."
+        )
+    freq_units = {"Hz", "kHz", "MHz", "GHz", "THz"}
+    if freq.unit not in freq_units:
+        raise TypeError(
+            f"qubit_frequency_check: Einheit [{freq.unit}] ist keine Frequenzeinheit. "
+            f"Erlaubt: {freq_units}."
+        )
+    # Konvertiere zu GHz
+    dim_info = DIMENSION_TO_BASE["frequency"]
+    base_val = float(freq.value) * dim_info[1].get(freq.unit, 1.0)  # -> Hz
+    return Quantity(base_val / 1e9, "GHz")
+
+def coherence_time_check(t):
+    """Prueft Kohaerenzzeit (muss [us], [ns], [ms] oder [s] sein)."""
+    if not isinstance(t, Quantity):
+        raise TypeError(
+            f"coherence_time_check: Erwartet Quantity mit Zeit-Einheit ([us]), "
+            f"bekam {type(t).__name__}."
+        )
+    time_units = {"s", "ms", "us", "ns", "ps", "fs"}
+    if t.unit not in time_units:
+        raise TypeError(
+            f"coherence_time_check: Einheit [{t.unit}] ist keine Zeiteinheit."
+        )
+    return t
+
+def energy_gap_check(E):
+    """Prueft Energieluecke (muss [eV], [meV], [J] sein)."""
+    if not isinstance(E, Quantity):
+        raise TypeError(
+            f"energy_gap_check: Erwartet Quantity mit Energie-Einheit ([eV]), "
+            f"bekam {type(E).__name__}."
+        )
+    energy_units = {"J", "kJ", "MJ", "eV", "meV", "MeV"}
+    if E.unit not in energy_units:
+        raise TypeError(
+            f"energy_gap_check: Einheit [{E.unit}] ist keine Energieeinheit."
+        )
+    return E
 def read_file(path):
     """
     Liest eine Datei als Text (UTF-8).
@@ -5196,8 +7075,9 @@ def _dedekind_assert(condition, message=None):
     assert(condition) oder assert(condition, "Fehlermeldung").
     """
     val = condition
-    if hasattr(val, "item"):
-        val = val.item() if val.numel() == 1 else bool(val.all().item())
+    if hasattr(val, "item") and (hasattr(val, "numel") or hasattr(val, "size")):
+        size = val.numel() if hasattr(val, "numel") else val.size
+        val = val.item() if size == 1 else bool(val.all().item())
     elif hasattr(val, "__len__") and len(val) == 1:
         val = val[0]
     if not bool(val):
@@ -6329,6 +8209,16 @@ _DERIVED_UNIT_TO_BASE = {
     "lx":   {"cd": 1, "m": -2},
     "kat":  {"mol": 1, "s": -1},
     "U":    {"mol": 1, "s": -1},
+    "Angstrom": {"m": 1},
+    "fm":   {"m": 1},
+    "ps":   {"s": 1},
+    "fs":   {"s": 1},
+    "THz":  {"s": -1},
+    "kJ/mol": {"kg": 1, "m": 2, "s": -2, "mol": -1},
+    "kcal/mol": {"kg": 1, "m": 2, "s": -2, "mol": -1},
+    "J/mol": {"kg": 1, "m": 2, "s": -2, "mol": -1},
+    "eV/atom": {"kg": 1, "m": 2, "s": -2, "mol": -1},
+    "Hartree/mol": {"kg": 1, "m": 2, "s": -2, "mol": -1},
 }
 
 
@@ -7200,6 +9090,263 @@ def ilu_preconditioner(A, drop_tol=1e-4, fill_factor=10):
 # Reproducible-Notebook-Export: .ddk -> standalone HTML/Markdown
 # ============================================================================
 
+
+
+
+# Bioinformatics constants added during master-quantum merge
+_SEQ_ALPHABETS = {'DNA': set('ACGTN'), 'RNA': set('ACGUN'), 'PROTEIN': set('ACDEFGHIKLMNPQRSTVWYBZX*')}
+_PROTEIN_CODON_TABLE = {'UUU': 'F', 'UUC': 'F', 'UUA': 'L', 'UUG': 'L', 'CUU': 'L', 'CUC': 'L', 'CUA': 'L', 'CUG': 'L', 'AUU': 'I', 'AUC': 'I', 'AUA': 'I', 'AUG': 'M', 'GUU': 'V', 'GUC': 'V', 'GUA': 'V', 'GUG': 'V', 'UCU': 'S', 'UCC': 'S', 'UCA': 'S', 'UCG': 'S', 'CCU': 'P', 'CCC': 'P', 'CCA': 'P', 'CCG': 'P', 'ACU': 'T', 'ACC': 'T', 'ACA': 'T', 'ACG': 'T', 'GCU': 'A', 'GCC': 'A', 'GCA': 'A', 'GCG': 'A', 'UAU': 'Y', 'UAC': 'Y', 'UAA': '*', 'UAG': '*', 'CAU': 'H', 'CAC': 'H', 'CAA': 'Q', 'CAG': 'Q', 'AAU': 'N', 'AAC': 'N', 'AAA': 'K', 'AAG': 'K', 'GAU': 'D', 'GAC': 'D', 'GAA': 'E', 'GAG': 'E', 'UGU': 'C', 'UGC': 'C', 'UGA': '*', 'UGG': 'W', 'CGU': 'R', 'CGC': 'R', 'CGA': 'R', 'CGG': 'R', 'AGU': 'S', 'AGC': 'S', 'AGA': 'R', 'AGG': 'R', 'GGU': 'G', 'GGC': 'G', 'GGA': 'G', 'GGG': 'G'}
+_DNA_COMPLEMENT = {'A': 'T', 'T': 'A', 'G': 'C', 'C': 'G', 'N': 'N'}
+
+
+def _rebuild_additive_unit_sets():
+    """Aktualisiert ADDITIVE_DIMENSION_UNIT_SETS in-place nach ├änderungen an DIMENSION_TO_BASE."""
+    ADDITIVE_DIMENSION_UNIT_SETS.clear()
+    for _b, tab in DIMENSION_TO_BASE.values():
+        ADDITIVE_DIMENSION_UNIT_SETS.append(frozenset(tab.keys()))
+
+def unwrap(x):
+    """Entfernt Einheit/Wrapper und liefert den nackten numerischen Wert (float/int/Tensor).
+    - Quantity(value, unit)  -> value (float)
+    - UncertainQuantity      -> value (float; std wird verworfen)
+    - 0-d torch.Tensor       -> .item()
+    - Liste/Tuple            -> elementweise unwrap
+    Sonst: passthrough.
+    Wirft NICHTS; sicher in jeder Hot-Loop-Position aufrufbar.
+    Nutzung: ersten Schritt einer per-jit/grad/fit-gerufenen Funktion, um Quantity-Overhead
+    zu vermeiden ÔÇö die Compile-Zeit-Einheitenpruefung hat die Dimensionen bereits validiert."""
+    if isinstance(x, Quantity):
+        return x.value
+    if 'UncertainQuantity' in globals() and isinstance(x, globals()['UncertainQuantity']):
+        return x.value
+    if hasattr(x, "shape") and hasattr(x, "numel"):
+        try:
+            if x.numel() == 1:
+                return x.item()
+        except Exception:
+            pass
+    if isinstance(x, (list, tuple)):
+        return type(x)(unwrap(item) for item in x)
+    return x
+
+def quantum_circuit(n_qubits):
+    """Erstellt einen neuen QuantumCircuit mit n_qubits Qubits.
+
+    Beispiel:
+        qc = quantum_circuit(2)
+        qc.h(0).cx(0, 1)
+        sv = statevec_sim(qc)
+    """
+    if isinstance(n_qubits, Quantity):
+        if n_qubits.unit not in ("", None):
+            raise ValueError(
+                f"quantum_circuit: n_qubits muss dimensionslos sein, bekam [{n_qubits.unit}]."
+            )
+        n_qubits = int(float(n_qubits.value))
+    else:
+        n_qubits = int(n_qubits)
+    return QuantumCircuit(n_qubits)
+
+def bell_state(which: int = 0):
+    """Erstellt einen der vier Bell-Zustaende als QuantumCircuit.
+
+    which=0: |╬ª+Ôƒ® = (|00Ôƒ®+|11Ôƒ®)/ÔêÜ2
+    which=1: |╬ª-Ôƒ® = (|00Ôƒ®-|11Ôƒ®)/ÔêÜ2
+    which=2: |╬¿+Ôƒ® = (|01Ôƒ®+|10Ôƒ®)/ÔêÜ2
+    which=3: |╬¿-Ôƒ® = (|01Ôƒ®-|10Ôƒ®)/ÔêÜ2
+    """
+    which = int(which.item() if hasattr(which, 'item') else which)
+    qc = QuantumCircuit(2)
+    qc.h(0)
+    qc.cx(0, 1)
+    if which == 1:
+        qc.z(0)
+    elif which == 2:
+        qc.x(1)
+    elif which == 3:
+        qc.z(0)
+        qc.x(1)
+    return qc
+
+def ghz_state(n_qubits: int):
+    """GHZ-Zustand: (|0...0Ôƒ® + |1...1Ôƒ®)/ÔêÜ2 fuer n Qubits."""
+    n_qubits = int(n_qubits.item() if hasattr(n_qubits, 'item') else n_qubits)
+    qc = QuantumCircuit(n_qubits)
+    qc.h(0)
+    for i in range(1, n_qubits):
+        qc.cx(0, i)
+    return qc
+
+def grover_circuit(n_qubits: int, target_state: int, n_iterations: int = None):
+    """Erstellt Grover-Suchalgorithmus-Schaltkreis.
+
+    Args:
+        n_qubits: Anzahl Qubits
+        target_state: Gesuchter Zustand als Integer (0 bis 2^n - 1)
+        n_iterations: Grover-Iterationen (default: pi/4 * sqrt(2^n))
+
+    Returns:
+        QuantumCircuit
+    """
+    n_qubits = int(n_qubits.item() if hasattr(n_qubits, 'item') else n_qubits)
+    target_state = int(target_state.item() if hasattr(target_state, 'item') else target_state)
+    dim = 1 << n_qubits
+    if target_state < 0 or target_state >= dim:
+        raise ValueError(f"grover_circuit: target_state={target_state} ausserhalb [0, {dim-1}].")
+
+    if n_iterations is None:
+        n_iterations = int(_builtin_max(1, round(_math.pi / 4 * _math.sqrt(dim))))
+    n_iterations = int(n_iterations.item() if hasattr(n_iterations, 'item') else n_iterations)
+
+    qc = QuantumCircuit(n_qubits)
+
+    # Initialisierung: Hadamard auf alle Qubits
+    for q in range(n_qubits):
+        qc.h(q)
+
+    for _ in range(n_iterations):
+        # Orakel: Phase-Flip fuer |targetÔƒ®
+        # Implementiert via Z auf korrekten Qubits (vereinfacht fuer native Simulation)
+        bits = format(target_state, f'0{n_qubits}b')
+        # X-Gatter auf Qubits die 0 sind (Bitumkehr fuer Multi-CZ)
+        for q in range(n_qubits):
+            if bits[q] == '0':
+                qc.x(q)
+        # Mehrstufige CZ-Kette (approximiert Multi-Qubit-Controlled-Z)
+        for q in range(n_qubits - 1):
+            qc.cz(q, n_qubits - 1)
+        for q in range(n_qubits):
+            if bits[q] == '0':
+                qc.x(q)
+
+        # Diffusion-Operator
+        for q in range(n_qubits):
+            qc.h(q)
+        for q in range(n_qubits):
+            qc.x(q)
+        for q in range(n_qubits - 1):
+            qc.cz(q, n_qubits - 1)
+        for q in range(n_qubits):
+            qc.x(q)
+        for q in range(n_qubits):
+            qc.h(q)
+
+    return qc
+
+def gc_content(dna):
+    """Liefert den Anteil G+C in einer DNA-Sequenz (0..1).
+    Akzeptiert auch RNA ÔÇö N wird ignoriert."""
+    if not isinstance(dna, str):
+        raise TypeError(f"gc_content: erwarte String, erhalten {type(dna).__name__}.")
+    s = dna.upper()
+    if not s:
+        return 0.0
+    valid = [c for c in s if c in "ACGTU"]
+    if not valid:
+        return 0.0
+    gc = sum(1 for c in valid if c in "GC")
+    return gc / len(valid)
+
+def reverse_complement(dna):
+    """Liefert das Reverse-Complement einer DNA-Sequenz."""
+    if not isinstance(dna, str):
+        raise TypeError(f"reverse_complement: erwarte String, erhalten {type(dna).__name__}.")
+    s = dna.upper()
+    bad = [c for c in s if c not in _DNA_COMPLEMENT]
+    if bad:
+        raise ValueError(
+            f"reverse_complement: ungueltiges DNA-Zeichen {bad[0]!r} "
+            f"(erlaubt: A, C, G, T, N)."
+        )
+    return "".join(_DNA_COMPLEMENT[c] for c in reversed(s))
+
+def transcribe(dna):
+    """DNA -> RNA: ersetzt T durch U."""
+    if not isinstance(dna, str):
+        raise TypeError(f"transcribe: erwarte String, erhalten {type(dna).__name__}.")
+    return dna.upper().replace("T", "U")
+
+def translate(rna, stop_at_stop=True):
+    """RNA -> Protein (1-Letter-Code). Liest in 3er-Codons; unbekannte Codons -> 'X'.
+    stop_at_stop=True (Default): bricht beim ersten Stop-Codon (*) ab.
+    """
+    if not isinstance(rna, str):
+        raise TypeError(f"translate: erwarte String, erhalten {type(rna).__name__}.")
+    s = rna.upper().replace("T", "U")
+    out = []
+    for i in range(0, len(s) - 2, 3):
+        codon = s[i:i+3]
+        aa = _PROTEIN_CODON_TABLE.get(codon, "X")
+        if aa == "*" and stop_at_stop:
+            break
+        out.append(aa)
+    return "".join(out)
+
+def k_mer_count(seq, k):
+    """Liefert ein Dict {k_mer: count} fuer alle ueberlappenden k-Mere."""
+    if not isinstance(seq, str):
+        raise TypeError(f"k_mer_count: erwarte String, erhalten {type(seq).__name__}.")
+    k = int(k)
+    if k < 1:
+        raise ValueError(f"k_mer_count: k muss >= 1 sein, bekam {k}.")
+    s = seq.upper()
+    counts = {}
+    for i in range(0, len(s) - k + 1):
+        kmer = s[i:i+k]
+        counts[kmer] = counts.get(kmer, 0) + 1
+    return counts
+
+def smiles_descriptors(smiles):
+    """Molekulare Descriptors aus einer SMILES-Notation via rdkit.
+    Liefert Dict mit: mw [g/mol], logp, num_atoms, num_heavy_atoms, num_rings,
+    num_aromatic_rings, hbd, hba, tpsa [Angstrom^2]."""
+    if not isinstance(smiles, str):
+        raise TypeError(f"smiles_descriptors: erwarte String, erhalten {type(smiles).__name__}.")
+    try:
+        from rdkit import Chem  # type: ignore[import-untyped]
+        from rdkit.Chem import Descriptors, Lipinski  # type: ignore[import-untyped]
+    except ImportError:
+        raise RuntimeError("smiles_descriptors benoetigt rdkit. Installation: pip install rdkit")
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        raise ValueError(f"smiles_descriptors: ungueltige SMILES {smiles!r}.")
+    return {
+        "mw": Quantity(float(Descriptors.MolWt(mol)), "g/mol"),
+        "logp": float(Descriptors.MolLogP(mol)),
+        "num_atoms": int(mol.GetNumAtoms()),
+        "num_heavy_atoms": int(mol.GetNumHeavyAtoms()),
+        "num_rings": int(Descriptors.RingCount(mol)),
+        "num_aromatic_rings": int(Descriptors.NumAromaticRings(mol)),
+        "hbd": int(Lipinski.NumHDonors(mol)),
+        "hba": int(Lipinski.NumHAcceptors(mol)),
+        "tpsa": Quantity(float(Descriptors.TPSA(mol)), "Angstrom"),  # eigentlich A^2; wir markieren die Laengendimension
+        "num_rotatable_bonds": int(Lipinski.NumRotatableBonds(mol)),
+    }
+
+def lipinski_rule_of_five(smiles):
+    """Lipinskis 'Rule of Five' fuer orale Bioverfuegbarkeit.
+    Liefert Dict mit Boolean-Checks + Anzahl Verletzungen."""
+    desc = smiles_descriptors(smiles)
+    mw = desc["mw"].value
+    logp = desc["logp"]
+    hbd = desc["hbd"]
+    hba = desc["hba"]
+    checks = {
+        "mw_le_500":  mw <= 500.0,
+        "logp_le_5":  logp <= 5.0,
+        "hbd_le_5":   hbd <= 5,
+        "hba_le_10":  hba <= 10,
+    }
+    violations = sum(1 for ok in checks.values() if not ok)
+    return {
+        "mw": desc["mw"],
+        "logp": logp,
+        "hbd": hbd,
+        "hba": hba,
+        "checks": checks,
+        "violations": violations,
+        "passes": violations == 0,
+    }
 def _notebook_in_progress_set():
     """Process-weite Re-Entry-Tracking-Menge. Liegt auf sys, damit sie über exec-Kontexte
     persistent ist (jeder exec(compile_source(...)) bekommt sonst eine frische ml_runtime-Kopie)."""

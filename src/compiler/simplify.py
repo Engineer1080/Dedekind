@@ -77,6 +77,10 @@ class SimplifyVisitor:
             body=[self.visit(s) for s in node.body],
             arg_units=getattr(node, "arg_units", None),
             return_unit=getattr(node, "return_unit", None),
+            arg_shapes=getattr(node, "arg_shapes", None),
+            return_shape=getattr(node, "return_shape", None),
+            is_pub=getattr(node, "is_pub", False),
+            type_params=list(getattr(node, "type_params", [])),
             line=node.line,
         )
 

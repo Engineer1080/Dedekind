@@ -1,17 +1,15 @@
 # Was Dedekind aktuell kann
 
-**Stand:** Basierend auf Code und Changelogs (v1.6.3, Mai 2026). Dedekind ist ein **Prototyp** – die Sprache wird nach Python transpiliert und nutzt PyTorch/NumPy als Laufzeit.
+**Stand:** Basierend auf Code und Changelogs (v1.21.0, Mai 2026). Dedekind ist ein **Prototyp** – die Sprache wird nach Python transpiliert und nutzt PyTorch/NumPy als Laufzeit.
 
 ---
 
 ## Sprachkern
 
 - **Syntax:** Imperativ, C/JavaScript-ähnlich mit Blöcken in `{}`, Funktionen mit `fn name(args) { ... }`, Kontrollfluss `if`/`else`, `while`, `for ... in`. **Betragsstriche:** `|x|` = `abs(x)` (z. B. `x = |-1|` → 1). **Logische Operatoren:** `and`, `or`, `not`, `xor`, `nand`, `nor`, `xnor` (Python-ähnliche Keywords; Präzedenz: `or` < `xor` < `and`/`nand`/`nor`/`xnor` < `not`).
-- **Typen:** Dynamische Typinferenz; primitive Typen, Listen, Vektoren/Matrizen als Tensoren, Quaternionen; Property-Zugriff (z. B. `.shape`, `.gpu()`). **Matrix-Multiplikation:** Operator `@` (z. B. `A @ B`). Dict-Literale werden nativ unterstützt (z. B. `{"key": val}`).
-- **Ausführungsmodifikatoren:** `.gpu()`, `.cpu()`, `.single()` für Hardware-Platzierung bzw. sequentielle Ausführung; `.sparse()` für Sparse-Tensoren; `.fast()` für hocheffiziente Hardware-Beschleunigung und JIT-Kompilierung (`torch.compile` / native Triton GPU Kernels bei kompatiblen Grafikprozessoren).
-- **Modulsystem & `@units` Signaturen:** Einbindung externer Module via `use <name>`. Unterstützung für formale Einheiten-Signaturen in Funktionen (z. B. `fn kinetic_energy(m: [kg], v: [m/s]) -> [J]`), die sowohl statisch zur Compile-Zeit als auch dynamisch zur Laufzeit streng validiert werden.
-- **DataFrames & Tabellarischer I/O:** Strukturierte, spaltenorientierte Tabellen mit `DataFrame(data, units=...)`. Automatische Einheitenextraktion per `df.column_with_unit(key)`. Nativer I/O über `read_csv` und `write_csv` (unterstützt `name [unit]` in Spaltenüberschriften) sowie optionale Hochleistungs-Konnektoren `read_parquet`/`write_parquet`, `read_hdf5`/`write_hdf5` und `read_netcdf`/`write_netcdf`.
-- **Fehlerbehandlung:** Compiler-Fehler mit Zeilennummer (`CompileError`); Einheiten-Check zur Compile-Zeit (`1[m] + 1[s]` → Fehler), der als echter statischer Typ-Analysator mittels Scope-basiertem Environment-Stack und kanonischer Dimensionsanalyse arbeitet. Runtime-Meldungen mit Kontext. **Assert:** `assert(condition, message)` – löst AssertionError bei falscher Bedingung; Mini-Test-Runner `run_tests.py` für `tests/dedekind/*.ddk`.
+- **Typen:** Dynamische Typinferenz; primitive Typen, Listen, Vektoren/Matrizen als Tensoren, Quaternionen; Property-Zugriff (z. B. `.shape`, `.gpu()`). **Matrix-Multiplikation:** Operator `@` (z. B. `A @ B`).
+- **Ausführungsmodifikatoren:** `.gpu()`, `.cpu()`, `.single()` für Hardware-Platzierung bzw. sequentielle Ausführung; `.sparse()` für Sparse-Tensoren; `.fast()` für MLIR/Inductor-Optimierung (z. B. bei Modellen).
+- **Fehlerbehandlung:** Compiler-Fehler mit Zeilennummer (`CompileError`); Einheiten-Check zur Compile-Zeit (`1[m] + 1[s]` → Fehler); Runtime-Meldungen mit Kontext. **Assert:** `assert(condition, message)` – löst AssertionError bei falscher Bedingung; Mini-Test-Runner `run_tests.py` für `tests/dedekind/*.ddk`.
 
 ---
 
@@ -20,15 +18,11 @@
 - **Konstanten:** `pi`, `e` (dimensionslos).
 - **Funktionen:** `sin`, `cos`, `tan`, `exp`, `log`, `log10`, `sqrt`, `abs`; Arkus- und Hyperbelfunktionen (`asin`, `acos`, `atan`, `atan2`, `sinh`, `cosh`, `tanh`) – elementweise, differenzierbar.
 - **Reduktionen & Runden:** `min`, `max`, `argmin`, `argmax` (optional `dim`); `round`, `floor`, `ceil`.
-- **Statistik:** `mean(x)`, `std(x)`, `var(x)`, `median(x)` (optional `dim`); `quantile(x, q)`, `percentile(x, p)`; `cov(x, y)`, `corrcoef(x, y)` (Kovarianz/Korrelation, bei 2D x: Matrix); `skew(x)`, `kurtosis(x)` (Schiefe, Kurtosis); `histogram(x, bins, range_lim)` (Zählung in Klassen; range- **Lineare Algebra:** `norm(x)`, `det(A)`, `trace(A)`; `solve(A, b)` (Ax = b); `eigh(A)` (Eigenwerte/-vektoren symmetrisch); `eig(A)` (allgemein); `svd(A)` (Singulärwertzerlegung); `lstsq(A, y)` (Least Squares); `cond(A)`, `rank(A)`, `pinv(A)` (Kondition, Rang, Pseudo-Inverse); `expm(A)`, `logm(A)` (Matrix-Exponential/-Logarithmus). FFT (`fft`, `ifft`); Matrix-Operationen (transpose, inverse, dot_product). **Symbolische Ableitung:** `diff_sym(expr, x)` (expr, x als Strings; Rückgabe Ableitung als String). **Unbestimmte Integrale:** `integrate_sym(expr, var)` – symbolische Integration ∫ expr d(var); Stammfunktion als String; nutzt SymPy. **Autograd:** `grad(f, x)` (Gradient); `jacobian(f, x)` (Jacobi-Matrix); `hessian(f, x)` (Hesse-Matrix).
-- **Symbolik & Gleichungssysteme:** `solve_sym(equation, var)` zur symbolischen Lösung von algebraischen Gleichungen oder Gleichungssystemen (Rückgabe als String-Liste/Dicts); `simplify_sym(expr)` zur mathematischen Vereinfachung komplexer Ausdrücke; `series(expr, var, x0, n)` für symbolische Taylor-Reihenentwicklungen bis zur Ordnung `n` (exklusive O-Term).
-- **Iterative Krylov-Solver & Vorkonditionierung:** `cg(A, b, ...)` (Conjugate Gradient) für symmetrisch-positiv-definite Systeme sowie `gmres(A, b, ...)` und `bicgstab(A, b, ...)` für allgemeine lineare Gleichungssysteme; diagonaler Jacobi-Vorkonditionierer `jacobi_preconditioner(A)` und Incomplete-LU-Vorkonditionierer `ilu_preconditioner(A, drop_tol, fill_factor)` zur Konvergenzbeschleunigung um das 2- bis 10-Fache.
+- **Statistik:** `mean(x)`, `std(x)`, `var(x)`, `median(x)` (optional `dim`); `quantile(x, q)`, `percentile(x, p)`; `cov(x, y)`, `corrcoef(x, y)` (Kovarianz/Korrelation, bei 2D x: Matrix); `skew(x)`, `kurtosis(x)` (Schiefe, Kurtosis); `histogram(x, bins, range_lim)` (Zählung in Klassen; range_lim optional (min, max)).
+- **Lineare Algebra:** `norm(x)`, `det(A)`, `trace(A)`; `solve(A, b)` (Ax = b); `eigh(A)` (Eigenwerte/-vektoren symmetrisch); `eig(A)` (allgemein); `svd(A)` (Singulärwertzerlegung); `lstsq(A, y)` (Least Squares); `cond(A)`, `rank(A)`, `pinv(A)` (Kondition, Rang, Pseudo-Inverse); `expm(A)`, `logm(A)` (Matrix-Exponential/-Logarithmus). FFT (`fft`, `ifft`); Matrix-Operationen (transpose, inverse, dot_product). **Symbolische Ableitung:** `diff_sym(expr, x)` (expr, x als Strings; Rückgabe Ableitung als String). **Unbestimmte Integrale:** `integrate_sym(expr, var)` – symbolische Integration ∫ expr d(var); Stammfunktion als String; nutzt SymPy. **Autograd:** `grad(f, x)` (Gradient); `jacobian(f, x)` (Jacobi-Matrix); `hessian(f, x)` (Hesse-Matrix).
 - **Numerik:** `interp(x, xp, fp)` (1D-lineare Interpolation); `trapz(y, x)`, `simpson(y, x)` (Trapez/Simpson für diskrete Daten); `riemann_sum(f, a, b, n, method="left"|"right"|"midpoint")` (Riemann-Summen für int f dx); `zeta(s)` (Riemann-Zeta ζ(s)=Σ 1/n^s, scipy); `volume_revolution_x`, `volume_revolution_y`; `volume_revolution_vertical(f,a,b,x0,n)` (Achse x=x0), `volume_revolution_horizontal(f,a,b,y0,n)` (Achse y=y0); `pappus_volume_vertical`, `pappus_volume_horizontal` (Satz von Pappus: V=2π·R·A); `root_bisect(f, a, b, tol)` (Nullstelle Bisektion); `newton(f, x0, tol)` (1D); `fsolve(f, x0)` (Vektor-Nullstelle Newton); `minimize(f, x0, method="gd"|"lbfgs")` (mehrdimensionale Minimierung). **Mathematische Folgen:** `arange(n)` bzw. `arange(start, stop, step)` (Integer-Folge); `arithmetic(a0, d, n)` (arithmetisch: aₙ = a₀ + n·d); `geometric(a0, r, n)` (geometrisch: aₙ = a₀·rⁿ); `sequence(f, n)` (allgemein: [f(0), f(1), …, f(n−1)]). **Weitere Algorithmen:** `qr(A)`, `lu(A)` (QR/LU-Zerlegung); `cholesky(A)`; `matrix_power(A, n)`; `kron(A, B)` (Kronecker-Produkt); `outer(a, b)` (äußeres Produkt); `vander(x, n)` (Vandermonde-Matrix); `matrix_sqrt(A)` (Matrix-Quadratwurzel); `matrix_norm(A, ord)` (Frobenius, Spektralnorm etc.); `cdist(X, Y, p)` (paarweise Abstände); `cross(a, b)` (3D-Kreuzprodukt); `polyfit`, `polyval`; `unique`, `argsort`; `convolve1d`. **Signal & Reduktionen:** `fftfreq`, `diff`, `cumsum`, `clip`, `shuffle`; `permutation(n)` (Zufallspermutation); `choice(a, size, replace)` (Zufallsstichprobe); `autocorr(x, max_lag)`; `moving_mean(x, window)`. **Spezialfunktionen:** `erf(x)`, `erfc(x)` (Fehlerfunktion); `gamma(x)`, `lgamma(x)` (Gamma/Log-Gamma); `bessel_j0(x)`, `bessel_j1(x)` (Bessel J₀, J₁); `bessel_j(n, x)` (Bessel Jₙ); `legendre(n, x)` (Legendre Pₙ); `hypergeom(a, b, c, z)` (₂F₁). **Zahlentheorie:** `gcd(a, b)`, `is_prime(n)`, `mod(a, m)`, `mod_inv(a, m)`, `mod_pow(base, exp, m)`; `dirichlet_function(x)` (D(x)=1 wenn x rational mit Nenner ≤10000, sonst 0; elementweise für Tensoren). **Fakultät:** Postfix-Operator `n!` (z. B. `5!`, `n!`) bzw. `factorial(n)`; Beispiel `factorial_test.ddk`. **Dedekind-Schnitte:** `DedekindCut(x)` (reelle Zahl als untere Menge A={q∈Q:q<x}); `dedekind_cut_from_rational(p,q)`, `dedekind_cut_sqrt2()`; `lower_set_contains(cut,q)`, `to_float()`. **Dedekind-Ringe:** `DedekindRingZ()`, `ideal(n)`, `ideal_factor(i)`; `DedekindIdeal` mit `.factor()`, `.norm()`, `*` (Ideal-Multiplikation). **Numerische Integration:** `integrate(f, a, b, n)` (Trapezregel); differenzierbar.
-- **Erweiterte Optimierung & JIT:** `jit(fn)` zur automatischen JIT-Beschleunigung via PyTorch Inductor. `least_squares(residuals, x0, jacobian, bounds, method)` für nichtlineare Ausgleichsrechnung; `minimize_constrained(f, x0, constraints, bounds, method, tol)` für nichtlineare beschränkte Optimierung (SLSQP/trust-constr); `milp(c, A_ub, b_ub, A_eq, b_eq, bounds, integrality)` für gemischt-ganzzahlige lineare Optimierung.
-- **Stochastische DGLn (SDE):** `sde_solve(drift, diffusion, y0, t, method="euler_maruyama"|"milstein", seed)` zur präzisen numerischen Simulation stochastischer Pfade (Itô-Interpretation).
-- **Finite-Elemente-Methode (FEM):** Dreiecksgitter mit `mesh_unit_square(n)` (Knotenkoordinaten, Element-Knoten-Zuordnung, Randknotenindizes); `fem_assemble_stiffness(mesh)` zur Galerkin-Steifigkeitsmatrix-Assemblierung; `fem_assemble_load(mesh, f)` zur Lastvektor-Assemblierung; `fem_poisson_2d(mesh, f, dirichlet_value)` zum Lösen von 2D-Poisson-Gleichungen mit Dirichlet-Randwerten.
 - **Ricci-Notation:** Indexnotation `A^ij * B_jk` für Einstein-Summen (Auto-Einsum).
-- **LaTeX-Export & Publizieren:** `export_to_latex(source)` bzw. CLI `--latex` – Formeln aus Dedekind-Code als LaTeX; `print_latex(s)` zeigt Formeln **nur in der Konsole** als Unicode (α, Δ, ∫, ½ etc.).r in Plots; zukünftig möglich: KaTeX/Web (siehe Documentation/Console_KaTeX_Roadmap.md).
+- **LaTeX-Export:** `export_to_latex(source)` bzw. CLI `--latex` – Formeln aus Dedekind-Code als LaTeX; `print_latex(s)` zeigt Formeln **nur in der Konsole** als Unicode (α, Δ, ∫, ½ etc.), keine Bilder in Plots; zukünftig möglich: KaTeX/Web (siehe Documentation/Console_KaTeX_Roadmap.md).
 
 ---
 
@@ -46,28 +40,6 @@
 
 ---
 
-## Astrophysik & Kosmologie
-
-- **Einheiten:** Solare Masse `[M_sun]` (Masse, $1 M_\odot \approx 1.98847 \times 10^{30} \text{ kg}$) und solare Leuchtkraft `[L_sun]` (Leistung, $1 L_\odot \approx 3.828 \times 10^{26} \text{ W}$). Vollständige statische Compile-Zeit- und Runtime-Prüfung.
-- **Modelle & Dynamik:**
-  - `solve_kepler(M, e)`: Löst die Kepler-Gleichung $E - e \sin(E) = M$ für die exzentrische Anomalie $E$ (rad) mittels differenzierbarem Newton-Raphson-Verfahren (6 Schritte), unterstützt Mean Anomaly `M` in `[rad]` oder `[deg]`.
-  - `redshift_to_velocity(z)`: Berechnet die relativistische Fluchtgeschwindigkeit $v = c \frac{(1+z)^2 - 1}{(1+z)^2 + 1}$ aus der Rotverschiebung $z$, liefert ein `Quantity [m/s]`.
-  - `schwarzschild_radius(M)`: Berechnet den Schwarzschild-Radius $R_s = \frac{2GM}{c^2}$ für eine gegebene Masse `M` (unterstützt `[kg]` oder `[M_sun]`), liefert ein `Quantity [m]`.
-  - `stellar_luminosity(M_solar)`: Berechnet die Hauptreihen-Leuchtkraft $L$ in `[L_sun]` aus der Sternenmasse $M$ in `[M_sun]` oder `[kg]` mittels stückweise differenzierbarer Näherung.
-
----
-
-## Meteorologie, Klimatologie & Geowissenschaften
-
-- **Einheiten:** Hectopascal `[hPa]` ($1 \text{ hPa} = 100 \text{ Pa}$) als Druckeinheit für Luftdruckmessungen. Druckeinheit Gigapascal `[GPa]` ($1 \text{ GPa} = 10^9 \text{ Pa}$) für geowissenschaftliche Spannungs- und Modulberechnungen.
-- **Modelle & Berechnungen:**
-  - `coriolis_parameter(latitude)`: Berechnet den Coriolis-Parameter $f = 2 \Omega \sin(\phi)$ in `[s^-1]` (reziproke Sekunden) für eine geographische Breite `latitude` (in `[deg]` oder `[rad]`).
-  - `saturated_vapor_pressure(T)`: Berechnet den Sättigungsdampfdruck von Wasserdampf über flüssigem Wasser in `[Pa]` bei Temperatur `T` (in `[K]`) nach der Magnus-Formel.
-  - `dew_point(T, RH)`: Berechnet den Taupunkt $T_d$ in `[K]` aus Temperatur `T` und relativer Luftfeuchtigkeit `RH` ($0 \dots 100$).
-  - `seismic_wave_velocities(K, G, rho)`: Berechnet die Ausbreitungsgeschwindigkeiten $[v_p, v_s]$ von Kompressionswellen (P-Wellen) und Scherwellen (S-Wellen) in `[m/s]` aus Kompressionsmodul `K`, Schermodul `G` und Dichte `rho` (unterstützt `[kg/m^3]` und `[g/cm^3]`).
-
----
-
 ## Stochastik & Fitting
 
 - **Verteilungen:** `Normal(mu, sigma)`, `Uniform(low, high)`, `Bernoulli(p)`, `Exponential(rate)`, `Gamma`, `Beta`, `Poisson`, `Dirichlet(alpha)`; `sample(dist)`, `log_prob(dist, value)`. **Binomialkoeffizient:** `binom(n, k)` (n über k). **t-Test:** `ttest_one_sample(x, mu0)`, `ttest_two_sample(x, y)` (Welch) — Rückgabe (t_statistik, p_value).
@@ -78,20 +50,17 @@
 
 ## Chemie & Biologie
 
-- **Einheiten:** Konzentration in `[M]` (mol/L), Stoffmenge in `[mol]`, Volumen in `[L]`, Verdünnungen in `[ppm]`; Massenkonzentration `[percent_wv]` (= 10 g/L), `[g/L]` und `[mg/mL]`; Druck in `[bar]`, `[atm]` und `[Pa]` (mit automatischer Umrechnung: 1 bar = 10⁵ Pa, 1 atm = 101325 Pa). M und mol/L gelten als gleich (vollständiger statischer Compile-Time und Runtime-Check).
-- **pH & Säure-Base:** `concentration_to_pH(c_M)` ($pH = -\log_{10}([H^+])$) und `pH_to_concentration(pH)` zur Umrechnung zwischen pH-Wert und Hydronium-Ionen-Konzentration in `[M]`.
+- **Einheiten:** Konzentration in `[M]`, Stoffmenge in `[mol]`, Volumen in `[L]`, Verdünnungen in `[ppm]`; Massenkonzentration `[percent_wv]` (= g/100mL); M und mol/L gelten als gleich (Runtime und Compile-Check). **pH:** `concentration_to_pH(c_M)`, `pH_to_concentration(pH)` für Umrechnung [H⁺] ↔ pH.
 - **Convenience:** `michaelis_menten(S, Vmax, Km)`, `logistic(t, r, K, N0)`, `logistic_growth_dt(N, r, K)`, `arrhenius(T, A, Ea)`, `linear_regression(x, y)`. **Chemisches Gleichgewicht:** `chemical_equilibrium(K, n_A, n_B, n_C, n_D, A0, B0, C0, D0)` – Massenwirkungsgesetz für aA + bB <-> cC + dD; Rückgabe (A_eq, B_eq, C_eq, D_eq).
 - **Chemische Elemente:** `atomic_mass("C")` (g/mol), `atomic_number("C")`; ca. 50 Elemente (IUPAC-nah); molare Masse z. B. H₂O, C₂H₆.
 - **Stöchiometrie:** `balance_equation(reactants_str, products_str)` – Koeffizienten für ausgeglichene Reaktionsgleichung (z. B. `"H2 + O2"`, `"H2O"` → ([2,1], [2])); nutzt lineare Algebra (Nullraum via SVD).
 - **Beispiele:** Kinetik 1. Ordnung, Dosis-Wirkung (EC50, Michaelis-Menten), logistisches Wachstum mit `ode_solve` und `fit`.
-- **Chemoinformatik & APIs:** `smiles_molecular_weight(smiles)` zur Berechnung der molaren Masse aus SMILES-Strings; `lipinski_descriptors(smiles)` zur Überprüfung von Lipinskis Rule of Five (MW, logP, HBD, HBA); `pubchem_get_molecular_formula(name)` und `chembl_get_ic50(target, compound)` zur Abfrage von Summenformeln und Aktivitätswerten (IC50) aus PubChem und ChEMBL mit robustem lokalem Fallback/Cache.
-- **Sequenz- & Strukturanalyse:** `smith_waterman_alignment(seq1, seq2, match_score, mismatch_penalty, gap_penalty)` führt ein lokales Sequenzalignment in PyTorch durch (unterstützt Strings und 1D-Tensors mit Traceback); `protein_structure_parse(path_or_content)` parst PDB- und mmCIF-Proteinstrukturen (aus Datei oder String) direkt in ein first-class `DataFrame` mit automatischen `"angstrom"`-Einheiten auf den Koordinaten-Spalten.
 
 ---
 
 ## Medizin, Pharmakologie & Epidemiologie
 
-- **Pharmakologie:** `hill_equation(dose, Emax, EC50, n)` – Hill-Gleichung E = Emax·doseⁿ/(EC50ⁿ+doseⁿ); `one_compartment_pk(C0, ke, t)` – Ein-Kompartiment C(t)=C0·e^(-ke·t); `two_compartment_pk(C0, k12, k21, ke, t)` – Zwei-Kompartiment-Kinetik C(t) = A·e^(-α·t) + B·e^(-β·t) mit Transferraten k12, k21 und Elimination ke, voll differenzierbar; `half_life(ke)` – Halbwertszeit t₁/₂ = ln(2)/ke.
+- **Pharmakologie:** `hill_equation(dose, Emax, EC50, n)` – Hill-Gleichung E = Emax·doseⁿ/(EC50ⁿ+doseⁿ); `one_compartment_pk(C0, ke, t)` – Ein-Kompartiment C(t)=C0·e^(-ke·t); `half_life(ke)` – Halbwertszeit t₁/₂ = ln(2)/ke.
 - **Epidemiologie:** `sir_model(S0, I0, R0, beta, gamma, t)` – SIR-Kompartimentmodell; `basic_reproduction_number(beta, gamma)` – R₀ = β/γ.
 - **Biostatistik:** `confidence_interval(x, alpha)` – Konfidenzintervall für Mittelwert (t-Verteilung); `odds_ratio(a, b, c, d)` – Odds Ratio aus 2×2-Tabelle; `sensitivity_specificity(TP, FN, FP, TN)` – Sensitivität, Spezifität, PPV, NPV.
 - **Beispiele:** `pharmacology_quickwins.ddk`, `epidemiology_sir.ddk`, `biostatistics_quickwins.ddk`.
@@ -124,23 +93,33 @@
 
 ---
 
+## Quantum Computing (v1.21)
+
+- **Nativer Simulator:** `quantum_circuit(n)` erstellt Schaltkreis; Gatter: `.h`, `.x`, `.y`, `.z`, `.cx`, `.cz`, `.rx`, `.ry`, `.rz`, `.t`, `.s`, `.swap`, `.measure`; `statevec_sim(qc)` → `list[complex]`; `statevec_sim(qc, shots)` → Mess-Dict; `statevec_expectation(qc, "ZZ")` → float.
+- **Convenience:** `bell_state(which)`, `ghz_state(n)`, `grover_circuit(n, target)` einzeilig nutzbar.
+- **VQE:** `vqe_circuit(n, L, params)` hardware-effizienter Ansatz; `vqe_energy(params, n, L, terms)` mit Pauli-String-Hamiltonian.
+- **Quanten-Informatik:** `fidelity(sv1, sv2)`, `entropy_von_neumann(probs)`, `schmidt_rank(sv, n_a)`.
+- **Physikalische Einheiten:** `[GHz]`, `[THz]`, `[eV]`, `[meV]`, `[us]`, `[mK]` fuer Quanten-Hardware-Parameter; `qubit_frequency_check`, `coherence_time_check`, `energy_gap_check`.
+- **Shape-Annotationen:** `Qubit[N]`, `StateVec[N]`, `Circuit[N,G]` in Funktionssignaturen mit symbolischen Dimensionen.
+- **Qiskit-Export:** `qc.to_qiskit()` (erfordert `pip install qiskit`).
+- **Modul:** `use quantum` mit Wrapper-Funktionen `simulate`, `sample_circuit`, `state_fidelity`, `vn_entropy` etc.
+
+---
+
 ## Tooling & IDE
 
 - **Compiler:** Transpilation von `.ddk` nach Python; CLI `python -m src.compiler.compiler <file.ddk>`; Optionen `--latex`, `--no-units-check`.
 - **Dedekind Studio:** Spyder-Fork mit nativem Dedekind- und Python-Kernel; Editor mit Syntax-Highlighting (Einheiten, Ricci-Indizes); Plots-Pane für `plot()`; wissenschaftliche Beispiele als Tabs; Fenster-/Taskleisten-Icon (Windows: .ico für scharfe Darstellung).
 - **Jupyter-Kernel:** Dedekind in Jupyter/Spyder-Konsolen; persistenter Kontext über Zellen.
 - **Beispiele:** Über 49 `.ddk`-Beispiele in `examples/dedekind/`; `pde_navier_stokes.ddk` für Navier-Stokes 2D; `angle_units.ddk` für Winkel rad/deg; `sequences.ddk` für Folgen; `stats_binom_ttest.ddk` für binom und t-Test. Batch-Test mit `run_examples.py` (-q, -v, --compile, --filter). **Tests:** `assert(condition, message)`; Mini-Test-Runner `run_tests.py` für `tests/dedekind/*.ddk`.
-- **Plots & Einheiten:** `plot(x, y, title=..., xscale="linear"|"log", yscale="log")`; `scatter(x, y)`; `contour(X, Y, Z, levels=...)`. Quantity-Listen werden automatisch erkannt; Einheiten werden extrahiert und die Achsen automatisch mit `[unit]` annotiert.
-- **Reproduzierbarer Notebook-Export:** `export_notebook(source_path, output_path=None, format="html"|"md", title=None, include_hash=True, capture_plots=True)` kompiliert und führt `.ddk`-Dateien aus, fängt Stdout und Plots ab und generiert ein eigenständiges Dokument samt SHA-256-Quellcode-Hash zur lückenlosen Nachvollziehbarkeit.
-- **Wissenschaftliches Publizieren (Paper-Mode):** `print_table(rows, headers=None, format="markdown"|"latex"|"csv"|"plain", precision=4, caption=None, label=None)` erzeugt LaTeX-Tabellen (booktabs-Formatierung) oder Markdown/CSV-Tabellen. `UncertainQuantity`-Werte werden vollautomatisch als `val ± std [unit]` (in LaTeX mathmodisch) formatiert.
-- **Reproduzierbarkeit:** `seed(n)` setzt den Zufalls-Seed für Python (`random`), NumPy und PyTorch konsistent; `data_hash(x)` berechnet deterministische SHA-256 Hashes von Tensoren, Listen und DataFrames.
+- **Plots:** `plot(x, y, title=..., xscale="linear"|"log", yscale="log")`; `scatter(x, y)`; `contour(X, Y, Z, levels=...)`.
 
 ---
 
 ## Was (noch) nicht oder nur eingeschränkt
 
-- **Symbolik:** Symbolische Ableitung `diff_sym(expr, x)`, unbestimmte Integrale `integrate_sym(expr, var)` sowie `solve_sym(equation, var)`, `simplify_sym(expr)` und `series(expr, var, x0, n)` sind vollständig als API vorhanden. **Symbolische Vereinfachung** (Compiler-Pass): Konstantenfaltung (`2*3` → `6`), `x+0` → `x`, `x*1` → `x`, `0*x` → `0`, `x-0` → `x`, `x^0` → `1`, `x^1` → `x`.
-- **Typen/Module:** Statische Compile-Zeit-Einheitenprüfung mit Scope-basiertem Environment-Stack; `@units`-Signaturen zur Typ-/Einheitenprüfung zur Laufzeit; einfaches Modulsystem über `use`. Kein volles statisches Klassen-Typing.
+- **Symbolik:** Symbolische Ableitung `diff_sym(expr, x)` und unbestimmte Integrale `integrate_sym(expr, var)` sind vorhanden (siehe Mathematik). **Symbolische Vereinfachung** (Compiler-Pass): Konstantenfaltung (`2*3` → `6`), `x+0` → `x`, `x*1` → `x`, `0*x` → `0`, `x-0` → `x`, `x^0` → `1`, `x^1` → `x`. Keine allgemeine Gleichungslöser.
+- **Typen/Module:** Kein statisches Typing; kein `import` – alles in einer Datei oder über Compiler-Pipeline.
 - **Performance:** Ziel AOT/MLIR/LLVM; aktuell Transpilation zu Python/PyTorch; native Binaries experimentell (z. B. `.exe`-Erzeugung).
 - **Weitere PDE:** Wärmeleitung, Advektion, Wellengleichung, Burgers, Reaktions-Diffusion, Advektions-Diffusion und Maxwell (FDTD 1D/2D) als Standard-API vorhanden.
 

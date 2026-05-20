@@ -1,0 +1,67 @@
+// Tests fuer die MILP-DSL: Variable, optimize_milp mit minimize/maximize,
+// Integer-Variablen und Unit-aware Constraints.
+
+fn approx(a, b, tol) {
+    d = a - b
+    if d < 0 { d = -d }
+    return d < tol
+}
+
+fn main() {
+    // --- Test 1: einfaches LP, max 3x + 2y unter x + y <= 4, x,y >= 0 -------
+    x = Variable("x", lower=0)
+    y = Variable("y", lower=0)
+    profit = 3 * x + 2 * y
+    res = optimize_milp(profit, [x + y <= 4], sense="maximize")
+    assert(approx(res["x"], 4.0, 1e-6), "LP: x = 4")
+    assert(approx(res["y"], 0.0, 1e-6), "LP: y = 0")
+    assert(approx(res["objective"], 12.0, 1e-6), "LP: max profit = 12")
+
+    // --- Test 2: Min, mit unteren Schranken ---------------------------------
+    a = Variable("a", lower=2)
+    b = Variable("b", lower=3)
+    cost = a + b
+    res2 = optimize_milp(cost, [], sense="minimize")
+    assert(approx(res2["a"], 2.0, 1e-6), "min an Schranke: a=2")
+    assert(approx(res2["b"], 3.0, 1e-6), "min an Schranke: b=3")
+    assert(approx(res2["objective"], 5.0, 1e-6), "min sum = 5")
+
+    // --- Test 3: Integer-Variablen ------------------------------------------
+    items = Variable("items", lower=0, integer=true)
+    boxes = Variable("boxes", lower=1, integer=true)
+    obj = items + 10 * boxes
+    res3 = optimize_milp(obj, [
+        items >= 7,                  // mindestens 7 Stueck
+        boxes * 5 >= items           // jede Box fasst 5 Stueck
+    ])
+    // 7 items, ceil(7/5) = 2 boxes -> 7 + 20 = 27
+    assert(res3["items"] == 7.0, "int: items = 7")
+    assert(res3["boxes"] == 2.0, "int: boxes = ceil(7/5) = 2")
+    assert(approx(res3["objective"], 27.0, 1e-6), "min cost = 27")
+
+    // --- Test 4: Vehicle Routing mit Einheiten ------------------------------
+    strecke = Variable("strecke", lower=0[km])
+    trucks  = Variable("trucks",  lower=1, integer=true)
+    fcost = 2.5 * strecke + 1000 * trucks
+    res4 = optimize_milp(fcost, [
+        strecke >= 500[km],
+        trucks * 200[km] >= strecke
+    ])
+    assert(approx(res4["strecke"], 500.0, 1e-6), "VRP: 500 km Strecke")
+    assert(res4["trucks"] == 3.0, "VRP: 3 trucks")
+    assert(approx(res4["objective"], 4250.0, 1e-6), "VRP: cost 4250 EUR")
+
+    // --- Test 5: Energie-Mix mit Einheiten ----------------------------------
+    p1 = Variable("p1", lower=0[kW], upper=300[kW])
+    p2 = Variable("p2", lower=0[kW])
+    cost5 = 20 * p1 + 80 * p2
+    res5 = optimize_milp(cost5, [p1 + p2 >= 500[kW]])
+    // 300 kW solar (max) + 200 kW gas; cost = 20*300 + 80*200 = 22000
+    assert(approx(res5["p1"], 300.0, 1e-6), "Energie: solar an obere Schranke")
+    assert(approx(res5["p2"], 200.0, 1e-6), "Energie: gas fuellt Rest")
+    assert(approx(res5["objective"], 22000.0, 1e-6), "Energie: min cost 22000")
+
+    print("optimize_milp_test: 13 Asserts bestanden")
+}
+
+main()

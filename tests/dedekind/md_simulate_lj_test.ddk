@@ -1,0 +1,59 @@
+// Test fuer md_simulate_lj — OpenMM-Bruecke mit Unit-Validierung.
+
+fn approx(a, b, tol) {
+    d = a - b
+    if d < 0 { d = -d }
+    return d < tol
+}
+
+fn main() {
+    // Argon-Cluster, deterministisch via seed
+    res = md_simulate_lj(
+        n_particles=8,
+        sigma=0.34[nm],
+        epsilon=0.99[kJ/mol],
+        mass=39.95[amu],
+        temperature=100[K],
+        dt=0.001[ps],
+        n_steps=50,
+        box_size=1.5[nm],
+        seed=123
+    )
+
+    // Strukturelle Asserts: alle Felder vorhanden, korrekte Typen/Shapes
+    pos = res["positions"]
+    assert(pos.shape[0] == 8, "8 Teilchen-Positionen")
+    assert(pos.shape[1] == 3, "3-D Positionen")
+
+    PE = res["potential_energy"]
+    KE = res["kinetic_energy"]
+    T  = res["temperature"]
+    assert(PE.unit == "kJ/mol", "PE ist in kJ/mol")
+    assert(KE.unit == "kJ/mol", "KE ist in kJ/mol")
+    assert(T.unit == "K", "Temperatur ist in K")
+
+    // Physikalische Plausibilitaet: KE > 0 (positive Bewegungsenergie)
+    assert(KE.value > 0, "KE positiv")
+    // Equipartition: T sollte in der Naehe von 100 K liegen (innerhalb 4x — Langevin braucht Zeit)
+    assert(T.value > 20.0, "Temperatur > 20 K (Langevin equilibriert)")
+    assert(T.value < 400.0, "Temperatur < 400 K (kein runaway)")
+
+    // Alternative Einheiten: Angstrom + kcal/mol akzeptiert
+    res2 = md_simulate_lj(
+        n_particles=8,
+        sigma=3.4[Angstrom],
+        epsilon=0.238[kcal/mol],
+        mass=39.95[amu],
+        temperature=100[K],
+        dt=1[fs],
+        n_steps=20,
+        box_size=15[Angstrom],
+        seed=123
+    )
+    assert(res2["positions"].shape[0] == 8, "Angstrom-Eingabe ergibt ebenfalls 8 Positionen")
+    assert(res2["potential_energy"].unit == "kJ/mol", "PE normalisiert auf kJ/mol")
+
+    print("md_simulate_lj_test: 8 Asserts bestanden")
+}
+
+main()

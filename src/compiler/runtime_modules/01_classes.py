@@ -113,6 +113,60 @@ class Quantity:
         display_unit = _unit_simplify(self.unit)
         return f"{self.value}[{display_unit}]"
 
+    def _cmp_value(self, other):
+        """Liefert (self_val, other_val) für Vergleich. Konvertiert Einheiten, wenn möglich."""
+        if isinstance(other, Quantity):
+            dim_s = _get_dimension(self.unit)
+            dim_o = _get_dimension(other.unit)
+            if dim_s is not None and dim_s == dim_o:
+                return _convert_to_base(self.value, self.unit, dim_s), \
+                       _convert_to_base(other.value, other.unit, dim_o)
+            if _normalize_unit_for_compare(self.unit) == _normalize_unit_for_compare(other.unit):
+                return self.value, other.value
+            raise ValueError(
+                f"Vergleich nicht möglich: [{self.unit}] vs [{other.unit}] (unterschiedliche Dimension)."
+            )
+        if isinstance(other, (int, float)):
+            return self.value, float(other)
+        return self.value, other
+
+    def __lt__(self, other):
+        a, b = self._cmp_value(other)
+        return a < b
+
+    def __le__(self, other):
+        a, b = self._cmp_value(other)
+        return a <= b
+
+    def __gt__(self, other):
+        a, b = self._cmp_value(other)
+        return a > b
+
+    def __ge__(self, other):
+        a, b = self._cmp_value(other)
+        return a >= b
+
+    def __eq__(self, other):
+        if isinstance(other, Quantity):
+            try:
+                a, b = self._cmp_value(other)
+                return a == b
+            except ValueError:
+                return False
+        if isinstance(other, (int, float)):
+            return self.value == float(other)
+        return NotImplemented
+
+    def __ne__(self, other):
+        eq = self.__eq__(other)
+        if eq is NotImplemented:
+            return NotImplemented
+        return not eq
+
+    def __hash__(self):
+        return hash((self.value, _normalize_unit_for_compare(self.unit)))
+
+
 def _unit_mul(u1, u2):
     if not u1: return u2
     if not u2: return u1
@@ -605,3 +659,578 @@ def compile_model(model):
         return DedekindCompiledModel(model)
     return model
 
+
+
+def _register_user_unit(name, factor, base_unit):
+    """Registriert eine benutzerdefinierte Einheit: 1 NAME = factor * base_unit.
+
+    Beispiele:
+        _register_user_unit("Foot", 0.3048, "m")     # 1 Foot = 0.3048 m  (length)
+        _register_user_unit("Mile", 1609.34, "m")    # 1 Mile = 1609.34 m  (length)
+        _register_user_unit("Darcy", 9.869233e-13, "m^2")  # permeability
+        _register_user_unit("MilliFoot", 0.001, "Foot")    # chaining wird aufgel├Âst
+
+    base_unit muss bereits in irgendeiner Dimensionstabelle vorkommen (Basis oder Alias).
+    """
+    name = str(name).strip()
+    base_unit = str(base_unit).strip()
+    factor = float(factor)
+    if not name:
+        raise ValueError("unit-Name darf nicht leer sein.")
+    # Dimension der base_unit suchen und Kettenaufl├Âsung durchf├╝hren
+    target_dim = None
+    base_factor = 1.0
+    for dim, (_b, tab) in DIMENSION_TO_BASE.items():
+        if base_unit in tab:
+            target_dim = dim
+            base_factor = tab[base_unit]
+            break
+    if target_dim is None:
+        raise ValueError(
+            f"`unit {name} = ...[{base_unit}]`: Basiseinheit '{base_unit}' ist keiner bekannten Dimension "
+            f"zugeordnet (L├ñnge, Masse, Zeit, Druck, Energie, ...). Bitte alias zu einer bestehenden Einheit."
+        )
+    DIMENSION_TO_BASE[target_dim][1][name] = factor * base_factor
+    _rebuild_additive_unit_sets()
+    return name
+
+def _unit_of_value(value):
+    """Liefert die Einheit eines Wertes als String. '' fuer unitless / Zahlen / Tensoren."""
+    if isinstance(value, Quantity):
+        return value.unit or ""
+    if isinstance(value, UncertainQuantity):
+        return value.unit or ""
+    return ""
+
+def _check_param_unit(value, param_name, fn_name, arg_name, unit_env):
+    """Bindet eine polymorphe Einheits-Variable konsistent ueber alle Argumente eines Calls.
+
+    Erstes Auftreten: bindet param_name -> Einheit von value.
+    Folgende Auftritte: muss die gleiche Dimension haben; bei Bedarf wird value
+    in die gebundene Einheit umgerechnet.
+
+    Beispiel:
+        fn add<U>(a: [U], b: [U]) -> [U] { return a + b }
+        add(2[m], 3[m])       # U bindet auf 'm'
+        add(2[m], 100[cm])    # U bindet auf 'm', 100[cm] wird zu 1[m]
+        add(2[m], 3[kg])      # ValueError (Dimensions-Mismatch)
+    """
+    actual = _unit_of_value(value)
+    if param_name not in unit_env:
+        unit_env[param_name] = actual
+        return value
+    bound = unit_env[param_name]
+    if bound == actual:
+        return value
+    # Beide non-empty + gleiche Einheit (durch String-Vergleich)?
+    if _normalize_unit_for_compare(bound) == _normalize_unit_for_compare(actual):
+        return value
+    # Beide non-empty + gleiche Dimension? -> in gebundene Einheit umrechnen.
+    if isinstance(value, Quantity) and bound:
+        try:
+            return _coerce_to_expected_unit(value, bound, f"{fn_name}({arg_name}) [Typ-Param {param_name}]")
+        except ValueError:
+            pass
+    # Caller gab plain number, Bindung erwartet Einheit
+    if bound and not actual and isinstance(value, (int, float)):
+        return Quantity(float(value), bound)
+    raise ValueError(
+        f"Typ-Param-Einheit '{param_name}' in {fn_name}({arg_name}): "
+        f"bereits an [{bound or 'unitless'}] gebunden, hier [{actual or 'unitless'}]."
+    )
+
+def _check_return_param_unit(value, param_name, fn_name, unit_env):
+    """Pruefe / binde polymorphe Einheits-Variable am Return-Punkt."""
+    actual = _unit_of_value(value)
+    if param_name not in unit_env:
+        # Return ist die erste Stelle, die param_name sieht ÔÇö binden, ohne Pruefung
+        unit_env[param_name] = actual
+        return value
+    bound = unit_env[param_name]
+    if bound == actual:
+        return value
+    if _normalize_unit_for_compare(bound) == _normalize_unit_for_compare(actual):
+        return value
+    if isinstance(value, Quantity) and bound:
+        try:
+            return _coerce_to_expected_unit(value, bound, f"return von {fn_name} [Typ-Param {param_name}]")
+        except ValueError:
+            pass
+    if bound and not actual and isinstance(value, (int, float)):
+        return Quantity(float(value), bound)
+    raise ValueError(
+        f"Typ-Param-Einheit '{param_name}' im Return von {fn_name}: "
+        f"erwartet [{bound or 'unitless'}], erhalten [{actual or 'unitless'}]."
+    )
+
+def _shape_of(value):
+    """Liefert die Shape eines Wertes als Tupel von ints. Skalar -> (), unbekannt -> None."""
+    if isinstance(value, (int, float, bool)):
+        return ()
+    if isinstance(value, Quantity):
+        return ()
+    if hasattr(value, "shape"):
+        try:
+            sh = tuple(int(d) for d in value.shape)
+            return sh
+        except Exception:
+            pass
+    if isinstance(value, (list, tuple)):
+        if len(value) == 0:
+            return (0,)
+        first_sub = _shape_of(value[0])
+        if first_sub is None:
+            return (len(value),)
+        # Konsistenz aller Elemente (sonst unregelm├ñ├ƒig -> nur erste Dimension)
+        for item in value[1:]:
+            if _shape_of(item) != first_sub:
+                return (len(value),)
+        return (len(value),) + first_sub
+    return None
+
+def _format_shape(dims):
+    """Liefert eine kompakte String-Darstellung einer Shape-Liste/Tupel."""
+    parts = [str(d) for d in dims]
+    return "[" + ", ".join(parts) + "]"
+
+def _check_shape(value, expected_dims, fn_name, arg_name, shape_env):
+    """Prueft, dass `value` die deklarierte Shape `expected_dims` hat.
+    Symbolische Dimensionen (Strings) werden in `shape_env` gebunden bzw. verglichen.
+    Wirft ValueError bei Mismatch. Liefert `value` unveraendert zurueck (passthrough)."""
+    actual = _shape_of(value)
+    if actual is None:
+        # Shape nicht ermittelbar (z. B. generischer Iterator) - skip
+        return value
+    if len(actual) != len(expected_dims):
+        raise ValueError(
+            f"Shape-Mismatch in {fn_name}({arg_name}): erwartet {_format_shape(expected_dims)} "
+            f"({len(expected_dims)}-D), erhalten {_format_shape(actual)} ({len(actual)}-D)."
+        )
+    for i, (want, got) in enumerate(zip(expected_dims, actual)):
+        if isinstance(want, int):
+            if want != got:
+                raise ValueError(
+                    f"Shape-Mismatch in {fn_name}({arg_name}): Dimension {i} erwartet {want}, "
+                    f"erhalten {got}. Volle Shape: erwartet {_format_shape(expected_dims)}, "
+                    f"erhalten {_format_shape(actual)}."
+                )
+        else:
+            # Symbolische Dimension: erste Begegnung bindet, danach Konsistenz pruefen
+            bound = shape_env.get(want)
+            if bound is None:
+                shape_env[want] = got
+            elif bound != got:
+                raise ValueError(
+                    f"Symbolische Shape-Dimension '{want}' in {fn_name}({arg_name}): bereits "
+                    f"als {bound} gebunden, hier {got}. Volle Shape: erwartet "
+                    f"{_format_shape(expected_dims)}, erhalten {_format_shape(actual)}."
+                )
+    return value
+
+def _check_return_shape(value, expected_dims, fn_name, shape_env):
+    actual = _shape_of(value)
+    if actual is None:
+        return value
+    if len(actual) != len(expected_dims):
+        raise ValueError(
+            f"Return-Shape-Mismatch in {fn_name}: erwartet {_format_shape(expected_dims)}, "
+            f"erhalten {_format_shape(actual)}."
+        )
+    for i, (want, got) in enumerate(zip(expected_dims, actual)):
+        if isinstance(want, int):
+            if want != got:
+                raise ValueError(
+                    f"Return-Shape-Mismatch in {fn_name}: Dim {i} erwartet {want}, erhalten {got}."
+                )
+        else:
+            bound = shape_env.get(want)
+            if bound is None:
+                shape_env[want] = got
+            elif bound != got:
+                raise ValueError(
+                    f"Symbolische Return-Dimension '{want}' in {fn_name}: bereits {bound}, "
+                    f"hier {got}."
+                )
+    return value
+
+def _graph_dims(value):
+    """Liefert (num_nodes, num_edges) fuer torch_geometric.data.Data oder
+    aehnliche Objekte. None wenn nicht ermittelbar."""
+    if hasattr(value, "num_nodes") and hasattr(value, "num_edges"):
+        try:
+            return int(value.num_nodes), int(value.num_edges)
+        except Exception:
+            pass
+    # Fallback: x.shape[0] / edge_index.shape[1]
+    n_nodes = None
+    n_edges = None
+    if hasattr(value, "x") and value.x is not None and hasattr(value.x, "shape"):
+        try:
+            n_nodes = int(value.x.shape[0])
+        except Exception:
+            pass
+    if hasattr(value, "edge_index") and value.edge_index is not None and hasattr(value.edge_index, "shape"):
+        try:
+            n_edges = int(value.edge_index.shape[1])
+        except Exception:
+            pass
+    if n_nodes is not None and n_edges is not None:
+        return n_nodes, n_edges
+    return None
+
+def _check_graph_dims_against_env(actual, expected_dims, fn_name, arg_name, shape_env, where):
+    """Pruefe (N_nodes, N_edges)-Tupel gegen erwartete Dimensionen mit Symbol-Bindung."""
+    labels = ("Knoten", "Kanten")
+    for i, (want, got, label) in enumerate(zip(expected_dims, actual, labels)):
+        if isinstance(want, int):
+            if want != got:
+                raise ValueError(
+                    f"Graph-Shape-Mismatch in {where} {fn_name}({arg_name}): "
+                    f"{label}-Anzahl erwartet {want}, erhalten {got}."
+                )
+        else:
+            bound = shape_env.get(want)
+            if bound is None:
+                shape_env[want] = got
+            elif bound != got:
+                raise ValueError(
+                    f"Symbolische Graph-Dimension '{want}' in {where} {fn_name}({arg_name}): "
+                    f"bereits als {bound} gebunden, hier {got} ({label})."
+                )
+
+def _check_graph_shape(value, expected_dims, fn_name, arg_name, shape_env):
+    """Validiert, dass `value` ein torch_geometric.data.Data-aehnliches Objekt mit den
+    deklarierten (N_nodes, N_edges)-Dimensionen ist. Symbolische Dimensionen werden
+    in `shape_env` gebunden bzw. konsistent gehalten."""
+    actual = _graph_dims(value)
+    if actual is None:
+        raise ValueError(
+            f"Graph-Shape-Check in {fn_name}({arg_name}): erwarte ein Graph-Objekt "
+            f"mit num_nodes/num_edges-Attributen (z. B. torch_geometric.data.Data), "
+            f"erhalten {type(value).__name__}."
+        )
+    _check_graph_dims_against_env(actual, expected_dims, fn_name, arg_name, shape_env, "Argument")
+    return value
+
+def _check_return_graph_shape(value, expected_dims, fn_name, shape_env):
+    actual = _graph_dims(value)
+    if actual is None:
+        raise ValueError(
+            f"Graph-Return-Shape-Check in {fn_name}: erwarte ein Graph-Objekt, "
+            f"erhalten {type(value).__name__}."
+        )
+    _check_graph_dims_against_env(actual, expected_dims, fn_name, "return", shape_env, "Return")
+    return value
+
+def _labeled_dims(value):
+    """Liefert tuple der dim-Namen fuer xarray.DataArray oder DataArray-aehnliche
+    Objekte. None wenn nicht ermittelbar."""
+    if hasattr(value, "dims"):
+        try:
+            return tuple(str(d) for d in value.dims)
+        except Exception:
+            pass
+    return None
+
+def _check_labeled_shape(value, expected_dims, fn_name, arg_name, shape_env):
+    """Validiert, dass `value` ein xarray.DataArray-aehnliches Objekt mit GENAU der
+    deklarierten Menge von dim-Namen ist (Reihenfolge irrelevant ÔÇö xarray operiert
+    namens-basiert)."""
+    actual = _labeled_dims(value)
+    if actual is None:
+        raise ValueError(
+            f"LabeledTensor-Shape-Check in {fn_name}({arg_name}): erwarte ein "
+            f"DataArray-aehnliches Objekt mit .dims (z. B. xarray.DataArray), "
+            f"erhalten {type(value).__name__}."
+        )
+    expected_set = set(str(d) for d in expected_dims)
+    actual_set = set(actual)
+    if expected_set != actual_set:
+        missing = expected_set - actual_set
+        extra = actual_set - expected_set
+        msgs = []
+        if missing:
+            msgs.append(f"fehlende Dimensionen: {sorted(missing)}")
+        if extra:
+            msgs.append(f"zusaetzliche Dimensionen: {sorted(extra)}")
+        raise ValueError(
+            f"LabeledTensor-Shape-Mismatch in {fn_name}({arg_name}): "
+            f"erwartet {{ {', '.join(sorted(expected_set))} }}, "
+            f"erhalten {{ {', '.join(sorted(actual_set))} }} ({'; '.join(msgs)})."
+        )
+    return value
+
+def _check_return_labeled_shape(value, expected_dims, fn_name, shape_env):
+    actual = _labeled_dims(value)
+    if actual is None:
+        raise ValueError(
+            f"LabeledTensor-Return-Check in {fn_name}: erwarte DataArray-aehnliches "
+            f"Objekt, erhalten {type(value).__name__}."
+        )
+    expected_set = set(str(d) for d in expected_dims)
+    actual_set = set(actual)
+    if expected_set != actual_set:
+        raise ValueError(
+            f"LabeledTensor-Return-Mismatch in {fn_name}: erwartet "
+            f"{{ {', '.join(sorted(expected_set))} }}, "
+            f"erhalten {{ {', '.join(sorted(actual_set))} }}."
+        )
+    return value
+
+def _validate_sequence_string(value, kind, where):
+    """Validiert: value ist ein String und enthaelt nur Zeichen aus dem Alphabet."""
+    if not isinstance(value, str):
+        raise TypeError(
+            f"Sequence[{kind}]-Check in {where}: erwarte String, erhalten {type(value).__name__}."
+        )
+    alphabet = _SEQ_ALPHABETS.get(kind.upper())
+    if alphabet is None:
+        raise ValueError(f"Sequence-Kind {kind!r} unbekannt (erlaubt: DNA, RNA, Protein).")
+    upper_val = value.upper()
+    bad = [c for c in upper_val if c not in alphabet]
+    if bad:
+        # Erstes Vorkommen mit Position
+        idx = next(i for i, c in enumerate(upper_val) if c not in alphabet)
+        raise ValueError(
+            f"Sequence[{kind}]-Check in {where}: ungueltiges Zeichen "
+            f"{value[idx]!r} an Position {idx} (erlaubt: {''.join(sorted(alphabet))})."
+        )
+
+def _check_sequence_shape(value, expected_dims, fn_name, arg_name, shape_env):
+    kind = str(expected_dims[0])
+    _validate_sequence_string(value, kind, f"{fn_name}({arg_name})")
+    return value
+
+def _check_return_sequence_shape(value, expected_dims, fn_name, shape_env):
+    kind = str(expected_dims[0])
+    _validate_sequence_string(value, kind, f"return von {fn_name}")
+    return value
+
+def _check_qubit_shape(val, dims, fn_name, arg_name, shape_env):
+    """Prueft Qubit[N] ÔÇö erwartet QuantumCircuit oder int."""
+    if isinstance(val, QuantumCircuit):
+        expected = dims[0] if dims else None
+        if expected is not None:
+            if isinstance(expected, str):
+                if expected in shape_env:
+                    if shape_env[expected] != val.n_qubits:
+                        raise TypeError(
+                            f"{fn_name}(): Argument '{arg_name}' Qubit[{expected}]={shape_env[expected]} "
+                            f"aber QuantumCircuit hat {val.n_qubits} Qubits."
+                        )
+                else:
+                    shape_env[expected] = val.n_qubits
+            elif val.n_qubits != int(expected):
+                raise TypeError(
+                    f"{fn_name}(): Argument '{arg_name}' erwartet Qubit[{expected}], "
+                    f"QuantumCircuit hat {val.n_qubits} Qubits."
+                )
+    return val
+
+def _check_statevec_shape(val, dims, fn_name, arg_name, shape_env):
+    """Prueft StateVec[N] ÔÇö erwartet Liste der Laenge 2^N."""
+    expected_n = dims[0] if dims else None
+    if isinstance(val, list):
+        actual_len = len(val)
+        if expected_n is not None:
+            if isinstance(expected_n, str):
+                if expected_n in shape_env:
+                    exp_len = 1 << shape_env[expected_n]
+                    if actual_len != exp_len:
+                        raise TypeError(
+                            f"{fn_name}(): '{arg_name}' StateVec[{expected_n}]: "
+                            f"erwartet Laenge 2^{shape_env[expected_n]}={exp_len}, bekam {actual_len}."
+                        )
+                else:
+                    import math
+                    if actual_len == 0 or (actual_len & (actual_len - 1)) != 0:
+                        raise TypeError(
+                            f"{fn_name}(): '{arg_name}' StateVec[{expected_n}]: "
+                            f"Laenge muss Potenz von 2 sein, bekam {actual_len}."
+                        )
+                    shape_env[expected_n] = int(math.log2(actual_len))
+            else:
+                exp_len = 1 << int(expected_n)
+                if actual_len != exp_len:
+                    raise TypeError(
+                        f"{fn_name}(): '{arg_name}' erwartet StateVec[{expected_n}] "
+                        f"(Laenge {exp_len}), bekam {actual_len}."
+                    )
+    return val
+
+def _check_return_qubit_shape(val, dims, fn_name, shape_env):
+    """Prueft Rueckgabe Qubit[N]/Circuit[N,G]."""
+    _check_qubit_shape(val, dims, fn_name, "return", shape_env)
+    return val
+
+def _check_return_statevec_shape(val, dims, fn_name, shape_env):
+    """Prueft Rueckgabe StateVec[N]."""
+    _check_statevec_shape(val, dims, fn_name, "return", shape_env)
+    return val
+
+def _pauli(name):
+    m = {"I": PAULI_I, "X": PAULI_X, "Y": PAULI_Y, "Z": PAULI_Z, "H": PAULI_H}
+    if name not in m:
+        raise ValueError(f"Unbekannte Pauli-Matrix '{name}'. Erlaubt: I, X, Y, Z, H.")
+    return m[name]
+
+class QuantumCircuit:
+    """Leichtgewichtiger Dedekind-Schaltkreis (kein Qiskit n├Âtig).
+
+    Speichert Gatter als Liste von (name, qubits, params). Kann via
+    `statevec_sim()` simuliert werden oder per `to_qiskit()` exportiert werden.
+    """
+
+    def __init__(self, n_qubits: int):
+        if not isinstance(n_qubits, int) or n_qubits < 1:
+            raise ValueError(f"QuantumCircuit: n_qubits muss >= 1 sein, bekam {n_qubits!r}.")
+        self.n_qubits = n_qubits
+        self._gates = []   # [(name, qubit_list, params)]
+        self._measurements = []  # [(qubit, clbit)]
+
+    def h(self, qubit: int):
+        """Hadamard-Gatter."""
+        self._validate_qubit(qubit)
+        self._gates.append(("H", [qubit], []))
+        return self
+
+    def x(self, qubit: int):
+        """Pauli-X (NOT) Gatter."""
+        self._validate_qubit(qubit)
+        self._gates.append(("X", [qubit], []))
+        return self
+
+    def y(self, qubit: int):
+        """Pauli-Y Gatter."""
+        self._validate_qubit(qubit)
+        self._gates.append(("Y", [qubit], []))
+        return self
+
+    def z(self, qubit: int):
+        """Pauli-Z Gatter."""
+        self._validate_qubit(qubit)
+        self._gates.append(("Z", [qubit], []))
+        return self
+
+    def cx(self, control: int, target: int):
+        """CNOT-Gatter."""
+        self._validate_qubit(control)
+        self._validate_qubit(target)
+        if control == target:
+            raise ValueError("CNOT: control und target d├╝rfen nicht gleich sein.")
+        self._gates.append(("CX", [control, target], []))
+        return self
+
+    def cz(self, control: int, target: int):
+        """CZ-Gatter."""
+        self._validate_qubit(control)
+        self._validate_qubit(target)
+        self._gates.append(("CZ", [control, target], []))
+        return self
+
+    def rx(self, theta, qubit: int):
+        """Rx-Rotation um Winkel theta (Bogenmass)."""
+        self._validate_qubit(qubit)
+        th = float(_unwrap_q(theta))
+        self._gates.append(("RX", [qubit], [th]))
+        return self
+
+    def ry(self, theta, qubit: int):
+        """Ry-Rotation."""
+        self._validate_qubit(qubit)
+        th = float(_unwrap_q(theta))
+        self._gates.append(("RY", [qubit], [th]))
+        return self
+
+    def rz(self, theta, qubit: int):
+        """Rz-Rotation."""
+        self._validate_qubit(qubit)
+        th = float(_unwrap_q(theta))
+        self._gates.append(("RZ", [qubit], [th]))
+        return self
+
+    def swap(self, q0: int, q1: int):
+        """SWAP-Gatter."""
+        self._validate_qubit(q0)
+        self._validate_qubit(q1)
+        self._gates.append(("SWAP", [q0, q1], []))
+        return self
+
+    def t(self, qubit: int):
+        """T-Gatter (pi/4-Phase)."""
+        self._validate_qubit(qubit)
+        self._gates.append(("T", [qubit], []))
+        return self
+
+    def s(self, qubit: int):
+        """S-Gatter (pi/2-Phase)."""
+        self._validate_qubit(qubit)
+        self._gates.append(("S", [qubit], []))
+        return self
+
+    def measure(self, qubit: int, clbit: int = None):
+        """F├╝gt Messung hinzu."""
+        self._validate_qubit(qubit)
+        self._measurements.append((qubit, clbit if clbit is not None else qubit))
+        return self
+
+    def measure_all(self):
+        """Misst alle Qubits."""
+        for i in range(self.n_qubits):
+            self.measure(i, i)
+        return self
+
+    def _validate_qubit(self, q):
+        if not isinstance(q, int) or q < 0 or q >= self.n_qubits:
+            raise ValueError(
+                f"Qubit-Index {q} ausserhalb des Bereichs [0, {self.n_qubits - 1}]."
+            )
+
+    def depth(self) -> int:
+        """Schaltkreistiefe (naiv: Anzahl Gatter-Schichten ohne Parallelisierung)."""
+        layers = [0] * self.n_qubits
+        for name, qubits, _ in self._gates:
+            d = _builtin_max(layers[q] for q in qubits) + 1
+            for q in qubits:
+                layers[q] = d
+        return _builtin_max(layers) if layers else 0
+
+    def n_gates(self) -> int:
+        """Gesamtanzahl der Gatter."""
+        return len(self._gates)
+
+    def __repr__(self):
+        lines = [f"QuantumCircuit({self.n_qubits} Qubits, {self.n_gates()} Gatter, Tiefe={self.depth()})"]
+        for name, qubits, params in self._gates:
+            pstr = f"({', '.join(f'{p:.4f}' for p in params)})" if params else ""
+            qstr = ", ".join(str(q) for q in qubits)
+            lines.append(f"  {name}{pstr}  q[{qstr}]")
+        if self._measurements:
+            lines.append(f"  MEASURE: {self._measurements}")
+        return "\n".join(lines)
+
+    def to_qiskit(self):
+        """Konvertiert zu echtem Qiskit QuantumCircuit (erfordert `pyimport qiskit`)."""
+        try:
+            import qiskit
+        except ImportError:
+            raise ImportError(
+                "Qiskit nicht gefunden. Installiere es: pip install qiskit\n"
+                "Alternativ: statevec_sim(circuit) fuer reine Simulation."
+            )
+        from qiskit import QuantumCircuit as _QC
+        qc = _QC(self.n_qubits, self.n_qubits if self._measurements else 0)
+        _QISKIT_MAP = {
+            "H": qc.h, "X": qc.x, "Y": qc.y, "Z": qc.z,
+            "CX": qc.cx, "CZ": qc.cz, "SWAP": qc.swap,
+            "T": qc.t, "S": qc.s,
+        }
+        _QISKIT_ROT = {"RX": qc.rx, "RY": qc.ry, "RZ": qc.rz}
+        for name, qubits, params in self._gates:
+            if name in _QISKIT_ROT:
+                _QISKIT_ROT[name](params[0], qubits[0])
+            elif name in _QISKIT_MAP:
+                _QISKIT_MAP[name](*qubits)
+        for qubit, clbit in self._measurements:
+            qc.measure(qubit, clbit)
+        return qc

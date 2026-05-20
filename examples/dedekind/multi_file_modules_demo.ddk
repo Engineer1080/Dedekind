@@ -1,0 +1,60 @@
+// multi_file_modules_demo.ddk — Multi-File-Module mit Sichtbarkeit (v1.19)
+//
+// Zwei Sprach-Features in einem:
+//   1. `use foo.bar` resolved gepunktet auf modules/foo/bar.ddk
+//   2. `pub fn name()` markiert Funktionen als oeffentlich; alle anderen
+//      Funktionen im Modul sind nach aussen unsichtbar (Mangling).
+//
+// Backward-kompatibel: Module ohne `pub`-Deklaration (z. B. die bestehenden
+// physics/stats/chemistry/biology/math/ml) verhalten sich wie bisher — alles
+// public.
+
+use geometry.area
+use geometry.volume
+use math
+
+fn main() {
+    print("=== Multi-File-Module mit Sichtbarkeit (v1.19) ===")
+    print("")
+
+    // --- 1. Aufruf aus modules/geometry/area.ddk ---
+    print("[1] geometry.area (modules/geometry/area.ddk)")
+    print("  circle_area(2.0)        =", circle_area(2.0))
+    print("  triangle_area(4.0, 3.0) =", triangle_area(4.0, 3.0))
+    print("")
+
+    // --- 2. Aufruf aus modules/geometry/volume.ddk ---
+    print("[2] geometry.volume (modules/geometry/volume.ddk)")
+    print("  cube_volume(3.0)        =", cube_volume(3.0))
+    print("  sphere_volume(1.0)      =", sphere_volume(1.0))
+    print("  cone_volume(2.0, 6.0)   =", cone_volume(2.0, 6.0))
+    print("")
+
+    // --- 3. Sichtbarkeit: private Funktionen sind unsichtbar ---
+    print("[3] Visibility-Check")
+    try {
+        bad = priv_pi()
+        print("  UNERWARTET: priv_pi war erreichbar")
+    } catch e {
+        print("  OK: priv_pi() nicht erreichbar — Mangling wirkt")
+    }
+    try {
+        bad2 = priv_four_thirds()
+        print("  UNERWARTET: priv_four_thirds war erreichbar")
+    } catch e {
+        print("  OK: priv_four_thirds() nicht erreichbar")
+    }
+    print("")
+
+    // --- 4. Bestehende Module (ohne pub) bleiben rueckwaerts-kompatibel ---
+    print("[4] Backward-Kompatibilitaet")
+    print("  use math (ohne pub) -> alle Funktionen sichtbar")
+    print("  fibonacci(10)           =", fibonacci(10))
+    print("  hypotenuse(3, 4)        =", hypotenuse(3.0, 4.0))
+    print("")
+
+    print("USP: in Python kommt jedes import seine eigene Disziplin —")
+    print("     __all__, leading underscore convention, etc. In Dedekind")
+    print("     erzwingt die Sprache, was sonst Stilrichtlinie ist.")
+}
+main()

@@ -1,7 +1,33 @@
 # Features für Naturwissenschaftler — Implementierungs-Roadmap
 
 **Dedekind Language**  
-Draft: January 2026
+Draft: January 2026 · letzter Roadmap-Stand-Update: v1.17.0 (März 2027)
+
+---
+
+## Status-Update (v1.17.0)
+
+Seit der ursprünglichen Roadmap (Januar 2026) wurde der Großteil der geplanten Phasen ausgeliefert:
+
+| Phase | Thema | Status | Geliefert in |
+|---|---|---|---|
+| 1 | PDE-Solver (heat) | ✅ erledigt | v0.8; v1.x erweitert auf Maxwell, Navier-Stokes, Burgers, Reaktions-Diffusion, Advektions-Diffusion |
+| 1 | Erweiterte Verteilungen (Exponential, Gamma, Beta, Poisson) | ✅ erledigt | v0.9 |
+| 1 | Numerische Integration (`integrate`) | ✅ erledigt | v0.9 |
+| 2 | Bessere Fehlermeldungen mit Zeilennummern | ✅ erledigt | v0.9.5 |
+| 2 | **Source-mapped Tracebacks** (über Roadmap hinausgehend) | ✅ erledigt | v1.8 |
+| 3 | Uncertainty-Propagation (`uncertain()`) | ✅ erledigt | v0.9.3 |
+| 3 | Einheiten-Check zur Compile-Zeit | ✅ erledigt | v0.9.5 |
+| 4 | Fitting/Regression (`fit()`) mit GD/MCMC/HMC | ✅ erledigt | v0.9.3, v0.9.4 |
+| 4 | LaTeX-Export (`export_to_latex`) | ✅ erledigt | v0.9.4 |
+| 5 | Symbolische Ableitungen (`diff_sym`) | ✅ erledigt | v1.3 |
+| 5 | **Über Phase 5 hinaus**: `integrate_sym`, `solve_sym`, `simplify_sym`, `series` (SymPy-Brücke) | ✅ erledigt | v1.3 – v1.6 |
+
+**Noch offen aus der ursprünglichen Roadmap:**
+- **NUTS** (No-U-Turn Sampler) zusätzlich zu HMC — nicht implementiert.
+- **Variational Inference** (VI) — nicht implementiert.
+
+**Seit v1.7 dazugekommen** (über die ursprüngliche Roadmap hinaus): Standardbibliothek-Module, `pyimport`, Purity-Check, Shape-Annotationen, PINN, Graph-Methoden, MILP-DSL, MD-Brücke, Labeled Tensors, Bioinformatik, try/catch, Slicing. Siehe `Documentation/README.md` und `Dedekind_Language_Specification.md` §15.12–§15.23.
 
 ---
 

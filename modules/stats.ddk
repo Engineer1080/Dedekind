@@ -1,0 +1,113 @@
+// modules/stats.ddk — Dedekind-Standardbibliothek: Statistik-Convenience.
+// Aktivierung: `use stats`
+//
+// Ergänzt die eingebauten Funktionen (mean, std, var, ttest_*, ...) um
+// Effektgrößen, Z-Scores, Standardfehler, Modellgüte und einfache CI-Helfer.
+
+// --- Standardisierung & Effektgrößen -----------------------------------------
+
+fn z_score(x, mu, sigma) {
+    return (x - mu) / sigma
+}
+
+fn cohens_d(mean1, mean2, pooled_std) {
+    return (mean1 - mean2) / pooled_std
+}
+
+fn pooled_std(s1, s2, n1, n2) {
+    // gepoolte Standardabweichung für zwei Stichproben
+    num = (n1 - 1) * s1 * s1 + (n2 - 1) * s2 * s2
+    return sqrt(num / (n1 + n2 - 2))
+}
+
+fn glass_delta(mean_treat, mean_ctrl, std_ctrl) {
+    return (mean_treat - mean_ctrl) / std_ctrl
+}
+
+fn hedges_g(mean1, mean2, s1, s2, n1, n2) {
+    // korrigierte Effektgröße (kleinere Stichproben)
+    sp = pooled_std(s1, s2, n1, n2)
+    d = (mean1 - mean2) / sp
+    j = 1.0 - 3.0 / (4.0 * (n1 + n2) - 9.0)
+    return j * d
+}
+
+// --- Standardfehler & Konfidenzintervalle ------------------------------------
+
+fn standard_error_mean(sigma, n) {
+    return sigma / sqrt(n)
+}
+
+fn ci_normal_mean(mean_val, sigma, n, z) {
+    // Normal-Approximation: mean ± z * SE
+    se = standard_error_mean(sigma, n)
+    return [mean_val - z * se, mean_val + z * se]
+}
+
+fn ci_proportion(p_hat, n, z) {
+    // Wald-Intervall für eine Proportion
+    se = sqrt(p_hat * (1.0 - p_hat) / n)
+    return [p_hat - z * se, p_hat + z * se]
+}
+
+// --- Modellgüte / Regression -------------------------------------------------
+
+fn r_squared(y_true, y_pred) {
+    y_mean = mean(y_true)
+    ss_res = 0.0
+    ss_tot = 0.0
+    n = len(y_true)
+    for i in arange(n) {
+        d_res = y_true[i] - y_pred[i]
+        d_tot = y_true[i] - y_mean
+        ss_res = ss_res + d_res * d_res
+        ss_tot = ss_tot + d_tot * d_tot
+    }
+    return 1.0 - ss_res / ss_tot
+}
+
+fn mse(y_true, y_pred) {
+    n = len(y_true)
+    s = 0.0
+    for i in arange(n) {
+        d = y_true[i] - y_pred[i]
+        s = s + d * d
+    }
+    return s / n
+}
+
+fn rmse(y_true, y_pred) {
+    return sqrt(mse(y_true, y_pred))
+}
+
+fn mae(y_true, y_pred) {
+    n = len(y_true)
+    s = 0.0
+    for i in arange(n) {
+        d = y_true[i] - y_pred[i]
+        if d < 0 { d = -d }
+        s = s + d
+    }
+    return s / n
+}
+
+// --- Verteilungs-Quickwins ---------------------------------------------------
+
+fn coefficient_of_variation(x) {
+    return std(x) / mean(x)
+}
+
+fn standardize(x) {
+    // (x - mean) / std elementweise
+    m = mean(x)
+    s = std(x)
+    return (x - m) / s
+}
+
+fn relative_error(approx, exact) {
+    diff = approx - exact
+    if diff < 0 { diff = -diff }
+    e = exact
+    if e < 0 { e = -e }
+    return diff / e
+}

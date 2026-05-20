@@ -1,0 +1,49 @@
+// quantum_bell.ddk — Bell-Zustaende und Quantenverschraenkung in Dedekind (v1.21)
+// Demonstriert: quantum_circuit(), .h(), .cx(), statevec_sim(), statevec_probs()
+
+// 1. Bell-Zustand |Φ+⟩ = (|00⟩ + |11⟩)/√2
+qc = quantum_circuit(2)
+qc.h(0)
+qc.cx(0, 1)
+
+sv = statevec_sim(qc)
+print("Statevector |Φ+⟩:")
+print(sv)
+
+probs = statevec_probs(qc)
+print("Wahrscheinlichkeiten [|00⟩, |01⟩, |10⟩, |11⟩]:")
+print(probs)
+
+// 2. Sampling: 1000 Messungen
+counts = statevec_sim(qc, 1000)
+print("Messergebnisse (1000 Shots):")
+print(counts)
+
+// 3. Alle vier Bell-Zustaende via Helfer
+phi_plus  = bell_state(0)
+phi_minus = bell_state(1)
+psi_plus  = bell_state(2)
+psi_minus = bell_state(3)
+
+sv0 = statevec_sim(phi_plus)
+sv1 = statevec_sim(phi_minus)
+
+// Fidelitaet: |Φ+⟩ und |Φ-⟩ sollten orthogonal sein (Fidelitaet = 0)
+f = fidelity(sv0, sv1)
+print("Fidelitaet |Φ+⟩ vs |Φ-⟩ (erwartet: ~0):")
+print(f)
+
+// 4. Schaltkreis-Info
+print("Gatter im Schaltkreis:", qc.n_gates())
+print("Tiefe:", qc.depth())
+
+// 5. GHZ-Zustand fuer 3 Qubits
+ghz = ghz_state(3)
+sv_ghz = statevec_sim(ghz)
+p_ghz = statevec_probs(ghz)
+print("GHZ-Wahrscheinlichkeiten (erwartet: |000⟩ und |111⟩ je 0.5):")
+print(p_ghz)
+
+// 6. Von-Neumann-Entropie der Wahrscheinlichkeitsverteilung
+s = entropy_von_neumann(p_ghz)
+print("Von-Neumann-Entropie (GHZ):", s)
