@@ -42,6 +42,15 @@ pandoc Dedekind_Research_and_Architecture.md -o Dedekind_Research_and_Architectu
 - **Typora / other editors**: Open the `.md` file and export to PDF from the application.
 
 
+## What changed in v2.3.0 (documented here)
+
+- **Version 2.3.0**: **Differentiable Space Physics & Orbital Mechanics.** Dedekind führt ein neues Modul `use space` ein, das differenzierbare Raumfahrtphysik und Astrodynamik ermöglicht.
+  - **Differentiable N-Body Simulation**: Native Runge-Kutta-Integration 4. Ordnung (RK4) für beliebig viele Himmelskörper mit gravitativen Interaktionen und weicher Nahbereichs-Wechselwirkung (Softening).
+  - **Kepler Solver**: Integrierter Newton-Raphson-Algorithmus zur präzisen und differenzierbaren numerischen Lösung der Kepler-Gleichung ($E - e \sin E = M$).
+  - **Koordinatentransformationen**: Analytische und differenzierbare Umrechnungen zwischen klassischen Kepler-Bahnelementen (Halbachse, Exzentrizität, Inklination, Rektaszension, Perigäum, Anomalie) und kartesischen Koordinaten (Zustandsvektoren für Ort und Geschwindigkeit), auch direkt ausgehend von der exzentrischen Anomalie $E$.
+  - **Trajektorienoptimierung**: Vollständige Integration in den Autograd- und Minimierungs-Mechanismus (L-BFGS/GD), um Trajektorien oder Manöver optimieren zu können (z.B. Erreichen einer Zielposition).
+  - **Beispiele & Tests**: Erfolgreiche Validierung in `tests/dedekind/space_test.ddk` (Einheitsumrechnung, Solvers, Transformationskonsistenz) sowie `examples/dedekind/space_orbit_optimization.ddk` (Optimierung eines Kreisbahneinschlusses). Alle 61/61 Testsuiten erfolgreich.
+
 ## What changed in v2.2.0 (documented here)
 
 - **Version 2.2.0**: **Differentiable Engineering Modules.** Dedekind erweitert seine Fähigkeiten um differenzierbare Regelungstechnik, Strömungsmechanik, Strukturmechanik, Wärmeleitung und Signalverarbeitung.

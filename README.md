@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-2.2.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-2.3.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -28,6 +28,13 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
+
+### What's New in v2.3.0 (Space Physics & Orbital Mechanics)
+
+- **Differentiable N-Body Simulation (`use space`):** Native differenzierbare N-Körper-Integration mittels Runge-Kutta-Verfahren 4. Ordnung (RK4) mit optionalem Softening-Parameter.
+- **Kepler-Gleichungslöser:** Robuster Newton-Raphson-Löser zur Bestimmung der exzentrischen Anomalie $E$ aus mittlerer Anomalie $M$ und Exzentrizität $e$.
+- **Koordinatentransformationen:** Differentiable Umrechnungen zwischen Kepler-Bahnelementen (Große Halbachse, Exzentrizität, Inklination, Rektaszension des aufsteigenden Knotens, Argument des Perigäums, wahre oder exzentrische Anomalie) und kartesischen Zustandsvektoren (Position & Geschwindigkeit).
+- **Trajektorienoptimierung:** Ermöglicht die direkte L-BFGS- oder GD-basierte Optimierung von Raumfahrttrajektorien und Bahnmanövern (z.B. Hohmann-Transfers oder Orbit-Targeting) durch den Dedekind-Compiler und Autograd.
 
 ### What's New in v2.2.0 (Differentiable Engineering)
 

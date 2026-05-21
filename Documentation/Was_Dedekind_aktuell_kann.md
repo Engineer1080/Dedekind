@@ -35,6 +35,7 @@
 - **Differenzierbare PDE:** `pde_heat_1d`, `pde_heat_2d` (Wärmeleitung); `pde_advection_1d`, `pde_advection_2d` (Advektion); `pde_wave_1d`, `pde_wave_2d` (Wellengleichung); `pde_burgers_1d`, `pde_burgers_2d` (Burgers); `pde_reaction_diffusion_1d`, `pde_reaction_diffusion_2d` (Reaktions-Diffusion); `pde_advection_diffusion_1d`, `pde_advection_diffusion_2d` (Advektions-Diffusion); `pde_maxwell_1d`, `pde_maxwell_2d` (Maxwell, FDTD); `pde_navier_stokes_2d(u0, v0, x, y, t, nu)` (Navier-Stokes 2D inkompressibel, Chorin-Projektion); Finite Differenzen + `ode_solve`.
 - **Quaternionen:** Native Unterstützung (`i`, `j`, `k`-Suffixe), `.rotate()`; unäres Minus (`-1.0 + 0i`).
 - **Uncertainty Propagation:** `uncertain(value, std)` bzw. `UncertainQuantity` – Gauß’sche Fehlerfortpflanzung für +, -, *, /, ^; optional mit Einheit.
+- **Raumfahrtphysik & Orbitmechanik (`use space`):** Differenzierbare N-Körper-Simulation (RK4), Kepler-Gleichungslöser (Newton-Raphson), Umrechnung von Kepler-Bahnelementen in kartesische Koordinaten (und umgekehrt, auch direkt aus der exzentrischen Anomalie $E$). Ermöglicht die autograd-basierten Trajektorienoptimierung und den Entwurf von Bahnmanövern (z.B. L-BFGS-Optimierung eines Bahntransfers).
 
 - **Differentialgeometrie:** `christoffel_symbols(g_func, x, h)`, `riemann_tensor(g_func, x, h)`, `covariant_derivative(T, g_func, x, h)` – Christoffel-Symbole, Riemann-Tensor, kovariante Ableitung (numerisch).
 

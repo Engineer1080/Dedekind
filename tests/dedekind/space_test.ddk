@@ -1,0 +1,123 @@
+use space
+
+fn test_kepler_solve() {
+    print("Running test_kepler_solve...")
+    
+    // For e=0, eccentric/mean anomaly should match mean anomaly exactly
+    E0 = kepler_solve(0.0, 0.0)
+    assert(abs(E0) < 1e-7, "e=0 should yield E=0")
+    
+    E1 = kepler_solve(1.0, 0.0)
+    assert(abs(E1 - 1.0) < 1e-7, "e=0 should yield E=M")
+    
+    // For e > 0
+    M = 1.0
+    ecc = 0.5
+    E = kepler_solve(M, ecc)
+    // E - ecc * sin(E) - M should be close to 0
+    err = E - ecc * sin(E) - M
+    print("M:", M, "ecc:", ecc, "E:", E, "err:", err)
+    assert(abs(err) < 1e-6, "Kepler solver error too high")
+    
+    print("test_kepler_solve: passed")
+}
+
+fn test_conversions() {
+    print("Running test_conversions...")
+    
+    // Orbital elements for Earth orbit
+    a = 7000000.0
+    ecc = 0.1
+    inc = 0.5
+    Omega = 1.0
+    omega = 1.5
+    nu = 0.2
+    mu = 3.986004418e14  // Earth gravitational parameter (m^3/s^2)
+    
+    // Convert to Cartesian
+    cart = kepler_to_cartesian(a, ecc, inc, Omega, omega, nu, mu)
+    r = cart["position"]
+    v = cart["velocity"]
+    
+    // Convert back to Keplerian
+    kep = cartesian_to_kepler(r, v, mu)
+    
+    // Verify parameters
+    assert(abs(kep["a"] - a) < 1.0, "a conversion failed")
+    assert(abs(kep["ecc"] - ecc) < 1e-5, "ecc conversion failed")
+    assert(abs(kep["inc"] - inc) < 1e-5, "inc conversion failed")
+    assert(abs(kep["Omega"] - Omega) < 1e-5, "Omega conversion failed")
+    assert(abs(kep["omega"] - omega) < 1e-5, "omega conversion failed")
+    assert(abs(kep["nu"] - nu) < 1e-5, "nu conversion failed")
+    
+    print("test_conversions: passed")
+}
+
+fn test_n_body() {
+    print("Running test_n_body...")
+    
+    // Earth-satellite system
+    pos_init = [[0.0, 0.0, 0.0], [7000000.0, 0.0, 0.0]]
+    vel_init = [[0.0, 0.0, 0.0], [0.0, 7546.0, 0.0]]
+    masses = [5.972e24, 1000.0]
+    
+    dt = 10.0
+    steps = 50
+    
+    res = n_body_simulate(pos_init, vel_init, masses, dt, steps)
+    pos_history = res["positions"]
+    vel_history = res["velocities"]
+    
+    // Check shapes: [steps, N, 3]
+    assert(pos_history.shape[0] == 50, "steps shape mismatch")
+    assert(pos_history.shape[1] == 2, "N shape mismatch")
+    assert(pos_history.shape[2] == 3, "dim shape mismatch")
+    
+    // Verify satellite moved
+    pos_sat_final = pos_history[49][1]
+    assert(abs(pos_sat_final[0] - 7000000.0) > 1000.0, "satellite should have moved")
+    
+    print("test_n_body: passed")
+}
+
+fn test_gradient() {
+    print("Running test_gradient...")
+    
+    // We want to verify that we can take gradients through n_body_simulate
+    fn loss_fn(v_init_y) {
+        pos_init = [[0.0, 0.0, 0.0], [7000000.0, 0.0, 0.0]]
+        // Velocity parameter is v_init_y
+        vel_init = [[0.0, 0.0, 0.0], [0.0, v_init_y, 0.0]]
+        masses = [5.972e24, 1000.0]
+        
+        dt = 10.0
+        steps = 5
+        res = n_body_simulate(pos_init, vel_init, masses, dt, steps)
+        
+        // Final position of satellite Y component
+        pos_history = res["positions"]
+        final_y = pos_history[4][1][1]
+        return final_y
+    }
+    
+    v0 = 7546.0
+    // Get gradient/jacobian of final_y with respect to v0
+    jac = jacobian(loss_fn, v0)
+    print("Jacobian of final_y w.r.t v_init_y:", jac[0])
+    
+    // Gradient should be non-zero and clean (not NaN/inf)
+    assert(abs(jac[0]) > 0.0, "gradient should be non-zero")
+    
+    print("test_gradient: passed")
+}
+
+fn main() {
+    print("=== Differentiable Space Physics Tests ===")
+    test_kepler_solve()
+    test_conversions()
+    test_n_body()
+    test_gradient()
+    print("space_test: Alle Tests bestanden!")
+}
+
+main()

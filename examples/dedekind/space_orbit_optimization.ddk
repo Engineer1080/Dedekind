@@ -1,0 +1,62 @@
+use space
+
+fn orbit_loss(params) {
+    vx = params[0]
+    vy = params[1]
+    
+    // Setup Earth (at origin) and Satellite (at 7000 km)
+    pos_init = [[0.0, 0.0, 0.0], [7000000.0, 0.0, 0.0]]
+    vel_init = [[0.0, 0.0, 0.0], [vx, vy, 0.0]]
+    masses = [5.972e24, 1000.0]
+    
+    // Simulate for 1000 seconds (10 steps of 100s)
+    dt = 100.0
+    steps = 11
+    
+    res = n_body_simulate(pos_init, vel_init, masses, dt, steps)
+    pos_history = res["positions"]
+    
+    // Get final position of the satellite (index 1) at the end of the simulation (index 10)
+    pos_sat_final = pos_history[10][1]
+    
+    // Target position after 1000 seconds (matching a circular orbit)
+    tx = 3311000.0
+    ty = 6167000.0
+    tz = 0.0
+    
+    dx = pos_sat_final[0] - tx
+    dy = pos_sat_final[1] - ty
+    dz = pos_sat_final[2] - tz
+    
+    // Loss is scaled distance squared in kilometers to avoid numerical gradient scaling issues
+    loss = (dx^2 + dy^2 + dz^2) / 1.0e6
+    return loss
+}
+
+fn main() {
+    print("=== Trajectory and Orbit Optimization Showcase ===")
+    
+    // Initial guess: v_x = 0.0, v_y = 7000.0 m/s (slower than circular speed of ~7546 m/s)
+    p_init = [0.0, 7000.0]
+    
+    loss_init = orbit_loss(p_init)
+    print("Initial parameters: vx =", p_init[0], ", vy =", p_init[1])
+    print("Initial targeting error (loss):", loss_init)
+    
+    // Run L-BFGS optimization to find the velocity that hits the target
+    res_opt = minimize(orbit_loss, p_init, "lbfgs")
+    p_opt = res_opt[0]
+    
+    loss_opt = orbit_loss(p_opt)
+    print("Optimized parameters: vx =", p_opt[0], ", vy =", p_opt[1])
+    print("Optimized targeting error (loss):", loss_opt)
+    
+    // Check if targeting error has decreased significantly
+    assert(loss_opt < 1.0, "Targeting optimization failed to converge")
+    assert(abs(p_opt[0] - 0.0) < 50.0, "Optimized vx out of range")
+    assert(abs(p_opt[1] - 7546.0) < 50.0, "Optimized vy out of range")
+    
+    print("Orbit targeting optimization: passed successfully!")
+}
+
+main()

@@ -1,0 +1,26 @@
+// Dedekind Standard Library: Differentiable Space Physics & Orbital Mechanics
+// Provides tools for N-body simulations, Kepler solvers, and Keplerian-Cartesian conversions.
+
+pub fn n_body_simulate(pos_init, vel_init, masses, dt, steps) {
+    return n_body_simulate_impl(pos_init, vel_init, masses, dt, steps, 6.6743e-11, 1e-9)
+}
+
+pub fn n_body_simulate_advanced(pos_init, vel_init, masses, dt, steps, G, softening) {
+    return n_body_simulate_impl(pos_init, vel_init, masses, dt, steps, G, softening)
+}
+
+pub fn kepler_solve(M, ecc) {
+    return kepler_solve_impl(M, ecc, 10, 1e-12)
+}
+
+pub fn kepler_to_cartesian(a, e, i, Omega, omega, nu, mu) {
+    return kepler_to_cartesian_impl(a, e, i, Omega, omega, nu, mu)
+}
+
+pub fn kepler_to_cartesian_from_E(a, e, i, Omega, omega, E, mu) {
+    return kepler_to_cartesian_from_E_impl(a, e, i, Omega, omega, E, mu)
+}
+
+pub fn cartesian_to_kepler(r, v, mu) {
+    return cartesian_to_kepler_impl(r, v, mu)
+}
