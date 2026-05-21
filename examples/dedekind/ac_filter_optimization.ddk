@@ -1,0 +1,52 @@
+use electronics
+
+fn rlc_resonance_loss(p) {
+    // p[0] represents L in mH
+    // p[1] represents C in nF
+    L_val = p[0] * 1e-3
+    C_val = p[1] * 1e-9
+    
+    c = circuit()
+    c.add_voltage_source("V1", 1, 0, phasor(10.0, 0.0))
+    c.add_inductor("L1", 1, 2, L_val)
+    c.add_capacitor("C1", 2, 3, C_val)
+    c.add_resistor("R1", 3, 0, 50.0)
+    
+    omega = 6000.0
+    res = c.solve_ac(omega)
+    v_out = res["v_3"]
+    
+    // Maximize v_out magnitude (target is 10.0 V at resonance)
+    // Penalty to keep L close to 100 mH
+    L_target = 100.0
+    loss_val = (10.0 - v_out.magnitude)^2 + 0.1 * (p[0] - L_target)^2
+    return loss_val
+}
+
+fn main() {
+    print("=== Differentiable RLC Bandpass Optimization ===")
+    
+    // Initial guess: L = 150 mH, C = 150 nF
+    p_init = [150.0, 150.0]
+    
+    // Compute initial loss and magnitude
+    loss_init = rlc_resonance_loss(p_init)
+    print("Initial parameters: L =", p_init[0], "mH, C =", p_init[1], "nF")
+    print("Initial Loss:", loss_init)
+    
+    // Run L-BFGS optimization
+    res_opt = minimize(rlc_resonance_loss, p_init, "lbfgs")
+    p_opt = res_opt[0]
+    
+    loss_opt = rlc_resonance_loss(p_opt)
+    print("Optimized parameters: L =", p_opt[0], "mH, C =", p_opt[1], "nF")
+    print("Expected: L = 100 mH, C = 277.78 nF")
+    print("Optimized Loss:", loss_opt)
+    
+    // Verifications
+    assert(abs(p_opt[0] - 100.0) < 0.1)
+    assert(abs(p_opt[1] - 277.778) < 0.1)
+    print("Optimization test: passed successfully!")
+}
+
+main()

@@ -40,6 +40,7 @@ DIMENSION_TO_BASE = {
     "magnetic_flux_density": ("T", {"T": 1.0, "G": 1e-4}),
     "magnetic_flux": ("Wb", {"Wb": 1.0}),
     "inductance": ("H", {"H": 1.0, "mH": 0.001, "uH": 1e-6}),
+    "capacitance": ("F", {"F": 1.0, "mF": 0.001, "uF": 1e-6, "muF": 1e-6, "nF": 1e-9, "pF": 1e-12}),
     "amount_concentration": ("M", {"M": 1.0, "mM": 0.001, "uM": 1e-6, "nM": 1e-9}),
     "absorbed_dose": ("Gy", {"Gy": 1.0, "mGy": 0.001}),
     "equivalent_dose": ("Sv", {"Sv": 1.0, "mSv": 0.001}),

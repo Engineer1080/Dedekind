@@ -40,6 +40,7 @@ DIMENSION_TO_BASE = {
     "magnetic_flux_density": ("T", {"T": 1.0, "G": 1e-4}),
     "magnetic_flux": ("Wb", {"Wb": 1.0}),
     "inductance": ("H", {"H": 1.0, "mH": 0.001, "uH": 1e-6}),
+    "capacitance": ("F", {"F": 1.0, "mF": 0.001, "uF": 1e-6, "muF": 1e-6, "nF": 1e-9, "pF": 1e-12}),
     "amount_concentration": ("M", {"M": 1.0, "mM": 0.001, "uM": 1e-6, "nM": 1e-9}),
     "absorbed_dose": ("Gy", {"Gy": 1.0, "mGy": 0.001}),
     "equivalent_dose": ("Sv", {"Sv": 1.0, "mSv": 0.001}),
@@ -9349,6 +9350,8 @@ class Circuit:
     def __init__(self):
         self.nodes = set([0])
         self.resistors = []
+        self.capacitors = []
+        self.inductors = []
         self.v_sources = []
         self.i_sources = []
 
@@ -9362,6 +9365,20 @@ class Circuit:
         self.nodes.add(node2)
         r_val = self._get_val(R, "resistance")
         self.resistors.append((node1, node2, r_val))
+        return self
+
+    def add_capacitor(self, name, node1, node2, C):
+        self.nodes.add(node1)
+        self.nodes.add(node2)
+        c_val = self._get_val(C, "capacitance")
+        self.capacitors.append((node1, node2, c_val))
+        return self
+
+    def add_inductor(self, name, node1, node2, L):
+        self.nodes.add(node1)
+        self.nodes.add(node2)
+        l_val = self._get_val(L, "inductance")
+        self.inductors.append((node1, node2, l_val))
         return self
 
     def add_voltage_source(self, name, node1, node2, V):
@@ -9464,30 +9481,183 @@ class Circuit:
                 
         return results
 
+    def solve_ac(self, omega):
+        # We want double precision complex number computations
+        omega_val = self._get_val(omega, "frequency")
+        omega_t = _to_tensor(omega_val).double()
+        
+        node_list = sorted(list(self.nodes))
+        if 0 in node_list:
+            node_list.remove(0)
+            
+        n_nodes = len(node_list)
+        n_vs = len(self.v_sources)
+        size = n_nodes + n_vs
+        
+        node_map = {node: i for i, node in enumerate(node_list)}
+        node_map[0] = -1  # Ground
+        
+        # Build complex A and z
+        A = [[torch.tensor(0.0, dtype=torch.complex128, device=omega_t.device) for _ in range(size)] for _ in range(size)]
+        z = [torch.tensor(0.0, dtype=torch.complex128, device=omega_t.device) for _ in range(size)]
+        
+        def add_to_A(i, j, val):
+            if i >= 0 and j >= 0:
+                A[i][j] = A[i][j] + val
+                
+        def add_to_z(i, val):
+            if i >= 0:
+                z[i] = z[i] + val
+
+        # 1. Resistors (Conductance Y_R = 1/R)
+        for n1, n2, r_val in self.resistors:
+            r_t = _to_tensor(r_val).double()
+            g = 1.0 / r_t
+            g_c = torch.complex(g, torch.zeros_like(g))
+            idx1 = node_map[n1]
+            idx2 = node_map[n2]
+            add_to_A(idx1, idx1, g_c)
+            add_to_A(idx2, idx2, g_c)
+            add_to_A(idx1, idx2, -g_c)
+            add_to_A(idx2, idx1, -g_c)
+            
+        # 2. Capacitors (Admittance Y_C = j * omega * C)
+        for n1, n2, c_val in self.capacitors:
+            c_t = _to_tensor(c_val).double()
+            y_c = torch.complex(torch.zeros_like(c_t), omega_t * c_t)
+            idx1 = node_map[n1]
+            idx2 = node_map[n2]
+            add_to_A(idx1, idx1, y_c)
+            add_to_A(idx2, idx2, y_c)
+            add_to_A(idx1, idx2, -y_c)
+            add_to_A(idx2, idx1, -y_c)
+            
+        # 3. Inductors (Admittance Y_L = -j / (omega * L))
+        for n1, n2, l_val in self.inductors:
+            l_t = _to_tensor(l_val).double()
+            omega_safe = torch.where(omega_t == 0.0, torch.ones_like(omega_t), omega_t)
+            l_safe = torch.where(l_t == 0.0, torch.ones_like(l_t), l_t)
+            y_val = -1.0 / (omega_safe * l_safe)
+            y_l = torch.complex(torch.zeros_like(l_t), y_val)
+            idx1 = node_map[n1]
+            idx2 = node_map[n2]
+            add_to_A(idx1, idx1, y_l)
+            add_to_A(idx2, idx2, y_l)
+            add_to_A(idx1, idx2, -y_l)
+            add_to_A(idx2, idx1, -y_l)
+            
+        # 4. Current sources (Complex Phasor)
+        for n1, n2, i_val in self.i_sources:
+            i_c = _to_complex_phasor(i_val)
+            idx1 = node_map[n1]
+            idx2 = node_map[n2]
+            add_to_z(idx1, -i_c)
+            add_to_z(idx2, i_c)
+            
+        # 5. Voltage sources (Complex Phasor)
+        v_names = []
+        for i, (name, n1, n2, v_val) in enumerate(self.v_sources):
+            v_names.append(name)
+            v_c = _to_complex_phasor(v_val)
+            idx1 = node_map[n1]
+            idx2 = node_map[n2]
+            v_idx = n_nodes + i
+            
+            add_to_z(v_idx, v_c)
+            
+            one_c = torch.tensor(1.0, dtype=torch.complex128, device=omega_t.device)
+            if idx1 >= 0:
+                A[idx1][v_idx] = A[idx1][v_idx] + one_c
+                A[v_idx][idx1] = A[v_idx][idx1] + one_c
+            if idx2 >= 0:
+                A[idx2][v_idx] = A[idx2][v_idx] - one_c
+                A[v_idx][idx2] = A[v_idx][idx2] - one_c
+                
+        # Stack into complex tensors
+        A_t = torch.stack([torch.stack(row) for row in A])
+        z_t = torch.stack(z)
+        
+        # Solve the complex system
+        x = torch.linalg.solve(A_t, z_t)
+        
+        results = {}
+        # Node voltages
+        results["v_0"] = Phasor(0.0, 0.0, "V")
+        for node in node_list:
+            idx = node_map[node]
+            v_c = x[idx]
+            results[f"v_{node}"] = Phasor(v_c, unit="V")
+            
+        # Voltage source currents
+        for i, name in enumerate(v_names):
+            i_c = x[n_nodes + i]
+            results[f"i_{name}"] = Phasor(i_c, unit="A")
+            
+        return results
+
+
+def _to_complex_phasor(v):
+    if isinstance(v, Phasor):
+        return v.complex_value()
+    if isinstance(v, Quantity):
+        val = _to_tensor(v.value).double()
+        return torch.complex(val, torch.zeros_like(val))
+    val = _to_tensor(v).double()
+    if torch.is_complex(val):
+        return val
+    return torch.complex(val, torch.zeros_like(val))
+
 
 class Phasor:
     """Repräsentation einer komplexen Wechselstromgröße mit Einheit."""
-    def __init__(self, mag, phase, unit=""):
-        if isinstance(mag, Quantity):
-            self.mag = float(mag.value)
-            self.unit = mag.unit
-        else:
-            self.mag = float(mag)
+    def __init__(self, mag, phase=0.0, unit=""):
+        if isinstance(mag, complex) or (isinstance(mag, torch.Tensor) and torch.is_complex(mag)):
+            c_val = mag
+            if isinstance(c_val, complex):
+                import cmath
+                mag_val, phase_val = cmath.polar(c_val)
+                self.mag = torch.tensor(mag_val, dtype=torch.float64)
+                self.phase = torch.tensor(phase_val, dtype=torch.float64)
+            else:
+                self.mag = torch.abs(c_val)
+                self.phase = torch.angle(c_val)
             self.unit = unit
-            
-        if isinstance(phase, Quantity):
-            self.phase = float(_convert_to_base(phase.value, phase.unit, "angle"))
         else:
-            self.phase = float(phase)
+            if isinstance(mag, Quantity):
+                self.mag = _to_tensor(mag.value).double()
+                self.unit = mag.unit
+            else:
+                self.mag = _to_tensor(mag).double()
+                self.unit = unit
+                
+            if isinstance(phase, Quantity):
+                self.phase = _to_tensor(_convert_to_base(phase.value, phase.unit, "angle")).double()
+            else:
+                self.phase = _to_tensor(phase).double()
             
     def complex_value(self):
-        import cmath
-        return cmath.rect(self.mag, self.phase)
+        mag = _to_tensor(self.mag).double()
+        phase = _to_tensor(self.phase).double()
+        return torch.complex(mag * torch.cos(phase), mag * torch.sin(phase))
         
+    @property
+    def value(self):
+        return self.mag
+        
+    @property
+    def magnitude(self):
+        return self.mag
+        
+    @property
+    def angle(self):
+        return self.phase
+
     def __repr__(self):
         import math
-        deg = math.degrees(self.phase)
-        return f"{self.mag}[{self.unit}] \u2220 {deg:.2f}\xb0"
+        mag_f = float(self.mag.item()) if hasattr(self.mag, 'item') else float(self.mag)
+        phase_f = float(self.phase.item()) if hasattr(self.phase, 'item') else float(self.phase)
+        deg = math.degrees(phase_f)
+        return f"{mag_f:.4f}[{self.unit}] \u2220 {deg:.2f}\xb0"
 
 
 class StateSpace:

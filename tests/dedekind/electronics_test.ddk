@@ -35,9 +35,49 @@ fn test_differentiable_circuit() {
     print("test_differentiable_circuit: passed")
 }
 
+fn test_ac_circuit() {
+    c = circuit()
+    c.add_voltage_source("V1", 1, 0, phasor(10.0[V], 0.0[rad]))
+    c.add_resistor("R1", 1, 2, 100.0[ohm])
+    c.add_capacitor("C1", 2, 0, 10.0[uF])
+    
+    omega = 1000.0
+    res = c.solve_ac(omega)
+    
+    v2 = res["v_2"]
+    
+    assert(abs(v2.magnitude - 7.0710678) < 1e-4)
+    assert(abs(v2.angle - (-0.785398)) < 1e-4)
+    
+    print("test_ac_circuit: passed")
+}
+
+fn test_differentiable_ac_circuit() {
+    fn v2_mag(c_vec) {
+        c = circuit()
+        c.add_voltage_source("V1", 1, 0, phasor(10.0, 0.0))
+        c.add_resistor("R1", 1, 2, 100.0)
+        c.add_capacitor("C1", 2, 0, c_vec[0] * 1e-6)
+        
+        omega = 1000.0
+        res = c.solve_ac(omega)
+        return [res["v_2"].magnitude]
+    }
+    
+    x0 = [10.0]  // 10 uF
+    J = jacobian(v2_mag, x0)
+    
+    // Expected derivative w.r.t x (in uF) at x=10 is -0.353553
+    assert(abs(J[0][0] - (-0.353553)) < 1e-4)
+    
+    print("test_differentiable_ac_circuit: passed")
+}
+
 fn main() {
     test_dc_circuit()
     test_differentiable_circuit()
+    test_ac_circuit()
+    test_differentiable_ac_circuit()
     print("electronics_test: Alle Tests bestanden!")
 }
 main()
