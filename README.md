@@ -1,6 +1,6 @@
 # Dedekind Programming Language
 
-![Version](https://img.shields.io/badge/Version-2.0.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-2.2.0-blue) ![Dedekind Studio](https://img.shields.io/badge/Status-Prototype-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **Dedekind** is a modern, high-performance programming language designed specifically for compute-intensive workloads in **Machine Learning** and **Graphics Rendering**.
 
@@ -28,6 +28,14 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
 - **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
+
+### What's New in v2.2.0 (Differentiable Engineering)
+
+- **Differentiable Control Theory (`use control`):** Native Unterstützung für blockdiagrammbasierte Simulationen. Ermöglicht zustandsbehaftete/statische Blöcke (PID-Regler, Integratoren, Übertragungsfunktionen, Sättigungsglieder) und automatische Schleifenauflösung zur parameterbasierten Optimierung.
+- **Differentiable Fluid Dynamics (`use fluid_dynamics`):** Vektorisiertes Lattice-Boltzmann-Verfahren (D2Q9) zur Strömungssimulation inkompressibler Fluide mit stetig differenzierbaren Hindernismasken (Zylinder, NACA-Tragflächenprofile) zur Strömungswiderstands- und Auftriebsoptimierung.
+- **Differentiable Structural Mechanics (`use structural`):** Stationäre 2D Finite-Elemente-Simulation (Q4-Bilinear-Elemente) linearer Elastizitätsprobleme und Topologieoptimierung (generatives Design) via SIMP-Materialdichtemodell und Optimality Criteria (OC) Solver mit Unicode-ASCII-Visualisierung im Terminal.
+- **Differentiable Heat Transfer & Thermodynamics (`use thermal`):** Stationäre und transiente (implizites Rückwärts-Euler-Verfahren) thermische Diffusionssimulation auf Q4-Elementen, thermische SIMP-Leitwert-Interpolation und OC-Topologieoptimierung für wärmeableitende Strukturen (Kühlkörper).
+- **Differentiable DSP & Electronics:** Native Biquad-IIR- und FIR-Filterstrukturen mit Autograd sowie ein komplexer MNA-Nodal-Netzwerklöser für AC-Schaltungsanalysen mit komplexwertigen Phasenwinkeln.
 
 ### What's New in v2.0.0 (Release)
 

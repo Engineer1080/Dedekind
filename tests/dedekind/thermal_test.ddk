@@ -1,0 +1,93 @@
+use thermal
+
+fn test_steady_state() {
+    print("Running steady state thermal test...")
+    mesh = thermal_mesh_2d(10, 4)
+    
+    // nx = 10, ny = 4
+    // nodes = (10+1)*(4+1) = 55 nodes
+    // Left boundary node (bottom-left): 0 * 5 + 0 = 0 -> fixed at 100.0
+    // Right boundary node (bottom-right): 10 * 5 + 0 = 50 -> fixed at 0.0
+    fixed_nodes = [0.0, 50.0]
+    fixed_temps = [100.0, 0.0]
+    
+    heat_sources = linspace(0.0, 0.0, 55)
+    conductivities = linspace(1.0, 1.0, 40) // 40 elements
+    
+    T = thermal_solve_2d(mesh, conductivities, heat_sources, fixed_nodes, fixed_temps)
+    
+    print("T[0]:", T[0])
+    print("T[50]:", T[50])
+    
+    assert(T[0] == 100.0)
+    assert(T[50] == 0.0)
+    
+    // T should decrease from left to right generally
+    print("T[25] (middle):", T[25])
+    assert(T[25] > 0.0)
+    assert(T[25] < 100.0)
+    print("test_steady_state: passed")
+}
+
+fn test_transient() {
+    print("Running transient thermal test...")
+    mesh = thermal_mesh_2d(10, 4)
+    
+    fixed_nodes = [0.0]
+    fixed_temps = [100.0]
+    
+    heat_sources = linspace(0.0, 0.0, 55)
+    conductivities = linspace(1.0, 1.0, 40)
+    capacities = linspace(1.0, 1.0, 40)
+    
+    initial_temps = linspace(20.0, 20.0, 55)
+    
+    // Solve transient for 5 steps, dt = 0.1
+    T = thermal_solve_transient_2d(mesh, conductivities, capacities, initial_temps, heat_sources, fixed_nodes, fixed_temps, 0.1, 5)
+    
+    print("Transient T[1] (adjacent to source):", T[1])
+    // The temperature should have risen from the initial 20.0 due to diffusion from T[0] = 100.0
+    assert(T[1] > 20.0)
+    assert(T[1] < 100.0)
+    print("test_transient: passed")
+}
+
+fn compliance_loss(params) {
+    mesh = thermal_mesh_2d(10, 4)
+    fixed_nodes = [0.0]
+    fixed_temps = [0.0]
+    
+    // Point heat source at node 54 (top right)
+    heat_sources = linspace(0.0, 0.0, 55)
+    heat_sources[54] = 10.0
+    
+    // Calculate steady state
+    T = thermal_solve_2d(mesh, params, heat_sources, fixed_nodes, fixed_temps)
+    
+    // Thermal compliance: Q^T * T
+    c = (T * heat_sources).sum()
+    return c
+}
+
+fn test_gradient_flow() {
+    print("Running thermal gradient flow test...")
+    p_init = linspace(0.5, 0.5, 40)
+    
+    jac = jacobian(compliance_loss, p_init)
+    
+    print("Jac element 0:", jac[0][0])
+    // Increasing conductivity of elements should decrease average temperature (reduce compliance)
+    // Thus the gradient with respect to conductivity should be negative.
+    assert(jac[0][0] < 0.0)
+    print("test_gradient_flow: passed")
+}
+
+fn main() {
+    print("=== Differentiable Heat Transfer Tests ===")
+    test_steady_state()
+    test_transient()
+    test_gradient_flow()
+    print("thermal_test: Alle Tests bestanden!")
+}
+
+main()

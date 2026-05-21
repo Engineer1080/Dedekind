@@ -1,0 +1,29 @@
+// Dedekind Standard Library: Structural Mechanics & Topology Optimization
+
+pub fn structural_mesh_2d(nx, ny) {
+    return structural_mesh_2d_impl(nx, ny)
+}
+
+pub fn structural_solve_2d(mesh, densities, loads, fixed_dofs) {
+    return structural_solve_2d_impl(mesh, densities, loads, fixed_dofs)
+}
+
+pub fn structural_solve_2d_params(mesh, densities, loads, fixed_dofs, E0, Emin, nu, penal) {
+    return structural_solve_2d_impl(mesh, densities, loads, fixed_dofs, E0, Emin, nu, penal)
+}
+
+pub fn structural_compliance_2d(mesh, densities, loads, fixed_dofs) {
+    return structural_compliance_2d_impl(mesh, densities, loads, fixed_dofs)
+}
+
+pub fn topo_opt_oc_2d(mesh, loads, fixed_dofs, volfrac) {
+    return topo_opt_oc_2d_impl(mesh, loads, fixed_dofs, volfrac)
+}
+
+pub fn topo_opt_oc_2d_advanced(mesh, loads, fixed_dofs, volfrac, steps, penal, rmin) {
+    return topo_opt_oc_2d_impl(mesh, loads, fixed_dofs, volfrac, steps, penal, rmin)
+}
+
+pub fn print_structural_topology_2d(densities, nx, ny) {
+    return print_structural_topology_2d_impl(densities, nx, ny)
+}

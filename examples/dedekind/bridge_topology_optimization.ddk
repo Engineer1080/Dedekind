@@ -1,0 +1,77 @@
+use structural
+
+fn main() {
+    print("=== Differentiable Structural Mechanics: MBB Bridge Topology Optimization ===")
+    
+    nx = 30
+    ny = 10
+    volfrac = 0.4
+    
+    mesh = structural_mesh_2d(nx, ny)
+    
+    // Total nodes = (30 + 1) * (10 + 1) = 31 * 11 = 341
+    // Total DOFs = 2 * 341 = 682
+    loads = linspace(0.0, 0.0, 682)
+    
+    // Apply a central point load at the top center
+    // Top center node is at x=15, y=0 -> node index = 15 * 11 + 0 = 165
+    // y-DOF = 2 * 165 + 1 = 331
+    loads[331] = -10.0
+    
+    // Supports at bottom-left and bottom-right corners
+    // Bottom-left node is at x=0, y=10 -> node index = 10 -> DOFs: 20, 21
+    // Bottom-right node is at x=30, y=10 -> node index = 340 -> DOFs: 680, 681
+    fixed_dofs = [20.0, 21.0, 680.0, 681.0]
+    
+    print("Optimization method 1: Optimality Criteria (OC) with Density Filter...")
+    print("Running 30 iterations of OC...")
+    
+    // Run Optimality Criteria (steps=30, penal=3.0, rmin=1.5)
+    opt_x_oc = topo_opt_oc_2d_advanced(mesh, loads, fixed_dofs, volfrac, 30, 3.0, 1.5)
+    
+    print("Resulting Topology (Optimality Criteria):")
+    print_structural_topology_2d(opt_x_oc, nx, ny)
+    
+    c_oc = structural_compliance_2d(mesh, opt_x_oc, loads, fixed_dofs)
+    print("Compliance (OC):", c_oc)
+    print("Volume fraction (OC):", mean(opt_x_oc))
+    
+    print("\nOptimization method 2: PyTorch Autograd & L-BFGS...")
+    print("Running 15 iterations of L-BFGS...")
+    
+    // Sigmoid mapping and penalty method
+    fn lbfgs_loss(params) {
+        // Map logits to density using sigmoid
+        x = 1.0 / (1.0 + exp(-params))
+        
+        // Calculate compliance
+        c = structural_compliance_2d(mesh, x, loads, fixed_dofs)
+        
+        // Volume constraint penalty (target volfrac = 0.4)
+        vol = mean(x)
+        penalty = 5000.0 * (vol - 0.4) * (vol - 0.4)
+        
+        return c + penalty
+    }
+    
+    // Initialize logits near 0 (which maps to sigmoid(0) = 0.5 density)
+    init_logits = linspace(-0.4, -0.4, 300) // 30 * 10 elements
+    
+    // Optimize using Dedekind's L-BFGS (minimize returns [opt_x, opt_f])
+    opt_res = minimize(lbfgs_loss, init_logits, method="lbfgs", steps=15)
+    opt_logits = opt_res[0]
+    
+    // Map optimized logits back to density
+    opt_x_lbfgs = 1.0 / (1.0 + exp(-opt_logits))
+    
+    print("Resulting Topology (L-BFGS):")
+    print_structural_topology_2d(opt_x_lbfgs, nx, ny)
+    
+    c_lbfgs = structural_compliance_2d(mesh, opt_x_lbfgs, loads, fixed_dofs)
+    print("Compliance (L-BFGS):", c_lbfgs)
+    print("Volume fraction (L-BFGS):", mean(opt_x_lbfgs))
+    
+    print("\nBridge topology optimization complete!")
+}
+
+main()

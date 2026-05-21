@@ -1,0 +1,73 @@
+use structural
+
+fn test_cantilever_solve() {
+    mesh = structural_mesh_2d(10, 4)
+    
+    // Left end fixed: x_node=0, y_node in [0, 4]
+    // Nodes: 0, 1, 2, 3, 4
+    // DOFs: 0 to 9
+    fixed_dofs = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]
+    
+    // Total DOFs = 2 * (10 + 1) * (4 + 1) = 2 * 11 * 5 = 110
+    loads = linspace(0.0, 0.0, 110)
+    
+    // Apply downward load of -1.0 at node 50 (top-right: x_node=10, y_node=0 -> node_idx=50 -> y_dof=101)
+    loads[101] = -1.0
+    
+    // Full density everywhere
+    densities = linspace(1.0, 1.0, 40)
+    
+    U = structural_solve_2d(mesh, densities, loads, fixed_dofs)
+    
+    // Displacement at the tip should be negative (downward)
+    print("Tip displacement U[101]:", U[101])
+    assert(U[101] < 0.0)
+    print("test_cantilever_solve: passed")
+}
+
+fn compliance_loss(params) {
+    mesh = structural_mesh_2d(10, 4)
+    fixed_dofs = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]
+    loads = linspace(0.0, 0.0, 110)
+    loads[101] = -1.0
+    
+    c = structural_compliance_2d(mesh, params, loads, fixed_dofs)
+    return c
+}
+
+fn test_gradient_flow() {
+    p_init = linspace(0.5, 0.5, 40)
+    
+    // Compute jacobian of compliance with respect to element densities
+    jac = jacobian(compliance_loss, p_init)
+    
+    // Sensitivities should be negative (increasing material decreases compliance)
+    print("Jac element 0:", jac[0][0])
+    assert(jac[0][0] < 0.0)
+    assert(jac[0][10] < 0.0)
+    
+    print("test_gradient_flow: passed")
+}
+
+fn test_topo_opt_oc() {
+    mesh = structural_mesh_2d(10, 4)
+    fixed_dofs = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]
+    loads = linspace(0.0, 0.0, 110)
+    loads[101] = -1.0
+    
+    // Run 5 steps of OC topology optimization
+    opt_x = topo_opt_oc_2d_advanced(mesh, loads, fixed_dofs, 0.5, 5, 3.0, 1.5)
+    
+    assert(opt_x.shape[0] == 40)
+    print("test_topo_opt_oc: passed")
+}
+
+fn main() {
+    print("=== Differentiable Structural Mechanics & TopOpt Tests ===")
+    test_cantilever_solve()
+    test_gradient_flow()
+    test_topo_opt_oc()
+    print("structural_test: Alle Tests bestanden!")
+}
+
+main()

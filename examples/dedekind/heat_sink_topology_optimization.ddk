@@ -1,0 +1,88 @@
+use thermal
+
+fn main() {
+    print("=== Differentiable Thermodynamics: Heat Sink Topology Optimization ===")
+    
+    nx = 30
+    ny = 30
+    volfrac = 0.4
+    
+    mesh = thermal_mesh_2d(nx, ny)
+    
+    // Nodes = 31 * 31 = 961
+    heat_sources = linspace(0.0, 0.0, 961)
+    
+    // Hot spot (electronic chip) at bottom center (x=15, y=0)
+    // Node index = 15 * 31 + 0 = 465
+    heat_sources[465] = 100.0
+    
+    // Fixed boundary: entire top boundary (y=30) cooled to 0.0
+    // Top boundary nodes: ix * 31 + 30 for ix in [0, 30]
+    fixed_nodes = linspace(0.0, 0.0, 31)
+    for i in range(31) {
+        fixed_nodes[i] = i * 31.0 + 30.0
+    }
+    fixed_temps = linspace(0.0, 0.0, 31)
+    
+    print("Optimization method 1: Optimality Criteria (OC)...")
+    print("Running 30 iterations of OC...")
+    
+    // Run thermal topology optimization via Optimality Criteria
+    opt_x_oc = topo_opt_thermal_oc_2d_advanced(mesh, heat_sources, fixed_nodes, fixed_temps, volfrac, 30, 3.0, 1.5, 1.0, 1e-6)
+    
+    print("Resulting Thermal Topology (Optimality Criteria):")
+    print_thermal_topology_2d(opt_x_oc, nx, ny)
+    
+    // Evaluate compliance (average temperature at hot spot)
+    // k = kmin + x^penal * (k0 - kmin)
+    k_oc = 1e-6 + (opt_x_oc * opt_x_oc * opt_x_oc) * (1.0 - 1e-6)
+    T_oc = thermal_solve_2d(mesh, k_oc, heat_sources, fixed_nodes, fixed_temps)
+    c_oc = (T_oc * heat_sources).sum()
+    print("Hot spot temperature / Compliance (OC):", c_oc)
+    print("Volume fraction (OC):", mean(opt_x_oc))
+    
+    print("\nOptimization method 2: PyTorch Autograd & L-BFGS...")
+    print("Running 15 iterations of L-BFGS...")
+    
+    fn lbfgs_loss(params) {
+        // Map logits to densities in [0, 1]
+        x = 1.0 / (1.0 + exp(-params))
+        
+        // Thermal conductivity interpolation
+        k = 1e-6 + (x * x * x) * (1.0 - 1e-6)
+        
+        // Solve heat equation
+        T = thermal_solve_2d(mesh, k, heat_sources, fixed_nodes, fixed_temps)
+        
+        // Thermal compliance
+        c = (T * heat_sources).sum()
+        
+        // Volume penalty constraint (target volfrac = 0.4)
+        vol = mean(x)
+        penalty = 10000.0 * (vol - 0.4) * (vol - 0.4)
+        
+        return c + penalty
+    }
+    
+    // Initialize densities to volfrac (sigmoid(-0.4) approx 0.4)
+    init_logits = linspace(-0.4, -0.4, 900) // 30 * 30 elements
+    
+    // Optimize
+    opt_res = minimize(lbfgs_loss, init_logits, method="lbfgs", steps=15)
+    opt_logits = opt_res[0]
+    
+    opt_x_lbfgs = 1.0 / (1.0 + exp(-opt_logits))
+    
+    print("Resulting Thermal Topology (L-BFGS):")
+    print_thermal_topology_2d(opt_x_lbfgs, nx, ny)
+    
+    k_lbfgs = 1e-6 + (opt_x_lbfgs * opt_x_lbfgs * opt_x_lbfgs) * (1.0 - 1e-6)
+    T_lbfgs = thermal_solve_2d(mesh, k_lbfgs, heat_sources, fixed_nodes, fixed_temps)
+    c_lbfgs = (T_lbfgs * heat_sources).sum()
+    print("Hot spot temperature / Compliance (L-BFGS):", c_lbfgs)
+    print("Volume fraction (L-BFGS):", mean(opt_x_lbfgs))
+    
+    print("\nHeat sink topology optimization complete!")
+}
+
+main()

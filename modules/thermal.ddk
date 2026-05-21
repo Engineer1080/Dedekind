@@ -1,0 +1,33 @@
+// Dedekind Standard Library: Differentiable Heat Transfer & Thermodynamics
+
+pub fn thermal_mesh_2d(nx, ny) {
+    return thermal_mesh_2d_impl(nx, ny)
+}
+
+pub fn thermal_solve_2d(mesh, conductivities, heat_sources, fixed_nodes, fixed_temps) {
+    return thermal_solve_2d_impl(mesh, conductivities, heat_sources, fixed_nodes, fixed_temps)
+}
+
+pub fn thermal_solve_2d_params(mesh, conductivities, heat_sources, fixed_nodes, fixed_temps, k_min) {
+    return thermal_solve_2d_impl(mesh, conductivities, heat_sources, fixed_nodes, fixed_temps, k_min)
+}
+
+pub fn thermal_solve_transient_2d(mesh, conductivities, capacities, initial_temps, heat_sources, fixed_nodes, fixed_temps, dt, steps) {
+    return thermal_solve_transient_2d_impl(mesh, conductivities, capacities, initial_temps, heat_sources, fixed_nodes, fixed_temps, dt, steps)
+}
+
+pub fn thermal_solve_transient_2d_params(mesh, conductivities, capacities, initial_temps, heat_sources, fixed_nodes, fixed_temps, dt, steps, k_min) {
+    return thermal_solve_transient_2d_impl(mesh, conductivities, capacities, initial_temps, heat_sources, fixed_nodes, fixed_temps, dt, steps, k_min)
+}
+
+pub fn topo_opt_thermal_oc_2d(mesh, heat_sources, fixed_nodes, fixed_temps, volfrac) {
+    return topo_opt_thermal_oc_2d_impl(mesh, heat_sources, fixed_nodes, fixed_temps, volfrac)
+}
+
+pub fn topo_opt_thermal_oc_2d_advanced(mesh, heat_sources, fixed_nodes, fixed_temps, volfrac, steps, penal, rmin, k0, kmin) {
+    return topo_opt_thermal_oc_2d_impl(mesh, heat_sources, fixed_nodes, fixed_temps, volfrac, steps, penal, rmin, k0, kmin)
+}
+
+pub fn print_thermal_topology_2d(densities, nx, ny) {
+    return print_thermal_topology_2d_impl(densities, nx, ny)
+}

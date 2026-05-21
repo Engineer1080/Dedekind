@@ -1,6 +1,6 @@
 # Was Dedekind aktuell kann
 
-**Stand:** Basierend auf Code und Changelogs (v1.21.0, Mai 2026). Dedekind ist ein **Prototyp** – die Sprache wird nach Python transpiliert und nutzt PyTorch/NumPy als Laufzeit.
+**Stand:** Basierend auf Code und Changelogs (v2.2.0, Mai 2026). Dedekind ist ein **Prototyp** – die Sprache wird nach Python transpiliert und nutzt PyTorch/NumPy als Laufzeit.
 
 ---
 
@@ -19,7 +19,7 @@
 - **Funktionen:** `sin`, `cos`, `tan`, `exp`, `log`, `log10`, `sqrt`, `abs`; Arkus- und Hyperbelfunktionen (`asin`, `acos`, `atan`, `atan2`, `sinh`, `cosh`, `tanh`) – elementweise, differenzierbar.
 - **Reduktionen & Runden:** `min`, `max`, `argmin`, `argmax` (optional `dim`); `round`, `floor`, `ceil`.
 - **Statistik:** `mean(x)`, `std(x)`, `var(x)`, `median(x)` (optional `dim`); `quantile(x, q)`, `percentile(x, p)`; `cov(x, y)`, `corrcoef(x, y)` (Kovarianz/Korrelation, bei 2D x: Matrix); `skew(x)`, `kurtosis(x)` (Schiefe, Kurtosis); `histogram(x, bins, range_lim)` (Zählung in Klassen; range_lim optional (min, max)).
-- **Lineare Algebra:** `norm(x)`, `det(A)`, `trace(A)`; `solve(A, b)` (Ax = b); `eigh(A)` (Eigenwerte/-vektoren symmetrisch); `eig(A)` (allgemein); `svd(A)` (Singulärwertzerlegung); `lstsq(A, y)` (Least Squares); `cond(A)`, `rank(A)`, `pinv(A)` (Kondition, Rang, Pseudo-Inverse); `expm(A)`, `logm(A)` (Matrix-Exponential/-Logarithmus). FFT (`fft`, `ifft`); Matrix-Operationen (transpose, inverse, dot_product). **Symbolische Ableitung:** `diff_sym(expr, x)` (expr, x als Strings; Rückgabe Ableitung als String). **Unbestimmte Integrale:** `integrate_sym(expr, var)` – symbolische Integration ∫ expr d(var); Stammfunktion als String; nutzt SymPy. **Autograd:** `grad(f, x)` (Gradient); `jacobian(f, x)` (Jacobi-Matrix); `hessian(f, x)` (Hesse-Matrix).
+- **Lineare Algebra:** `norm(x)`, `det(A)`, `trace(A)`; `solve(A, b)` (Ax = b); `eigh(A)` (Eigenwerte/-vektoren symmetrisch); `eig(A)` (allgemein); `svd(A)` (Singulärwertzerlegung); `lstsq(A, y)` (Least Squares); `cond(A)`, `rank(A)`, `pinv(A)` (Kondition, Rang, Pseudo-Inverse); `expm(A)`, `logm(A)` (Matrix-Exponential/-Logarithmus). FFT (`fft`, `ifft`); Matrix-Operationen (transpose, inverse, dot_product). **Symbolische Mathematik:** `diff_sym(expr, x)` (Ableitung), `integrate_sym(expr, var)` (unbestimmtes Integral), `solve_sym(eq, var)` (Lösen von Gleichungen/Gleichungssystemen) – alles via SymPy mit String-Schnittstelle. **Autograd:** `grad(f, x)` (Gradient); `jacobian(f, x)` (Jacobi-Matrix); `hessian(f, x)` (Hesse-Matrix).
 - **Numerik:** `interp(x, xp, fp)` (1D-lineare Interpolation); `trapz(y, x)`, `simpson(y, x)` (Trapez/Simpson für diskrete Daten); `riemann_sum(f, a, b, n, method="left"|"right"|"midpoint")` (Riemann-Summen für int f dx); `zeta(s)` (Riemann-Zeta ζ(s)=Σ 1/n^s, scipy); `volume_revolution_x`, `volume_revolution_y`; `volume_revolution_vertical(f,a,b,x0,n)` (Achse x=x0), `volume_revolution_horizontal(f,a,b,y0,n)` (Achse y=y0); `pappus_volume_vertical`, `pappus_volume_horizontal` (Satz von Pappus: V=2π·R·A); `root_bisect(f, a, b, tol)` (Nullstelle Bisektion); `newton(f, x0, tol)` (1D); `fsolve(f, x0)` (Vektor-Nullstelle Newton); `minimize(f, x0, method="gd"|"lbfgs")` (mehrdimensionale Minimierung). **Mathematische Folgen:** `arange(n)` bzw. `arange(start, stop, step)` (Integer-Folge); `arithmetic(a0, d, n)` (arithmetisch: aₙ = a₀ + n·d); `geometric(a0, r, n)` (geometrisch: aₙ = a₀·rⁿ); `sequence(f, n)` (allgemein: [f(0), f(1), …, f(n−1)]). **Weitere Algorithmen:** `qr(A)`, `lu(A)` (QR/LU-Zerlegung); `cholesky(A)`; `matrix_power(A, n)`; `kron(A, B)` (Kronecker-Produkt); `outer(a, b)` (äußeres Produkt); `vander(x, n)` (Vandermonde-Matrix); `matrix_sqrt(A)` (Matrix-Quadratwurzel); `matrix_norm(A, ord)` (Frobenius, Spektralnorm etc.); `cdist(X, Y, p)` (paarweise Abstände); `cross(a, b)` (3D-Kreuzprodukt); `polyfit`, `polyval`; `unique`, `argsort`; `convolve1d`. **Signal & Reduktionen:** `fftfreq`, `diff`, `cumsum`, `clip`, `shuffle`; `permutation(n)` (Zufallspermutation); `choice(a, size, replace)` (Zufallsstichprobe); `autocorr(x, max_lag)`; `moving_mean(x, window)`. **Spezialfunktionen:** `erf(x)`, `erfc(x)` (Fehlerfunktion); `gamma(x)`, `lgamma(x)` (Gamma/Log-Gamma); `bessel_j0(x)`, `bessel_j1(x)` (Bessel J₀, J₁); `bessel_j(n, x)` (Bessel Jₙ); `legendre(n, x)` (Legendre Pₙ); `hypergeom(a, b, c, z)` (₂F₁). **Zahlentheorie:** `gcd(a, b)`, `is_prime(n)`, `mod(a, m)`, `mod_inv(a, m)`, `mod_pow(base, exp, m)`; `dirichlet_function(x)` (D(x)=1 wenn x rational mit Nenner ≤10000, sonst 0; elementweise für Tensoren). **Fakultät:** Postfix-Operator `n!` (z. B. `5!`, `n!`) bzw. `factorial(n)`; Beispiel `factorial_test.ddk`. **Dedekind-Schnitte:** `DedekindCut(x)` (reelle Zahl als untere Menge A={q∈Q:q<x}); `dedekind_cut_from_rational(p,q)`, `dedekind_cut_sqrt2()`; `lower_set_contains(cut,q)`, `to_float()`. **Dedekind-Ringe:** `DedekindRingZ()`, `ideal(n)`, `ideal_factor(i)`; `DedekindIdeal` mit `.factor()`, `.norm()`, `*` (Ideal-Multiplikation). **Numerische Integration:** `integrate(f, a, b, n)` (Trapezregel); differenzierbar.
 - **Ricci-Notation:** Indexnotation `A^ij * B_jk` für Einstein-Summen (Auto-Einsum).
 - **LaTeX-Export:** `export_to_latex(source)` bzw. CLI `--latex` – Formeln aus Dedekind-Code als LaTeX; `print_latex(s)` zeigt Formeln **nur in der Konsole** als Unicode (α, Δ, ∫, ½ etc.), keine Bilder in Plots; zukünftig möglich: KaTeX/Web (siehe Documentation/Console_KaTeX_Roadmap.md).
@@ -37,6 +37,16 @@
 - **Uncertainty Propagation:** `uncertain(value, std)` bzw. `UncertainQuantity` – Gauß’sche Fehlerfortpflanzung für +, -, *, /, ^; optional mit Einheit.
 
 - **Differentialgeometrie:** `christoffel_symbols(g_func, x, h)`, `riemann_tensor(g_func, x, h)`, `covariant_derivative(T, g_func, x, h)` – Christoffel-Symbole, Riemann-Tensor, kovariante Ableitung (numerisch).
+
+---
+
+## Differentiable Engineering (v2.2)
+
+- **Regelungstechnik (`use control`):** Differentiable Control Blocks zur dynamischen Systemmodellierung. Unterstützt zustandsbehaftete Blöcke wie PID-Regler (`PIDBlock`), Übertragungsfunktionen (`TransferFunctionBlock`), Integratoren (`IntegratorBlock`) und Sättigungsglieder (`SaturationBlock`). Bietet automatische Schleifenauflösung zur parameterbasierten Optimierung von geschlossenen Regelkreisen.
+- **Strömungsmechanik (`use fluid_dynamics`):** Gitterfreie Strömungssimulation basierend auf dem Lattice-Boltzmann-Verfahren (LBM, D2Q9-Modell). Unterstützt stetig differenzierbare, weiche Hindernismasken (Zylinder, NACA-Tragflächenprofile) zur direkten autograd-basierten Widerstands- (Drag) und Auftriebsoptimierung (Lift).
+- **Strukturmechanik (`use structural`):** 2D Finite-Elemente-Elastizitätslöser (Q4-Bilinear-Elemente) zur statischen mechanischen Spannungsanalyse. Beinhaltet SIMP-Materialdichtemodellierung, Sensitivitäts-Faltungsfilter und einen integrierten Optimality Criteria (OC) Solver zur Topologieoptimierung (z.B. Brückendesigns) samt Unicode-ASCII-Vorschau im Terminal.
+- **Wärmeübertragung (`use thermal`):** Stationäre und transiente (Backward Euler) Finite-Elemente-Wärmediffusion auf Q4-Elementen. Unterstützt thermische SIMP-Dichte-Leitwert-Interpolation und OC-Topologieoptimierung für wärmeableitende Strukturen (Kühlkörper) mit ASCII-Unicode-Rasterdarstellung.
+- **Signalverarbeitung & AC-Netzwerke:** Native FIR- und IIR-Filterstrukturen (Biquads) mit Autograd; SPICE-ähnlicher Modified Nodal Analysis (MNA) Löser zur Bestimmung von Wechselstrom-Spannungen und -Strömen unter Einbezug komplexwertiger Phasenwinkeln.
 
 ---
 
@@ -118,10 +128,10 @@
 
 ## Was (noch) nicht oder nur eingeschränkt
 
-- **Symbolik:** Symbolische Ableitung `diff_sym(expr, x)` und unbestimmte Integrale `integrate_sym(expr, var)` sind vorhanden (siehe Mathematik). **Symbolische Vereinfachung** (Compiler-Pass): Konstantenfaltung (`2*3` → `6`), `x+0` → `x`, `x*1` → `x`, `0*x` → `0`, `x-0` → `x`, `x^0` → `1`, `x^1` → `x`. Keine allgemeine Gleichungslöser.
-- **Typen/Module:** Kein statisches Typing; kein `import` – alles in einer Datei oder über Compiler-Pipeline.
-- **Performance:** Ziel AOT/MLIR/LLVM; aktuell Transpilation zu Python/PyTorch; native Binaries experimentell (z. B. `.exe`-Erzeugung).
-- **Weitere PDE:** Wärmeleitung, Advektion, Wellengleichung, Burgers, Reaktions-Diffusion, Advektions-Diffusion und Maxwell (FDTD 1D/2D) als Standard-API vorhanden.
+- **Symbolik:** Symbolische Ableitung `diff_sym`, Integration `integrate_sym` und algebraische Gleichungslöser `solve_sym` sind vorhanden (via SymPy). Eigene symbolische Vereinfachungen im Compiler-Pass sind auf grundlegende Operationen beschränkt (Konstantenfaltung wie `2*3` → `6`, Identitäten wie `x+0` → `x`, `x*1` → `x`, `0*x` → `0`). Keine symbolischen DGL-Löser.
+- **Typen/Module:** Kein statisches Typing (außer Dimensions- und Shape-Checks). Kein klassischer Python-`import` (stattdessen `use` für hierarchische Dedekind-Module mit Sichtbarkeitssteuerung via `pub fn` sowie `pyimport` für Python-Bibliotheken).
+- **Performance:** Native Binärdateien (AOT via MLIR/LLVM) und Standalone-Executables (`.exe`) sind noch experimentell. Im Normalbetrieb wird der AST zu Python/PyTorch-Code transpiliert.
+- **PDEs & Geometrien:** 1D/2D-Standard-PDE-Solver und strukturierte 2D-FEM (Q4-Bilinear-Elemente) sind vorhanden. Allgemeine unstrukturierte 3D-Gitter oder beliebig komplexe Randbedingungen sind nativ noch nicht implementiert.
 
 ---
 
