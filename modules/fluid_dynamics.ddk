@@ -35,11 +35,23 @@ pub fn lbm_karman_benchmark(re, nx, ny, n_steps) {
 // Ausgaben als Quantity in physikalischen Einheiten ([m/s], [Pa], [N/m]).
 
 pub fn lbm_physical(domain_x, domain_y, nx, inlet_u, nu, rho) {
-    return lbm_physical_impl(domain_x, domain_y, nx, inlet_u, nu, rho, 0, 0)
+    return lbm_physical_impl(domain_x, domain_y, nx, inlet_u, nu, rho, 0, 0, "bgk", "soft")
 }
 
 pub fn lbm_physical_full(domain_x, domain_y, nx, ny, inlet_u, nu, rho, u_lattice) {
-    return lbm_physical_impl(domain_x, domain_y, nx, inlet_u, nu, rho, ny, u_lattice)
+    return lbm_physical_impl(domain_x, domain_y, nx, inlet_u, nu, rho, ny, u_lattice, "bgk", "soft")
+}
+
+pub fn lbm_physical_mrt(domain_x, domain_y, nx, inlet_u, nu, rho) {
+    return lbm_physical_impl(domain_x, domain_y, nx, inlet_u, nu, rho, 0, 0, "mrt", "soft")
+}
+
+pub fn lbm_physical_hard(domain_x, domain_y, nx, inlet_u, nu, rho) {
+    return lbm_physical_impl(domain_x, domain_y, nx, inlet_u, nu, rho, 0, 0, "bgk", "hard")
+}
+
+pub fn lbm_physical_mrt_hard(domain_x, domain_y, nx, inlet_u, nu, rho) {
+    return lbm_physical_impl(domain_x, domain_y, nx, inlet_u, nu, rho, 0, 0, "mrt", "hard")
 }
 
 pub fn lbm_set_cylinder(sim, cx, cy, radius) {

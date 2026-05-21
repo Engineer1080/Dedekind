@@ -211,6 +211,80 @@ fn test_physical_run_time() {
     print("[OK] Run for physical time, pressure as Pa")
 }
 
+fn test_mrt_collision_runs() {
+    print("Testing MRT collision model runs and gives finite output...")
+    sim = lbm_physical_mrt(0.05[m], 0.02[m], 60,
+                            0.01[m/s], 1.0e-4[m^2/s], 1000.0[kg/m^3])
+    lbm_set_cylinder(sim, 0.01[m], 0.01[m], 0.003[m])
+    lbm_add_walls(sim)
+    lbm_run_steps(sim, 300)
+    F = lbm_drag_lift(sim)
+    print("  MRT drag =", F[0])
+    // Finitheit prüfen
+    drag_val = F[0].value
+    assert(drag_val > 0.0)
+    assert(drag_val < 100.0)
+    print("[OK] MRT collision finite drag")
+}
+
+fn test_hard_vs_soft_bounce() {
+    print("Testing hard bounce-back gives higher drag than soft (sharper boundary)...")
+    sim_soft = lbm_physical(0.05[m], 0.02[m], 60,
+                             0.01[m/s], 1.0e-4[m^2/s], 1000.0[kg/m^3])
+    lbm_set_cylinder(sim_soft, 0.01[m], 0.01[m], 0.003[m])
+    lbm_add_walls(sim_soft)
+    lbm_run_steps(sim_soft, 400)
+    F_soft = lbm_drag_lift(sim_soft)
+
+    sim_hard = lbm_physical_hard(0.05[m], 0.02[m], 60,
+                                  0.01[m/s], 1.0e-4[m^2/s], 1000.0[kg/m^3])
+    lbm_set_cylinder(sim_hard, 0.01[m], 0.01[m], 0.003[m])
+    lbm_add_walls(sim_hard)
+    lbm_run_steps(sim_hard, 400)
+    F_hard = lbm_drag_lift(sim_hard)
+
+    print("  Soft-Bounce drag =", F_soft[0].value)
+    print("  Hard-Bounce drag =", F_hard[0].value)
+    // Hard sollte signifikant höher sein (scharfes Hindernis = mehr Widerstand)
+    assert(F_hard[0].value > F_soft[0].value)
+    print("[OK] hard > soft as expected")
+}
+
+fn test_autograd_validates_against_fd() {
+    print("Testing Autograd-Gradient stimmt mit finitem-Differenzen-Gradient überein...")
+
+    nx = 24
+    ny = 16
+    n_steps = 20
+
+    fn drag_at_radius(r_arr) {
+        r = r_arr[0]
+        mask = soft_cylinder_mask(nx, ny, 10.0, 8.0, r, 0.6)
+        sim = lbm_simulation_with_mask(nx, ny, 0.7, mask)
+        simulation_run(sim, n_steps, 0.05)
+        F = simulation_get_drag_lift(sim)
+        return [F[0]]
+    }
+
+    r0 = [2.0]
+    j = jacobian(drag_at_radius, r0)
+    grad_autograd = j[0][0]
+
+    // Zentrale finite Differenzen
+    h = 0.001
+    f_plus = drag_at_radius([2.0 + h])
+    f_minus = drag_at_radius([2.0 - h])
+    grad_fd = (f_plus[0] - f_minus[0]) / (2.0 * h)
+
+    rel_err = abs(grad_autograd - grad_fd) / abs(grad_fd)
+    print("  Autograd-Gradient    =", grad_autograd)
+    print("  Finite-Diff-Gradient =", grad_fd)
+    print("  Relativer Fehler     =", rel_err)
+    // Mit tau=0.7 und 20 Schritten muss die Übereinstimmung sehr eng sein
+    assert(rel_err < 1e-4)
+    print("[OK] Autograd ≈ Finite-Differenzen (validates differentiable LBM end-to-end)")
+}
+
 fn main() {
     test_lbm_init()
     test_lbm_step()
@@ -224,5 +298,8 @@ fn main() {
     test_physical_units_validation()
     test_physical_drag_units()
     test_physical_run_time()
+    test_mrt_collision_runs()
+    test_hard_vs_soft_bounce()
+    test_autograd_validates_against_fd()
 }
 main()

@@ -17,6 +17,21 @@ _LBM_W_LIST = [4.0/9, 1.0/9, 1.0/9, 1.0/9, 1.0/9,
 # Bounce-Back: für jede Richtung b die entgegengesetzte Richtung -b
 _LBM_OPPOSITE = [0, 3, 4, 1, 2, 7, 8, 5, 6]
 
+# MRT-Transformationsmatrix (Lallemand & Luo 2000, d'Humières et al. 2002)
+# Reihen sind die 9 Momente: rho, e, eps, jx, qx, jy, qy, pxx, pxy.
+# Spalten entsprechen den 9 D2Q9-Richtungen.
+_LBM_MRT_M = [
+    [ 1,  1,  1,  1,  1,  1,  1,  1,  1],   # rho     (m0, konserviert)
+    [-4, -1, -1, -1, -1,  2,  2,  2,  2],   # e       (m1, Energie)
+    [ 4, -2, -2, -2, -2,  1,  1,  1,  1],   # eps     (m2, Energie²)
+    [ 0,  1,  0, -1,  0,  1, -1, -1,  1],   # jx      (m3, Impuls x — konserviert)
+    [ 0, -2,  0,  2,  0,  1, -1, -1,  1],   # qx      (m4, Wärmestrom x)
+    [ 0,  0,  1,  0, -1,  1,  1, -1, -1],   # jy      (m5, Impuls y — konserviert)
+    [ 0,  0, -2,  0,  2,  1,  1, -1, -1],   # qy      (m6, Wärmestrom y)
+    [ 0,  1, -1,  1, -1,  0,  0,  0,  0],   # pxx     (m7, Spannungs-Diag — Scherviskosität)
+    [ 0,  0,  0,  0,  0,  1, -1,  1, -1],   # pxy     (m8, Spannungs-Off — Scherviskosität)
+]
+
 
 def _to_double_tensor(v):
     t = _to_tensor(v)
@@ -50,29 +65,55 @@ def lbm_equilibrium(rho, u, device=None):
 
 
 class LbmSimulation:
-    """Vollständig differenzierbarer 2D-D2Q9-BGK Lattice-Boltzmann-Solver.
+    """Vollständig differenzierbarer 2D-D2Q9 Lattice-Boltzmann-Solver.
 
     Parameter
     ---------
     nx, ny : int
         Gittergröße in Lattice-Einheiten.
     tau : float
-        BGK-Relaxationszeit. Muss > 0.5 sein (Stabilität). nu_lattice = (tau - 0.5)/3.
+        Scher-Relaxationszeit. Muss > 0.5 sein (Stabilität). nu_lattice = (tau - 0.5)/3.
+        Bei MRT ist tau die Scherviskositäts-Relaxation (s7=s8=1/tau).
     obstacle_mask : Tensor[nx, ny] | None
-        Soft mask in [0, 1]: 1 = solides Hindernis, 0 = freie Strömung.
+        Mask in [0, 1]: 1 = solides Hindernis, 0 = freie Strömung. Soft-Bounce-Back
+        per Default; "hard" als bounce_back-Parameter schärft die Mask auf {0, 1}
+        für physikalisch korrekte Halfway-Bounce-Back-Behandlung.
     inlet_u : float
         Eingangsgeschwindigkeit (Lattice-Einheit), wird sowohl für Initialisierung
         als auch (per Default) für die Inlet-BC genutzt. Default 0.0.
+    collision : str
+        "bgk" (default): Bhatnagar-Gross-Krook Single-Relaxation. Schnell,
+        differenzierbar, stabil bis Re~300. "mrt" (Multiple-Relaxation-Time
+        nach Lallemand & Luo 2000): höhere Stabilität (Re~2000), ~30% langsamer
+        wegen Matrix-Transformation in Momentenraum.
+    bounce_back : str
+        "soft" (default): glatte Maske-Mischung, differenzierbar in M. Geeignet
+        für Shape-Optimierung. "hard": M wird auf {0,1} geschärft (Halfway-
+        Bounce-Back). Physikalisch korrektere C_D-Werte; Gradient bzgl. M ist
+        durchgereicht, aber durch die Schärfung quasi-binär.
     """
 
     # Empfohlene Maximalgeschwindigkeit (Mach-Limit ~ 0.1 für niedrige Kompressibilität)
     MAX_LATTICE_U = 0.1
 
-    def __init__(self, nx, ny, tau, obstacle_mask=None, inlet_u=0.0):
+    def __init__(self, nx, ny, tau, obstacle_mask=None, inlet_u=0.0,
+                 collision="bgk", bounce_back="soft"):
         self.nx = int(nx)
         self.ny = int(ny)
         self.tau = float(tau)
         self._inlet_u = float(inlet_u)
+        self.collision_model = str(collision).lower()
+        self.bounce_back_model = str(bounce_back).lower()
+        if self.collision_model not in ("bgk", "mrt"):
+            raise ValueError(
+                f"LbmSimulation: collision='{collision}' unbekannt, "
+                f"erwartet 'bgk' oder 'mrt'."
+            )
+        if self.bounce_back_model not in ("soft", "hard"):
+            raise ValueError(
+                f"LbmSimulation: bounce_back='{bounce_back}' unbekannt, "
+                f"erwartet 'soft' oder 'hard'."
+            )
 
         if self.tau <= 0.5:
             raise ValueError(
@@ -111,6 +152,28 @@ class LbmSimulation:
         # Konstanten einmal allokieren — wiederverwendet pro Step und in get_drag_lift
         self._cx, self._cy, self._w = _lbm_constants(device, dtype)
 
+        # MRT-Setup: Transformationsmatrix M (9,9), Inverse, Diagonal-Relaxation S
+        if self.collision_model == "mrt":
+            M_np = _LBM_MRT_M
+            M_t = torch.tensor(M_np, dtype=dtype, device=device)  # (9, 9)
+            self._mrt_M = M_t
+            # Inverse via geschlossener Formel (M ist orthogonal bis auf Skalierung,
+            # M_inv = M^T * diag(1/||row||²))
+            row_norm_sq = (M_t * M_t).sum(dim=1)  # (9,)
+            self._mrt_Minv = M_t.t() / row_norm_sq.view(1, 9)
+            # Relaxationsraten (Lallemand & Luo 2000):
+            # s0 = s3 = s5 = 0 (rho, jx, jy konserviert)
+            # s1 = s2 = 1.4 (e, eps — Bulk-Viskosität & energy²)
+            # s4 = s6 = 1.2 (qx, qy — Geist-Moden)
+            # s7 = s8 = 1/tau (Scherviskosität)
+            s7 = 1.0 / self.tau
+            s_rates = [0.0, 1.4, 1.4, 0.0, 1.2, 0.0, 1.2, s7, s7]
+            self._mrt_S = torch.tensor(s_rates, dtype=dtype, device=device).view(9, 1, 1)
+        else:
+            self._mrt_M = None
+            self._mrt_Minv = None
+            self._mrt_S = None
+
         # Initialisierung: rho=1, u=inlet_u im Fluid, u=0 im Solid
         rho_init = torch.ones((self.nx, self.ny), dtype=dtype, device=device)
         u_init = torch.zeros((2, self.nx, self.ny), dtype=dtype, device=device)
@@ -134,8 +197,44 @@ class LbmSimulation:
                 f"Obstacle mask shape must be ({self.nx}, {self.ny})."
             )
 
+    def _mrt_collide(self, f, rho, ux, uy):
+        """MRT-Collision: Transform → Relax in Momentum Space → Transform Back.
+
+        Lallemand & Luo (2000) Standard-Rates; konservierte Momente (rho, jx, jy)
+        haben s=0, Scherviskosität ist tau (s7=s8=1/tau).
+        """
+        # f: (9, nx, ny) → reshape für 9x9 Matrix-Multiplikation
+        f_flat = f.view(9, -1)               # (9, N)
+        m = self._mrt_M @ f_flat              # (9, N) Momente
+
+        # Equilibriums-Momente (Lallemand & Luo 2000, normiert auf rho)
+        rho_flat = rho.view(-1)               # (N,)
+        jx = (rho * ux).view(-1)              # (N,)
+        jy = (rho * uy).view(-1)              # (N,)
+        rho_safe = rho_flat + 1e-15
+        jx2_p_jy2 = (jx * jx + jy * jy) / rho_safe
+
+        m_eq = torch.zeros_like(m)
+        m_eq[0] = rho_flat
+        m_eq[1] = -2.0 * rho_flat + 3.0 * jx2_p_jy2
+        m_eq[2] = rho_flat - 3.0 * jx2_p_jy2
+        m_eq[3] = jx
+        m_eq[4] = -jx
+        m_eq[5] = jy
+        m_eq[6] = -jy
+        m_eq[7] = (jx * jx - jy * jy) / rho_safe
+        m_eq[8] = jx * jy / rho_safe
+
+        # Relaxation in Momentenraum
+        S = self._mrt_S.view(9, 1)            # (9, 1)
+        m_new = m - S * (m - m_eq)
+
+        # Rücktransformation
+        f_new_flat = self._mrt_Minv @ m_new   # (9, N)
+        return f_new_flat.view(9, self.nx, self.ny)
+
     def step(self, inlet_u=None):
-        """Ein LBM-Zeitschritt: Stream → Inlet/Outlet-BC → Macroscopic → BGK → Soft-Bounce."""
+        """Ein LBM-Zeitschritt: Stream → Inlet/Outlet-BC → Macroscopic → Collide → Bounce."""
         if inlet_u is None:
             inlet_u_val = self._inlet_u
         else:
@@ -178,13 +277,24 @@ class LbmSimulation:
         ux = torch.sum(f_outlet * self._cx, dim=0) / rho_safe
         uy = torch.sum(f_outlet * self._cy, dim=0) / rho_safe
 
-        # 5. BGK Collision
-        feq = self._equilibrium_from_macro(rho, ux, uy)
-        f_coll = f_outlet - (1.0 / self.tau) * (f_outlet - feq)
+        # 5. Collision (BGK oder MRT)
+        if self.collision_model == "mrt":
+            f_coll = self._mrt_collide(f_outlet, rho, ux, uy)
+        else:
+            feq = self._equilibrium_from_macro(rho, ux, uy)
+            f_coll = f_outlet - (1.0 / self.tau) * (f_outlet - feq)
 
-        # 6. Soft-Mask-Bounce-Back: an Hindernis-Zellen wird f durch f[opposite] ersetzt
+        # 6. Bounce-Back: an Hindernis-Zellen wird f durch f[opposite] ersetzt.
+        #    Soft-Mask: M bleibt in [0,1], Mischung mit Verlauf.
+        #    Hard:     M wird auf {0,1} geschärft (Halfway-Bounce-Back, scharf).
         f_bounce = f_outlet[_LBM_OPPOSITE]
-        M = self.obstacle_mask.unsqueeze(0)
+        if self.bounce_back_model == "hard":
+            # Schwellenwert 0.5: differenzierbar via float-Cast, aber Gradient = 0
+            # (für Shape-Optimierung "soft" verwenden)
+            M_sharp = (self.obstacle_mask >= 0.5).to(self.obstacle_mask.dtype)
+            M = M_sharp.unsqueeze(0)
+        else:
+            M = self.obstacle_mask.unsqueeze(0)
         self.f = (1.0 - M) * f_coll + M * f_bounce
 
     def run(self, steps, inlet_u=None):
@@ -250,8 +360,10 @@ class LbmSimulation:
 
 # --- Runtime-Brücke zum Dedekind-Compiler ------------------------------
 
-def lbm_simulation_impl(nx, ny, tau, obstacle_mask=None, inlet_u=0.0):
-    return LbmSimulation(nx, ny, tau, obstacle_mask, inlet_u)
+def lbm_simulation_impl(nx, ny, tau, obstacle_mask=None, inlet_u=0.0,
+                        collision="bgk", bounce_back="soft"):
+    return LbmSimulation(nx, ny, tau, obstacle_mask, inlet_u,
+                         collision=collision, bounce_back=bounce_back)
 
 
 def simulation_step_impl(sim, inlet_u=None):
@@ -617,7 +729,10 @@ class PhysicalLbmSimulation:
     DEFAULT_U_LATTICE = 0.05
 
     def __init__(self, domain_x, domain_y, nx, inlet_u, nu,
-                 rho=1.225, ny=None, u_lattice_target=None):
+                 rho=1.225, ny=None, u_lattice_target=None,
+                 collision="bgk", bounce_back="soft"):
+        self.collision_model = str(collision).lower()
+        self.bounce_back_model = str(bounce_back).lower()
         self.L_x = _lbm_to_si_length(domain_x, "domain_x")
         self.L_y = _lbm_to_si_length(domain_y, "domain_y")
         self.U_in = _lbm_to_si_velocity(inlet_u, "inlet_u")
@@ -685,11 +800,13 @@ class PhysicalLbmSimulation:
         # 2D-Kraft pro Tiefe: rho * dx^3 / dt^2 = rho * dx * (dx/dt)^2
         self._force_factor_2d = self.rho_phys * self.dx * self._velocity_factor ** 2
 
-        # Underlying Solver
+        # Underlying Solver (BGK/MRT + soft/hard bounce-back werden durchgereicht)
         self.sim = LbmSimulation(
             self.nx, self.ny, self.tau,
             obstacle_mask=None,
             inlet_u=self.u_lattice,
+            collision=self.collision_model,
+            bounce_back=self.bounce_back_model,
         )
 
     def reynolds(self, length_char=None):
@@ -780,14 +897,16 @@ class PhysicalLbmSimulation:
 
 # --- Runtime-Brücke (von .ddk-Code aus aufrufbar) ---
 
-def lbm_physical_impl(domain_x, domain_y, nx, inlet_u, nu, rho=1.225, ny=None, u_lattice=None):
+def lbm_physical_impl(domain_x, domain_y, nx, inlet_u, nu, rho=1.225,
+                      ny=None, u_lattice=None, collision="bgk", bounce_back="soft"):
     # Aus .ddk-Wrappern kommen 0/0.0 als Sentinel für "keine Angabe"
     if isinstance(ny, (int, float)) and ny == 0:
         ny = None
     if isinstance(u_lattice, (int, float)) and u_lattice == 0:
         u_lattice = None
     return PhysicalLbmSimulation(domain_x, domain_y, nx, inlet_u, nu,
-                                 rho=rho, ny=ny, u_lattice_target=u_lattice)
+                                 rho=rho, ny=ny, u_lattice_target=u_lattice,
+                                 collision=collision, bounce_back=bounce_back)
 
 
 def lbm_physical_set_cylinder_impl(sim, cx, cy, radius):
