@@ -1,5 +1,10 @@
+// 2D-Wärmediffusion via sparse 5-Punkt-Stencil-Laplace.
+// Hinweis: Dies ist KEIN CFD (keine Konvektion, kein Druckfeld). Für echte
+// inkompressible Strömung siehe physics_astronomy/pde_navier_stokes.ddk
+// oder engineering/airfoil_optimization.ddk (LBM).
+
 fn main() {
-    print("--- Dedekind: Sparse CFD Simulation (Heat Diffusion) ---")
+    print("--- Dedekind: Sparse 2D Heat Diffusion ---")
     print_latex(r"\frac{\partial T}{\partial t} = \alpha \nabla^2 T \quad \texttt{.sparse()}")
     
     // Grid: 50x50 Punkte (2.500 Knoten), sparse Laplacian 2500x2500
@@ -35,6 +40,6 @@ fn main() {
     contour(x, y, T, title="Initial (Delta at center)", levels=8)
     contour(x, y, T_final, title="After " + str(n_steps) + " steps (diffused)", levels=8)
     
-    print("Sparse CFD simulation complete.")
+    print("Sparse diffusion simulation complete.")
 }
 main()

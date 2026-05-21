@@ -2,11 +2,31 @@
 // Aktivierung: `use fluid_dynamics`
 
 pub fn lbm_simulation(nx, ny, tau) {
-    return lbm_simulation_impl(nx, ny, tau, [0.0])
+    return lbm_simulation_impl(nx, ny, tau, [0.0], 0.0)
 }
 
 pub fn lbm_simulation_with_mask(nx, ny, tau, mask) {
-    return lbm_simulation_impl(nx, ny, tau, mask)
+    return lbm_simulation_impl(nx, ny, tau, mask, 0.0)
+}
+
+pub fn lbm_simulation_full(nx, ny, tau, mask, inlet_u) {
+    return lbm_simulation_impl(nx, ny, tau, mask, inlet_u)
+}
+
+pub fn simulation_get_pressure(sim) {
+    return simulation_get_pressure_impl(sim)
+}
+
+pub fn lbm_reynolds(u_lattice, l_lattice, tau) {
+    return lbm_reynolds_impl(u_lattice, l_lattice, tau)
+}
+
+pub fn lbm_tau_from_reynolds(re, u_lattice, l_lattice) {
+    return lbm_tau_from_reynolds_impl(re, u_lattice, l_lattice)
+}
+
+pub fn lbm_karman_benchmark(re, nx, ny, n_steps) {
+    return lbm_karman_benchmark_impl(re, nx, ny, n_steps, 0.4)
 }
 
 pub fn simulation_step(sim, inlet_u) {

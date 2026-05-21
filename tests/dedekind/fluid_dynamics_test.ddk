@@ -71,9 +71,85 @@ fn test_lbm_autograd() {
     print("[OK] LBM Autograd")
 }
 
+fn test_lbm_reynolds() {
+    print("Testing Reynolds helpers...")
+    // Re = u*L/nu, nu = (tau-0.5)/3 → bei tau=0.8, u=0.05, L=10: Re=5
+    re = lbm_reynolds(0.05, 10.0, 0.8)
+    print("Re(u=0.05, L=10, tau=0.8) =", re)
+    assert(abs(re - 5.0) < 1e-9)
+
+    // Umkehr: tau aus Re
+    tau = lbm_tau_from_reynolds(100.0, 0.05, 20.0)
+    print("tau(Re=100, u=0.05, L=20) =", tau)
+    // nu = u*L/Re = 0.01, tau = 3*nu + 0.5 = 0.53
+    assert(abs(tau - 0.53) < 1e-9)
+
+    print("[OK] Reynolds helpers")
+}
+
+fn test_lbm_stability_check() {
+    print("Testing tau stability check...")
+    caught = false
+    try {
+        // tau=0.5 muss als instabil abgelehnt werden
+        sim = lbm_simulation(10, 10, 0.5)
+    } catch e {
+        caught = true
+        print("Erwarteter Fehler:", e)
+    }
+    assert(caught)
+    print("[OK] tau stability check")
+}
+
+fn test_lbm_mem_no_obstacle() {
+    print("Testing MEM-Drag returns zero without obstacle...")
+    sim = lbm_simulation(20, 12, 0.8)
+    simulation_run(sim, 10, 0.05)
+    forces = simulation_get_drag_lift(sim)
+    print("F_x, F_y (no obstacle):", forces)
+    // Ohne Hindernis: M=0 überall, MEM-Force muss exakt 0 sein
+    assert(abs(forces[0]) < 1e-12)
+    assert(abs(forces[1]) < 1e-12)
+    print("[OK] MEM zero-obstacle invariant")
+}
+
+fn test_lbm_pressure() {
+    print("Testing pressure field...")
+    sim = lbm_simulation(15, 10, 0.8)
+    simulation_run(sim, 5, 0.05)
+    p = simulation_get_pressure(sim)
+    rho = simulation_get_density(sim)
+    print("p shape:", p.shape, " rho shape:", rho.shape)
+    // p = rho/3 in Lattice-Einheiten
+    diff = abs(mean(p) * 3.0 - mean(rho))
+    print("mean(p)*3 - mean(rho) =", diff)
+    assert(diff < 1e-6)
+    print("[OK] pressure = rho/3")
+}
+
+fn test_karman_quick() {
+    print("Testing Karman benchmark (quick: 1500 steps, klein)...")
+    // Sehr kurze Variante; misst nur, dass die API durchläuft und plausible
+    // Werte liefert (nicht textbook-Konvergenz).
+    result = lbm_karman_benchmark(100.0, 120, 40, 1500)
+    cd = result["C_D_mean"]
+    st = result["strouhal"]
+    print("C_D =", cd, "  St =", st)
+    // Sehr lockere Schranken; bei dieser Auflösung erwarten wir nur Größenordnung
+    assert(cd > 0.5)
+    assert(cd < 6.0)
+    assert(st >= 0.0)
+    print("[OK] Karman benchmark API")
+}
+
 fn main() {
     test_lbm_init()
     test_lbm_step()
     test_lbm_autograd()
+    test_lbm_reynolds()
+    test_lbm_stability_check()
+    test_lbm_mem_no_obstacle()
+    test_lbm_pressure()
+    test_karman_quick()
 }
 main()

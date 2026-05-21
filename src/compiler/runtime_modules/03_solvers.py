@@ -819,7 +819,7 @@ def pde_navier_stokes_2d(u0, v0, x, y, t, nu, bc="periodic"):
     Chorin-Projektionsmethode: 1) Prädiktor (Konvektion + Diffusion), 2) Druck-Poisson (FFT), 3) Projektion.
     u0, v0: Anfangsgeschwindigkeiten 2D (nx, ny); x, y: Ortsgitter; t: Zeitgitter; nu: kinematische Viskosität.
     bc: 'periodic' (default; FFT für Druck-Poisson). 'dirichlet' experimentell (Jacobi-Iteration).
-    Rückgabe: (u_sol, v_sol) je (len(t), nx, ny). CFL: dt*max(|u|)/dx < 1 empfohlen.
+    Rückgabe: (u_sol, v_sol, p_sol) je (len(t), nx, ny). CFL: dt*max(|u|)/dx < 1 empfohlen.
     """
     u0 = _to_tensor(u0).float()
     v0 = _to_tensor(v0).float().to(u0.device)
@@ -907,8 +907,10 @@ def pde_navier_stokes_2d(u0, v0, x, y, t, nu, bc="periodic"):
     nt = t.numel()
     u_sol = torch.zeros(nt, nx, ny, device=u0.device, dtype=u0.dtype)
     v_sol = torch.zeros(nt, nx, ny, device=u0.device, dtype=u0.dtype)
+    p_sol = torch.zeros(nt, nx, ny, device=u0.device, dtype=u0.dtype)
     u_sol[0] = u0
     v_sol[0] = v0
+    # p_sol[0] bleibt 0 (Druck ist bis auf Konstante bestimmt; t=0 ohne Vorgabe)
     u_cur = u0.clone()
     v_cur = v0.clone()
 
@@ -944,8 +946,9 @@ def pde_navier_stokes_2d(u0, v0, x, y, t, nu, bc="periodic"):
         v_cur = v_star - dt * py
         u_sol[n + 1] = u_cur
         v_sol[n + 1] = v_cur
+        p_sol[n + 1] = p
 
-    return u_sol, v_sol
+    return u_sol, v_sol, p_sol
 
 # --- Sparse PDE: 2D Laplacian und Diffusion ---
 
