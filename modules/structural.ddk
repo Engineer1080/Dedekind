@@ -27,3 +27,32 @@ pub fn topo_opt_oc_2d_advanced(mesh, loads, fixed_dofs, volfrac, steps, penal, r
 pub fn print_structural_topology_2d(densities, nx, ny) {
     return print_structural_topology_2d_impl(densities, nx, ny)
 }
+
+pub fn structural_solve_truss_2d(nodes, elements, E, A, loads, fixed_dofs) {
+    return structural_solve_truss_2d_impl(nodes, elements, E, A, loads, fixed_dofs)
+}
+
+pub fn structural_truss_stress_2d(nodes, elements, E, U) {
+    return structural_truss_stress_2d_impl(nodes, elements, E, U)
+}
+
+pub fn structural_modal_2d(mesh, densities, fixed_dofs) {
+    return structural_modal_2d_impl(mesh, densities, fixed_dofs)
+}
+
+pub fn structural_modal_2d_advanced(mesh, densities, fixed_dofs, rho, num_modes) {
+    return structural_modal_2d_impl(mesh, densities, fixed_dofs, rho, num_modes)
+}
+
+pub fn concrete_beam_capacity(b, h, d, As, fprime_c, fy) {
+    return concrete_beam_capacity_impl(b, h, d, As, fprime_c, fy)
+}
+
+pub fn concrete_beam_capacity_advanced(b, h, d, As, fprime_c, fy, Es) {
+    return concrete_beam_capacity_impl(b, h, d, As, fprime_c, fy, Es)
+}
+
+pub fn steel_buckling_check(A, r, L, K, E, fy) {
+    return steel_buckling_check_impl(A, r, L, K, E, fy)
+}
+

@@ -23,7 +23,7 @@ Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Prob
 12. [Implementation Roadmap](#12-implementation-roadmap)
 13. [Technical Foundation](#13-technical-foundation)
 14. [Conclusion](#14-conclusion)
-15. [**Physical Units and Universal Constants (v0.6)**](#15-physical-units-and-universal-constants-v06) (incl. §15.7 ODE, §15.8 Probabilistic, §15.9 PDE, §15.10 Integration & Math v0.9, ..., §15.27 Quantum v1.21, §15.28 Geosciences v2.0, §15.29 EE & Control v2.1)
+15. [**Physical Units and Universal Constants (v0.6)**](#15-physical-units-and-universal-constants-v06) (incl. §15.7 ODE, §15.8 Probabilistic, §15.9 PDE, §15.10 Integration & Math v0.9, ..., §15.27 Quantum v1.21, §15.28 Geosciences v2.0, §15.29 EE & Control v2.1, §15.30 Robotics v2.1, §15.31 Space Physics v2.0, §15.32 Structural Mechanics v2.0, §15.33 Heat Transfer v2.0, §15.34 CFD v2.0, §15.35 DSP v2.0)
 
 ---
 
@@ -304,6 +304,15 @@ Examples: \(\int_0^1 x^2\,dx = 1/3\), \(\int_0^\pi \sin(x)\,dx = 2\); see `examp
 - **`use biology`** — `exponential_growth`, `doubling_time`, `growth_rate_from_doubling`, `gompertz_growth`, `von_bertalanffy`, `population_change_logistic`, `carrying_capacity`, `kleibers_law`, `allometric_scaling`, `bmr_harris_benedict`, `bmi`, `hardy_weinberg_freq`, `fitness_selection_coefficient`, `mutation_drift_balance`, `r_naught_sir`, `herd_immunity_threshold`.
 - **`use math`** — constants `PHI`, `TAU`; sequences `fibonacci`, `harmonic_sum`, `geometric_sum`; number theory `lcm`, `is_perfect_square`, `digital_root`; geometry `circle_area`, `circle_circumference`, `sphere_volume`, `sphere_surface`, `cylinder_volume`, `cone_volume`, `hypotenuse`, `law_of_cosines_c`; helpers `lerp`, `clamp_scalar`, `sigmoid`, `softplus`.
 - **`use ml`** — activations `leaky_relu`, `elu`, `swish`, `gelu_approx`; losses `mse_loss`, `mae_loss`, `binary_crossentropy`; metrics `accuracy`, `precision_binary`, `recall_binary`, `f1_score`.
+- **`use space`** — N-body simulation (`n_body_simulate`, `n_body_simulate_advanced`), Kepler equation solvers (`kepler_solve`), Keplerian-Cartesian conversions (`kepler_to_cartesian`, `kepler_to_cartesian_from_E`, `cartesian_to_kepler`).
+- **`use control`** — State-Space LTI models (`state_space`), PI controllers (`pi_controller`), Bode plots (`bode_plot`), block diagram simulation (`block_diagram`, `constant_block`, `gain_block`, `sum_block`, `product_block`, `saturation_block`, `integrator_block`, `pid_block`, `pid_block_saturated`, `state_space_block`, `state_space_block_with_d`, `transfer_function_block`).
+- **`use electronics`** — circuit builder (`circuit`), complex AC analysis (`phasor`), resistance calculations (`parallel_resistors`), RC time constants (`rc_time_constant`), and resonance frequencies (`rlc_resonance_freq`).
+- **`use dsp`** — Finite Impulse Response filtering (`fir_filter`), Infinite Impulse Response filtering (`iir_filter`), Biquad filter coefficient generators (`biquad_lowpass`, `biquad_highpass`, `biquad_bandpass`), frequency response calculation (`freqz`), and filter design (`butter`, `cheby1`).
+- **`use structural`** — 2D meshes (`structural_mesh_2d`), static finite element solver (`structural_solve_2d`, `structural_solve_2d_params`), compliance calculations (`structural_compliance_2d`), Optimality Criteria topology optimization (`topo_opt_oc_2d`, `topo_opt_oc_2d_advanced`), and character-based visualization (`print_structural_topology_2d`).
+- **`use thermal`** — 2D thermal meshes (`thermal_mesh_2d`), steady-state solver (`thermal_solve_2d`, `thermal_solve_2d_params`), transient thermal solver (`thermal_solve_transient_2d`, `thermal_solve_transient_2d_params`), thermal topology optimization (`topo_opt_thermal_oc_2d`, `topo_opt_thermal_oc_2d_advanced`), and character-based visualization (`print_thermal_topology_2d`).
+- **`use fluid_dynamics`** — Lattice Boltzmann Method CFD solvers (`lbm_simulation`, `lbm_simulation_with_mask`), simulation iteration handlers (`simulation_step`, `simulation_run`), field extractors (`simulation_get_velocity`, `simulation_get_density`), force calculators (`simulation_get_drag_lift`, `simulation_get_drag_lift_for_mask`), dynamic obstacle modifier (`simulation_set_obstacle`), and soft masks (`soft_cylinder_mask`, `soft_airfoil_mask`, `add_wind_tunnel_walls`).
+- **`use quantum`** — Quantum Computing bridge wrappers (`make_bell`, `make_ghz`, `make_grover`, `make_vqe_ansatz`, `simulate`, `sample_circuit`, `expectation`, `probs`, `state_fidelity`, `vn_entropy`).
+- **`use robotics`** — Kinematic chains (`kinematic_chain`), revolute/prismatic joints (`add_revolute_joint`, `add_prismatic_joint`), forward kinematics solver (`forward_kinematics`), and end-effector extraction (`end_effector_pos`, `end_effector_rot`).
 
 **User-defined units** are declared at top level with the `unit` keyword (a *soft* keyword — `q.unit` member access and `unit="V"` kwargs remain valid):
 
@@ -763,9 +772,9 @@ Order in the annotation is documentation only — xarray operates name-based, so
 
 Example: `examples/dedekind/labeled_tensors_demo.ddk` (4×8×12 synthetic climate dataset: temporal mean, zonal mean, anomaly, `.sel`-slicing by coordinate value). Test: `tests/dedekind/labeled_tensors_test.ddk`.
 
-### 15.22 Bioinformatics Quick-Wins (v1.16)
+### 15.22 Bioinformatics & Life Sciences (v1.16, updated v2.0)
 
-Typed bioinformatics primitives layered on top of the existing annotation system, with one cheminformatics bridge via `pyimport rdkit`.
+Typed bioinformatics and life sciences primitives layered on top of the existing annotation system, with native sequence alignment, protein structure parsing, pharmacokinetics modeling, biochemical helpers, and database query integration.
 
 ```dedekind
 fn dna_to_protein(dna: Sequence[DNA]) -> Sequence[Protein] {
@@ -784,30 +793,45 @@ protein = dna_to_protein("ATGGCCCTGTGGATGCGCCTCCTGCCCCTGCTG")
 | `RNA` | A, C, G, U, N |
 | `Protein` | 20 standard amino acids + B, Z, X (ambiguity), `*` (stop) |
 
-Mismatch raises `ValueError: Sequence[DNA]-Check in fn(seq): ungueltiges Zeichen 'U' an Position 3 (erlaubt: ACGNT).` — catches the classic Python/Biopython bug of passing an RNA string into a DNA-only function and silently miscomputing GC content.
+Mismatch raises `ValueError: Sequence[DNA]-Check in fn(seq): ungueltiges Zeichen 'U' an Position 3 (erlaubt: ACGNT).`
 
-**Native bio built-ins** (no pyimport):
+**Native bioinformatics and life science built-ins:**
 
-| Built-in | Returns |
+| Built-in | Description / Returns |
 |----------|---------|
 | `gc_content(dna)` | float 0..1 |
 | `reverse_complement(dna)` | str |
 | `transcribe(dna)` | RNA str (T→U) |
 | `translate(rna, stop_at_stop=True)` | protein str |
 | `k_mer_count(seq, k)` | dict {k-mer: count} |
+| `smith_waterman_alignment(seq1, seq2, match, mismatch, gap)` | Computes Smith-Waterman local alignment of two sequences (strings or 1D tensor/lists). Returns a dict with `score` (float), `aligned_seq1` (str), and `aligned_seq2` (str). |
+| `protein_structure_parse(filepath)` | Parses a PDB or mmCIF file and returns a `DataFrame` with columns: `atom_name`, `res_name`, `chain_id`, `element`, and `x`, `y`, `z` coordinates (represented as `angstrom` quantities). |
+| `two_compartment_pk(c0, k12, k21, ke, t)` | Differentiable two-compartment pharmacokinetics simulator. Computes central compartment concentration at time `t` (scalar or tensor) given initial concentration `c0`, and rate constants `k12`, `k21`, `ke`. |
+| `concentration_to_pH(h_conc)` | Computes pH from Hydrogen ion concentration `h_conc` (can be a `Quantity` in `M`). Returns dimensionless float. |
+| `pH_to_concentration(ph)` | Computes Hydrogen ion concentration (in `M`) from pH value. Returns dimensionless float/tensor. |
 
-**Cheminformatics (via rdkit, with robust pure-Python fallback):**
+**Cheminformatics and Database Queries:**
 
-| Built-in | Returns |
+| Built-in | Description / Returns |
 |----------|---------|
+| `smiles_molecular_weight(smiles)` | Returns the molecular weight of a SMILES string as a `Quantity` in `g/mol`. |
 | `smiles_descriptors(smiles)` | dict with `mw` ([g/mol]), `logp`, `num_atoms`, `num_heavy_atoms`, `num_rings`, `num_aromatic_rings`, `hbd`, `hba`, `tpsa`, `num_rotatable_bonds` |
 | `lipinski_rule_of_five(smiles)` | dict with `mw`, `logp`, `hbd`, `hba`, `checks` (four bool flags), `violations` (count), `passes` (bool) |
+| `pubchem_get_molecular_formula(name)` | Fetches the molecular formula for a compound name from the PubChem REST API. |
+| `chembl_get_ic50(target, compound)` | Fetches the IC50 value of a compound against a target from the ChEMBL database, returned as a `Quantity` in `nM`. |
 
-MW and TPSA come back as `Quantity` — directly usable in unit-aware arithmetic. If `rdkit` is not installed, Dedekind automatically falls back to an integrated pure-Python SMILES parser to compute the primary parameters (`mw`, `logp`, `hbd`, `hba`).
+If `rdkit` is not installed, Dedekind automatically falls back to an integrated pure-Python SMILES parser to compute the primary parameters (`mw`, `logp`, `hbd`, `hba`).
 
-**What v1.16 deliberately does not provide:** no sequence alignment (Smith-Waterman, Needleman-Wunsch), no PDB/structure parsing, no phylogenetic trees, no multiple sequence alignment. For those, `pyimport Bio.Align`, `pyimport Bio.PDB`, etc. Dedekind's role here is typed quick-wins where native implementation is small, plus the annotated cheminformatics bridge with unit-aware descriptors.
+**Physical Units:**
+Dedicated life sciences units are registered and fully supported:
+- **`percent_wv`**: Percent weight-by-volume ($1\% \text{ w/v} = 10\text{ g/L}$).
+- **`g/L`**: Grams per liter (concentration).
+- **`mg/mL`**: Milligrams per milliliter (concentration).
+- **`bar`**: Pressure unit ($1\text{ bar} = 100\,000\text{ Pa}$).
+- **`atm`**: Standard atmosphere pressure ($1\text{ atm} = 101\,325\text{ Pa}$).
+- **`angstrom`**: Length unit ($1\,\text{Å} = 10^{-10}\text{ m}$).
 
-Example: `examples/dedekind/bioinformatics_demo.ddk` (insulin signal peptide via central dogma, k-mer analysis, Aspirin/Caffeine/Ibuprofen Lipinski). Test: `tests/dedekind/bioinformatics_test.ddk`.
+Example: `examples/dedekind/bioinformatics_demo.ddk`. Tests: `tests/dedekind/life_sciences_phase{1,2,3}_test.ddk`, `tests/dedekind/bioinformatics_test.ddk`.
 
 ### 15.23 try/catch and Slicing Syntax (v1.17)
 
@@ -1147,6 +1171,253 @@ result = sys.step_response(t_vals)
 ```
 
 Both models enforce Dedekind's strict unit rules for voltage, current, resistance, time, and states.
+
+---
+
+### 15.30 Differentiable Robotics (v2.1)
+
+Dedekind v2.1 introduces native differentiable robotics modeling, enabling kinodynamic analysis and analytical Jacobian extraction of robotic manipulators directly within PyTorch's Autograd environment.
+
+#### 15.30.1 Kinematic Chain Modeling (`use robotics`)
+
+To construct a robotic system, Dedekind provides the `KinematicChain` class representing a serial-link manipulator defined by Denavit-Hartenberg (DH) parameters.
+
+| Method / Built-in | Description |
+|-------------------|-------------|
+| `kinematic_chain()` | Instantiates and returns a new empty `KinematicChain` object. |
+| `add_revolute_joint(d, a, alpha)` | Appends a revolute joint to the chain. Parameter `d` is joint offset (Quantity/scalar), `a` is link length (Quantity/scalar), and `alpha` is link twist (Quantity/scalar in radians/degrees). |
+| `add_prismatic_joint(theta, a, alpha)` | Appends a prismatic joint to the chain. Parameter `theta` is joint angle, `a` is link length, and `alpha` is link twist. |
+| `forward_kinematics(joint_vars)` | Computes the end-effector homogeneous transformation matrix $T$ (a $4 \times 4$ tensor) given a list/tensor of active joint variables (radians for revolute joints, meters for prismatic joints). |
+
+The following global utility functions extract position and orientation from a homogeneous transformation matrix:
+- **`end_effector_pos(T)`**: Extracts the 3D position vector $[x, y, z]^T$ as a tensor.
+- **`end_effector_rot(T)`**: Extracts the $3\times3$ rotation matrix.
+
+#### 15.30.2 Robotic Jacobian & Sensitivity via Autograd
+
+Since forward kinematics propagates through Autograd-enabled tensors, users can extract the robotic Jacobian matrix analytically using Dedekind's built-in `jacobian` operator.
+
+```dedekind
+use robotics
+
+arm = kinematic_chain()
+arm.add_revolute_joint(0.0[m], 1.0[m], 0.0[rad])
+arm.add_revolute_joint(0.0[m], 1.0[m], 0.0[rad])
+
+fn fk_pos(q) {
+    T = arm.forward_kinematics(q)
+    return end_effector_pos(T)
+}
+
+// Joint angles (q1 = 45 deg, q2 = 45 deg)
+q = [0.785398, 0.785398]
+
+// Analytical Jacobian J(q) = d(pos)/d(q)
+J = jacobian(fk_pos, q)
+```
+
+Example: `tests/dedekind/robotics_test.ddk`.
+
+---
+
+### 15.31 Differentiable Space Physics & Orbital Mechanics (v2.0)
+
+Dedekind v2.0 supports orbital mechanics modeling and N-body physical simulation with full differentiability.
+
+#### 15.31.1 Kepler's Equation Solver
+
+Kepler's equation relates the mean anomaly $M$ and the eccentric anomaly $E$ for an elliptic orbit:
+$$M = E - e\sin(E)$$
+
+- **`kepler_solve(M, ecc)`**: Numerically solves Kepler's equation for eccentric anomaly $E$ given mean anomaly $M$ (scalar/tensor) and eccentricity $ecc$ (0 to 1). Fully differentiable.
+
+#### 15.31.2 Coordinate Conversions
+
+Dedekind supports conversion between Keplerian orbital elements and Cartesian state vectors (position and velocity vectors).
+
+- **`kepler_to_cartesian(a, ecc, inc, Omega, omega, nu, mu)`**: Converts Keplerian orbital elements to Cartesian state. Returns a dictionary containing `"position"` ($[x, y, z]^T$ tensor) and `"velocity"` ($[v_x, v_y, v_z]^T$ tensor).
+- **`cartesian_to_kepler(r, v, mu)`**: Converts Cartesian position `r` and velocity `v` vectors to Keplerian orbital elements. Returns a dictionary with keys `"a"`, `"ecc"`, `"inc"`, `"Omega"`, `"omega"`, and `"nu"`.
+
+#### 15.31.3 Differentiable N-Body Simulation
+
+- **`n_body_simulate(pos_init, vel_init, masses, dt, steps)`**: Runs a symplectic integration of $N$ point masses under mutual Newtonian gravitation. `pos_init` is a shape $[N, 3]$ tensor of initial positions, `vel_init` is a shape $[N, 3]$ tensor of initial velocities, `masses` is a shape $[N]$ tensor of masses, `dt` is time-step size, and `steps` is simulation step count. Returns a dictionary containing `"positions"` (tensor of shape $[steps, N, 3]$) and `"velocities"` (tensor of shape $[steps, N, 3]$).
+
+```dedekind
+use space
+
+// Integrate orbital trajectory under gravity and backpropagate to optimize launch velocity
+fn loss_fn(v_init_y) {
+    pos_init = [[0.0, 0.0, 0.0], [7000000.0, 0.0, 0.0]]
+    vel_init = [[0.0, 0.0, 0.0], [0.0, v_init_y, 0.0]]
+    masses = [5.972e24, 1000.0]
+    
+    res = n_body_simulate(pos_init, vel_init, masses, 10.0, 5)
+    final_pos = res["positions"][4][1] // step 5, satellite
+    return final_pos[1] // Y coordinate
+}
+
+jac = jacobian(loss_fn, 7546.0)
+```
+
+Example: `tests/dedekind/space_test.ddk`.
+
+---
+
+### 15.32 Differentiable Structural Mechanics (v2.0)
+
+Dedekind v2.0 integrates 2D static Finite Element Analysis (FEA) and topology optimization.
+
+#### 15.32.1 Mesh and FE Solver
+
+- **`structural_mesh_2d(nelx, nely)`**: Instantiates a 2D rectangular structural mesh of dimensions `nelx` by `nely`.
+- **`structural_solve_2d(mesh, densities, loads, fixed_dofs)`**: Solves the static equilibrium equation $\mathbf{K}(\mathbf{\rho})\mathbf{U} = \mathbf{F}$ using the solid isotropic material with penalization (SIMP) method. Returns the displacement vector $\mathbf{U}$.
+- **`structural_compliance_2d(mesh, densities, loads, fixed_dofs)`**: Computes the structural compliance (flexibility) $c = \mathbf{U}^T \mathbf{K} \mathbf{U} = \mathbf{F}^T \mathbf{U}$. Minimizing compliance maximizes structural stiffness.
+
+#### 15.32.2 2D Truss Solver
+
+- **`structural_solve_truss_2d(nodes, elements, E, A, loads, fixed_dofs)`**: Solves a 2D pin-jointed truss system under load. Returns the global joint displacement vector $\mathbf{U}$ of size `2*N`.
+- **`structural_truss_stress_2d(nodes, elements, E, U)`**: Computes the axial stress $\sigma = \frac{E}{L} \mathbf{u}_e$ for each member. Returns a vector of member stresses of size `M`.
+
+#### 15.32.3 Dynamic Modal Analysis
+
+- **`structural_modal_2d(mesh, densities, fixed_dofs)`**: Computes the natural frequencies (in Hz) and mode shapes of a 2D Q4 grid structure. Returns a tuple `(frequencies, eigenvectors)`.
+- **`structural_modal_2d_advanced(mesh, densities, fixed_dofs, rho, num_modes)`**: Advanced interface allowing a custom material density factor `rho` and specifies how many mode shapes to return.
+
+#### 15.32.4 Section Capacity & Column Buckling
+
+- **`concrete_beam_capacity(b, h, d, As, fprime_c, fy)`**: Calculates the nominal and LRFD design moment capacity of a rectangular reinforced concrete section under Ultimate Limit State (ULS) using ACI 318 criteria. Returns `(Mn, Md, eps_s, c, phi)`.
+- **`concrete_beam_capacity_advanced(b, h, d, As, fprime_c, fy, Es)`**: Advanced capacity check supporting a custom steel elasticity modulus `Es`.
+- **`steel_buckling_check(A, r, L, K, E, fy)`**: Performs steel column buckling checks according to AISC 360-16 LRFD and ASD methods. Returns `(Pn, Pd, Pa, Fe, Fcr, lambda)`.
+
+#### 15.32.5 Topology Optimization
+
+- **`topo_opt_oc_2d_advanced(mesh, loads, fixed_dofs, volfrac, max_steps, penalty, filter_radius)`**: Performs topology optimization using the Optimality Criteria (OC) method to distribute material within the mesh.
+- **`print_structural_topology_2d(densities, nelx, nely, threshold=0.5)`**: Outputs an ASCII representation of the structure to print the density layout.
+
+```dedekind
+use structural
+
+mesh = structural_mesh_2d(10, 4)
+fixed_dofs = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0] // left end fixed
+loads = linspace(0.0, 0.0, 110)
+loads[101] = -1.0 // vertical load at tip
+
+// Optimize layout for 50% volume fraction
+opt_densities = topo_opt_oc_2d_advanced(mesh, loads, fixed_dofs, 0.5, 5, 3.0, 1.5)
+print_structural_topology_2d(opt_densities, 10, 4)
+```
+
+Example: `tests/dedekind/structural_test.ddk`.
+
+---
+
+### 15.33 Differentiable Heat Transfer & Thermodynamics (v2.0)
+
+Dedekind v2.0 provides finite element/finite difference solvers for 2D steady-state and transient heat equation simulation, coupled with thermal topology optimization.
+
+#### 15.33.1 Steady-State and Transient Thermal Solvers
+
+- **`thermal_mesh_2d(nelx, nely)`**: Creates a 2D thermal mesh grid.
+- **`thermal_solve_2d(mesh, conductivities, heat_sources, fixed_nodes, fixed_temps)`**: Solves the steady-state heat equation $\nabla \cdot (k \nabla T) + Q = 0$ for nodal temperatures $T$.
+- **`thermal_solve_transient_2d(mesh, conductivities, capacities, initial_temps, heat_sources, fixed_nodes, fixed_temps, dt, steps)`**: Solves the transient heat equation $\rho c_p \frac{\partial T}{\partial t} = \nabla \cdot (k \nabla T) + Q$. Returns the nodal temperatures $T$ at the final simulation step.
+
+#### 15.33.2 Thermal Topology Optimization
+
+- **`topo_opt_thermal_oc_2d_advanced(mesh, heat_sources, fixed_nodes, volfrac, max_steps, penalty, filter_radius)`**: Optimizes the distribution of high-conductivity material to minimize the thermal compliance (average temperature) under a volume constraint.
+- **`print_thermal_topology_2d(densities, nelx, nely, threshold=0.5)`**: Prints an ASCII map of thermal material densities.
+
+```dedekind
+use thermal
+
+mesh = thermal_mesh_2d(10, 4)
+fixed_nodes = [0.0] // bottom-left node fixed
+fixed_temps = [100.0]
+heat_sources = linspace(0.0, 0.0, 55)
+
+conductivities = linspace(1.0, 1.0, 40)
+capacities = linspace(1.0, 1.0, 40)
+initial_temps = linspace(20.0, 20.0, 55)
+
+// Simulate transient thermal diffusion
+T_final = thermal_solve_transient_2d(mesh, conductivities, capacities, initial_temps, heat_sources, fixed_nodes, fixed_temps, 0.1, 5)
+```
+
+Example: `tests/dedekind/thermal_test.ddk`.
+
+---
+
+### 15.34 Computational Fluid Dynamics (v2.0)
+
+Dedekind v2.0 integrates a 2D Lattice Boltzmann Method (LBM) CFD simulation engine with D2Q9 discretization and differentiable boundary/obstacle interaction.
+
+#### 15.34.1 Simulation and Iteration Built-ins
+
+- **`lbm_simulation(nx, ny, viscosity)`**: Initializes a D2Q9 LBM grid of shape `[nx, ny]` with a given kinematic viscosity.
+- **`lbm_simulation_with_mask(nx, ny, viscosity, mask)`**: Initializes an LBM grid with a solid obstacle fraction mask tensor of shape `[nx, ny]`.
+- **`simulation_step(sim, inflow_velocity)`**: Propagates the LBM state (stream and collide phases) by one time step with a given inflow boundary velocity.
+- **`simulation_run(sim, steps, inflow_velocity)`**: Iterates the simulation for `steps` steps.
+- **`simulation_get_density(sim)`**: Returns the current density field as a tensor of shape `[nx, ny]`.
+- **`simulation_get_velocity(sim)`**: Returns the current velocity field as a tensor of shape `[2, nx, ny]`.
+- **`simulation_get_drag_lift(sim)`**: Computes the integrated drag and lift force components $[F_x, F_y]$ acting on the obstacle mask.
+
+#### 15.34.2 Differentiable Solid Mask Generators
+
+To enable gradient-based design of aerodynamic shapes, masks are generated using soft, differentiable boundary functions:
+- **`soft_cylinder_mask(nx, ny, cx, cy, r, sigma)`**: Generates a soft cylinder mask centered at `(cx, cy)` with radius `r` and boundary thickness `sigma`.
+- **`soft_airfoil_mask(nx, ny, cx, cy, chord, angle, thickness)`**: Generates a soft NACA-style airfoil mask.
+
+```dedekind
+use fluid_dynamics
+
+fn get_drag(r_arr) {
+    r = r_arr[0]
+    mask = soft_cylinder_mask(20, 10, 8.0, 5.0, r, 0.5)
+    sim = lbm_simulation_with_mask(20, 10, 0.8, mask)
+    simulation_run(sim, 4, 0.05)
+    forces = simulation_get_drag_lift(sim)
+    return [forces[0]] // drag force
+}
+
+// Compute analytical derivative of drag w.r.t cylinder radius
+d_drag_d_r = jacobian(get_drag, [1.5])
+```
+
+Example: `tests/dedekind/fluid_dynamics_test.ddk`.
+
+---
+
+### 15.35 Digital Signal Processing (v2.0)
+
+Dedekind v2.0 includes native Digital Signal Processing (DSP) primitives, enabling differentiable FIR/IIR filtering and filter coefficient design.
+
+#### 15.35.1 Filtering Built-ins
+
+- **`fir_filter(x, b)`**: Convolves 1D signal `x` (tensor/list) with FIR filter coefficients `b`.
+- **`iir_filter(x, b, a)`**: Computes the output of an IIR filter with numerator coefficients `b` and denominator coefficients `a` on signal `x` using direct form II transposed representation.
+- **`freqz(b, a, n_freqs)`**: Computes the complex frequency response $H(e^{j\omega})$ evaluated at `n_freqs` frequencies from $0$ to $\pi$. Returns a list `[omega, H]`.
+
+#### 15.35.2 Differentiable Biquad & Filter Design Helpers
+
+- **`biquad_lowpass(fc, Q, fs)`**: Designs a biquad lowpass filter. Returns a list `[b, a]` containing coefficients.
+- **`biquad_highpass(fc, Q, fs)`**: Designs a biquad highpass filter. Returns `[b, a]`.
+- **`biquad_bandpass(fc, Q, fs)`**: Designs a biquad bandpass filter. Returns `[b, a]`.
+- **`butter(order, Wn)`**: Designs an N-th order digital Butterworth filter with normalized cutoff frequency `Wn`. Returns `[b, a]`.
+- **`cheby1(order, rp, Wn)`**: Designs an N-th order digital Chebyshev Type I filter with peak-to-peak passband ripple `rp` (dB) and normalized cutoff frequency `Wn`. Returns `[b, a]`.
+
+```dedekind
+use dsp
+
+fn get_lowpass_b0(fc) {
+    res = biquad_lowpass(fc, 0.707, 1.0)
+    b = res[0]
+    return b[0]
+}
+
+// Compute sensitivity of b0 coefficient w.r.t cutoff frequency
+d_b0_d_fc = jacobian(get_lowpass_b0, [0.2])
+```
+
+Example: `tests/dedekind/dsp_test.ddk`.
 
 ---
 

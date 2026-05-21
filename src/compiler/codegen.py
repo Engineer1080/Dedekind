@@ -66,6 +66,7 @@ _RUNTIME_BUILTIN_NAMES = frozenset({
     'least_squares', 'minimize_constrained', 'milp',
     'mesh_unit_square', 'fem_assemble_stiffness', 'fem_assemble_load', 'fem_poisson_2d',
     'structural_mesh_2d_impl', 'structural_solve_2d_impl', 'structural_compliance_2d_impl', 'topo_opt_oc_2d_impl', 'print_structural_topology_2d_impl',
+    'structural_solve_truss_2d_impl', 'structural_truss_stress_2d_impl', 'structural_modal_2d_impl', 'concrete_beam_capacity_impl', 'steel_buckling_check_impl',
     'thermal_mesh_2d_impl', 'thermal_solve_2d_impl', 'thermal_solve_transient_2d_impl', 'topo_opt_thermal_oc_2d_impl', 'print_thermal_topology_2d_impl',
     'n_body_simulate_impl', 'kepler_solve_impl', 'kepler_to_cartesian_impl', 'kepler_to_cartesian_from_E_impl', 'cartesian_to_kepler_impl',
     'solve_sym', 'simplify_sym', 'series',

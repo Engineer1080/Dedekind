@@ -62,12 +62,164 @@ fn test_topo_opt_oc() {
     print("test_topo_opt_oc: passed")
 }
 
+fn test_truss_solve() {
+    nodes = [[0.0, 0.0], [0.0, 2.0], [2.0, 1.0]]
+    elements = [[0, 2], [1, 2]]
+    E = [200e9, 200e9]
+    A = [1e-4, 1e-4]
+    
+    // Loads at nodes. Total 6 DOFs (2 per node).
+    // Apply load at node 2 (DOF 4, 5).
+    loads = [0.0, 0.0, 0.0, 0.0, 10000.0, -5000.0]
+    
+    // Fixed DOFs: Node 0 (0, 1), Node 1 (2, 3)
+    fixed_dofs = [0.0, 1.0, 2.0, 3.0]
+    
+    U = structural_solve_truss_2d(nodes, elements, E, A, loads, fixed_dofs)
+    
+    // Check displacements are non-zero at free node (node 2 -> DOF 4, 5)
+    print("Truss Node 2 Displacements:", U[4], U[5])
+    assert(U[4] > 0.0)
+    assert(U[5] < 0.0)
+    
+    // Compute stresses
+    stresses = structural_truss_stress_2d(nodes, elements, E, U)
+    print("Truss Stresses:", stresses[0], stresses[1])
+    assert(stresses[1] != 0.0)
+    
+    // Check that we can compute derivative with respect to area A
+    fn loss(area) {
+        u = structural_solve_truss_2d(nodes, elements, E, area, loads, fixed_dofs)
+        return u[4]
+    }
+    jac = jacobian(loss, A)
+    print("Truss Jacobian w.r.t A:", jac[0][0], jac[0][1])
+    // Increasing A should decrease displacement (stiffer structure)
+    assert(jac[0][1] < 0.0)
+    
+    print("test_truss_solve: passed")
+}
+
+fn test_modal_analysis() {
+    mesh = structural_mesh_2d(4, 2)
+    densities = linspace(1.0, 1.0, 8) // 4x2 elements
+    fixed_dofs = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0] // fixed nodes at x=0
+    
+    res = structural_modal_2d_advanced(mesh, densities, fixed_dofs, 7800.0, 3)
+    freqs = res[0]
+    modes = res[1]
+    
+    print("Modal frequencies:", freqs)
+    // Frequencies should be positive and ascending
+    assert(freqs[0] > 0.0)
+    assert(freqs[1] >= freqs[0])
+    
+    // Check shape of modes: (2 * nodes_count, num_modes)
+    // nodes count = (4 + 1) * (2 + 1) = 15. Total DOFs = 30
+    print("Mode shape dim 0:", modes.shape[0])
+    assert(modes.shape[0] == 30)
+    assert(modes.shape[1] == 3)
+    
+    // Check differentiability
+    fn first_freq(dens) {
+        r = structural_modal_2d_advanced(mesh, dens, fixed_dofs, 7800.0, 3)
+        f = r[0]
+        return f[0]
+    }
+    jac = jacobian(first_freq, densities)
+    print("Modal freq Jacobian:", jac[0])
+    
+    print("test_modal_analysis: passed")
+}
+
+fn test_concrete_beam() {
+    b = 0.3
+    h = 0.5
+    d = 0.45
+    As = 0.001
+    fc = 30e6
+    fy = 400e6
+    
+    res = concrete_beam_capacity(b, h, d, As, fc, fy)
+    Mn = res[0]
+    Md = res[1]
+    eps_s = res[2]
+    c = res[3]
+    phi = res[4]
+    
+    print("Concrete Beam Mn:", Mn)
+    print("Concrete Beam Md:", Md)
+    print("Steel Strain eps_s:", eps_s)
+    print("Neutral Axis c:", c)
+    print("Reduction Factor phi:", phi)
+    
+    assert(Mn > 0.0)
+    assert(Md <= Mn)
+    assert(phi >= 0.65)
+    assert(phi <= 0.90)
+    
+    // Differentiability check w.r.t steel area As
+    fn beam_loss(area) {
+        r = concrete_beam_capacity(0.3, 0.5, 0.45, area[0], 30e6, 400e6)
+        return r[1] // Md
+    }
+    jac = jacobian(beam_loss, [0.001])
+    print("Concrete capacity gradient w.r.t As:", jac[0])
+    assert(jac[0] > 0.0) // increasing steel area increases capacity
+    
+    print("test_concrete_beam: passed")
+}
+
+fn test_steel_buckling() {
+    A = 0.005 // 50 cm^2
+    r = 0.05  // 5 cm
+    L = 4.0   // 4 meters
+    K = 1.0   // pinned-pinned
+    E = 200e9 // 200 GPa
+    fy = 250e6 // 250 MPa
+    
+    res = steel_buckling_check(A, r, L, K, E, fy)
+    Pn = res[0]
+    Pd = res[1]
+    Pa = res[2]
+    Fe = res[3]
+    Fcr = res[4]
+    lam = res[5]
+    
+    print("Steel Buckling Pn:", Pn)
+    print("Steel Buckling Pd:", Pd)
+    print("Steel Buckling Pa:", Pa)
+    print("Elastic buckling Fe:", Fe)
+    print("Critical stress Fcr:", Fcr)
+    print("Slenderness lambda:", lam)
+    
+    assert(Pn > 0.0)
+    assert(Pd < Pn)
+    assert(Pa < Pn)
+    
+    // Differentiability check w.r.t L
+    fn buckling_loss(len_val) {
+        r = steel_buckling_check(0.005, 0.05, len_val[0], 1.0, 200e9, 250e6)
+        return r[1] // Pd
+    }
+    jac = jacobian(buckling_loss, [4.0])
+    print("Buckling capacity gradient w.r.t L:", jac[0])
+    assert(jac[0] < 0.0) // increasing length decreases capacity
+    
+    print("test_steel_buckling: passed")
+}
+
 fn main() {
     print("=== Differentiable Structural Mechanics & TopOpt Tests ===")
     test_cantilever_solve()
     test_gradient_flow()
     test_topo_opt_oc()
+    test_truss_solve()
+    test_modal_analysis()
+    test_concrete_beam()
+    test_steel_buckling()
     print("structural_test: Alle Tests bestanden!")
 }
 
 main()
+
