@@ -313,6 +313,7 @@ Examples: \(\int_0^1 x^2\,dx = 1/3\), \(\int_0^\pi \sin(x)\,dx = 2\); see `examp
 - **`use fluid_dynamics`** — Lattice Boltzmann Method CFD solvers (`lbm_simulation`, `lbm_simulation_with_mask`), simulation iteration handlers (`simulation_step`, `simulation_run`), field extractors (`simulation_get_velocity`, `simulation_get_density`), force calculators (`simulation_get_drag_lift`, `simulation_get_drag_lift_for_mask`), dynamic obstacle modifier (`simulation_set_obstacle`), and soft masks (`soft_cylinder_mask`, `soft_airfoil_mask`, `add_wind_tunnel_walls`).
 - **`use quantum`** — Quantum Computing bridge wrappers (`make_bell`, `make_ghz`, `make_grover`, `make_vqe_ansatz`, `simulate`, `sample_circuit`, `expectation`, `probs`, `state_fidelity`, `vn_entropy`).
 - **`use robotics`** — Kinematic chains (`kinematic_chain`), revolute/prismatic joints (`add_revolute_joint`, `add_prismatic_joint`), forward kinematics solver (`forward_kinematics`), and end-effector extraction (`end_effector_pos`, `end_effector_rot`).
+- **`use molecular`** — Differentiable Molecular Dynamics (`molecular_lj_simulate`, `molecular_lj_simulate_advanced`), Morse potential (`morse_potential`), and geometry descriptors (`molecular_distance`, `molecular_angle`, `molecular_dihedral`).
 
 **User-defined units** are declared at top level with the `unit` keyword (a *soft* keyword — `q.unit` member access and `unit="V"` kwargs remain valid):
 
@@ -1421,4 +1422,48 @@ Example: `tests/dedekind/dsp_test.ddk`.
 
 ---
 
+### 15.36 Differentiable Molecular Dynamics & Chemistry (v2.0)
+
+Dedekind v2.0 introduces support for Differentiable Molecular Dynamics (MD) and chemical geometry calculations. All solvers and descriptors are fully differentiable, allowing analytical gradients of potential energies, temperatures, and geometric variables to be computed automatically via PyTorch autograd.
+
+#### 15.36.1 Velocity Verlet LJ Simulation Solvers
+
+- **`molecular_lj_simulate(positions, velocities, masses, box_size, dt, steps)`**: Simulates a system of particles interacting via the Lennard-Jones potential using the Velocity Verlet algorithm. It applies periodic boundary conditions (PBC) with the minimum image convention. Returns a dictionary containing the histories of positions, velocities, potential energies, kinetic energies, and temperatures.
+- **`molecular_lj_simulate_advanced(positions, velocities, masses, box_size, dt, steps, epsilon, sigma, cutoff, thermostat_tau, target_temp)`**: Advanced interface providing custom Lennard-Jones parameters ($\epsilon, \sigma$), cutoff radius, and NVT Berendsen thermostat velocity scaling parameters ($\tau$ and target temperature). A non-positive `thermostat_tau` disables velocity scaling.
+
+#### 15.36.2 Potential Functions
+
+- **`morse_potential(r, De, a, re)`**: Computes the differentiable Morse potential energy for a bond distance $r$:
+  $$V(r) = D_e \left(1 - e^{-a(r - r_e)}\right)^2$$
+  where $D_e$ is the well depth, $a$ controls the width of the potential, and $r_e$ is the equilibrium bond length.
+
+#### 15.36.3 Molecular Geometry Descriptors
+
+These descriptors are numerically stabilized with a small $\epsilon = 10^{-12}$ factor to prevent NaN or division-by-zero errors in backpropagation at boundaries.
+- **`molecular_distance(pos1, pos2)`**: Calculates the Euclidean distance between two atomic positions `pos1` and `pos2`.
+- **`molecular_angle(pos1, pos2, pos3)`**: Calculates the bond angle (in radians) formed by the three positions, with `pos2` as the central atom.
+- **`molecular_dihedral(pos1, pos2, pos3, pos4)`**: Calculates the dihedral (torsional) angle (in radians) formed by four connected atomic positions.
+
+```dedekind
+use molecular
+
+// Compute Morse potential and its derivative
+De = 1.0
+a = 1.0
+re = 1.5
+
+fn get_morse_pe(r_arr) {
+    r = r_arr[0]
+    return [morse_potential(r, De, a, re)]
+}
+
+// Jacobian at r = 1.0
+jac = jacobian(get_morse_pe, [1.0])
+```
+
+Example: `tests/dedekind/molecular_test.ddk`.
+
+---
+
 *This document is the Markdown source for the Language Specification. PDF can be generated e.g. with `pandoc Dedekind_Language_Specification.md -o Dedekind_Language_Specification_v0.2.pdf`. See Documentation/README.md for build instructions.*
+

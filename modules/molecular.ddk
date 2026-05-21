@@ -1,0 +1,26 @@
+// Dedekind Standard Library: Differentiable Molecular Dynamics & Chemistry
+// Aktivierung: `use molecular`
+
+pub fn molecular_lj_simulate(positions, velocities, masses, box_size, dt, steps) {
+    return molecular_lj_simulate_impl(positions, velocities, masses, box_size, dt, steps)
+}
+
+pub fn molecular_lj_simulate_advanced(positions, velocities, masses, box_size, dt, steps, epsilon, sigma, cutoff, thermostat_tau, target_temp) {
+    return molecular_lj_simulate_impl(positions, velocities, masses, box_size, dt, steps, epsilon, sigma, cutoff, thermostat_tau, target_temp)
+}
+
+pub fn morse_potential(r, De, a, re) {
+    return morse_potential_impl(r, De, a, re)
+}
+
+pub fn molecular_distance(pos1, pos2) {
+    return molecular_distance_impl(pos1, pos2)
+}
+
+pub fn molecular_angle(pos1, pos2, pos3) {
+    return molecular_angle_impl(pos1, pos2, pos3)
+}
+
+pub fn molecular_dihedral(pos1, pos2, pos3, pos4) {
+    return molecular_dihedral_impl(pos1, pos2, pos3, pos4)
+}

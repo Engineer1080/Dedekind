@@ -87,6 +87,8 @@ _RUNTIME_BUILTIN_NAMES = frozenset({
     'qubit_frequency_check', 'coherence_time_check', 'energy_gap_check',
     'fidelity', 'entropy_von_neumann', 'schmidt_rank',
     'PAULI_I', 'PAULI_X', 'PAULI_Y', 'PAULI_Z', 'PAULI_H',
+    # Molecular Dynamics & Chemistry (v2.4)
+    'molecular_lj_simulate_impl', 'morse_potential_impl', 'molecular_distance_impl', 'molecular_angle_impl', 'molecular_dihedral_impl',
     # Constants (from ml_runtime)
     'pi', 'e', 'c', 'G', 'h', 'k_B', 'k_e', 'hbar', 'e_charge', 'epsilon_0', 'mu_0',
     'm_e', 'm_p', 'N_A', 'R_gas', 'alpha', 'sigma_SB', 'F_faraday',

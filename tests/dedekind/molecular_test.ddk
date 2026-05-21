@@ -1,0 +1,137 @@
+use molecular
+
+fn test_molecular_geometry() {
+    pos1 = [0.0, 0.0, 0.0]
+    pos2 = [0.0, 0.0, 1.0]
+    pos3 = [0.0, 1.0, 1.0]
+    pos4 = [1.0, 1.0, 1.0]
+    
+    // Distance
+    d = molecular_distance(pos1, pos2)
+    print("Distance:", d)
+    assert(abs(d - 1.0) < 1e-6)
+    
+    // Angle (pos1-pos2-pos3, should be 90 degrees / pi/2 radians)
+    ang = molecular_angle(pos1, pos2, pos3)
+    print("Angle (rad):", ang)
+    assert(abs(ang - 1.570796) < 1e-5)
+    
+    // Dihedral angle (pos1-pos2-pos3-pos4, should be 90 degrees / pi/2 or -pi/2 depending on convention)
+    dih = molecular_dihedral(pos1, pos2, pos3, pos4)
+    print("Dihedral angle (rad):", dih)
+    assert(abs(abs(dih) - 1.570796) < 1e-5)
+    
+    // Test differentiability of geometry descriptors w.r.t coordinates
+    fn geom_loss(p) {
+        p1 = [0.0, 0.0, 0.0]
+        p2 = [0.0, 0.0, p[0]]
+        p3 = [0.0, 1.0, 1.0]
+        return molecular_angle(p1, p2, p3)
+    }
+    
+    jac = jacobian(geom_loss, [1.0])
+    print("Angle gradient w.r.t p2_z:", jac[0][0])
+    // Increasing p2_z from 1.0 to 1.1 decreases the angle formed, so the gradient is negative.
+    assert(jac[0][0] < 0.0)
+    print("test_molecular_geometry: passed")
+}
+
+fn test_morse_potential() {
+    r = 1.2
+    De = 5.0
+    a = 2.0
+    re = 1.0
+    
+    val = morse_potential(r, De, a, re)
+    print("Morse Potential at 1.2:", val)
+    
+    // Analytical value: 5.0 * (1 - exp(-2 * (1.2 - 1.0)))^2 = 5.0 * (1 - exp(-0.4))^2
+    // exp(-0.4) ≈ 0.67032, 1 - 0.67032 = 0.32968, squared = 0.108689, times 5 = 0.5434
+    assert(abs(val - 0.5434) < 1e-3)
+    
+    // Verify differentiability
+    fn morse_loss(params) {
+        return morse_potential(params[0], 5.0, 2.0, 1.0)
+    }
+    jac = jacobian(morse_loss, [1.2])
+    print("Morse gradient w.r.t r:", jac[0][0])
+    // At r > re, potential should have a positive gradient (increasing r towards infinity increases potential back to De)
+    assert(jac[0][0] > 0.0)
+    print("test_morse_potential: passed")
+}
+
+fn test_lj_dynamics_nve() {
+    // Two atoms in a 3D box
+    positions = [[2.0, 2.0, 2.0], [2.0, 2.0, 3.1]]
+    velocities = [[0.1, 0.0, 0.0], [-0.1, 0.0, 0.0]]
+    masses = [1.0, 1.0]
+    box_size = 10.0
+    dt = 0.005
+    steps = 10
+    
+    // Run NVE simulation
+    res = molecular_lj_simulate_advanced(positions, velocities, masses, box_size, dt, steps, 1.0, 1.0, 2.5, -1.0, 1.0)
+    
+    final_pos = res["positions"]
+    final_pe = res["potential_energies"]
+    final_ke = res["kinetic_energies"]
+    
+    print("Initial PE:", final_pe[0])
+    print("Final PE:", final_pe[10])
+    print("Initial KE:", final_ke[0])
+    print("Final KE:", final_ke[10])
+    
+    // Total energy (PE + KE) should be approximately conserved in NVE
+    E_init = final_pe[0] + final_ke[0]
+    E_final = final_pe[10] + final_ke[10]
+    print("Total energy initial vs final:", E_init, E_final)
+    assert(abs(E_init - E_final) < 1e-3)
+    
+    // Differentiability check w.r.t potential parameters (epsilon)
+    fn md_loss(eps) {
+        sim = molecular_lj_simulate_advanced(positions, velocities, masses, box_size, dt, 5, eps[0], 1.0, 2.5, -1.0, 1.0)
+        pes = sim["potential_energies"]
+        return pes[5]
+    }
+    jac = jacobian(md_loss, [1.0])
+    print("MD PE gradient w.r.t epsilon:", jac[0][0])
+    assert(abs(jac[0][0]) > 0.0)
+    
+    print("test_lj_dynamics_nve: passed")
+}
+
+fn test_lj_dynamics_nvt() {
+    positions = [[1.0, 1.0, 1.0], [1.0, 1.0, 2.2], [2.2, 1.0, 1.0], [1.0, 2.2, 1.0]]
+    velocities = [[1.0, -1.0, 0.5], [-1.0, 1.0, -0.5], [0.5, 0.5, -1.0], [-0.5, -0.5, 1.0]]
+    masses = [1.0, 1.0, 1.0, 1.0]
+    box_size = 5.0
+    dt = 0.01
+    steps = 15
+    target_temp = 2.0
+    thermostat_tau = 0.05
+    
+    res = molecular_lj_simulate_advanced(positions, velocities, masses, box_size, dt, steps, 1.0, 1.0, 2.5, thermostat_tau, target_temp)
+    temps = res["temperatures"]
+    
+    print("Initial Temp:", temps[0])
+    print("Final Temp:", temps[15])
+    
+    // The temperature should converge closer to target_temp = 2.0
+    err_init = abs(temps[0] - target_temp)
+    err_final = abs(temps[15] - target_temp)
+    print("Initial temp error:", err_init, "Final temp error:", err_final)
+    assert(err_final < err_init)
+    
+    print("test_lj_dynamics_nvt: passed")
+}
+
+fn main() {
+    print("=== Differentiable Molecular Dynamics & Chemistry Tests ===")
+    test_molecular_geometry()
+    test_morse_potential()
+    test_lj_dynamics_nve()
+    test_lj_dynamics_nvt()
+    print("molecular_test: Alle Tests bestanden!")
+}
+
+main()
