@@ -126,18 +126,10 @@ class Circuit:
         results["v_0"] = Quantity(0.0, "V")
         for node in node_list:
             idx = node_map[node]
-            v_t = x[idx]
-            if v_t.requires_grad:
-                results[f"v_{node}"] = v_t
-            else:
-                results[f"v_{node}"] = Quantity(float(v_t.item()), "V")
+            results[f"v_{node}"] = Quantity(x[idx], "V")
         
         for i, name in enumerate(v_names):
-            i_t = x[n_nodes + i]
-            if i_t.requires_grad:
-                results[f"i_{name}"] = i_t
-            else:
-                results[f"i_{name}"] = Quantity(float(i_t.item()), "A")
+            results[f"i_{name}"] = Quantity(x[n_nodes + i], "A")
                 
         return results
 

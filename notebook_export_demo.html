@@ -15,8 +15,8 @@ pre{background:#f6f8fa;padding:1em;border-radius:6px;overflow-x:auto;font-family
 </head>
 <body>
 <h1>Gedämpfter Oszillator – Mess-Notizen</h1>
-<div class="meta">Source: <code>notebook_export_demo.ddk</code> · Generated: 2026-05-20T07:40:51</div>
-<div class="meta">SHA-256: <span class="hash">1ae14f0a36decdd415329a478facbde514550e960e7526e45bcf54173d20ec65</span></div>
+<div class="meta">Source: <code>notebook_export_demo.ddk</code> · Generated: 2026-05-21T08:35:50</div>
+<div class="meta">SHA-256: <span class="hash">3e502b7d6cb66b22246613cf1e0f6bc9921d9e0b63bb3b2579db9b258c276c37</span></div>
 <h2>Source</h2>
 <pre><code>// Feature 13: Notebook-Export — bündelt Code, Output, Plots und SHA-256 in HTML/Markdown.
 //
@@ -42,7 +42,7 @@ fn main() {
     print(data_hash(x))
 
     // Export der .ddk-Datei selbst als Standalone-HTML- und Markdown-Notebook.
-    src = &quot;examples/dedekind/notebook_export_demo.ddk&quot;
+    src = &quot;examples/dedekind/compiler_features/notebook_export_demo.ddk&quot;
     html_path = export_notebook(src, output_path=&quot;./notebook_export_demo.html&quot;, format=&quot;html&quot;,
                                 title=&quot;Gedämpfter Oszillator – Mess-Notizen&quot;)
     md_path = export_notebook(src, output_path=&quot;./notebook_export_demo.md&quot;, format=&quot;md&quot;,

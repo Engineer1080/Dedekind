@@ -33,7 +33,7 @@ fn main() {
     print(from_disk_parsed[1])
 
     // JSON-Objekt aus Datei lesen und Schlüsselzugriff (obj["key"])
-    obj_content = read_file("examples/dedekind/test_data.json")
+    obj_content = read_file("examples/dedekind/basics/test_data.json")
     obj = json_parse(obj_content)
     print("JSON-Objekt name:")
     print(obj["name"])

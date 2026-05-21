@@ -93,8 +93,15 @@ def _convert_between_units(value, std, from_unit, to_unit, dimension):
 class Quantity:
     """Physikalische Größe mit Einheit (z. B. 10[m], 5[m/s], 0.1[M], 50[ppm]). Rechenregeln: gleiche Einheit für +/-, Einheiten multiplizieren/dividieren. Chemie: mol, L, M (= mol/L), ppm, bar, atm, g. Radioaktivität: Bq (1/s), Gy (J/kg), Sv (J/kg, Äquivalentdosis)."""
     def __init__(self, value, unit=""):
-        self.value = float(value)
+        if type(value).__name__ == "Tensor" or hasattr(value, "requires_grad"):
+            self.value = value
+        else:
+            try:
+                self.value = float(value)
+            except Exception:
+                self.value = value
         self.unit = str(unit) if unit else ""
+
 
     def _same_unit(self, other):
         if not isinstance(other, Quantity):
@@ -698,8 +705,12 @@ def _to_tensor(data):
     if isinstance(data, torch.Tensor):
         return data
     if isinstance(data, Quantity):
+        if isinstance(data.value, torch.Tensor):
+            return data.value.float()
         return torch.tensor(data.value, dtype=torch.float32)
     if isinstance(data, UncertainQuantity):
+        if isinstance(data.value, torch.Tensor):
+            return data.value.float()
         return torch.tensor(data.value, dtype=torch.float32)
     if isinstance(data, (list, tuple)):
         if not data:
@@ -721,7 +732,10 @@ def _to_tensor(data):
             except (TypeError, ValueError, RuntimeError):
                 return data
         if converted and len(converted) == len(data):
-            return torch.stack(converted)
+            try:
+                return torch.stack(converted)
+            except (TypeError, ValueError, RuntimeError):
+                return converted
         return data
     try:
         return torch.as_tensor(data, dtype=torch.float32)
@@ -1511,6 +1525,16 @@ def linspace(start, stop, steps):
     return torch.linspace(float(s.item()) if s.numel() == 1 else float(s.item()),
                           float(e.item()) if e.numel() == 1 else float(e.item()),
                           n)
+
+def logspace(start, stop, steps, base=10.0):
+    """Erzeugt einen 1D-Tensor mit `steps` logarithmisch verteilten Werten von base^start bis base^stop."""
+    s = _to_tensor(start).float().squeeze()
+    e = _to_tensor(stop).float().squeeze()
+    b = float(_to_tensor(base).float().squeeze().item())
+    n = int(steps)
+    return torch.logspace(float(s.item()) if s.numel() == 1 else float(s.item()),
+                          float(e.item()) if e.numel() == 1 else float(e.item()),
+                          n, base=b)
 
 
 # --- Mathematische Folgen (arithmetisch, geometrisch, allgemein) ---
@@ -4781,16 +4805,28 @@ def newton(f, x0, tol=1e-8, max_iter=50, h=1e-6):
         x = x - fx / df
     return x
 
+class OptimizeResult(tuple):
+    def __new__(cls, x, fun):
+        return super().__new__(cls, (x, fun))
+    @property
+    def x(self):
+        return self[0]
+    @property
+    def fun(self):
+        return self[1]
+
 def minimize(f, x0, method="gd", lr=0.01, steps=500):
     """
     Mehrdimensionale Minimierung von f(x). x0: Startvektor (1D-Tensor oder Liste).
-    method: "gd" (Gradient Descent) oder "lbfgs". Rückgabe: (x_opt, f_opt) als Tensor und Skalar.
+    method: "gd" (Gradient Descent), "adam" oder "lbfgs". Rückgabe: OptimizeResult (x_opt, f_opt) behaving like a tuple.
     """
     x = _to_tensor(x0).float().clone().detach().requires_grad_(True)
     if x.dim() != 1:
         x = x.flatten()
     n_params = x.numel()
-    if method == "lbfgs":
+    
+    method_lower = str(method).lower()
+    if method_lower == "lbfgs":
         optimizer = torch.optim.LBFGS([x], lr=1.0)
         def closure():
             optimizer.zero_grad()
@@ -4801,6 +4837,15 @@ def minimize(f, x0, method="gd", lr=0.01, steps=500):
             return loss
         for _ in range(_builtin_min(steps, 20)):
             optimizer.step(closure)
+    elif method_lower == "adam":
+        optimizer = torch.optim.Adam([x], lr=lr)
+        for _ in range(steps):
+            optimizer.zero_grad()
+            out = f(x)
+            out = _to_tensor(out).float()
+            loss = out.sum() if out.numel() > 1 else out
+            loss.backward()
+            optimizer.step()
     else:
         optimizer = torch.optim.SGD([x], lr=lr)
         for _ in range(steps):
@@ -4810,11 +4855,12 @@ def minimize(f, x0, method="gd", lr=0.01, steps=500):
             loss = out.sum() if out.numel() > 1 else out
             loss.backward()
             optimizer.step()
+            
     with torch.no_grad():
         f_opt = f(x)
         f_opt = _to_tensor(f_opt).float()
         f_val = f_opt.sum().item() if f_opt.numel() > 1 else f_opt.item()
-    return x.detach(), f_val
+    return OptimizeResult(x.detach(), f_val)
 
 def fsolve(f, x0, tol=1e-8, max_iter=50):
     """
@@ -9466,18 +9512,10 @@ class Circuit:
         results["v_0"] = Quantity(0.0, "V")
         for node in node_list:
             idx = node_map[node]
-            v_t = x[idx]
-            if v_t.requires_grad:
-                results[f"v_{node}"] = v_t
-            else:
-                results[f"v_{node}"] = Quantity(float(v_t.item()), "V")
+            results[f"v_{node}"] = Quantity(x[idx], "V")
         
         for i, name in enumerate(v_names):
-            i_t = x[n_nodes + i]
-            if i_t.requires_grad:
-                results[f"i_{name}"] = i_t
-            else:
-                results[f"i_{name}"] = Quantity(float(i_t.item()), "A")
+            results[f"i_{name}"] = Quantity(x[n_nodes + i], "A")
                 
         return results
 

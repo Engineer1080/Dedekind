@@ -33,11 +33,20 @@ def main():
         print(f"Fehler: Beispiele-Ordner nicht gefunden: {EXAMPLES_DIR}")
         sys.exit(1)
 
-    # Alle .ddk-Dateien finden (sortiert für reproduzierbare Reihenfolge)
-    ddk_files = sorted(
-        f for f in os.listdir(EXAMPLES_DIR)
-        if f.endswith(".ddk") and (not args.filter or args.filter in f)
-    )
+    # Alle .ddk-Dateien rekursiv finden (sortiert für reproduzierbare Reihenfolge)
+    ddk_files = []
+    for root, dirs, files in os.walk(EXAMPLES_DIR):
+        for f in files:
+            if f.endswith(".ddk"):
+                rel_dir = os.path.relpath(root, EXAMPLES_DIR)
+                if rel_dir == ".":
+                    rel_path = f
+                else:
+                    rel_path = os.path.join(rel_dir, f)
+                if not args.filter or args.filter in rel_path:
+                    ddk_files.append(rel_path.replace("\\", "/"))
+    ddk_files.sort()
+
     if not ddk_files:
         print("Keine .ddk-Dateien gefunden.")
         sys.exit(0)

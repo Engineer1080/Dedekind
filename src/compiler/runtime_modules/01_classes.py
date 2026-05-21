@@ -1,8 +1,15 @@
 class Quantity:
     """Physikalische Größe mit Einheit (z. B. 10[m], 5[m/s], 0.1[M], 50[ppm]). Rechenregeln: gleiche Einheit für +/-, Einheiten multiplizieren/dividieren. Chemie: mol, L, M (= mol/L), ppm, bar, atm, g. Radioaktivität: Bq (1/s), Gy (J/kg), Sv (J/kg, Äquivalentdosis)."""
     def __init__(self, value, unit=""):
-        self.value = float(value)
+        if type(value).__name__ == "Tensor" or hasattr(value, "requires_grad"):
+            self.value = value
+        else:
+            try:
+                self.value = float(value)
+            except Exception:
+                self.value = value
         self.unit = str(unit) if unit else ""
+
 
     def _same_unit(self, other):
         if not isinstance(other, Quantity):
@@ -606,8 +613,12 @@ def _to_tensor(data):
     if isinstance(data, torch.Tensor):
         return data
     if isinstance(data, Quantity):
+        if isinstance(data.value, torch.Tensor):
+            return data.value.float()
         return torch.tensor(data.value, dtype=torch.float32)
     if isinstance(data, UncertainQuantity):
+        if isinstance(data.value, torch.Tensor):
+            return data.value.float()
         return torch.tensor(data.value, dtype=torch.float32)
     if isinstance(data, (list, tuple)):
         if not data:
@@ -629,7 +640,10 @@ def _to_tensor(data):
             except (TypeError, ValueError, RuntimeError):
                 return data
         if converted and len(converted) == len(data):
-            return torch.stack(converted)
+            try:
+                return torch.stack(converted)
+            except (TypeError, ValueError, RuntimeError):
+                return converted
         return data
     try:
         return torch.as_tensor(data, dtype=torch.float32)

@@ -675,16 +675,28 @@ def newton(f, x0, tol=1e-8, max_iter=50, h=1e-6):
         x = x - fx / df
     return x
 
+class OptimizeResult(tuple):
+    def __new__(cls, x, fun):
+        return super().__new__(cls, (x, fun))
+    @property
+    def x(self):
+        return self[0]
+    @property
+    def fun(self):
+        return self[1]
+
 def minimize(f, x0, method="gd", lr=0.01, steps=500):
     """
     Mehrdimensionale Minimierung von f(x). x0: Startvektor (1D-Tensor oder Liste).
-    method: "gd" (Gradient Descent) oder "lbfgs". Rückgabe: (x_opt, f_opt) als Tensor und Skalar.
+    method: "gd" (Gradient Descent), "adam" oder "lbfgs". Rückgabe: OptimizeResult (x_opt, f_opt) behaving like a tuple.
     """
     x = _to_tensor(x0).float().clone().detach().requires_grad_(True)
     if x.dim() != 1:
         x = x.flatten()
     n_params = x.numel()
-    if method == "lbfgs":
+    
+    method_lower = str(method).lower()
+    if method_lower == "lbfgs":
         optimizer = torch.optim.LBFGS([x], lr=1.0)
         def closure():
             optimizer.zero_grad()
@@ -695,6 +707,15 @@ def minimize(f, x0, method="gd", lr=0.01, steps=500):
             return loss
         for _ in range(_builtin_min(steps, 20)):
             optimizer.step(closure)
+    elif method_lower == "adam":
+        optimizer = torch.optim.Adam([x], lr=lr)
+        for _ in range(steps):
+            optimizer.zero_grad()
+            out = f(x)
+            out = _to_tensor(out).float()
+            loss = out.sum() if out.numel() > 1 else out
+            loss.backward()
+            optimizer.step()
     else:
         optimizer = torch.optim.SGD([x], lr=lr)
         for _ in range(steps):
@@ -704,11 +725,12 @@ def minimize(f, x0, method="gd", lr=0.01, steps=500):
             loss = out.sum() if out.numel() > 1 else out
             loss.backward()
             optimizer.step()
+            
     with torch.no_grad():
         f_opt = f(x)
         f_opt = _to_tensor(f_opt).float()
         f_val = f_opt.sum().item() if f_opt.numel() > 1 else f_opt.item()
-    return x.detach(), f_val
+    return OptimizeResult(x.detach(), f_val)
 
 def fsolve(f, x0, tol=1e-8, max_iter=50):
     """

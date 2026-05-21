@@ -1,8 +1,8 @@
 # Gedämpfter Oszillator – Mess-Notizen
 
-*Source:* `notebook_export_demo.ddk`  ·  *Generated:* 2026-05-20T07:40:51
+*Source:* `notebook_export_demo.ddk`  ·  *Generated:* 2026-05-21T08:35:50
 
-*SHA-256:* `1ae14f0a36decdd415329a478facbde514550e960e7526e45bcf54173d20ec65`
+*SHA-256:* `3e502b7d6cb66b22246613cf1e0f6bc9921d9e0b63bb3b2579db9b258c276c37`
 
 ## Source
 
@@ -31,7 +31,7 @@ fn main() {
     print(data_hash(x))
 
     // Export der .ddk-Datei selbst als Standalone-HTML- und Markdown-Notebook.
-    src = "examples/dedekind/notebook_export_demo.ddk"
+    src = "examples/dedekind/compiler_features/notebook_export_demo.ddk"
     html_path = export_notebook(src, output_path="./notebook_export_demo.html", format="html",
                                 title="Gedämpfter Oszillator – Mess-Notizen")
     md_path = export_notebook(src, output_path="./notebook_export_demo.md", format="md",

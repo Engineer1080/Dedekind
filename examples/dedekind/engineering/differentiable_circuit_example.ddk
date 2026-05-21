@@ -41,7 +41,7 @@ fn main() {
     // Gradient Descent (Optimierung)
     // Wir nutzen Dedekinds eingebauten differenzierbaren Optimizer
     print("Optimiere R_x mit Gradientenabstieg...")
-    opt_result = minimize(circuit_loss, initial_guess, method="adam", lr=1.0, max_iter=200)
+    opt_result = minimize(circuit_loss, initial_guess, method="adam", lr=1.0, steps=200)
     
     R_opt = opt_result.x[0]
     print("Optimierter Widerstand R_x: " + str(R_opt) + " Ohm")

@@ -4,7 +4,7 @@ from .ast_nodes import *
 _TORCH_FUNC_NAMES = frozenset({
     'gpu', 'cpu', 'fast', 'with_grad', 'sparse', 'grad', 'einsum', 'matmul',
     'randn', 'relu', 'softmax', 'conv2d', 'max_pool2d', 'fft', 'ifft',
-    'linspace', 'arange', 'arithmetic', 'geometric', 'sequence', 'stack', 'to_tensor', 'to_gpu', 'to_cpu',
+    'linspace', 'logspace', 'arange', 'arithmetic', 'geometric', 'sequence', 'stack', 'to_tensor', 'to_gpu', 'to_cpu',
 })
 _TORCH_MEMBER_NAMES = frozenset({'gpu', 'cpu', 'single'})
 
@@ -14,7 +14,7 @@ _RUNTIME_BUILTIN_NAMES = frozenset({
     'Quantity', 'Quaternion', 'Dense', 'Sequential', 'compile_model',
     'DedekindCut', 'DedekindIdeal', 'DedekindRingZ',
     'random_vector', 'random_matrix', 'transpose', 'inverse', 'dot_product', 'cross',
-    'relu', 'softmax', 'convolution', 'pooling', 'fft', 'ifft', 'fftfreq', 'diff', 'cumsum', 'clip', 'shuffle', 'linspace', 'arange', 'arithmetic', 'geometric', 'sequence',
+    'relu', 'softmax', 'convolution', 'pooling', 'fft', 'ifft', 'fftfreq', 'diff', 'cumsum', 'clip', 'shuffle', 'linspace', 'logspace', 'arange', 'arithmetic', 'geometric', 'sequence',
     'ode_solve', 'lagrange_ode_rhs', 'hamilton_ode_rhs', 'lotka_volterra', 'chemical_equilibrium',
     'pde_heat_1d', 'pde_heat_2d', 'pde_advection_1d', 'pde_advection_2d', 'pde_wave_1d', 'pde_wave_2d', 'pde_burgers_1d', 'pde_burgers_2d',
     'pde_reaction_diffusion_1d', 'pde_reaction_diffusion_2d',

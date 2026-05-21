@@ -180,6 +180,16 @@ def linspace(start, stop, steps):
                           float(e.item()) if e.numel() == 1 else float(e.item()),
                           n)
 
+def logspace(start, stop, steps, base=10.0):
+    """Erzeugt einen 1D-Tensor mit `steps` logarithmisch verteilten Werten von base^start bis base^stop."""
+    s = _to_tensor(start).float().squeeze()
+    e = _to_tensor(stop).float().squeeze()
+    b = float(_to_tensor(base).float().squeeze().item())
+    n = int(steps)
+    return torch.logspace(float(s.item()) if s.numel() == 1 else float(s.item()),
+                          float(e.item()) if e.numel() == 1 else float(e.item()),
+                          n, base=b)
+
 
 # --- Mathematische Folgen (arithmetisch, geometrisch, allgemein) ---
 
