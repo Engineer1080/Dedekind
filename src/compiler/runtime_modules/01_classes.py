@@ -169,6 +169,20 @@ class Quantity:
     def __hash__(self):
         return hash((self.value, _normalize_unit_for_compare(self.unit)))
 
+    def __getitem__(self, key):
+        """Index/Slice einer Tensor- oder Listenwertigen Quantity; Einheit bleibt erhalten.
+        Wirft TypeError, wenn der Wert ein Skalar ist (keine sinnvolle Indizierung)."""
+        v = self.value
+        try:
+            sub = v[key]
+        except TypeError:
+            raise TypeError(
+                f"Quantity-Wert vom Typ {type(v).__name__} kann nicht indiziert werden (Skalar?)."
+            )
+        if isinstance(sub, Quantity):
+            return sub
+        return Quantity(sub, self.unit)
+
 
 def _unit_mul(u1, u2):
     if not u1: return u2

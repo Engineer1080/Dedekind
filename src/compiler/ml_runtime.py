@@ -261,6 +261,20 @@ class Quantity:
     def __hash__(self):
         return hash((self.value, _normalize_unit_for_compare(self.unit)))
 
+    def __getitem__(self, key):
+        """Index/Slice einer Tensor- oder Listenwertigen Quantity; Einheit bleibt erhalten.
+        Wirft TypeError, wenn der Wert ein Skalar ist (keine sinnvolle Indizierung)."""
+        v = self.value
+        try:
+            sub = v[key]
+        except TypeError:
+            raise TypeError(
+                f"Quantity-Wert vom Typ {type(v).__name__} kann nicht indiziert werden (Skalar?)."
+            )
+        if isinstance(sub, Quantity):
+            return sub
+        return Quantity(sub, self.unit)
+
 
 def _unit_mul(u1, u2):
     if not u1: return u2
@@ -10900,6 +10914,346 @@ def lbm_karman_benchmark_impl(re=100.0, nx=240, ny=80, n_steps=4000, warmup_frac
         "shedding_period_steps": float(shedding_period),
         "lift_history": lift_history,
     }
+
+
+# --- Einheiten-bewusste API ---------------------------------------------
+#
+# Forschende denken in physikalischen Einheiten (m, m/s, m²/s, Pa, N).
+# LBM rechnet intern in Lattice-Einheiten.  PhysicalLbmSimulation übersetzt
+# zwischen beiden Welten und enthält den Solver `LbmSimulation` als
+# Implementierungsdetail.
+#
+# Standard-Konvertierungen (Krüger et al., "The Lattice Boltzmann Method"):
+#   dx           = L_domain / nx           [m / lattice unit]
+#   dt           = u_lat * dx / u_phys     [s / lattice step]
+#   nu_lattice   = nu_phys * dt / dx^2     [dimensionslos]
+#   tau          = 3 * nu_lattice + 0.5    [BGK]
+# Output-Umrechnung:
+#   u_phys       = u_lat   * (dx / dt)
+#   p_phys       = p_lat   * rho_phys * (dx / dt)^2     [Pa]
+#   F_phys (2D)  = F_lat   * rho_phys * dx^3 / dt^2     [N/m, force per depth]
+
+def _lbm_q_value_unit(x):
+    """Liefert (value, unit_string) für Quantity oder (float(x), '') für rohe Zahl."""
+    if isinstance(x, Quantity):
+        return float(x.value), str(x.unit).strip()
+    return float(x), ""
+
+
+def _lbm_to_si_length(x, name="length"):
+    v, u = _lbm_q_value_unit(x)
+    if u in ("", "m"):
+        return v
+    table = {"cm": 0.01, "mm": 0.001, "km": 1000.0, "um": 1e-6, "nm": 1e-9}
+    if u in table:
+        return v * table[u]
+    raise ValueError(
+        f"LBM Physical API: Parameter '{name}' braucht Längeneinheit "
+        f"(m, cm, mm, km, um, nm), bekam [{u}]."
+    )
+
+
+def _lbm_to_si_velocity(x, name="velocity"):
+    v, u = _lbm_q_value_unit(x)
+    if u in ("", "m/s"):
+        return v
+    table = {"km/h": 1.0 / 3.6, "cm/s": 0.01, "mm/s": 0.001}
+    if u in table:
+        return v * table[u]
+    raise ValueError(
+        f"LBM Physical API: Parameter '{name}' braucht Geschwindigkeit "
+        f"(m/s, km/h, cm/s, mm/s), bekam [{u}]."
+    )
+
+
+def _lbm_to_si_kviscosity(x, name="nu"):
+    """Kinematische Viskosität in m²/s. Stokes (St) und Centistokes (cSt) erlaubt."""
+    v, u = _lbm_q_value_unit(x)
+    if u in ("", "m^2/s", "m**2/s", "m²/s"):
+        return v
+    table = {
+        "cm^2/s": 1e-4, "cm**2/s": 1e-4, "cm²/s": 1e-4,
+        "mm^2/s": 1e-6, "mm**2/s": 1e-6, "mm²/s": 1e-6,
+        "St": 1e-4, "cSt": 1e-6,
+    }
+    if u in table:
+        return v * table[u]
+    raise ValueError(
+        f"LBM Physical API: Parameter '{name}' braucht kinematische Viskosität "
+        f"(m^2/s, mm^2/s, cSt, St), bekam [{u}]."
+    )
+
+
+def _lbm_to_si_density(x, name="rho"):
+    v, u = _lbm_q_value_unit(x)
+    if u in ("", "kg/m^3", "kg/m**3", "kg/m³"):
+        return v
+    table = {
+        "g/cm^3": 1000.0, "g/cm**3": 1000.0, "g/cm³": 1000.0,
+        "g/L": 1.0, "g/l": 1.0, "kg/L": 1000.0,
+    }
+    if u in table:
+        return v * table[u]
+    raise ValueError(
+        f"LBM Physical API: Parameter '{name}' braucht Dichte "
+        f"(kg/m^3, g/cm^3), bekam [{u}]."
+    )
+
+
+def _lbm_to_si_time(x, name="time"):
+    v, u = _lbm_q_value_unit(x)
+    if u in ("", "s"):
+        return v
+    table = {"ms": 1e-3, "us": 1e-6, "ns": 1e-9,
+             "min": 60.0, "h": 3600.0}
+    if u in table:
+        return v * table[u]
+    raise ValueError(
+        f"LBM Physical API: Parameter '{name}' braucht Zeit "
+        f"(s, ms, min, h), bekam [{u}]."
+    )
+
+
+class PhysicalLbmSimulation:
+    """Einheiten-bewusster Wrapper um LbmSimulation.
+
+    Eingabe in SI-Einheiten (m, m/s, m²/s, kg/m³, s), Ausgabe als Quantity
+    in physikalischen Einheiten. Interne Lattice-Skalierung wird automatisch
+    so gewählt, dass die Mach-Bedingung (u_lattice ≈ 0.05, Default) erfüllt
+    ist und tau im stabilen BGK-Bereich liegt.
+
+    Domänen-Geometrie: Rechteckiger Kanal, x = Strömungsrichtung, y = quer.
+    Auflösung wird über nx in x vorgegeben; ny folgt aus dem Seitenverhältnis,
+    oder kann explizit gesetzt werden.
+
+    Force-Output ist 2D, also pro Tiefeneinheit (Einheit: N/m).
+    """
+
+    # Konservative Ziel-Lattice-Geschwindigkeit (u_max ≤ 0.1 für niedrige Mach)
+    DEFAULT_U_LATTICE = 0.05
+
+    def __init__(self, domain_x, domain_y, nx, inlet_u, nu,
+                 rho=1.225, ny=None, u_lattice_target=None):
+        self.L_x = _lbm_to_si_length(domain_x, "domain_x")
+        self.L_y = _lbm_to_si_length(domain_y, "domain_y")
+        self.U_in = _lbm_to_si_velocity(inlet_u, "inlet_u")
+        self.nu_phys = _lbm_to_si_kviscosity(nu, "nu")
+        self.rho_phys = _lbm_to_si_density(rho, "rho")
+
+        if self.L_x <= 0 or self.L_y <= 0:
+            raise ValueError("PhysicalLbmSimulation: domain_x/domain_y müssen > 0 sein.")
+        if self.U_in <= 0:
+            raise ValueError("PhysicalLbmSimulation: inlet_u muss > 0 sein.")
+        if self.nu_phys <= 0:
+            raise ValueError("PhysicalLbmSimulation: nu muss > 0 sein.")
+
+        self.nx = int(nx)
+        if self.nx < 8:
+            raise ValueError(f"PhysicalLbmSimulation: nx={self.nx} zu klein (min 8).")
+
+        # dx aus Domänenlänge und Auflösung
+        self.dx = self.L_x / self.nx  # [m / lattice unit]
+        # ny aus Seitenverhältnis (oder explizit)
+        if ny is None:
+            self.ny = _builtin_max(8, int(round(self.L_y / self.dx)))
+        else:
+            self.ny = int(ny)
+
+        # dt aus Mach-Bedingung
+        u_lat = float(u_lattice_target) if u_lattice_target is not None else self.DEFAULT_U_LATTICE
+        if u_lat <= 0 or u_lat > 0.1:
+            raise ValueError(
+                f"PhysicalLbmSimulation: u_lattice_target={u_lat} muss in (0, 0.1] liegen "
+                f"(Mach-Stabilität)."
+            )
+        self.u_lattice = u_lat
+        self.dt = u_lat * self.dx / self.U_in  # [s / lattice step]
+
+        # Lattice-Viskosität und tau
+        self.nu_lattice = self.nu_phys * self.dt / (self.dx * self.dx)
+        self.tau = 3.0 * self.nu_lattice + 0.5
+
+        if self.tau <= 0.5:
+            # nx zur Erreichung von tau ≥ 0.55 vorschlagen
+            # tau = 0.5 + 3*nu*dt/dx^2; dt = u_lat*dx/U; → tau = 0.5 + 3*nu*u_lat/(U*dx)
+            # für tau ≥ 0.55: dx ≤ 3*nu*u_lat / (0.05*U)  → nx ≥ L_x / dx
+            dx_safe = 3.0 * self.nu_phys * self.u_lattice / (0.05 * self.U_in)
+            nx_suggest = _builtin_max(self.nx + 1, int(self.L_x / dx_safe) + 1) if dx_safe > 0 else self.nx * 4
+            raise ValueError(
+                f"PhysicalLbmSimulation: tau={self.tau:.4f} ≤ 0.5 (BGK instabil). "
+                f"Vorschlag: nx ≥ {nx_suggest} (statt {self.nx}); alternativ "
+                f"u_lattice_target reduzieren oder nu größer wählen."
+            )
+        if self.tau < 0.55:
+            print(
+                f"[PhysicalLbmSimulation] Warnung: tau={self.tau:.4f} im grenzwertigen "
+                f"Bereich (<0.55). Numerische Artefakte möglich; höhere Auflösung empfohlen."
+            )
+        if self.tau > 2.0:
+            print(
+                f"[PhysicalLbmSimulation] Hinweis: tau={self.tau:.3f} > 2.0 deutet auf "
+                f"unnötig grobe Auflösung hin; nx oder u_lattice_target reduzieren."
+            )
+
+        # Conversion factors für Output
+        self._velocity_factor = self.dx / self.dt           # u_lat → m/s
+        self._pressure_factor = self.rho_phys * self._velocity_factor ** 2
+        # 2D-Kraft pro Tiefe: rho * dx^3 / dt^2 = rho * dx * (dx/dt)^2
+        self._force_factor_2d = self.rho_phys * self.dx * self._velocity_factor ** 2
+
+        # Underlying Solver
+        self.sim = LbmSimulation(
+            self.nx, self.ny, self.tau,
+            obstacle_mask=None,
+            inlet_u=self.u_lattice,
+        )
+
+    def reynolds(self, length_char=None):
+        """Re = U * L / nu. Default-Länge ist domain_y (Kanalbreite)."""
+        L = self.L_y if length_char is None else _lbm_to_si_length(length_char, "length_char")
+        return self.U_in * L / self.nu_phys
+
+    def set_cylinder(self, cx, cy, radius, alpha=None):
+        """Setzt einen runden Hindernis. cx, cy, radius in physikalischen Längeneinheiten."""
+        cx_lat = _lbm_to_si_length(cx, "cx") / self.dx
+        cy_lat = _lbm_to_si_length(cy, "cy") / self.dx
+        r_lat = _lbm_to_si_length(radius, "radius") / self.dx
+        if r_lat < 3:
+            raise ValueError(
+                f"PhysicalLbmSimulation.set_cylinder: Radius {r_lat:.2f} Lattice-Einheiten "
+                f"zu klein für saubere Aufloesung (min ~3). Höhere nx oder größerer Radius."
+            )
+        alpha_lat = 0.8 if alpha is None else float(alpha)
+        mask = lbm_soft_cylinder_mask_impl(self.nx, self.ny, cx_lat, cy_lat, r_lat, alpha_lat)
+        self.sim.set_obstacle_mask(mask)
+        return self
+
+    def add_walls(self):
+        """Schaltet die periodischen y-Wände aus, indem Top/Bottom als Solid markiert werden."""
+        new_mask = add_wind_tunnel_walls_impl(self.sim.obstacle_mask)
+        self.sim.set_obstacle_mask(new_mask)
+        return self
+
+    def step(self):
+        self.sim.step()
+        return self
+
+    def run_steps(self, n_steps):
+        self.sim.run(int(n_steps))
+        return self
+
+    def run_time(self, t):
+        """Läuft für eine physikalische Zeit t (Quantity in [s] oder rohe Zahl)."""
+        t_phys = _lbm_to_si_time(t, "t")
+        n_steps = _builtin_max(1, int(round(t_phys / self.dt)))
+        self.sim.run(n_steps)
+        return self
+
+    # --- Output mit physikalischen Einheiten ---
+
+    def get_velocity(self):
+        """Geschwindigkeitsfeld (2, nx, ny) als Quantity in [m/s]."""
+        u_lat = self.sim.get_velocity()
+        return Quantity(u_lat * self._velocity_factor, "m/s")
+
+    def get_pressure(self):
+        """Druckfeld (nx, ny) als Quantity in [Pa]."""
+        p_lat = self.sim.get_pressure()
+        return Quantity(p_lat * self._pressure_factor, "Pa")
+
+    def get_density(self):
+        """Massendichte als Quantity in [kg/m^3]."""
+        rho_lat = self.sim.get_density()
+        return Quantity(rho_lat * self.rho_phys, "kg/m^3")
+
+    def get_drag_lift(self, target_mask=None):
+        """Drag (Fx) und Lift (Fy) auf das Hindernis als Quantity-Tensor in [N/m].
+
+        2D-Force, also pro Tiefeneinheit (Spannweitenlänge). Mit gegebener
+        Tiefe einfach multiplizieren: total_force = result * depth[m].
+        """
+        F_lat = self.sim.get_drag_lift(target_mask)
+        return Quantity(F_lat * self._force_factor_2d, "N/m")
+
+    def summary(self):
+        """Liefert dict mit Setup-Übersicht für Debug/Logs."""
+        return {
+            "domain_x_m": self.L_x,
+            "domain_y_m": self.L_y,
+            "nx": self.nx,
+            "ny": self.ny,
+            "dx_m": self.dx,
+            "dt_s": self.dt,
+            "inlet_u_m_per_s": self.U_in,
+            "nu_m2_per_s": self.nu_phys,
+            "rho_kg_per_m3": self.rho_phys,
+            "tau": self.tau,
+            "u_lattice": self.u_lattice,
+            "nu_lattice": self.nu_lattice,
+            "Reynolds_Ly": self.reynolds(),
+        }
+
+
+# --- Runtime-Brücke (von .ddk-Code aus aufrufbar) ---
+
+def lbm_physical_impl(domain_x, domain_y, nx, inlet_u, nu, rho=1.225, ny=None, u_lattice=None):
+    # Aus .ddk-Wrappern kommen 0/0.0 als Sentinel für "keine Angabe"
+    if isinstance(ny, (int, float)) and ny == 0:
+        ny = None
+    if isinstance(u_lattice, (int, float)) and u_lattice == 0:
+        u_lattice = None
+    return PhysicalLbmSimulation(domain_x, domain_y, nx, inlet_u, nu,
+                                 rho=rho, ny=ny, u_lattice_target=u_lattice)
+
+
+def lbm_physical_set_cylinder_impl(sim, cx, cy, radius):
+    sim.set_cylinder(cx, cy, radius)
+    return sim
+
+
+def lbm_physical_add_walls_impl(sim):
+    sim.add_walls()
+    return sim
+
+
+def lbm_physical_run_steps_impl(sim, n_steps):
+    sim.run_steps(n_steps)
+    return sim
+
+
+def lbm_physical_run_time_impl(sim, t):
+    sim.run_time(t)
+    return sim
+
+
+def lbm_physical_velocity_impl(sim):
+    return sim.get_velocity()
+
+
+def lbm_physical_pressure_impl(sim):
+    return sim.get_pressure()
+
+
+def lbm_physical_reynolds_impl(sim, length_char=None):
+    # Sentinel: [0.0] / 0 → kein expliziter L_char, Default = domain_y
+    if length_char is None:
+        return sim.reynolds(None)
+    if isinstance(length_char, (int, float)) and length_char == 0:
+        return sim.reynolds(None)
+    if hasattr(length_char, "numel") and length_char.numel() == 1:
+        if float(length_char.flatten()[0]) == 0.0:
+            return sim.reynolds(None)
+    if isinstance(length_char, list) and len(length_char) == 1 and length_char[0] == 0.0:
+        return sim.reynolds(None)
+    return sim.reynolds(length_char)
+
+
+def lbm_physical_drag_lift_impl(sim, target_mask=None):
+    return sim.get_drag_lift(target_mask)
+
+
+def lbm_physical_summary_impl(sim):
+    return sim.summary()
 import torch
 
 class Block:

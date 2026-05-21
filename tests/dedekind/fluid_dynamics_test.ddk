@@ -142,6 +142,75 @@ fn test_karman_quick() {
     print("[OK] Karman benchmark API")
 }
 
+fn test_physical_setup() {
+    print("Testing PhysicalLbmSimulation construction & summary...")
+    sim = lbm_physical(
+        0.10[m], 0.04[m], 80,
+        0.01[m/s], 1.0e-4[m^2/s], 1000.0[kg/m^3]
+    )
+    s = lbm_summary(sim)
+    print("  dx =", s["dx_m"], " dt =", s["dt_s"], " tau =", s["tau"])
+    // dx = 0.10 / 80 = 0.00125 m
+    assert(abs(s["dx_m"] - 0.00125) < 1e-9)
+    // ny = round(0.04 / 0.00125) = 32
+    assert(s["ny"] == 32)
+    // dt = 0.05 * dx / U = 0.05 * 0.00125 / 0.01 = 0.00625
+    assert(abs(s["dt_s"] - 0.00625) < 1e-9)
+    // nu_lat = nu * dt / dx² = 1e-4 * 0.00625 / 0.00125² = 0.4
+    // tau = 3 * 0.4 + 0.5 = 1.7
+    assert(abs(s["tau"] - 1.7) < 1e-9)
+    print("[OK] PhysicalLbmSimulation Setup")
+}
+
+fn test_physical_units_validation() {
+    print("Testing dass falsche Einheiten abgelehnt werden...")
+    caught = false
+    try {
+        // domain_x mit kg statt m → muss fehlschlagen
+        sim = lbm_physical(
+            5.0[kg], 0.04[m], 50,
+            0.01[m/s], 1.0e-4[m^2/s], 1000.0[kg/m^3]
+        )
+    } catch e {
+        caught = true
+        print("Erwarteter Fehler:", e)
+    }
+    assert(caught)
+    print("[OK] Unit validation")
+}
+
+fn test_physical_drag_units() {
+    print("Testing dass drag/lift in N/m kommt mit korrektem Konvertierungsfaktor...")
+    sim = lbm_physical(
+        0.10[m], 0.04[m], 80,
+        0.01[m/s], 1.0e-4[m^2/s], 1000.0[kg/m^3]
+    )
+    lbm_set_cylinder(sim, 0.02[m], 0.02[m], 0.005[m])
+    lbm_add_walls(sim)
+    lbm_run_steps(sim, 200)
+
+    F = lbm_drag_lift(sim)
+    print("  Drag-Force = ", F[0])
+    // Quantity-Einheit muss N/m sein
+    assert(F[0].unit == "N/m")
+    // Drag muss positiv sein
+    assert(F[0].value > 0.0)
+    print("[OK] Drag in physical [N/m]")
+}
+
+fn test_physical_run_time() {
+    print("Testing Lauf für physikalische Zeit (Quantity)...")
+    sim = lbm_physical(
+        0.10[m], 0.04[m], 80,
+        0.01[m/s], 1.0e-4[m^2/s], 1000.0[kg/m^3]
+    )
+    // 1 Sekunde physikalisch bei dt=0.00625 s → 160 Schritte
+    lbm_run_time(sim, 1.0[s])
+    p = lbm_pressure(sim)
+    assert(p.unit == "Pa")
+    print("[OK] Run for physical time, pressure as Pa")
+}
+
 fn main() {
     test_lbm_init()
     test_lbm_step()
@@ -151,5 +220,9 @@ fn main() {
     test_lbm_mem_no_obstacle()
     test_lbm_pressure()
     test_karman_quick()
+    test_physical_setup()
+    test_physical_units_validation()
+    test_physical_drag_units()
+    test_physical_run_time()
 }
 main()

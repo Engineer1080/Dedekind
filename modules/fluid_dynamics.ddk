@@ -29,6 +29,59 @@ pub fn lbm_karman_benchmark(re, nx, ny, n_steps) {
     return lbm_karman_benchmark_impl(re, nx, ny, n_steps, 0.4)
 }
 
+// --- Einheiten-bewusste API ---
+//
+// Eingaben als Quantity in SI-Einheiten (m, m/s, m^2/s, kg/m^3, s),
+// Ausgaben als Quantity in physikalischen Einheiten ([m/s], [Pa], [N/m]).
+
+pub fn lbm_physical(domain_x, domain_y, nx, inlet_u, nu, rho) {
+    return lbm_physical_impl(domain_x, domain_y, nx, inlet_u, nu, rho, 0, 0)
+}
+
+pub fn lbm_physical_full(domain_x, domain_y, nx, ny, inlet_u, nu, rho, u_lattice) {
+    return lbm_physical_impl(domain_x, domain_y, nx, inlet_u, nu, rho, ny, u_lattice)
+}
+
+pub fn lbm_set_cylinder(sim, cx, cy, radius) {
+    return lbm_physical_set_cylinder_impl(sim, cx, cy, radius)
+}
+
+pub fn lbm_add_walls(sim) {
+    return lbm_physical_add_walls_impl(sim)
+}
+
+pub fn lbm_run_steps(sim, n_steps) {
+    return lbm_physical_run_steps_impl(sim, n_steps)
+}
+
+pub fn lbm_run_time(sim, t) {
+    return lbm_physical_run_time_impl(sim, t)
+}
+
+pub fn lbm_velocity(sim) {
+    return lbm_physical_velocity_impl(sim)
+}
+
+pub fn lbm_pressure(sim) {
+    return lbm_physical_pressure_impl(sim)
+}
+
+pub fn lbm_drag_lift(sim) {
+    return lbm_physical_drag_lift_impl(sim, [0.0])
+}
+
+pub fn lbm_drag_lift_on(sim, target_mask) {
+    return lbm_physical_drag_lift_impl(sim, target_mask)
+}
+
+pub fn lbm_physical_reynolds(sim) {
+    return lbm_physical_reynolds_impl(sim, [0.0])
+}
+
+pub fn lbm_summary(sim) {
+    return lbm_physical_summary_impl(sim)
+}
+
 pub fn simulation_step(sim, inlet_u) {
     return simulation_step_impl(sim, inlet_u)
 }
