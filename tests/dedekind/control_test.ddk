@@ -21,8 +21,81 @@ fn test_lti_step() {
     print("test_lti_step: passed")
 }
 
+fn test_closed_loop_pid() {
+    ref = constant_block(1.0)
+    sum_err = sum_block([ref, ref], [1.0, -1.0])
+    pid = pid_block(sum_err, 5.0, 10.0, 0.0) // PI: Kp=5, Ki=10
+    plant = transfer_function_block(pid, [5.0], [1.0, 2.0]) // G(s) = 5/(s+2)
+    
+    // Close feedback loop
+    sum_err.set_inputs([ref, plant])
+    
+    diagram = block_diagram()
+    diagram.add_block(ref)
+    diagram.add_block(sum_err)
+    diagram.add_block(pid)
+    diagram.add_block(plant)
+    
+    // Simulate for 4 seconds, dt = 0.01
+    res = diagram.simulate(4.0, 0.01)
+    
+    t = res["t"]
+    y = res[plant]
+    
+    // Final value should be close to 1.0 (settled response)
+    assert(abs(y[399] - 1.0) < 0.01)
+    print("test_closed_loop_pid: passed")
+}
+
+fn control_loss(params) {
+    Kp = params[0]
+    Ki = params[1]
+    
+    ref = constant_block(1.0)
+    sum_err = sum_block([ref, ref], [1.0, -1.0])
+    pid = pid_block(sum_err, Kp, Ki, 0.0)
+    plant = transfer_function_block(pid, [5.0], [1.0, 2.0])
+    sum_err.set_inputs([ref, plant])
+    
+    diagram = block_diagram()
+    diagram.add_block(ref)
+    diagram.add_block(sum_err)
+    diagram.add_block(pid)
+    diagram.add_block(plant)
+    
+    res = diagram.simulate(2.0, 0.05)
+    y = res[plant]
+    
+    err_sum = 0.0
+    // Sum of errors
+    for i in range(40) {
+        diff = 1.0 - y[i]
+        err_sum = err_sum + diff^2
+    }
+    return err_sum
+}
+
+fn test_differentiable_control() {
+    p_init = [1.0, 1.0]
+    
+    // Compute loss
+    l = control_loss(p_init)
+    
+    // Compute jacobian
+    jac = jacobian(control_loss, p_init)
+    
+    // Verify that gradients flow and Kp gradient is negative (increasing Kp reduces error)
+    assert(jac[0][0] < 0.0)
+    assert(jac[0][1] < 0.0)
+    
+    print("test_differentiable_control: passed")
+}
+
 fn main() {
+    print("=== Control Theory Tests ===")
     test_lti_step()
+    test_closed_loop_pid()
+    test_differentiable_control()
     print("control_test: Alle Tests bestanden!")
 }
 main()

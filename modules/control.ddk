@@ -25,3 +25,53 @@ pub fn bode_plot(sys, omega) {
     plot(w_out, phase_1d, title="Bode Plot - Phase", xlabel="Frequency (rad/s)", ylabel="Phase (deg)", xscale="log")
 }
 
+// Block Diagram Simulation Wrappers
+pub fn block_diagram() {
+    return block_diagram_impl()
+}
+
+pub fn constant_block(value) {
+    return constant_block_impl(value)
+}
+
+pub fn gain_block(inp, K) {
+    return gain_block_impl(inp, K)
+}
+
+pub fn sum_block(inputs, signs) {
+    return sum_block_impl(inputs, signs)
+}
+
+pub fn product_block(inputs) {
+    return product_block_impl(inputs)
+}
+
+pub fn saturation_block(inp, min_val, max_val) {
+    return saturation_block_impl(inp, min_val, max_val)
+}
+
+pub fn integrator_block(inp, x0) {
+    return integrator_block_impl(inp, x0)
+}
+
+pub fn pid_block(inp, Kp, Ki, Kd) {
+    return pid_block_impl(inp, Kp, Ki, Kd)
+}
+
+pub fn pid_block_saturated(inp, Kp, Ki, Kd, min_val, max_val) {
+    return pid_block_saturated_impl(inp, Kp, Ki, Kd, min_val, max_val)
+}
+
+pub fn state_space_block(inp, A, B, C) {
+    return state_space_block_impl(inp, A, B, C)
+}
+
+pub fn state_space_block_with_d(inp, A, B, C, D) {
+    return state_space_block_impl(inp, A, B, C, D)
+}
+
+pub fn transfer_function_block(inp, num, den) {
+    return transfer_function_block_impl(inp, num, den)
+}
+
+

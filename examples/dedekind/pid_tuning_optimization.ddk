@@ -1,0 +1,77 @@
+use control
+
+fn pid_loss(params) {
+    Kp = params[0]
+    Ki = params[1]
+    Kd = params[2]
+    
+    // Spring-mass-damper plant G(s) = 1 / (s^2 + s + 4)
+    // num = [1.0], den = [1.0, 1.0, 4.0]
+    
+    ref = constant_block(1.0)
+    sum_err = sum_block([ref, ref], [1.0, -1.0])
+    
+    // Saturated control output: min_val=-10, max_val=10 (non-linear limit)
+    pid = pid_block_saturated(sum_err, Kp, Ki, Kd, -10.0, 10.0)
+    plant = transfer_function_block(pid, [1.0], [1.0, 1.0, 4.0])
+    sum_err.set_inputs([ref, plant])
+    
+    diagram = block_diagram()
+    diagram.add_block(ref)
+    diagram.add_block(sum_err)
+    diagram.add_block(pid)
+    diagram.add_block(plant)
+    
+    res = diagram.simulate(3.0, 0.02) // 150 steps
+    y = res[plant]
+    
+    loss_val = 0.0
+    for i in range(150) {
+        diff = 1.0 - y[i]
+        loss_val = loss_val + diff^2
+    }
+    
+    // L2 regularization to keep gains moderate
+    penalty = 0.01 * ((Kp^2 + Ki^2) + Kd^2)
+    
+    // Penalty for negative values
+    if Kp < 0.0 {
+        penalty = penalty + (100.0 * (Kp^2))
+    }
+    if Ki < 0.0 {
+        penalty = penalty + (100.0 * (Ki^2))
+    }
+    if Kd < 0.0 {
+        penalty = penalty + (100.0 * (Kd^2))
+    }
+    
+    return (loss_val + penalty)
+}
+
+fn main() {
+    print("=== Differentiable PID Controller Tuning ===")
+    
+    p_init = [1.0, 0.1, 0.1]
+    
+    loss_init = pid_loss(p_init)
+    print("Initial parameters: Kp =", p_init[0], ", Ki =", p_init[1], ", Kd =", p_init[2])
+    print("Initial Loss:", loss_init)
+    
+    // Run L-BFGS optimization
+    res_opt = minimize(pid_loss, p_init, "lbfgs")
+    p_opt = res_opt[0]
+    loss_opt = pid_loss(p_opt)
+    
+    print("Optimized parameters: Kp =", p_opt[0], ", Ki =", p_opt[1], ", Kd =", p_opt[2])
+    print("Optimized Loss:", loss_opt)
+    
+    // Verifications
+    assert(loss_opt < loss_init)
+    assert(p_opt[0] > 0.0)
+    assert(p_opt[1] > 0.0)
+    assert(p_opt[2] > 0.0)
+    
+    print("PID Optimization test: passed successfully!")
+}
+
+main()
