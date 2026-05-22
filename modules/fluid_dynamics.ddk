@@ -147,6 +147,20 @@ pub fn lbm_thermal_with_obstacle(nx, ny, tau_u, tau_T, T_hot, T_cold,
                                         gravity_beta, mask, T_obstacle)
 }
 
+pub fn lbm_thermal_simulation_full(nx, ny, tau_u, tau_T, T_hot, T_cold, gravity_beta, inlet_u, T_inlet, bc_x, bc_y) {
+    return lbm_thermal_simulation_impl(nx, ny, tau_u, tau_T, T_hot, T_cold,
+                                        gravity_beta, [0.0], -1.0,
+                                        inlet_u, T_inlet, bc_x, bc_y)
+}
+
+pub fn lbm_thermal_with_obstacle_full(nx, ny, tau_u, tau_T, T_hot, T_cold,
+                                      gravity_beta, mask, T_obstacle,
+                                      inlet_u, T_inlet, bc_x, bc_y) {
+    return lbm_thermal_simulation_impl(nx, ny, tau_u, tau_T, T_hot, T_cold,
+                                        gravity_beta, mask, T_obstacle,
+                                        inlet_u, T_inlet, bc_x, bc_y)
+}
+
 pub fn thermal_set_temperature(sim, T_field) {
     return thermal_set_temperature_impl(sim, T_field)
 }
@@ -155,8 +169,16 @@ pub fn thermal_step(sim) {
     return thermal_step_impl(sim)
 }
 
+pub fn thermal_step_inlet(sim, inlet_u) {
+    return thermal_step_impl(sim, inlet_u)
+}
+
 pub fn thermal_run(sim, steps) {
     return thermal_run_impl(sim, steps)
+}
+
+pub fn thermal_run_inlet(sim, steps, inlet_u) {
+    return thermal_run_impl(sim, steps, inlet_u)
 }
 
 pub fn thermal_temperature(sim) {

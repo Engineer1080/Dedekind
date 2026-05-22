@@ -86,11 +86,71 @@ fn test_obstacle_dirichlet_T() {
     print("[OK] Hindernis-Dirichlet-T")
 }
 
+fn test_forced_convection() {
+    print("Testing forced convection (inlet/outlet) in x...")
+    nx = 60
+    ny = 20
+    sim = lbm_thermal_simulation_full(nx, ny, 0.6, 0.6, 0.0, 0.0, 0.0, 0.05, 1.0, "inlet_outlet", "walls")
+    
+    thermal_run(sim, 300)
+    T = thermal_temperature(sim)
+    u = thermal_velocity(sim)
+    
+    u_mean_x = mean(u[0])
+    print("  Mean ux in domain:", u_mean_x, "(soll ≈ 0.05)")
+    assert(u_mean_x > 0.02)
+    assert(u_mean_x < 0.05)
+    
+    print("  T near inlet (x=5, y=10):", T[5][10])
+    print("  T downstream (x=50, y=10):", T[50][10])
+    assert(T[5][10] > 0.5)
+    assert(T[50][10] < T[5][10])
+    print("[OK] Forced convection test passed")
+}
+
+fn test_insulated_walls() {
+    print("Testing insulated walls (Neumann adiabatic BC) in y...")
+    nx = 40
+    ny = 20
+    sim = lbm_thermal_simulation_full(nx, ny, 0.6, 0.6, 0.0, 0.0, 0.0, 0.0, 0.0, "periodic", "insulated")
+    
+    rows = linspace(0.0, nx - 1.0, nx)
+    cols = linspace(0.0, ny - 1.0, ny)
+    IY = outer(1.0 + 0.0 * rows, cols)
+    
+    T_bump = 0.0 * IY
+    T_bump_new = T_bump + 1.0 * exp(-0.1 * (IY - 10.0) * (IY - 10.0))
+    thermal_set_temperature(sim, T_bump_new)
+    
+    T_initial = thermal_temperature(sim)
+    sum_initial = sum(sum(T_initial))
+    print("  Initial total heat:", sum_initial)
+    
+    thermal_run(sim, 150)
+    T_final = thermal_temperature(sim)
+    sum_final = sum(sum(T_final))
+    print("  Final total heat (insulated):", sum_final)
+    
+    assert(abs(sum_final - sum_initial) < 0.05 * sum_initial)
+    
+    sim_dir = lbm_thermal_simulation_full(nx, ny, 0.6, 0.6, 0.0, 0.0, 0.0, 0.0, 0.0, "periodic", "walls")
+    thermal_set_temperature(sim_dir, T_bump_new)
+    thermal_run(sim_dir, 150)
+    T_dir_final = thermal_temperature(sim_dir)
+    sum_dir_final = sum(sum(T_dir_final))
+    print("  Final total heat (Dirichlet/walls):", sum_dir_final)
+    
+    assert(sum_dir_final < 0.97 * sum_initial)
+    print("[OK] Insulated walls test passed")
+}
+
 fn main() {
     test_pure_conduction()
     test_rayleigh_number_helper()
     test_convection_onset()
     test_velocity_zero_no_buoyancy()
     test_obstacle_dirichlet_T()
+    test_forced_convection()
+    test_insulated_walls()
 }
 main()
