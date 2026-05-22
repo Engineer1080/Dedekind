@@ -1,0 +1,122 @@
+use crystallography
+pyimport torch
+
+fn approx(a, b, tol) {
+    d = a - b
+    if d < 0 { d = -d }
+    return d < tol
+}
+
+fn test_symmetry_apply() {
+    coords = [0.1, 0.2, 0.7]
+    R = [[-1.0, 0.0, 0.0], [0.0, -1.0, 0.0], [0.0, 0.0, -1.0]]
+    t = [0.0, 0.0, 0.0]
+    
+    res = cryst_symmetry_apply(coords, R, t)
+    print("Symmetry applied coords:", res[0].item(), res[1].item(), res[2].item())
+    assert(approx(res[0].item(), 0.9, 1e-6))
+    assert(approx(res[1].item(), 0.8, 1e-6))
+    assert(approx(res[2].item(), 0.3, 1e-6))
+    print("test_symmetry_apply: passed")
+}
+
+fn test_symmetry_generate_equivalent() {
+    coords = [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]
+    
+    R1 = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
+    R2 = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
+    R_ops = [R1, R2]
+    
+    t1 = [0.0, 0.0, 0.0]
+    t2 = [0.5, 0.5, 0.5]
+    t_ops = [t1, t2]
+    
+    eq = cryst_generate_equivalent_atoms(coords, R_ops, t_ops)
+    
+    assert(approx(eq[0][0][0].item(), 0.1, 1e-6))
+    assert(approx(eq[0][1][2].item(), 0.6, 1e-6))
+    
+    assert(approx(eq[1][0][0].item(), 0.6, 1e-6))
+    assert(approx(eq[1][1][2].item(), 0.1, 1e-6))
+    print("test_symmetry_generate_equivalent: passed")
+}
+
+fn test_find_symmetries() {
+    coords = [[0.1, 0.1, 0.1], [0.9, 0.9, 0.9]]
+    elements = [6, 6]
+    
+    R1 = [[-1.0, 0.0, 0.0], [0.0, -1.0, 0.0], [0.0, 0.0, -1.0]]
+    t1 = [0.0, 0.0, 0.0]
+    
+    R2 = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
+    t2 = [0.2, 0.2, 0.2]
+    
+    R_ops = [R1, R2]
+    t_ops = [t1, t2]
+    
+    syms = cryst_find_symmetries(coords, elements, R_ops, t_ops)
+    
+    assert(syms[0].item() == true)
+    assert(syms[1].item() == false)
+    
+    elements_diff = [6, 8]
+    syms_diff = cryst_find_symmetries(coords, elements_diff, R_ops, t_ops)
+    assert(syms_diff[0].item() == false)
+    assert(syms_diff[1].item() == false)
+    print("test_find_symmetries: passed")
+}
+
+fn test_structure_factor_atoms() {
+    coords = [[0.0, 0.0, 0.0], [0.5, 0.5, 0.5]]
+    sf = [1.0, 1.0]
+    hkl = [[1.0, 0.0, 0.0], [2.0, 0.0, 0.0]]
+    
+    F = cryst_structure_factor_atoms(coords, sf, hkl)
+    
+    amp_1 = abs(F[0])
+    amp_2 = abs(F[1])
+    
+    assert(amp_1.item() < 1e-5)
+    assert(approx(amp_2.item(), 2.0, 1e-5))
+    
+    fn sf_loss(p) {
+        c = [[0.0, 0.0, 0.0], [p[0], 0.5, 0.5]]
+        s = [1.0, 1.0]
+        h = [[1.0, 0.0, 0.0]]
+        res_F = cryst_structure_factor_atoms(c, s, h)
+        val = abs(res_F[0])
+        return val * val
+    }
+    
+    jac = jacobian(sf_loss, [0.25])
+    print("Gradient of SF loss:", jac[0][0].item())
+    assert(approx(jac[0][0].item(), -12.56637, 1e-3))
+    print("test_structure_factor_atoms: passed")
+}
+
+fn test_structure_factor_density() {
+    grid = torch.zeros(4, 4, 4)
+    grid[0][0][0] = 1.0
+    
+    F = cryst_structure_factor_density(grid)
+    
+    amp_000 = abs(F[0][0][0]).item()
+    amp_123 = abs(F[1][2][3]).item()
+    
+    print("Grid FFT amplitudes at (0,0,0) and (1,2,3):", amp_000, amp_123)
+    assert(approx(amp_000, 1.0, 1e-6))
+    assert(approx(amp_123, 1.0, 1e-6))
+    print("test_structure_factor_density: passed")
+}
+
+fn main() {
+    print("=== Dedekind Crystallography Module Tests ===")
+    test_symmetry_apply()
+    test_symmetry_generate_equivalent()
+    test_find_symmetries()
+    test_structure_factor_atoms()
+    test_structure_factor_density()
+    print("crystallography_test: passed!")
+}
+
+main()

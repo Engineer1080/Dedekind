@@ -89,6 +89,8 @@ _RUNTIME_BUILTIN_NAMES = frozenset({
     'PAULI_I', 'PAULI_X', 'PAULI_Y', 'PAULI_Z', 'PAULI_H',
     # Molecular Dynamics & Chemistry (v2.4)
     'molecular_lj_simulate_impl', 'morse_potential_impl', 'molecular_distance_impl', 'molecular_angle_impl', 'molecular_dihedral_impl',
+    # Crystallography (v2.8)
+    'cryst_symmetry_apply_impl', 'cryst_generate_equivalent_atoms_impl', 'cryst_find_symmetries_impl', 'cryst_structure_factor_atoms_impl', 'cryst_structure_factor_density_impl',
     # 3D LBM (D3Q19) & Voxelizer
     'lbm3d_simulation_impl', 'lbm3d_step_impl', 'lbm3d_run_impl', 'lbm3d_velocity_impl',
     'lbm3d_density_impl', 'lbm3d_drag_lift_force_impl', 'lbm3d_set_obstacle_impl',

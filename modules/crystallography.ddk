@@ -1,0 +1,26 @@
+// Dedekind Standard Library: Crystallography & Differentiable Structure Analysis
+// Aktivierung: `use crystallography`
+
+pub fn cryst_symmetry_apply(coords, R, t) {
+    return cryst_symmetry_apply_impl(coords, R, t)
+}
+
+pub fn cryst_generate_equivalent_atoms(coords, R_ops, t_ops) {
+    return cryst_generate_equivalent_atoms_impl(coords, R_ops, t_ops)
+}
+
+pub fn cryst_find_symmetries(coords, elements, R_ops, t_ops) {
+    return cryst_find_symmetries_impl(coords, elements, R_ops, t_ops, 1e-3)
+}
+
+pub fn cryst_find_symmetries_advanced(coords, elements, R_ops, t_ops, tol) {
+    return cryst_find_symmetries_impl(coords, elements, R_ops, t_ops, tol)
+}
+
+pub fn cryst_structure_factor_atoms(coords, scattering_factors, hkl_indices) {
+    return cryst_structure_factor_atoms_impl(coords, scattering_factors, hkl_indices)
+}
+
+pub fn cryst_structure_factor_density(density_map) {
+    return cryst_structure_factor_density_impl(density_map)
+}
