@@ -1,0 +1,200 @@
+// Tests für 3D LBM (D3Q19) und STL-Voxelizer
+
+use fluid_dynamics
+
+fn test_stl_voxelization() {
+    print("Testing STL-Voxelization of a Cube...")
+    cube_stl = "solid cube
+  facet normal 0 0 -1
+    outer loop
+      vertex 0 0 0
+      vertex 0 1 0
+      vertex 1 1 0
+    endloop
+  endfacet
+  facet normal 0 0 -1
+    outer loop
+      vertex 0 0 0
+      vertex 1 1 0
+      vertex 1 0 0
+    endloop
+  endfacet
+  facet normal 0 0 1
+    outer loop
+      vertex 0 0 1
+      vertex 1 0 1
+      vertex 1 1 1
+    endloop
+  endfacet
+  facet normal 0 0 1
+    outer loop
+      vertex 0 0 1
+      vertex 1 1 1
+      vertex 0 1 1
+    endloop
+  endfacet
+  facet normal 0 -1 0
+    outer loop
+      vertex 0 0 0
+      vertex 1 0 0
+      vertex 1 0 1
+    endloop
+  endfacet
+  facet normal 0 -1 0
+    outer loop
+      vertex 0 0 0
+      vertex 1 0 1
+      vertex 0 0 1
+    endloop
+  endfacet
+  facet normal 0 1 0
+    outer loop
+      vertex 0 1 0
+      vertex 0 1 1
+      vertex 1 1 1
+    endloop
+  endfacet
+  facet normal 0 1 0
+    outer loop
+      vertex 0 1 0
+      vertex 1 1 1
+      vertex 1 1 0
+    endloop
+  endfacet
+  facet normal -1 0 0
+    outer loop
+      vertex 0 0 0
+      vertex 0 0 1
+      vertex 0 1 1
+    endloop
+  endfacet
+  facet normal -1 0 0
+    outer loop
+      vertex 0 0 0
+      vertex 0 1 1
+      vertex 0 1 0
+    endloop
+  endfacet
+  facet normal 1 0 0
+    outer loop
+      vertex 1 0 0
+      vertex 1 1 0
+      vertex 1 1 1
+    endloop
+  endfacet
+  facet normal 1 0 0
+    outer loop
+      vertex 1 0 0
+      vertex 1 1 1
+      vertex 1 0 1
+    endloop
+  endfacet
+endsolid cube
+"
+    write_file("./temp_cube.stl", cube_stl)
+    
+    // Voxelize into a 10x10x10 grid with padding of 2.0 (box size = 6x6x6 = 216 voxels)
+    mask = voxelize_stl("./temp_cube.stl", 10, 10, 10)
+    
+    print("  Mask shape:", mask.shape)
+    assert(mask.shape[0] == 10)
+    assert(mask.shape[1] == 10)
+    assert(mask.shape[2] == 10)
+    
+    non_zero = mask.sum()
+    print("  Voxel count (expected 216):", non_zero)
+    assert(abs(non_zero - 216.0) < 1e-5)
+    print("[OK] STL-Voxelization")
+}
+
+fn test_lbm3d_simulation() {
+    print("Testing 3D LBM Simulation (D3Q19) Mass Conservation...")
+    sim = lbm3d_simulation(8, 8, 8, 0.8)
+    
+    rho = lbm3d_density(sim)
+    vel = lbm3d_velocity(sim)
+    
+    print("  Density shape:", rho.shape)
+    print("  Velocity shape:", vel.shape)
+    
+    assert(rho.shape[0] == 8)
+    assert(rho.shape[1] == 8)
+    assert(rho.shape[2] == 8)
+    assert(vel.shape[0] == 3)
+    assert(vel.shape[1] == 8)
+    assert(vel.shape[2] == 8)
+    assert(vel.shape[3] == 8)
+    
+    rho_mean = mean(rho)
+    print("  Initial mean density:", rho_mean)
+    assert(abs(rho_mean - 1.0) < 1e-10)
+    
+    lbm3d_run(sim, 5, 0.0)
+    
+    rho_post = lbm3d_density(sim)
+    rho_post_mean = mean(rho_post)
+    print("  Mean density after 5 steps:", rho_post_mean)
+    assert(abs(rho_post_mean - 1.0) < 1e-10)
+    print("[OK] 3D LBM Simulation Mass Conservation")
+}
+
+fn drag_of_sphere(r_arr) {
+    r = r_arr[0]
+    mask = soft_sphere_mask(10, 6, 6, 5.0, 3.0, 3.0, r, 0.5)
+    sim = lbm3d_simulation_with_mask(10, 6, 6, 0.8, mask)
+    lbm3d_run(sim, 3, 0.05)
+    forces = lbm3d_drag_lift(sim)
+    return [forces[0]]
+}
+
+fn test_lbm3d_autograd() {
+    print("Testing 3D LBM Autograd vs Finite Differences...")
+    
+    r_init = [1.5]
+    j = jacobian(drag_of_sphere, r_init)
+    grad_ag = j[0][0]
+    
+    h = 0.01
+    fp = drag_of_sphere([1.5 + h])[0]
+    fm = drag_of_sphere([1.5 - h])[0]
+    grad_fd = (fp - fm) / (2.0 * h)
+    
+    rel_err = abs(grad_ag - grad_fd) / abs(grad_fd)
+    print("  Autograd-Gradient:", grad_ag)
+    print("  FD-Gradient:      ", grad_fd)
+    print("  Rel. Fehler:      ", rel_err)
+    
+    assert(rel_err < 1e-3)
+    print("[OK] 3D LBM Autograd")
+}
+
+fn loss_target_drag(r_arr) {
+    drag = drag_of_sphere(r_arr)[0]
+    target = 0.02
+    diff = drag - target
+    return [diff * diff]
+}
+
+fn test_lbm3d_optimization() {
+    print("Testing 3D LBM Shape Optimization (Minimize drag error)...")
+    r0 = [1.5]
+    initial_loss = loss_target_drag(r0)[0]
+    print("  Initial loss:", initial_loss)
+    
+    result = minimize(loss_target_drag, r0, "adam", 0.1, 4)
+    r_opt = result[0]
+    final_loss = loss_target_drag([r_opt[0]])[0]
+    print("  Final loss:  ", final_loss)
+    print("  Optimized r: ", r_opt[0])
+    
+    assert(final_loss < initial_loss)
+    print("[OK] 3D LBM Shape Optimization")
+}
+
+fn main() {
+    test_stl_voxelization()
+    test_lbm3d_simulation()
+    test_lbm3d_autograd()
+    test_lbm3d_optimization()
+}
+main()

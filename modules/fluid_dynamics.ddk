@@ -204,3 +204,61 @@ pub fn soft_airfoil_mask(nx, ny, t, c, beta, x_start, x_end, y_center, alpha) {
 pub fn add_wind_tunnel_walls(mask) {
     return add_wind_tunnel_walls_impl(mask)
 }
+
+// --- 3D LBM (D3Q19) & Voxelizer ---
+
+pub fn lbm3d_simulation(nx, ny, nz, tau) {
+    return lbm3d_simulation_impl(nx, ny, nz, tau, [0.0], 0.0)
+}
+
+pub fn lbm3d_simulation_with_mask(nx, ny, nz, tau, mask) {
+    return lbm3d_simulation_impl(nx, ny, nz, tau, mask, 0.0)
+}
+
+pub fn lbm3d_simulation_full(nx, ny, nz, tau, mask, inlet_u) {
+    return lbm3d_simulation_impl(nx, ny, nz, tau, mask, inlet_u)
+}
+
+pub fn lbm3d_step(sim, inlet_u) {
+    return lbm3d_step_impl(sim, inlet_u)
+}
+
+pub fn lbm3d_run(sim, steps, inlet_u) {
+    return lbm3d_run_impl(sim, steps, inlet_u)
+}
+
+pub fn lbm3d_velocity(sim) {
+    return lbm3d_velocity_impl(sim)
+}
+
+pub fn lbm3d_density(sim) {
+    return lbm3d_density_impl(sim)
+}
+
+pub fn lbm3d_drag_lift(sim) {
+    return lbm3d_drag_lift_force_impl(sim, [0.0])
+}
+
+pub fn lbm3d_drag_lift_on(sim, target_mask) {
+    return lbm3d_drag_lift_force_impl(sim, target_mask)
+}
+
+pub fn lbm3d_set_obstacle(sim, mask) {
+    return lbm3d_set_obstacle_impl(sim, mask)
+}
+
+pub fn voxelize_stl(stl_path, nx, ny, nz) {
+    return voxelize_stl_impl(stl_path, nx, ny, nz, true, 2.0)
+}
+
+pub fn voxelize_stl_scaled(stl_path, nx, ny, nz, scale_to_fit, padding) {
+    return voxelize_stl_impl(stl_path, nx, ny, nz, scale_to_fit, padding)
+}
+
+pub fn soft_sphere_mask(nx, ny, nz, cx, cy, cz, r, alpha) {
+    return lbm3d_soft_sphere_mask_impl(nx, ny, nz, cx, cy, cz, r, alpha)
+}
+
+pub fn soft_cylinder_mask_3d(nx, ny, nz, cx, cy, r, axis, alpha) {
+    return lbm3d_soft_cylinder_mask_impl(nx, ny, nz, cx, cy, r, axis, alpha)
+}

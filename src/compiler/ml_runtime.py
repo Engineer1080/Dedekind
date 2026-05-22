@@ -11872,6 +11872,416 @@ def lbm_physical_drag_lift_impl(sim, target_mask=None):
 
 def lbm_physical_summary_impl(sim):
     return sim.summary()
+
+
+# --- D3Q19 Konstanten ----------------------------------------------------
+_D3Q19_CX_LIST = [0, 1, -1, 0, 0, 0, 0, 1, -1, 1, -1, 1, -1, 1, -1, 0, 0, 0, 0]
+_D3Q19_CY_LIST = [0, 0, 0, 1, -1, 0, 0, 1, -1, -1, 1, 0, 0, 0, 0, 1, -1, 1, -1]
+_D3Q19_CZ_LIST = [0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 1, -1, -1, 1, 1, -1, -1, 1]
+_D3Q19_W_LIST = [
+    1.0/3.0,
+    1.0/18.0, 1.0/18.0, 1.0/18.0, 1.0/18.0, 1.0/18.0, 1.0/18.0,
+    1.0/36.0, 1.0/36.0, 1.0/36.0, 1.0/36.0, 1.0/36.0, 1.0/36.0,
+    1.0/36.0, 1.0/36.0, 1.0/36.0, 1.0/36.0, 1.0/36.0, 1.0/36.0
+]
+_D3Q19_OPPOSITE = [0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13, 16, 15, 18, 17]
+
+
+def _lbm3d_constants(device, dtype):
+    """Liefert (cx, cy, cz, w) als 19x1x1x1-Tensoren auf dem gewünschten Device/Dtype."""
+    cx = torch.tensor(_D3Q19_CX_LIST, dtype=dtype, device=device).view(19, 1, 1, 1)
+    cy = torch.tensor(_D3Q19_CY_LIST, dtype=dtype, device=device).view(19, 1, 1, 1)
+    cz = torch.tensor(_D3Q19_CZ_LIST, dtype=dtype, device=device).view(19, 1, 1, 1)
+    w = torch.tensor(_D3Q19_W_LIST, dtype=dtype, device=device).view(19, 1, 1, 1)
+    return cx, cy, cz, w
+
+
+def lbm3d_equilibrium(rho, u, device=None):
+    """Berechnet die D3Q19 Gleichgewichtsverteilung f_eq in 3D.
+    rho: shape (nx, ny, nz) oder (1, ny, nz); u: shape (3, nx, ny, nz) oder (3, 1, ny, nz).
+    Rückgabe: f_eq mit shape (19, *rho.shape).
+    """
+    if device is None:
+        device = rho.device
+    ux = u[0]
+    uy = u[1]
+    uz = u[2]
+    u2 = ux * ux + uy * uy + uz * uz
+    cx, cy, cz, w = _lbm3d_constants(device, torch.float64)
+    c_dot_u = cx * ux + cy * uy + cz * uz
+    feq = w * rho * (1.0 + 3.0 * c_dot_u + 4.5 * c_dot_u * c_dot_u - 1.5 * u2)
+    return feq
+
+
+class Lbm3dSimulation:
+    """Vollständig differenzierbarer 3D-D3Q19 Lattice-Boltzmann-Solver.
+    
+    Grid-Größe: (nx, ny, nz).
+    tau: Relaxationszeit (> 0.5).
+    """
+    MAX_LATTICE_U = 0.1
+
+    def __init__(self, nx, ny, nz, tau, obstacle_mask=None, inlet_u=0.0,
+                 collision="bgk", bounce_back="soft"):
+        self.nx = int(nx)
+        self.ny = int(ny)
+        self.nz = int(nz)
+        self.tau = float(tau)
+        self._inlet_u = float(inlet_u)
+        self.collision_model = str(collision).lower()
+        self.bounce_back_model = str(bounce_back).lower()
+        
+        if self.tau <= 0.5:
+            raise ValueError(f"Lbm3dSimulation: tau={self.tau} muss > 0.5 sein.")
+            
+        if obstacle_mask is not None:
+            mask_t = _to_double_tensor(obstacle_mask)
+            if mask_t.numel() == 1 and float(mask_t.flatten()[0]) == 0.0:
+                self.obstacle_mask = torch.zeros((self.nx, self.ny, self.nz), dtype=torch.float64)
+            else:
+                self.obstacle_mask = mask_t
+                if self.obstacle_mask.shape != (self.nx, self.ny, self.nz):
+                    raise ValueError(f"Obstacle mask shape must be ({self.nx}, {self.ny}, {self.nz}), got {tuple(self.obstacle_mask.shape)}.")
+        else:
+            self.obstacle_mask = torch.zeros((self.nx, self.ny, self.nz), dtype=torch.float64)
+            
+        device = self.obstacle_mask.device
+        dtype = torch.float64
+        self._cx, self._cy, self._cz, self._w = _lbm3d_constants(device, dtype)
+        
+        # Initialisierung
+        rho_init = torch.ones((self.nx, self.ny, self.nz), dtype=dtype, device=device)
+        u_init = torch.zeros((3, self.nx, self.ny, self.nz), dtype=dtype, device=device)
+        u_init[0] = self._inlet_u
+        
+        self.f = lbm3d_equilibrium(rho_init, u_init, device)
+
+    def set_obstacle_mask(self, mask):
+        mask_t = _to_double_tensor(mask)
+        if mask_t.shape != (self.nx, self.ny, self.nz):
+            raise ValueError(f"Obstacle mask shape must be ({self.nx}, {self.ny}, {self.nz}), got {tuple(mask_t.shape)}")
+        self.obstacle_mask = mask_t
+
+    def step(self, inlet_u=None):
+        if inlet_u is None:
+            inlet_u_val = self._inlet_u
+        else:
+            inlet_u_val = float(inlet_u) if not isinstance(inlet_u, torch.Tensor) else inlet_u
+
+        # 1. Streaming in 3D
+        f_streamed = torch.stack([
+            torch.roll(
+                self.f[i],
+                shifts=(int(_D3Q19_CX_LIST[i]), int(_D3Q19_CY_LIST[i]), int(_D3Q19_CZ_LIST[i])),
+                dims=(0, 1, 2),
+            )
+            for i in range(19)
+        ])
+
+        # 2. Inlet (x=0)
+        ny = self.ny
+        nz = self.nz
+        device = self.f.device
+        dtype = self.f.dtype
+        
+        rho_col = torch.ones((ny, nz), dtype=dtype, device=device)
+        u_col = torch.zeros((3, ny, nz), dtype=dtype, device=device)
+        if isinstance(inlet_u_val, torch.Tensor):
+            u_col = torch.stack([
+                torch.ones((ny, nz), dtype=dtype, device=device) * inlet_u_val,
+                torch.zeros((ny, nz), dtype=dtype, device=device),
+                torch.zeros((ny, nz), dtype=dtype, device=device),
+            ])
+        else:
+            u_col[0] = inlet_u_val
+            
+        feq_inlet = lbm3d_equilibrium(
+            rho_col.unsqueeze(0), u_col.unsqueeze(1), device
+        )  # (19, 1, ny, nz)
+        f_inlet = torch.cat([feq_inlet, f_streamed[:, 1:, :, :]], dim=1)
+
+        # 3. Outlet (x=nx-1)
+        f_outlet = torch.cat([f_inlet[:, :-1, :, :], f_inlet[:, -2:-1, :, :]], dim=1)
+
+        # 4. Macroscopic
+        rho = torch.sum(f_outlet, dim=0)
+        rho_safe = rho + 1e-15
+        ux = torch.sum(f_outlet * self._cx, dim=0) / rho_safe
+        uy = torch.sum(f_outlet * self._cy, dim=0) / rho_safe
+        uz = torch.sum(f_outlet * self._cz, dim=0) / rho_safe
+
+        # 5. Collision (BGK)
+        u_stack = torch.stack([ux, uy, uz])
+        feq = lbm3d_equilibrium(rho, u_stack, device)
+        f_coll = f_outlet - (1.0 / self.tau) * (f_outlet - feq)
+
+        # 6. Bounce-Back at obstacles
+        f_bounce = f_outlet[_D3Q19_OPPOSITE]
+        if self.bounce_back_model == "hard":
+            M_sharp = (self.obstacle_mask >= 0.5).to(self.obstacle_mask.dtype)
+            M = M_sharp.unsqueeze(0)
+        else:
+            M = self.obstacle_mask.unsqueeze(0)
+            
+        self.f = (1.0 - M) * f_coll + M * f_bounce
+
+    def run(self, steps, inlet_u=None):
+        for _ in range(int(steps)):
+            self.step(inlet_u)
+
+    def get_velocity(self):
+        rho = torch.sum(self.f, dim=0)
+        rho_safe = rho + 1e-15
+        ux = torch.sum(self.f * self._cx, dim=0) / rho_safe
+        uy = torch.sum(self.f * self._cy, dim=0) / rho_safe
+        uz = torch.sum(self.f * self._cz, dim=0) / rho_safe
+        return torch.stack([ux, uy, uz])
+
+    def get_density(self):
+        return torch.sum(self.f, dim=0)
+
+    def get_drag_lift(self, target_mask=None):
+        """Impulsaustausch-Methode (MEM) in 3D.
+        
+        Rückgabe: Tensor [Fx, Fy, Fz]
+        """
+        if target_mask is None:
+            M = self.obstacle_mask
+        else:
+            mask_t = _to_double_tensor(target_mask)
+            if mask_t.numel() == 1 and float(mask_t.flatten()[0]) == 0.0:
+                M = self.obstacle_mask
+            else:
+                M = mask_t
+
+        one_minus_M = 1.0 - M
+        Fx = torch.zeros((), dtype=self.f.dtype, device=self.f.device)
+        Fy = torch.zeros((), dtype=self.f.dtype, device=self.f.device)
+        Fz = torch.zeros((), dtype=self.f.dtype, device=self.f.device)
+        
+        for b in range(1, 19):
+            cxb = _D3Q19_CX_LIST[b]
+            cyb = _D3Q19_CY_LIST[b]
+            czb = _D3Q19_CZ_LIST[b]
+            M_shift = torch.roll(M, shifts=(-cxb, -cyb, -czb), dims=(0, 1, 2))
+            w = one_minus_M * M_shift
+            contrib = (self.f[b] * w).sum()
+            Fx = Fx + 2.0 * cxb * contrib
+            Fy = Fy + 2.0 * cyb * contrib
+            Fz = Fz + 2.0 * czb * contrib
+
+        return torch.stack([Fx, Fy, Fz])
+
+
+def lbm3d_simulation_impl(nx, ny, nz, tau, obstacle_mask=None, inlet_u=0.0):
+    return Lbm3dSimulation(nx, ny, nz, tau, obstacle_mask=obstacle_mask, inlet_u=inlet_u)
+
+
+def lbm3d_step_impl(sim, inlet_u=None):
+    sim.step(inlet_u)
+    return sim
+
+
+def lbm3d_run_impl(sim, steps, inlet_u=None):
+    sim.run(steps, inlet_u)
+    return sim
+
+
+def lbm3d_velocity_impl(sim):
+    return sim.get_velocity()
+
+
+def lbm3d_density_impl(sim):
+    return sim.get_density()
+
+
+def lbm3d_drag_lift_force_impl(sim, target_mask=None):
+    if target_mask is None:
+        return sim.get_drag_lift(None)
+    if hasattr(target_mask, "numel") and target_mask.numel() == 1 and float(target_mask.flatten()[0]) == 0.0:
+        return sim.get_drag_lift(None)
+    if isinstance(target_mask, list) and len(target_mask) == 1 and target_mask[0] == 0.0:
+        return sim.get_drag_lift(None)
+    return sim.get_drag_lift(target_mask)
+
+
+def lbm3d_set_obstacle_impl(sim, mask):
+    sim.set_obstacle_mask(mask)
+    return sim
+
+
+def load_stl_triangles(file_path):
+    with open(file_path, 'rb') as f:
+        data = f.read()
+    
+    is_ascii = False
+    if len(data) > 5 and data[:5] == b'solid':
+        preview = data[:1000].lower()
+        if b'facet' in preview and b'outer' in preview:
+            is_ascii = True
+            
+    triangles = []
+    
+    if is_ascii:
+        lines = data.decode('utf-8', errors='ignore').split('\n')
+        curr_tri = []
+        for line in lines:
+            parts = line.strip().split()
+            if not parts:
+                continue
+            if parts[0] == 'vertex':
+                curr_tri.append([float(parts[1]), float(parts[2]), float(parts[3])])
+                if len(curr_tri) == 3:
+                    triangles.append(curr_tri)
+                    curr_tri = []
+    else:
+        if len(data) < 84:
+            raise ValueError("Invalid binary STL file: too short.")
+        import struct
+        num_triangles = struct.unpack('<I', data[80:84])[0]
+        expected_size = 84 + num_triangles * 50
+        if len(data) < expected_size:
+            raise ValueError(f"Invalid binary STL file: size {len(data)} is less than expected {expected_size}.")
+        
+        offset = 84
+        for _ in range(num_triangles):
+            tri_data = struct.unpack('<9f', data[offset+12:offset+48])
+            v1 = list(tri_data[0:3])
+            v2 = list(tri_data[3:6])
+            v3 = list(tri_data[6:9])
+            triangles.append([v1, v2, v3])
+            offset += 50
+            
+    return torch.tensor(triangles, dtype=torch.float64)
+
+
+def voxelize_stl_impl(stl_path, nx, ny, nz, scale_to_fit=True, padding=2.0):
+    nx = int(nx)
+    ny = int(ny)
+    nz = int(nz)
+    triangles = load_stl_triangles(stl_path)
+    
+    if triangles.shape[0] == 0:
+        return torch.zeros((nx, ny, nz), dtype=torch.float64)
+        
+    if scale_to_fit:
+        min_bounds = triangles.view(-1, 3).min(dim=0)[0]
+        max_bounds = triangles.view(-1, 3).max(dim=0)[0]
+        size = max_bounds - min_bounds
+        max_size = size.max()
+        if max_size < 1e-8:
+            max_size = 1.0
+            
+        target_size_x = nx - 2.0 * padding
+        target_size_y = ny - 2.0 * padding
+        target_size_z = nz - 2.0 * padding
+        
+        scale = _builtin_min(target_size_x / size[0].item() if size[0] > 1e-8 else float('inf'),
+                    target_size_y / size[1].item() if size[1] > 1e-8 else float('inf'),
+                    target_size_z / size[2].item() if size[2] > 1e-8 else float('inf'))
+        
+        center = 0.5 * (min_bounds + max_bounds)
+        grid_center = torch.tensor([nx / 2.0, ny / 2.0, nz / 2.0], dtype=torch.float64)
+        
+        triangles = (triangles - center.view(1, 1, 3)) * scale + grid_center.view(1, 1, 3)
+        
+    mask = torch.zeros((nx, ny, nz), dtype=torch.float64)
+    M = triangles.shape[0]
+    
+    for m in range(M):
+        tri = triangles[m]
+        A, B, C = tri[0], tri[1], tri[2]
+        
+        AB = B - A
+        AC = C - A
+        Nx = AB[1]*AC[2] - AB[2]*AC[1]
+        Ny = AB[2]*AC[0] - AB[0]*AC[2]
+        Nz = AB[0]*AC[1] - AB[1]*AC[0]
+        
+        if abs(Nz.item()) < 1e-8:
+            continue
+            
+        min_x = int(math.floor(_builtin_min(A[0].item(), B[0].item(), C[0].item())))
+        max_x = int(math.ceil(_builtin_max(A[0].item(), B[0].item(), C[0].item())))
+        min_y = int(math.floor(_builtin_min(A[1].item(), B[1].item(), C[1].item())))
+        max_y = int(math.ceil(_builtin_max(A[1].item(), B[1].item(), C[1].item())))
+        
+        min_x = _builtin_max(0, min_x)
+        max_x = _builtin_min(nx - 1, max_x)
+        min_y = _builtin_max(0, min_y)
+        max_y = _builtin_min(ny - 1, max_y)
+        
+        ax, ay, az = A[0].item(), A[1].item(), A[2].item()
+        bx, by, bz = B[0].item(), B[1].item(), B[2].item()
+        cx, cy, cz = C[0].item(), C[1].item(), C[2].item()
+        
+        nx_val, ny_val, nz_val = Nx.item(), Ny.item(), Nz.item()
+        
+        for ix in range(min_x, max_x + 1):
+            px = ix + 0.123456789
+            for iy in range(min_y, max_y + 1):
+                py = iy + 0.456789123
+                
+                d1 = (px - bx)*(ay - by) - (ax - bx)*(py - by)
+                d2 = (px - cx)*(by - cy) - (bx - cx)*(py - cy)
+                d3 = (px - ax)*(cy - ay) - (cx - ax)*(py - ay)
+                
+                has_neg = (d1 < 0) or (d2 < 0) or (d3 < 0)
+                has_pos = (d1 > 0) or (d2 > 0) or (d3 > 0)
+                
+                if not (has_neg and has_pos):
+                    z_inter = az - (nx_val * (px - ax) + ny_val * (py - ay)) / nz_val
+                    limit_iz = int(math.floor(z_inter - 0.5))
+                    limit_iz = _builtin_min(nz - 1, _builtin_max(0, limit_iz))
+                    if z_inter > 0.5:
+                        mask[ix, iy, 0:limit_iz+1] = 1.0 - mask[ix, iy, 0:limit_iz+1]
+                        
+    return mask
+
+
+def lbm3d_soft_sphere_mask_impl(nx, ny, nz, cx, cy, cz, r, alpha=1.0):
+    nx_v = int(nx)
+    ny_v = int(ny)
+    nz_v = int(nz)
+    r_val = float(r) if not hasattr(r, "item") else r
+    cx_val = float(cx) if not hasattr(cx, "item") else cx
+    cy_val = float(cy) if not hasattr(cy, "item") else cy
+    cz_val = float(cz) if not hasattr(cz, "item") else cz
+    alpha_val = float(alpha)
+    
+    x = torch.arange(nx_v, dtype=torch.float64).view(nx_v, 1, 1)
+    y = torch.arange(ny_v, dtype=torch.float64).view(1, ny_v, 1)
+    z = torch.arange(nz_v, dtype=torch.float64).view(1, 1, nz_v)
+    
+    dist = torch.sqrt((x - cx_val)**2 + (y - cy_val)**2 + (z - cz_val)**2 + 1e-12)
+    mask = torch.sigmoid((r_val - dist) / alpha_val)
+    return mask
+
+
+def lbm3d_soft_cylinder_mask_impl(nx, ny, nz, cx, cy, r, axis=0, alpha=1.0):
+    nx_v = int(nx)
+    ny_v = int(ny)
+    nz_v = int(nz)
+    r_val = float(r) if not hasattr(r, "item") else r
+    cx_val = float(cx) if not hasattr(cx, "item") else cx
+    cy_val = float(cy) if not hasattr(cy, "item") else cy
+    alpha_val = float(alpha)
+    axis_val = int(axis)
+    
+    x = torch.arange(nx_v, dtype=torch.float64).view(nx_v, 1, 1)
+    y = torch.arange(ny_v, dtype=torch.float64).view(1, ny_v, 1)
+    z = torch.arange(nz_v, dtype=torch.float64).view(1, 1, nz_v)
+    
+    if axis_val == 0:
+        dist = torch.sqrt((y - cx_val)**2 + (z - cy_val)**2 + 1e-12)
+    elif axis_val == 1:
+        dist = torch.sqrt((x - cx_val)**2 + (z - cy_val)**2 + 1e-12)
+    else:
+        dist = torch.sqrt((x - cx_val)**2 + (y - cy_val)**2 + 1e-12)
+        
+    mask = torch.sigmoid((r_val - dist) / alpha_val)
+    return mask
+
 import torch
 
 class Block:
