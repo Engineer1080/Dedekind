@@ -485,6 +485,72 @@ def lbm_soft_ellipse_mask_impl(nx, ny, cx, cy, a, b, alpha=0.1):
     return mask
 
 
+def lbm_fourier_shape_mask_impl(nx, ny, cx, cy, r0, a_coeffs, b_coeffs, alpha=0.5):
+    """
+    Differenzierbare Soft-Maske mit Fourier-parametrisiertem Rand:
+
+        r(θ) = r0 · (1 + Σ_{k=1..K} a_k·cos(k·θ) + b_k·sin(k·θ))
+
+    Erlaubt komplexe 2D-Topologien (Tragflächenprofile, Tropfen, Rotorblätter)
+    mit K freien harmonischen Modi pro Cos/Sin. Voll differenzierbar bezüglich
+    cx, cy, r0 und jedem Element von a_coeffs, b_coeffs. K kann zwischen
+    a_coeffs und b_coeffs unterschiedlich sein — fehlende Koeffizienten
+    werden mit 0 aufgefüllt.
+
+    Parameter
+    ---------
+    nx, ny : int
+        Gittergröße in Lattice-Einheiten.
+    cx, cy : float / Tensor
+        Form-Zentrum (Lattice-Koordinaten).
+    r0 : float / Tensor
+        Basisradius (Lattice-Einheiten).
+    a_coeffs, b_coeffs : 1D-Tensor oder Liste
+        Cosinus- bzw. Sinus-Fourier-Koeffizienten. Index 0 entspricht dem
+        ersten Harmonischen (k=1).
+    alpha : float
+        Glättungsbreite des Sigmoid-Übergangs am Rand.
+    """
+    nx_val = int(nx)
+    ny_val = int(ny)
+    cx_t = _to_double_tensor(cx)
+    cy_t = _to_double_tensor(cy)
+    r0_t = _to_double_tensor(r0)
+    alpha_t = _to_double_tensor(alpha)
+    a_t = _to_double_tensor(a_coeffs).flatten()
+    b_t = _to_double_tensor(b_coeffs).flatten()
+
+    y_coords, x_coords = torch.meshgrid(
+        torch.arange(ny_val, dtype=torch.float64),
+        torch.arange(nx_val, dtype=torch.float64),
+        indexing='ij',
+    )
+    x_coords = x_coords.t()
+    y_coords = y_coords.t()
+
+    dx_grid = x_coords - cx_t
+    dy_grid = y_coords - cy_t
+    # Numerisch stabiler Radius (vermeidet sqrt(0) für Gradient bei Zentrum)
+    rho = torch.sqrt(dx_grid * dx_grid + dy_grid * dy_grid + 1e-12)
+    theta = torch.atan2(dy_grid, dx_grid)
+
+    # Harmonische Summe; gilt für a_t und b_t unabhängig (gleiche oder
+    # unterschiedliche Längen)
+    harmonics = torch.ones_like(rho)  # k=0-Konstante = 1 (eingebaut)
+    K_a = a_t.numel()
+    K_b = b_t.numel()
+    for k in range(1, _builtin_max(K_a, K_b) + 1):
+        if k - 1 < K_a:
+            harmonics = harmonics + a_t[k - 1] * torch.cos(k * theta)
+        if k - 1 < K_b:
+            harmonics = harmonics + b_t[k - 1] * torch.sin(k * theta)
+
+    r_border = r0_t * harmonics
+    # Soft Mask: 1 wenn rho < r_border, 0 sonst, glatter Übergang
+    mask = torch.sigmoid(-(rho - r_border) / alpha_t)
+    return mask
+
+
 def lbm_soft_airfoil_mask_impl(nx, ny, t, c, beta, x_start, x_end, y_center, alpha=1.0):
     nx_val = int(nx)
     ny_val = int(ny)

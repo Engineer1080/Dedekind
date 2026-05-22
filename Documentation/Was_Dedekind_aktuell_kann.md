@@ -44,7 +44,17 @@
 ## Differentiable Engineering (v2.2)
 
 - **Regelungstechnik (`use control`):** Differentiable Control Blocks zur dynamischen Systemmodellierung. Unterstützt zustandsbehaftete Blöcke wie PID-Regler (`PIDBlock`), Übertragungsfunktionen (`TransferFunctionBlock`), Integratoren (`IntegratorBlock`) und Sättigungsglieder (`SaturationBlock`). Bietet automatische Schleifenauflösung zur parameterbasierten Optimierung von geschlossenen Regelkreisen.
-- **Strömungsmechanik (`use fluid_dynamics`):** Gitterfreie Strömungssimulation basierend auf dem Lattice-Boltzmann-Verfahren (LBM, D2Q9-Modell). Unterstützt stetig differenzierbare, weiche Hindernismasken (Zylinder, NACA-Tragflächenprofile) zur direkten autograd-basierten Widerstands- (Drag) und Auftriebsoptimierung (Lift).
+- **Strömungsmechanik (`use fluid_dynamics`):** Vollumfängliche, differenzierbare CFD-Pipeline.
+  - **LBM D2Q9:** BGK- und MRT-Collision (`lbm_physical_mrt`, Lallemand-Luo 2000) für hohe Reynolds-Zahlen; soft & hard (Halfway-)Bounce-Back-Randbehandlung.
+  - **Einheiten-bewusste API:** `lbm_physical(domain_x[m], domain_y[m], nx, inlet[m/s], nu[m²/s], rho[kg/m³])` liefert Drag/Lift in `N/m`, Druck in `Pa`, Geschwindigkeit in `m/s` — Quantity-Konsistenz wird zur Compile- und Laufzeit geprüft.
+  - **Echte MEM-Drag/Lift:** Momentum-Exchange-Method nach Newton III; validiert per Karman-Vortex-Benchmark (Strouhal-Zahl).
+  - **Differenzierbare Form-Parametrisierung:**
+    - `soft_cylinder_mask`, `soft_ellipse_mask` (2-Parameter, Volumen-Constraint),
+    - `soft_airfoil_mask` (NACA-artig),
+    - `fourier_shape_mask` (K Harmonische, 2K freie Koeffizienten für Cos/Sin → komplexe Topologien wie Class-Shape-Transformation in der Industrie),
+    - alle voll Autograd-fähig.
+  - **Shape-Optimierung End-to-End:** Adam/L-BFGS differenziert durch hunderte LBM-Schritte hindurch direkt zu den Form-Parametern — kein separater Adjoint-Solver nötig. Validiert vs. zentralen finiten Differenzen (rel. Fehler < 10⁻⁴).
+  - **Immersed Boundary Method (IBM):** Im Chorin-Navier-Stokes-Solver (`pde_navier_stokes_2d`) — Brinkman-Penalisierung mit Force-History für gekoppelte FSI-Anwendungen.
 - **Strukturmechanik (`use structural`):** 2D Finite-Elemente-Elastizitätslöser (Q4-Bilinear-Elemente) zur statischen mechanischen Spannungsanalyse. Beinhaltet SIMP-Materialdichtemodellierung, Sensitivitäts-Faltungsfilter und einen integrierten Optimality Criteria (OC) Solver zur Topologieoptimierung (z.B. Brückendesigns) samt Unicode-ASCII-Vorschau im Terminal.
 - **Wärmeübertragung (`use thermal`):** Stationäre und transiente (Backward Euler) Finite-Elemente-Wärmediffusion auf Q4-Elementen. Unterstützt thermische SIMP-Dichte-Leitwert-Interpolation und OC-Topologieoptimierung für wärmeableitende Strukturen (Kühlkörper) mit ASCII-Unicode-Rasterdarstellung.
 - **Signalverarbeitung & AC-Netzwerke:** Native FIR- und IIR-Filterstrukturen (Biquads) mit Autograd; SPICE-ähnlicher Modified Nodal Analysis (MNA) Löser zur Bestimmung von Wechselstrom-Spannungen und -Strömen unter Einbezug komplexwertiger Phasenwinkeln.

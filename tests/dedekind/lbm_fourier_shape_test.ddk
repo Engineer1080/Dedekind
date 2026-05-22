@@ -1,0 +1,92 @@
+// Tests für Fourier-basierte Form-Parametrisierung + Multi-Parameter-Optimierung
+
+use fluid_dynamics
+
+fn test_fourier_mask_circle() {
+    print("Testing fourier_shape_mask: Nullkoeffizienten → Kreis...")
+    a = [0.0, 0.0, 0.0]
+    b = [0.0, 0.0, 0.0]
+    M = fourier_shape_mask(40, 30, 20.0, 15.0, 5.0, a, b, 0.3)
+
+    assert(M.shape[0] == 40)
+    assert(M.shape[1] == 30)
+    // Zentrum ~1
+    assert(M[20][15] > 0.95)
+    // Punkt am Rand des Kreises (Distanz 5): ~0.5
+    edge = M[25][15]    // Distanz 5 in x
+    print("  Wert am Radius (~0.5):", edge)
+    assert(edge > 0.3)
+    assert(edge < 0.7)
+    print("[OK] Kreis-Spezialfall")
+}
+
+fn test_fourier_mask_asymmetric() {
+    print("Testing fourier_shape_mask: a_1 > 0 → Tropfenform...")
+    a = [0.4, 0.0, 0.0]   // erste Harmonische → Asymmetrie in x
+    b = [0.0, 0.0, 0.0]
+    M = fourier_shape_mask(40, 30, 20.0, 15.0, 5.0, a, b, 0.3)
+
+    // r(θ=0)  = 5·(1+0.4) = 7  → Punkt (27, 15) ist drinnen
+    // r(θ=π)  = 5·(1-0.4) = 3  → Punkt (16, 15) ist draußen (Distanz 4 > 3)
+    right_inside = M[26][15]
+    left_outside = M[16][15]
+    print("  rechts (θ=0, soll innen):", right_inside)
+    print("  links  (θ=π, soll draußen):", left_outside)
+    assert(right_inside > 0.7)
+    assert(left_outside < 0.3)
+    print("[OK] Asymmetrische Form (Tropfen)")
+}
+
+fn drag_of_fourier(coeffs) {
+    a = [coeffs[0], coeffs[1]]
+    b = [coeffs[2], coeffs[3]]
+    M = fourier_shape_mask(40, 24, 12.0, 12.0, 3.0, a, b, 0.3)
+    sim = lbm_simulation_full(40, 24, 0.7, M, 0.05)
+    simulation_run(sim, 60, 0.05)
+    F = simulation_get_drag_lift(sim)
+    return [F[0]]
+}
+
+fn test_fourier_drag_gradient() {
+    print("Testing Autograd-Gradient bzgl. aller Fourier-Koeffizienten...")
+    x0 = [0.0, 0.0, 0.0, 0.0]
+    j = jacobian(drag_of_fourier, x0)
+
+    // Validierung gegen finite Differenzen für a_1 (erste Komponente)
+    h = 0.01
+    fp = drag_of_fourier([h, 0.0, 0.0, 0.0])[0]
+    fm = drag_of_fourier([-h, 0.0, 0.0, 0.0])[0]
+    fd_grad_a1 = (fp - fm) / (2.0 * h)
+    ag_grad_a1 = j[0][0]
+
+    print("  Autograd ∂drag/∂a_1:", ag_grad_a1)
+    print("  Finite-Diff       :", fd_grad_a1)
+    rel_err = abs(ag_grad_a1 - fd_grad_a1) / (abs(fd_grad_a1) + 1e-12)
+    print("  Rel. Fehler       :", rel_err)
+    assert(rel_err < 1e-2)
+    print("[OK] Multi-Parameter-Autograd")
+}
+
+fn test_fourier_multi_param_optimization() {
+    print("Testing Adam findet Multi-Parameter-Minimum...")
+    x0 = [0.0, 0.0, 0.0, 0.0]
+    d0 = drag_of_fourier(x0)[0]
+
+    // Kurze Adam-Optimierung
+    result = minimize(drag_of_fourier, x0, "adam", 0.05, 8)
+    x_opt = result[0]
+    d_opt = drag_of_fourier([x_opt[0], x_opt[1], x_opt[2], x_opt[3]])[0]
+
+    print("  Drag Kreis:    ", d0)
+    print("  Drag optimiert:", d_opt)
+    assert(d_opt < d0)
+    print("[OK] 4-Parameter-Optimierung reduziert Drag")
+}
+
+fn main() {
+    test_fourier_mask_circle()
+    test_fourier_mask_asymmetric()
+    test_fourier_drag_gradient()
+    test_fourier_multi_param_optimization()
+}
+main()

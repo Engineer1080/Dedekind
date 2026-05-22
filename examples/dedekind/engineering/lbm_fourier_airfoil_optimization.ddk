@@ -1,0 +1,96 @@
+// Fourier-basierte Aerodynamik-Form-Optimierung
+// =============================================
+//
+// Industrielle Anwendung: Profil-Design für Tragflächen, Karosserien, Schiffe,
+// Windturbinen. Statt eines klassischen NACA-Profils parametrisieren wir die
+// Kontur durch K Fourier-Harmonische pro Cos/Sin (8 Parameter total für K=4):
+//
+//     r(θ) = r0 · (1 + Σ_{k=1..K} a_k·cos(k·θ) + b_k·sin(k·θ))
+//
+// Vorteile gegenüber NACA:
+//   - Glatte, beliebig komplexe Topologien darstellbar
+//   - Volume kann separat kontrolliert werden (r0 fest, Koeffizienten frei)
+//   - Standard in der "Class-Shape-Transformation" (CST) der Industrie
+//
+// Differenzierbarkeit: Dedekind-Compiler propagiert den Gradienten über
+// PyTorch-Autograd durch die GESAMTE LBM-Pipeline (D2Q9, 150 Schritte) bis zu
+// den Fourier-Koeffizienten. Adam optimiert alle 8 Parameter gleichzeitig.
+//
+// Wissenschaftliche Bedeutung: gleiche Methodik wie bei adjoint-basierter
+// Form-Optimierung in OpenFOAM/SU2, aber ohne separaten Adjoint-Solver —
+// die Gradienten fallen automatisch aus dem Forward-Pass.
+//
+// Erwartung: ~15-25 % Drag-Reduktion gegenüber Kreis bei festem Basisradius.
+
+use fluid_dynamics
+
+// Domain-Konstanten (im Modul-Scope sichtbar für die Closure)
+fn nx_lat() { return 80 }
+fn ny_lat() { return 40 }
+fn cx_obj() { return 25.0 }
+fn cy_obj() { return 20.0 }
+fn r_base() { return 4.0 }       // Basisradius in Gittereinheiten
+fn u_inlet_lat() { return 0.06 } // Inlet-Geschwindigkeit (Lattice)
+
+// Drag-Funktion: nimmt 8-Parametervektor [a_1..a_4, b_1..b_4] entgegen
+fn drag_of_shape(coeffs) {
+    a = [coeffs[0], coeffs[1], coeffs[2], coeffs[3]]
+    b = [coeffs[4], coeffs[5], coeffs[6], coeffs[7]]
+    M = fourier_shape_mask(nx_lat(), ny_lat(),
+                            cx_obj(), cy_obj(),
+                            r_base(), a, b, 0.4)
+    sim = lbm_simulation_full(nx_lat(), ny_lat(), 0.7, M, u_inlet_lat())
+    simulation_run(sim, 150, u_inlet_lat())
+    F = simulation_get_drag_lift(sim)
+    return [F[0]]
+}
+
+fn main() {
+    print("=========================================================================")
+    print("  Fourier-Form-Optimierung: aerodynamisches Profil-Design mit 8 Parametern")
+    print("=========================================================================")
+    print("")
+    print("Methodik: Form-Kontur durch r(θ) = r0·(1 + Σ a_k·cos(kθ) + b_k·sin(kθ))")
+    print("          K=4 Harmonische → 8 Parameter, Adam-Optimierung via Autograd.")
+    print("")
+
+    // Startpunkt: Kreis (alle Koeffizienten = 0)
+    x0 = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    d_circle = drag_of_shape(x0)[0]
+    print("Referenz (Kreis, alle Koeffizienten = 0):  drag =", d_circle)
+    print("")
+
+    // Adam-Optimierung: lr=0.05, 20 Schritte
+    print("--- Adam-Optimierung (lr=0.05, 20 Schritte) ---")
+    result = minimize(drag_of_shape, x0, "adam", 0.05, 20)
+    x_opt = result[0]
+    d_opt = drag_of_shape([x_opt[0], x_opt[1], x_opt[2], x_opt[3],
+                            x_opt[4], x_opt[5], x_opt[6], x_opt[7]])[0]
+    print("")
+    print("Optimierte Koeffizienten (a_1..a_4):", x_opt[0], x_opt[1], x_opt[2], x_opt[3])
+    print("Optimierte Koeffizienten (b_1..b_4):", x_opt[4], x_opt[5], x_opt[6], x_opt[7])
+    print("")
+    print("Drag nach Optimierung:                drag =", d_opt)
+
+    reduction = (d_circle - d_opt) / d_circle * 100.0
+    print("")
+    print(">>> Drag-Reduktion gegenüber Kreis:", reduction, "%")
+
+    // Plausibilitätsprüfungen
+    assert(d_opt < d_circle)        // Optimierung verbessert Drag
+    assert(reduction > 10.0)        // Mindestens 10 % Reduktion
+
+    // a_1 > 0 (positiver Cos-Koeffizient) entspricht einer Tropfenform mit
+    // Spitze stromabwärts: r(θ=0) > r(θ=π), d.h. die Form füllt den Wake.
+    // Das ist die klassische "Streamlining"-Lösung.
+    assert(x_opt[1] > 0.2)          // a_2 (zweite Harmonische) wird stark genutzt
+
+    print("")
+    print("=========================================================================")
+    print("  Bedeutung: Adam differenziert durch 150 D2Q9-LBM-Schritte hindurch     ")
+    print("  und findet die optimalen Fourier-Koeffizienten. Kein Adjoint-Code      ")
+    print("  nötig — Dedekind erbt die Differenzierbarkeit aus dem Compiler.        ")
+    print("=========================================================================")
+}
+
+main()

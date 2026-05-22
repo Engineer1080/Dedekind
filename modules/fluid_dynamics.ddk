@@ -130,6 +130,10 @@ pub fn soft_ellipse_mask(nx, ny, cx, cy, a, b, alpha) {
     return lbm_soft_ellipse_mask_impl(nx, ny, cx, cy, a, b, alpha)
 }
 
+pub fn fourier_shape_mask(nx, ny, cx, cy, r0, a_coeffs, b_coeffs, alpha) {
+    return lbm_fourier_shape_mask_impl(nx, ny, cx, cy, r0, a_coeffs, b_coeffs, alpha)
+}
+
 pub fn soft_airfoil_mask(nx, ny, t, c, beta, x_start, x_end, y_center, alpha) {
     return lbm_soft_airfoil_mask_impl(nx, ny, t, c, beta, x_start, x_end, y_center, alpha)
 }
