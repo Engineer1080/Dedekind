@@ -1,0 +1,173 @@
+use fluid_dynamics
+
+// 1. Math verification: Cs = 0.0 should behave identically to standard BGK in 2D and 3D.
+fn test_equivalence_2d() {
+    print("Testing equivalence of standard LBM and LES LBM with Cs = 0.0 (2D)...")
+    sim_std = lbm_simulation(20, 10, 0.8)
+    sim_les = lbm_simulation_les(20, 10, 0.8, 0.0)
+    
+    simulation_run(sim_std, 10, 0.05)
+    simulation_run(sim_les, 10, 0.05)
+    
+    v_std = simulation_get_velocity(sim_std)
+    v_les = simulation_get_velocity(sim_les)
+    
+    diff_u = (abs(v_std - v_les)).sum()
+    print("  Velocity difference:", diff_u)
+    assert(diff_u < 1e-12)
+    print("[OK] 2D Equivalence")
+}
+
+fn test_equivalence_3d() {
+    print("Testing equivalence of standard LBM and LES LBM with Cs = 0.0 (3D)...")
+    sim_std = lbm3d_simulation(8, 8, 8, 0.8)
+    sim_les = lbm3d_simulation_les(8, 8, 8, 0.8, 0.0)
+    
+    lbm3d_run(sim_std, 5, 0.05)
+    lbm3d_run(sim_les, 5, 0.05)
+    
+    v_std = lbm3d_velocity(sim_std)
+    v_les = lbm3d_velocity(sim_les)
+    
+    diff_u = (abs(v_std - v_les)).sum()
+    print("  Velocity difference:", diff_u)
+    assert(diff_u < 1e-12)
+    print("[OK] 3D Equivalence")
+}
+
+// 2. Physical verification: Cs > 0.0 should increase damping, yielding different velocity.
+fn test_eddy_viscosity_damping_2d() {
+    print("Testing eddy viscosity damping effect (2D)...")
+    // Run simulation with Cs = 0.0
+    sim_std = lbm_simulation(20, 10, 0.6)
+    simulation_run(sim_std, 15, 0.08)
+    v_std = simulation_get_velocity(sim_std)
+    
+    // Run simulation with Cs = 0.2
+    sim_les = lbm_simulation_les(20, 10, 0.6, 0.2)
+    simulation_run(sim_les, 15, 0.08)
+    v_les = simulation_get_velocity(sim_les)
+    
+    diff_u = (abs(v_std - v_les)).sum()
+    print("  Velocity difference between Cs=0.0 and Cs=0.2:", diff_u)
+    // There must be a physical difference because Smagorinsky adds eddy viscosity
+    assert(diff_u > 1e-5)
+    print("[OK] 2D Damping Effect")
+}
+
+fn test_eddy_viscosity_damping_3d() {
+    print("Testing eddy viscosity damping effect (3D)...")
+    // Run simulation with Cs = 0.0
+    sim_std = lbm3d_simulation(8, 8, 8, 0.6)
+    lbm3d_run(sim_std, 10, 0.08)
+    v_std = lbm3d_velocity(sim_std)
+    
+    // Run simulation with Cs = 0.2
+    sim_les = lbm3d_simulation_les(8, 8, 8, 0.6, 0.2)
+    lbm3d_run(sim_les, 10, 0.08)
+    v_les = lbm3d_velocity(sim_les)
+    
+    diff_u = (abs(v_std - v_les)).sum()
+    print("  Velocity difference between Cs=0.0 and Cs=0.2:", diff_u)
+    // There must be a physical difference because Smagorinsky adds eddy viscosity
+    assert(diff_u > 1e-5)
+    print("[OK] 3D Damping Effect")
+}
+
+// 3. Autograd differentiation: Verify that we can compute gradients of drag forces with respect to the Smagorinsky constant Cs.
+fn drag_2d_wrt_Cs(Cs_arr) {
+    Cs = Cs_arr[0]
+    mask = soft_cylinder_mask(16, 8, 6.0, 4.0, 1.5, 0.5)
+    sim = lbm_simulation_les_with_mask(16, 8, 0.6, mask, Cs)
+    simulation_run(sim, 5, 0.05)
+    forces = simulation_get_drag_lift(sim)
+    return [forces[0]]
+}
+
+fn test_autograd_2d() {
+    print("Testing 2D LBM Autograd with respect to Smagorinsky constant Cs...")
+    Cs_init = [0.16]
+    
+    // Compute Autograd gradient
+    j = jacobian(drag_2d_wrt_Cs, Cs_init)
+    grad_ag = j[0][0]
+    
+    // Compute Finite Difference gradient
+    h = 0.01
+    fp = drag_2d_wrt_Cs([0.16 + h])[0]
+    fm = drag_2d_wrt_Cs([0.16 - h])[0]
+    grad_fd = (fp - fm) / (2.0 * h)
+    
+    rel_err = abs(grad_ag - grad_fd) / (abs(grad_fd) + 1e-8)
+    print("  2D Autograd-Gradient bzgl. Cs:", grad_ag)
+    print("  2D FD-Gradient bzgl. Cs:      ", grad_fd)
+    print("  2D Rel. Fehler:               ", rel_err)
+    
+    // Check match and that gradient flows (non-zero gradient)
+    assert(abs(grad_ag) > 1e-12)
+    assert(rel_err < 1e-2)
+    print("[OK] 2D Autograd w.r.t Cs")
+}
+
+fn drag_3d_wrt_Cs(Cs_arr) {
+    Cs = Cs_arr[0]
+    mask = soft_sphere_mask(10, 6, 6, 5.0, 3.0, 3.0, 1.5, 0.5)
+    sim = lbm3d_simulation_les_with_mask(10, 6, 6, 0.6, mask, Cs)
+    lbm3d_run(sim, 4, 0.05)
+    forces = lbm3d_drag_lift(sim)
+    return [forces[0]]
+}
+
+fn test_autograd_3d() {
+    print("Testing 3D LBM Autograd with respect to Smagorinsky constant Cs...")
+    Cs_init = [0.16]
+    
+    // Compute Autograd gradient
+    j = jacobian(drag_3d_wrt_Cs, Cs_init)
+    grad_ag = j[0][0]
+    
+    // Compute Finite Difference gradient
+    h = 0.01
+    fp = drag_3d_wrt_Cs([0.16 + h])[0]
+    fm = drag_3d_wrt_Cs([0.16 - h])[0]
+    grad_fd = (fp - fm) / (2.0 * h)
+    
+    rel_err = abs(grad_ag - grad_fd) / (abs(grad_fd) + 1e-8)
+    print("  3D Autograd-Gradient bzgl. Cs:", grad_ag)
+    print("  3D FD-Gradient bzgl. Cs:      ", grad_fd)
+    print("  3D Rel. Fehler:               ", rel_err)
+    
+    // Check match and that gradient flows (non-zero gradient)
+    assert(abs(grad_ag) > 1e-12)
+    assert(rel_err < 1e-2)
+    print("[OK] 3D Autograd w.r.t Cs")
+}
+
+fn test_physical_les() {
+    print("Testing physical LBM wrappers with LES...")
+    
+    // Test physical LBM simulation with Smagorinsky constant
+    sim_les = lbm_physical_les(0.2, 0.1, 20, 1.0, 1e-6, 1.225, 0.16)
+    lbm_run_steps(sim_les, 5)
+    v_les = lbm_velocity(sim_les)
+    
+    sim_les_hard = lbm_physical_les_hard(0.2, 0.1, 20, 1.0, 1e-6, 1.225, 0.16)
+    lbm_run_steps(sim_les_hard, 5)
+    v_les_hard = lbm_velocity(sim_les_hard)
+    
+    assert(v_les.value.shape[0] == 2)
+    assert(v_les_hard.value.shape[0] == 2)
+    print("[OK] Physical LES wrappers")
+}
+
+fn main() {
+    test_equivalence_2d()
+    test_equivalence_3d()
+    test_eddy_viscosity_damping_2d()
+    test_eddy_viscosity_damping_3d()
+    test_autograd_2d()
+    test_autograd_3d()
+    test_physical_les()
+}
+
+main()

@@ -13,6 +13,14 @@ pub fn lbm_simulation_full(nx, ny, tau, mask, inlet_u) {
     return lbm_simulation_impl(nx, ny, tau, mask, inlet_u)
 }
 
+pub fn lbm_simulation_les(nx, ny, tau, Cs) {
+    return lbm_simulation_impl(nx, ny, tau, [0.0], 0.0, "bgk", "soft", Cs)
+}
+
+pub fn lbm_simulation_les_with_mask(nx, ny, tau, mask, Cs) {
+    return lbm_simulation_impl(nx, ny, tau, mask, 0.0, "bgk", "soft", Cs)
+}
+
 pub fn simulation_get_pressure(sim) {
     return simulation_get_pressure_impl(sim)
 }
@@ -52,6 +60,14 @@ pub fn lbm_physical_hard(domain_x, domain_y, nx, inlet_u, nu, rho) {
 
 pub fn lbm_physical_mrt_hard(domain_x, domain_y, nx, inlet_u, nu, rho) {
     return lbm_physical_impl(domain_x, domain_y, nx, inlet_u, nu, rho, 0, 0, "mrt", "hard")
+}
+
+pub fn lbm_physical_les(domain_x, domain_y, nx, inlet_u, nu, rho, Cs) {
+    return lbm_physical_impl(domain_x, domain_y, nx, inlet_u, nu, rho, 0, 0, "bgk", "soft", Cs)
+}
+
+pub fn lbm_physical_les_hard(domain_x, domain_y, nx, inlet_u, nu, rho, Cs) {
+    return lbm_physical_impl(domain_x, domain_y, nx, inlet_u, nu, rho, 0, 0, "bgk", "hard", Cs)
 }
 
 pub fn lbm_set_cylinder(sim, cx, cy, radius) {
@@ -217,6 +233,14 @@ pub fn lbm3d_simulation_with_mask(nx, ny, nz, tau, mask) {
 
 pub fn lbm3d_simulation_full(nx, ny, nz, tau, mask, inlet_u) {
     return lbm3d_simulation_impl(nx, ny, nz, tau, mask, inlet_u)
+}
+
+pub fn lbm3d_simulation_les(nx, ny, nz, tau, Cs) {
+    return lbm3d_simulation_impl(nx, ny, nz, tau, [0.0], 0.0, Cs)
+}
+
+pub fn lbm3d_simulation_les_with_mask(nx, ny, nz, tau, mask, Cs) {
+    return lbm3d_simulation_impl(nx, ny, nz, tau, mask, 0.0, Cs)
 }
 
 pub fn lbm3d_step(sim, inlet_u) {

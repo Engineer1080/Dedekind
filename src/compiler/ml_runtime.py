@@ -10567,13 +10567,14 @@ class LbmSimulation:
     MAX_LATTICE_U = 0.1
 
     def __init__(self, nx, ny, tau, obstacle_mask=None, inlet_u=0.0,
-                 collision="bgk", bounce_back="soft"):
+                 collision="bgk", bounce_back="soft", smagorinsky_constant=0.0):
         self.nx = int(nx)
         self.ny = int(ny)
         self.tau = float(tau)
         self._inlet_u = float(inlet_u)
         self.collision_model = str(collision).lower()
         self.bounce_back_model = str(bounce_back).lower()
+        self.smagorinsky_constant = smagorinsky_constant
         if self.collision_model not in ("bgk", "mrt"):
             raise ValueError(
                 f"LbmSimulation: collision='{collision}' unbekannt, "
@@ -10752,7 +10753,23 @@ class LbmSimulation:
             f_coll = self._mrt_collide(f_outlet, rho, ux, uy)
         else:
             feq = self._equilibrium_from_macro(rho, ux, uy)
-            f_coll = f_outlet - (1.0 / self.tau) * (f_outlet - feq)
+            use_smag = False
+            if isinstance(self.smagorinsky_constant, torch.Tensor):
+                use_smag = float(self.smagorinsky_constant.detach().item()) > 0.0
+            else:
+                use_smag = float(self.smagorinsky_constant) > 0.0
+                
+            if use_smag:
+                f_neq = f_outlet - feq
+                Q_xx = torch.sum(self._cx.view(9, 1, 1)**2 * f_neq, dim=0)
+                Q_yy = torch.sum(self._cy.view(9, 1, 1)**2 * f_neq, dim=0)
+                Q_xy = torch.sum(self._cx.view(9, 1, 1) * self._cy.view(9, 1, 1) * f_neq, dim=0)
+                Q_bar = torch.sqrt(Q_xx**2 + Q_yy**2 + 2.0 * Q_xy**2 + 1e-12)
+                temp = 18.0 * math.sqrt(2.0) * (self.smagorinsky_constant**2) * Q_bar / rho_safe
+                tau_eff = 0.5 * (self.tau + torch.sqrt(self.tau**2 + temp))
+                f_coll = f_outlet - (1.0 / tau_eff.unsqueeze(0)) * f_neq
+            else:
+                f_coll = f_outlet - (1.0 / self.tau) * (f_outlet - feq)
 
         # 6. Bounce-Back: an Hindernis-Zellen wird f durch f[opposite] ersetzt.
         #    Soft-Mask: M bleibt in [0,1], Mischung mit Verlauf.
@@ -11116,9 +11133,10 @@ class ThermalLbmSimulation:
 # --- Runtime-Brücke zum Dedekind-Compiler ------------------------------
 
 def lbm_simulation_impl(nx, ny, tau, obstacle_mask=None, inlet_u=0.0,
-                        collision="bgk", bounce_back="soft"):
+                        collision="bgk", bounce_back="soft", smagorinsky_constant=0.0):
     return LbmSimulation(nx, ny, tau, obstacle_mask, inlet_u,
-                         collision=collision, bounce_back=bounce_back)
+                         collision=collision, bounce_back=bounce_back,
+                         smagorinsky_constant=smagorinsky_constant)
 
 
 def simulation_step_impl(sim, inlet_u=None):
@@ -11645,9 +11663,10 @@ class PhysicalLbmSimulation:
 
     def __init__(self, domain_x, domain_y, nx, inlet_u, nu,
                  rho=1.225, ny=None, u_lattice_target=None,
-                 collision="bgk", bounce_back="soft"):
+                 collision="bgk", bounce_back="soft", smagorinsky_constant=0.0):
         self.collision_model = str(collision).lower()
         self.bounce_back_model = str(bounce_back).lower()
+        self.smagorinsky_constant = smagorinsky_constant
         self.L_x = _lbm_to_si_length(domain_x, "domain_x")
         self.L_y = _lbm_to_si_length(domain_y, "domain_y")
         self.U_in = _lbm_to_si_velocity(inlet_u, "inlet_u")
@@ -11722,6 +11741,7 @@ class PhysicalLbmSimulation:
             inlet_u=self.u_lattice,
             collision=self.collision_model,
             bounce_back=self.bounce_back_model,
+            smagorinsky_constant=self.smagorinsky_constant,
         )
 
     def reynolds(self, length_char=None):
@@ -11813,7 +11833,8 @@ class PhysicalLbmSimulation:
 # --- Runtime-Brücke (von .ddk-Code aus aufrufbar) ---
 
 def lbm_physical_impl(domain_x, domain_y, nx, inlet_u, nu, rho=1.225,
-                      ny=None, u_lattice=None, collision="bgk", bounce_back="soft"):
+                      ny=None, u_lattice=None, collision="bgk", bounce_back="soft",
+                      smagorinsky_constant=0.0):
     # Aus .ddk-Wrappern kommen 0/0.0 als Sentinel für "keine Angabe"
     if isinstance(ny, (int, float)) and ny == 0:
         ny = None
@@ -11821,7 +11842,8 @@ def lbm_physical_impl(domain_x, domain_y, nx, inlet_u, nu, rho=1.225,
         u_lattice = None
     return PhysicalLbmSimulation(domain_x, domain_y, nx, inlet_u, nu,
                                  rho=rho, ny=ny, u_lattice_target=u_lattice,
-                                 collision=collision, bounce_back=bounce_back)
+                                 collision=collision, bounce_back=bounce_back,
+                                 smagorinsky_constant=smagorinsky_constant)
 
 
 def lbm_physical_set_cylinder_impl(sim, cx, cy, radius):
@@ -11922,7 +11944,7 @@ class Lbm3dSimulation:
     MAX_LATTICE_U = 0.1
 
     def __init__(self, nx, ny, nz, tau, obstacle_mask=None, inlet_u=0.0,
-                 collision="bgk", bounce_back="soft"):
+                 collision="bgk", bounce_back="soft", smagorinsky_constant=0.0):
         self.nx = int(nx)
         self.ny = int(ny)
         self.nz = int(nz)
@@ -11930,6 +11952,7 @@ class Lbm3dSimulation:
         self._inlet_u = float(inlet_u)
         self.collision_model = str(collision).lower()
         self.bounce_back_model = str(bounce_back).lower()
+        self.smagorinsky_constant = smagorinsky_constant
         
         if self.tau <= 0.5:
             raise ValueError(f"Lbm3dSimulation: tau={self.tau} muss > 0.5 sein.")
@@ -12013,7 +12036,27 @@ class Lbm3dSimulation:
         # 5. Collision (BGK)
         u_stack = torch.stack([ux, uy, uz])
         feq = lbm3d_equilibrium(rho, u_stack, device)
-        f_coll = f_outlet - (1.0 / self.tau) * (f_outlet - feq)
+        use_smag = False
+        if isinstance(self.smagorinsky_constant, torch.Tensor):
+            use_smag = float(self.smagorinsky_constant.detach().item()) > 0.0
+        else:
+            use_smag = float(self.smagorinsky_constant) > 0.0
+            
+        if use_smag:
+            f_neq = f_outlet - feq
+            Q_xx = torch.sum(self._cx**2 * f_neq, dim=0)
+            Q_yy = torch.sum(self._cy**2 * f_neq, dim=0)
+            Q_zz = torch.sum(self._cz**2 * f_neq, dim=0)
+            Q_xy = torch.sum(self._cx * self._cy * f_neq, dim=0)
+            Q_xz = torch.sum(self._cx * self._cz * f_neq, dim=0)
+            Q_yz = torch.sum(self._cy * self._cz * f_neq, dim=0)
+            
+            Q_bar = torch.sqrt(Q_xx**2 + Q_yy**2 + Q_zz**2 + 2.0 * (Q_xy**2 + Q_xz**2 + Q_yz**2) + 1e-12)
+            temp = 18.0 * math.sqrt(2.0) * (self.smagorinsky_constant**2) * Q_bar / rho_safe
+            tau_eff = 0.5 * (self.tau + torch.sqrt(self.tau**2 + temp))
+            f_coll = f_outlet - (1.0 / tau_eff.unsqueeze(0)) * f_neq
+        else:
+            f_coll = f_outlet - (1.0 / self.tau) * (f_outlet - feq)
 
         # 6. Bounce-Back at obstacles
         f_bounce = f_outlet[_D3Q19_OPPOSITE]
@@ -12073,8 +12116,9 @@ class Lbm3dSimulation:
         return torch.stack([Fx, Fy, Fz])
 
 
-def lbm3d_simulation_impl(nx, ny, nz, tau, obstacle_mask=None, inlet_u=0.0):
-    return Lbm3dSimulation(nx, ny, nz, tau, obstacle_mask=obstacle_mask, inlet_u=inlet_u)
+def lbm3d_simulation_impl(nx, ny, nz, tau, obstacle_mask=None, inlet_u=0.0, smagorinsky_constant=0.0):
+    return Lbm3dSimulation(nx, ny, nz, tau, obstacle_mask=obstacle_mask, inlet_u=inlet_u,
+                           smagorinsky_constant=smagorinsky_constant)
 
 
 def lbm3d_step_impl(sim, inlet_u=None):
