@@ -126,6 +126,10 @@ pub fn soft_cylinder_mask(nx, ny, cx, cy, r, alpha) {
     return lbm_soft_cylinder_mask_impl(nx, ny, cx, cy, r, alpha)
 }
 
+pub fn soft_ellipse_mask(nx, ny, cx, cy, a, b, alpha) {
+    return lbm_soft_ellipse_mask_impl(nx, ny, cx, cy, a, b, alpha)
+}
+
 pub fn soft_airfoil_mask(nx, ny, t, c, beta, x_start, x_end, y_center, alpha) {
     return lbm_soft_airfoil_mask_impl(nx, ny, t, c, beta, x_start, x_end, y_center, alpha)
 }

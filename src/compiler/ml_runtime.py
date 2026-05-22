@@ -10926,6 +10926,35 @@ def lbm_soft_cylinder_mask_impl(nx, ny, cx, cy, r, alpha=1.0):
     return mask
 
 
+def lbm_soft_ellipse_mask_impl(nx, ny, cx, cy, a, b, alpha=0.1):
+    """
+    Differenzierbare Soft-Ellipse-Maske. Halbachsen a (x-Richtung), b (y-Richtung).
+    Voll differenzierbar bezüglich cx, cy, a, b. Ideal für Shape-Optimierung:
+    bei festem Volumen (a*b = const) den Drag durch Variation von a/b minimieren.
+    """
+    nx_val = int(nx)
+    ny_val = int(ny)
+    cx_t = _to_double_tensor(cx)
+    cy_t = _to_double_tensor(cy)
+    a_t = _to_double_tensor(a)
+    b_t = _to_double_tensor(b)
+    alpha_t = _to_double_tensor(alpha)
+
+    y_coords, x_coords = torch.meshgrid(
+        torch.arange(ny_val, dtype=torch.float64),
+        torch.arange(nx_val, dtype=torch.float64),
+        indexing='ij',
+    )
+    x_coords = x_coords.t()
+    y_coords = y_coords.t()
+
+    # Normalisierte Ellipsendistanz² (=1 am Rand)
+    d_norm_sq = ((x_coords - cx_t) / a_t) ** 2 + ((y_coords - cy_t) / b_t) ** 2
+    # Sigmoid um Ellipsenrand: ~1 innen, ~0 außen, weicher Übergang
+    mask = torch.sigmoid(-(d_norm_sq - 1.0) / alpha_t)
+    return mask
+
+
 def lbm_soft_airfoil_mask_impl(nx, ny, t, c, beta, x_start, x_end, y_center, alpha=1.0):
     nx_val = int(nx)
     ny_val = int(ny)

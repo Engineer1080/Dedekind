@@ -1,0 +1,73 @@
+// Shape-Optimierung: Adam findet die optimale Ellipse für minimalen Drag
+//
+// Problem: Wie schlank muss eine Ellipse sein, um bei festem Volumen den
+// geringsten Strömungswiderstand zu haben? (Volumen-Constraint: a·b = const.)
+//
+// Methodisch: Wir parametrisieren die Form durch x = log(a/b). Volumen ist
+// fest → b = V/a → es bleibt 1 freier Parameter. Adam differenziert durch
+// die GESAMTE LBM-Simulation (200 Schritte D2Q9) hindurch via PyTorch-Autograd.
+//
+// Killer-Feature: keine Adjoint-Codes, keine Finite-Differenzen — Dedekind
+// erbt die Differenzierbarkeit direkt aus dem Compiler.
+//
+// Erwartung: Adam reduziert den Drag um ~15-20 % gegenüber dem Kreis (a/b=1).
+
+use fluid_dynamics
+
+// Drag einer Ellipse bei festem Volumen V=a·b
+fn drag_for_aspect(x_arr) {
+    aspect_log = x_arr[0]
+    aspect     = exp(aspect_log)          // a/b
+    V          = 12.0                     // konstantes "Volumen"
+    a          = sqrt(V * aspect)         // x-Halbachse (parallel zur Strömung)
+    b          = V / a                    // y-Halbachse (quer)
+
+    nx = 80
+    ny = 40
+    mask = soft_ellipse_mask(nx, ny, 25.0, 20.0, a, b, 0.3)
+    sim  = lbm_simulation_full(nx, ny, 0.7, mask, 0.05)
+    simulation_run(sim, 200, 0.05)
+    F = simulation_get_drag_lift(sim)
+    return [F[0]]
+}
+
+fn main() {
+    print("===============================================================")
+    print("  Shape-Optimierung: Adam findet optimale Ellipsenform          ")
+    print("===============================================================")
+
+    // Startpunkt: Kreis (a/b = 1 → log(a/b) = 0)
+    x0       = [0.0]
+    d0       = drag_for_aspect(x0)[0]
+    aspect_0 = exp(x0[0])
+    print("Start (Kreis a/b=1):  drag =", d0)
+
+    // Adam-Optimierung
+    result   = minimize(drag_for_aspect, x0, "adam", 0.2, 15)
+    x_opt    = result[0]
+    aspect_opt = exp(x_opt[0])
+    d_opt      = drag_for_aspect([x_opt[0]])[0]
+
+    print("")
+    print("Optimum nach 15 Adam-Schritten:")
+    print("  a/b  =", aspect_opt)
+    print("  drag =", d_opt)
+
+    // Vergleich
+    reduction = (d0 - d_opt) / d0 * 100.0
+    print("")
+    print("Drag-Reduktion gegenüber Kreis:", reduction, " %")
+
+    // Plausibilitätsprüfungen
+    assert(aspect_opt > 1.5)      // Optimum ist deutlich schlanker als Kreis
+    assert(d_opt < d0)            // Drag wurde tatsächlich reduziert
+    assert(reduction > 5.0)       // Mindestens 5 % Reduktion
+
+    print("")
+    print("===============================================================")
+    print("  End-to-end-differenzierbares CFD: Autograd durch 200          ")
+    print("  LBM-Schritte → Form-Gradient → Adam → optimale Geometrie.    ")
+    print("===============================================================")
+}
+
+main()
