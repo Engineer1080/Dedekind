@@ -1,0 +1,86 @@
+// LES-LBM: Smagorinsky-Konstante per Autograd kalibrieren
+//
+// Aufgabe: Bei hohen Reynolds-Zahlen ist das BGK-LBM-Modell instabil — die
+// Smagorinsky-Wirbelviskosität liefert ein Sub-Grid-Modell. Die zentrale
+// Stellschraube ist C_s (typisch 0.1 ... 0.2). Wir nutzen Dedekinds Autograd,
+// um C_s so zu wählen, dass der Drag um einen Zylinder einem gewünschten
+// Referenzwert entspricht — ein typisches LES-Kalibrierungsproblem.
+//
+// Killer-Feature: Gradient des Drags nach C_s fließt durch den vollen
+// LBM-Solver inklusive Smagorinsky-Term und weicher Maske.
+
+use fluid_dynamics
+
+// Drag eines Zylinders mit Smagorinsky-LES bei gegebenem C_s
+fn drag_for_Cs(Cs_arr) {
+    Cs = Cs_arr[0]
+    nx = 24
+    ny = 12
+    mask = soft_cylinder_mask(nx, ny, 8.0, 6.0, 2.0, 0.5)
+    sim  = lbm_simulation_les_with_mask(nx, ny, 0.6, mask, Cs)
+    simulation_run(sim, 20, 0.06)
+    F = simulation_get_drag_lift(sim)
+    return [F[0]]
+}
+
+// Ziel-Drag-Verlust für C_s-Kalibrierung
+fn calibration_loss(Cs_arr) {
+    drag       = drag_for_Cs(Cs_arr)[0]
+    target     = 0.05
+    diff       = drag - target
+    return [diff * diff]
+}
+
+fn main() {
+    print("===============================================================")
+    print("  LES-LBM: Smagorinsky-Konstante C_s via Autograd kalibrieren   ")
+    print("===============================================================")
+
+    // 1) Sanity-Check: Cs=0 muss sich wie Standard-LBM verhalten
+    sim_std = lbm_simulation(24, 12, 0.6)
+    sim_les = lbm_simulation_les(24, 12, 0.6, 0.0)
+    simulation_run(sim_std, 10, 0.05)
+    simulation_run(sim_les, 10, 0.05)
+    diff0 = (abs(simulation_get_velocity(sim_std) - simulation_get_velocity(sim_les))).sum()
+    print("Geschwindigkeitsabweichung Standard vs LES(Cs=0):", diff0)
+    assert(diff0 < 1e-10)
+
+    // 2) Physik-Check: LES dämpft kleinskalige Wirbel -> Drag ändert sich
+    d_cs_off = drag_for_Cs([0.00])[0]
+    d_cs_lo  = drag_for_Cs([0.10])[0]
+    d_cs_hi  = drag_for_Cs([0.20])[0]
+    print("Drag(Cs=0.00):", d_cs_off)
+    print("Drag(Cs=0.10):", d_cs_lo)
+    print("Drag(Cs=0.20):", d_cs_hi)
+
+    // 3) Autograd: dDrag/dCs bei C_s=0.16
+    j       = jacobian(drag_for_Cs, [0.16])
+    grad_ag = j[0][0]
+    print("")
+    print("dDrag/dCs (Autograd) @ Cs=0.16:", grad_ag)
+    assert(abs(grad_ag) > 1e-10)
+
+    // 4) Kalibrierung: Adam findet C_s, das den Ziel-Drag trifft
+    print("")
+    print("Adam-Kalibrierung Richtung Ziel-Drag 0.05 ...")
+    Cs0          = [0.16]
+    initial_loss = calibration_loss(Cs0)[0]
+    result       = minimize(calibration_loss, Cs0, "adam", 0.02, 8)
+    Cs_opt       = result[0]
+    final_loss   = calibration_loss([Cs_opt[0]])[0]
+
+    print("Initial loss:", initial_loss)
+    print("Final loss:  ", final_loss)
+    print("Kalibriertes C_s:", Cs_opt[0])
+    assert(final_loss <= initial_loss)
+    assert(Cs_opt[0] > 0.0)
+    assert(Cs_opt[0] < 0.5)
+
+    print("")
+    print("===============================================================")
+    print("  Smagorinsky-LES + Autograd: ein-Parameter-Sub-Grid-Tuning     ")
+    print("  ohne FD-Sweep, ohne externe Adjoint-Implementierung.          ")
+    print("===============================================================")
+}
+
+main()

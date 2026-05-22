@@ -1,0 +1,77 @@
+// 3D LBM (D3Q19): Strömung um eine Kugel mit weicher Maske und Autograd-Drag
+//
+// Aufgabe: Eine Kugel im 3D-Kanal — wir simulieren mit dem neuen D3Q19-Solver
+// und differenzieren den Drag nach dem Kugel-Radius. Genau dieser Gradient
+// ist die Grundlage für 3D-Shape-Optimierung (z. B. Bionic-Design).
+//
+// Killer-Feature: D3Q19 + soft_sphere_mask sind end-to-end differenzierbar;
+// Adam reduziert anschließend einen Ziel-Drag-Fehler ohne Adjoint-Code.
+
+use fluid_dynamics
+
+// Drag der Kugel bei Radius r
+fn drag_for_radius(r_arr) {
+    r = r_arr[0]
+    nx = 12
+    ny = 8
+    nz = 8
+    mask = soft_sphere_mask(nx, ny, nz, 6.0, 4.0, 4.0, r, 0.5)
+    sim  = lbm3d_simulation_with_mask(nx, ny, nz, 0.7, mask)
+    lbm3d_run(sim, 8, 0.05)
+    F = lbm3d_drag_lift(sim)
+    return [F[0]]
+}
+
+// Ziel-Drag-Verlust für Shape-Optimierung
+fn loss_target_drag(r_arr) {
+    drag   = drag_for_radius(r_arr)[0]
+    target = 0.015
+    diff   = drag - target
+    return [diff * diff]
+}
+
+fn main() {
+    print("===============================================================")
+    print("  3D LBM (D3Q19): Drag-Sensitivität bzgl. Kugelradius           ")
+    print("===============================================================")
+
+    // 1) Forward: Drag bei drei Radien
+    r_small  = drag_for_radius([1.0])[0]
+    r_medium = drag_for_radius([1.5])[0]
+    r_large  = drag_for_radius([2.0])[0]
+    print("Drag(r=1.0):", r_small)
+    print("Drag(r=1.5):", r_medium)
+    print("Drag(r=2.0):", r_large)
+
+    // Monotonie: größerer Radius -> mehr Widerstand
+    assert(r_large > r_small)
+
+    // 2) Autograd: dDrag/dr bei r=1.5 (Jacobi-Zeile)
+    j       = jacobian(drag_for_radius, [1.5])
+    grad_ag = j[0][0]
+    print("")
+    print("dDrag/dr (Autograd) @ r=1.5:", grad_ag)
+    assert(abs(grad_ag) > 1e-10)
+
+    // 3) Shape-Optimierung: Adam findet Radius, der einen Ziel-Drag trifft
+    print("")
+    print("Adam-Optimierung Richtung Ziel-Drag 0.015 ...")
+    r0           = [1.5]
+    initial_loss = loss_target_drag(r0)[0]
+    result       = minimize(loss_target_drag, r0, "adam", 0.1, 6)
+    r_opt        = result[0]
+    final_loss   = loss_target_drag([r_opt[0]])[0]
+
+    print("Initial loss:", initial_loss)
+    print("Final loss:  ", final_loss)
+    print("Optimaler r: ", r_opt[0])
+    assert(final_loss < initial_loss)
+
+    print("")
+    print("===============================================================")
+    print("  Voll differenzierbare 3D-CFD: D3Q19 + soft_sphere_mask        ")
+    print("  liefern Gradienten für reale Shape-Optimierungs-Loops.        ")
+    print("===============================================================")
+}
+
+main()
