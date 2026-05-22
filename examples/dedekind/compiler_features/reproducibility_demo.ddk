@@ -1,0 +1,39 @@
+// Reproducibility-Report-Demo
+//
+// Dieses File ist absichtlich klein gehalten und enthaelt typische Bestandteile
+// einer wissenschaftlichen Methods-Section: deterministischer Seed, Konstanten
+// mit Einheiten, eine Lagrange-Funktion und ein ODE-Integrationsaufruf.
+//
+// Aufruf fuer den Reproduzierbarkeits-Anhang:
+//   python -m src.compiler.compiler \
+//       examples/dedekind/compiler_features/reproducibility_demo.ddk \
+//       --reproducibility-report repro.md
+//
+// Das geschriebene `repro.md` enthaelt:
+//   - SHA-256 der Quelle und Git-Commit (dirty-Flag)
+//   - Python-/torch-/numpy-/scipy-Versionen, CUDA-Verfuegbarkeit
+//   - die im Source erkannten seed(...)-Aufrufe (hier: 42)
+//   - die Methods-Section als LaTeX, generiert aus dem AST
+//
+// Der LaTeX-Block ist *single source of truth*: derselbe AST treibt die
+// Simulation und liefert die Formeln fuer's Manuskript. Drift unmoeglich.
+
+seed(42)
+
+// Federsteifigkeit und Masse (dimensionslos, Einheiten-Demo siehe
+// physical_units.ddk; hier liegt der Fokus auf dem Reproduzierbarkeits-Report)
+m = 1.0
+k = 4.0
+
+// Lagrangian eines harmonischen Oszillators
+fn L(q, v) {
+    return 0.5 * m * v[0] * v[0] - 0.5 * k * q[0] * q[0]
+}
+
+// Euler-Lagrange ergibt q-ddot = -k/m * q -> ode_solve integriert
+rhs    = lagrange_ode_rhs(L)
+t_grid = linspace(0, 2 * pi, 51)
+y0     = [1.0, 0.0]
+traj   = ode_solve(rhs, y0, t_grid)
+
+print("Reproducibility demo: trajektorie an t=pi:", traj[25][0])

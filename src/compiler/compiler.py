@@ -282,17 +282,28 @@ def export_to_latex(source_code: str) -> str:
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python compiler.py <source_file> [--latex]")
+        print("Usage: python compiler.py <source_file> [--latex] [--reproducibility-report PATH]")
         return
 
-    args = [a for a in sys.argv[1:] if a not in ("--no-units-check", "--no-purity-check")]
-    check_units = "--no-units-check" not in sys.argv[1:]
-    check_purity = "--no-purity-check" not in sys.argv[1:]
-    export_latex = "--latex" in args
-    if export_latex:
-        args = [a for a in args if a != "--latex"]
+    raw_args = list(sys.argv[1:])
+    check_units = "--no-units-check" not in raw_args
+    check_purity = "--no-purity-check" not in raw_args
+    export_latex = "--latex" in raw_args
+
+    repro_path = None
+    if "--reproducibility-report" in raw_args:
+        i = raw_args.index("--reproducibility-report")
+        if i + 1 >= len(raw_args):
+            print("Error: --reproducibility-report requires an output PATH argument.")
+            return
+        repro_path = raw_args[i + 1]
+        del raw_args[i:i + 2]
+
+    args = [a for a in raw_args
+            if a not in ("--no-units-check", "--no-purity-check", "--latex")]
     if not args:
-        print("Usage: python compiler.py <source_file> [--latex] [--no-units-check] [--no-purity-check]")
+        print("Usage: python compiler.py <source_file> [--latex] "
+              "[--reproducibility-report PATH] [--no-units-check] [--no-purity-check]")
         return
 
     filepath = args[0]
@@ -304,6 +315,12 @@ def main():
         source = f.read()
 
     try:
+        if repro_path is not None:
+            from .reproducibility import write_report
+            out = write_report(source, filepath, repro_path)
+            print(f"Reproducibility report written: {out}")
+            return
+
         if export_latex:
             print(f"Exporting {filepath} to LaTeX...")
             latex = export_to_latex(source)

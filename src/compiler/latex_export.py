@@ -2,10 +2,12 @@
 LaTeX-Export von Dedekind-Ausdrücken (AST → LaTeX).
 Für Papers und Notizen: Formeln aus Dedekind-Code als LaTeX erzeugen.
 """
+from typing import List
 from .ast_nodes import (
     Node, Program, BinaryOp, Call, Identifier, Literal, Quantity,
     MemberAccess, IndexedVariable, Subscript, VectorLiteral,
     Assignment, ReturnStmt, FunctionDef, Lambda, QuaternionLiteral,
+    IfStmt, WhileStmt, ForStmt,
 )
 
 
@@ -64,7 +66,27 @@ class LatexExporter:
         return self.visit(node.value)
 
     def visit_FunctionDef(self, node: FunctionDef) -> str:
-        return ""  # Nur Körper ggf. später; hier nur Ausdrücke
+        return self._visit_body(node.body)
+
+    def _visit_body(self, stmts: List[Node]) -> str:
+        lines = []
+        for s in stmts:
+            line = self.visit(s)
+            if line:
+                lines.append(line)
+        return "\n".join(lines)
+
+    def visit_IfStmt(self, node: IfStmt) -> str:
+        parts = [self._visit_body(node.then_branch)]
+        if node.else_branch:
+            parts.append(self._visit_body(node.else_branch))
+        return "\n".join(p for p in parts if p)
+
+    def visit_WhileStmt(self, node: WhileStmt) -> str:
+        return self._visit_body(node.body)
+
+    def visit_ForStmt(self, node: ForStmt) -> str:
+        return self._visit_body(node.body)
 
     def visit_BinaryOp(self, node: BinaryOp) -> str:
         left = self.visit(node.left)
@@ -77,6 +99,8 @@ class LatexExporter:
         if op == "*":
             if left == "1" or right == "1":
                 return right if left == "1" else left
+            if isinstance(node.left, IndexedVariable) and isinstance(node.right, IndexedVariable):
+                return f"{left}\\, {right}"
             return f"{left} \\cdot {right}"
         if op == "/":
             return f"\\frac{{{left}}}{{{right}}}"
@@ -110,9 +134,7 @@ class LatexExporter:
     def visit_IndexedVariable(self, node: IndexedVariable) -> str:
         base = _escape_latex(node.name)
         idx = node.indices
-        if len(idx) == 1:
-            return f"{base}_{{{idx}}}"
-        return f"{base}_{{{idx}}}"
+        return f"{base}^{{{idx}}}"
 
     def visit_Subscript(self, node: Subscript) -> str:
         val = self.visit(node.value)
@@ -129,6 +151,63 @@ class LatexExporter:
             fname = self.visit(func)
         args = [self.visit(a) for a in node.args]
         fname_lower = fname.lower() if isinstance(fname, str) else ""
+
+        # Domain-specific scientific rendering ---------------------------------
+        if fname == "partial" and len(args) >= 2:
+            u, x = args[0], args[1]
+            order = 1
+            for k, v in (node.kwargs or []):
+                if k == "order" and isinstance(v, Literal) and isinstance(v.value, (int, float)):
+                    order = int(v.value)
+            if order == 1:
+                return f"\\frac{{\\partial {u}}}{{\\partial {x}}}"
+            return f"\\frac{{\\partial^{{{order}}} {u}}}{{\\partial {x}^{{{order}}}}}"
+
+        # PDE solver calls -> canonical PDE in LaTeX. Operand list intentionally
+        # ignored: the equation is fixed by the solver name; arguments are u0,
+        # boundary data, parameters, grid -- all numerical, not symbolic.
+        _PDE_FORMS = {
+            "pde_heat_1d":  "\\partial_t u = \\alpha\\, \\partial_x^2 u",
+            "pde_heat_2d":  "\\partial_t u = \\alpha\\, \\nabla^2 u",
+            "pde_wave_1d":  "\\partial_t^2 u = c^2\\, \\partial_x^2 u",
+            "pde_wave_2d":  "\\partial_t^2 u = c^2\\, \\nabla^2 u",
+            "pde_advection_1d": "\\partial_t u + v\\, \\partial_x u = 0",
+            "pde_advection_2d": "\\partial_t u + \\mathbf{v} \\cdot \\nabla u = 0",
+            "pde_burgers_1d":   "\\partial_t u + u\\, \\partial_x u = \\nu\\, \\partial_x^2 u",
+            "pde_burgers_2d":   "\\partial_t \\mathbf{u} + (\\mathbf{u} \\cdot \\nabla)\\mathbf{u} = \\nu\\, \\nabla^2 \\mathbf{u}",
+            "pde_reaction_diffusion_1d": "\\partial_t u = D\\, \\partial_x^2 u + f(u)",
+            "pde_reaction_diffusion_2d": "\\partial_t u = D\\, \\nabla^2 u + f(u)",
+            "pde_advection_diffusion_1d": "\\partial_t u + v\\, \\partial_x u = D\\, \\partial_x^2 u",
+            "pde_advection_diffusion_2d": "\\partial_t u + \\mathbf{v} \\cdot \\nabla u = D\\, \\nabla^2 u",
+            "pde_maxwell_1d": "\\partial_t \\mathbf{E} = c^2\\, \\nabla \\times \\mathbf{B},\\quad \\partial_t \\mathbf{B} = -\\nabla \\times \\mathbf{E}",
+            "pde_maxwell_2d": "\\partial_t \\mathbf{E} = c^2\\, \\nabla \\times \\mathbf{B},\\quad \\partial_t \\mathbf{B} = -\\nabla \\times \\mathbf{E}",
+            "pde_navier_stokes_2d": "\\partial_t \\mathbf{u} + (\\mathbf{u} \\cdot \\nabla)\\mathbf{u} = -\\nabla p + \\nu\\, \\nabla^2 \\mathbf{u},\\quad \\nabla \\cdot \\mathbf{u} = 0",
+        }
+        if fname in _PDE_FORMS:
+            return _PDE_FORMS[fname]
+
+        # ode_solve(f, y0, t)  ->  dy/dt = f(t, y)
+        if fname == "ode_solve":
+            return "\\frac{d\\mathbf{y}}{dt} = f(t, \\mathbf{y})"
+
+        # Lagrangian / Hamiltonian wrappers expand to canonical equations.
+        if fname == "lagrange_ode_rhs":
+            L = args[0] if args else "L"
+            return (f"\\frac{{d}}{{dt}} \\frac{{\\partial {L}}}{{\\partial \\dot q}} "
+                    f"- \\frac{{\\partial {L}}}{{\\partial q}} = 0")
+        if fname == "hamilton_ode_rhs":
+            H = args[0] if args else "H"
+            return (f"\\dot q = \\frac{{\\partial {H}}}{{\\partial p}},\\quad "
+                    f"\\dot p = -\\frac{{\\partial {H}}}{{\\partial q}}")
+
+        # grad(f, x)  ->  \nabla_x f
+        if fname == "grad" and len(args) >= 2:
+            return f"\\nabla_{{{args[1]}}} {args[0]}"
+        # integrate(f, a, b, n)  ->  \int_a^b f(x)\, dx
+        if fname == "integrate" and len(args) >= 3:
+            return f"\\int_{{{args[1]}}}^{{{args[2]}}} {args[0]}\\, dx"
+        # ----------------------------------------------------------------------
+
         if fname_lower in _LATEX_FUNCS:
             cmd = _LATEX_FUNCS[fname_lower]
             if cmd == "sqrt":
