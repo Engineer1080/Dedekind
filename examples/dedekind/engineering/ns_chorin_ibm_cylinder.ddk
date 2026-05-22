@@ -1,0 +1,77 @@
+// Navier-Stokes + Immersed Boundary Method (IBM) — Zylinder im Kanal
+//
+// Methode: Chorin-Projektion (Prädiktor → Druck-Poisson per FFT → Projektion)
+// IBM:     Brinkman-Penalisierung — implizites Penalty "-η·M·u" im Prädiktor
+//          treibt u im Solid (M=1) zu Null, ohne die Gitterstruktur zu ändern.
+//
+// Kraft auf den Zylinder: F = ρ·η·∫ M·u* · dV (Newton III, Penalty-Reaktion)
+// Das Integral wird pro Zeitschritt ausgewertet → F_history (nt, 2) = [Fx, Fy].
+
+fn make_mask(nx, ny, cx, cy, r) {
+    // Soft-Kreisscheiben-Maske: 1 im Innern, 0 draußen, linearer Übergang.
+    rows  = linspace(0.0, nx - 1.0, nx)
+    cols  = linspace(0.0, ny - 1.0, ny)
+    IX    = outer(rows, 1.0 + 0.0 * cols)
+    IY    = outer(1.0 + 0.0 * rows, cols)
+    dist  = sqrt((IX - cx) * (IX - cx) + (IY - cy) * (IY - cy))
+    raw   = 1.0 - (dist - r)
+    return clip(raw, 0.0, 1.0)
+}
+
+fn main() {
+    print("=== NS Chorin + IBM: Zylinder im periodischen Kanal ===")
+
+    // Gitter: 2 m × 1 m, 48 × 24 Punkte
+    nx = 48
+    ny = 24
+    x  = linspace(0.0, 2.0, nx)
+    y  = linspace(0.0, 1.0, ny)
+    t  = linspace(0.0, 0.4, 81)   // 80 Schritte, dt = 0.005 s
+
+    nu  = 0.01   // kinematische Viskosität m²/s  (Re = U·H/ν = 0.1·1/0.01 = 10)
+    rho = 1.0    // Dichte kg/m³
+    U   = 0.1    // Einströmgeschwindigkeit m/s
+
+    // Anfangsbedingung: homogenes Profil
+    ones2d = outer(1.0 + 0.0 * x, 1.0 + 0.0 * y)
+    u0 = U * ones2d
+    v0 = 0.0 * ones2d
+
+    // Zylinder-Maske: weiche Kreisscheibe bei (nx/3, ny/2), R≈2.5 Gittereinheiten
+    cx_g = 16.0
+    cy_g = 12.0
+    r_g  = 2.5
+    M = make_mask(nx, ny, cx_g, cy_g, r_g)
+    print("Solid-Zellen (M>0.5):", sum(M > 0.5))
+
+    // Navier-Stokes mit IBM lösen
+    result  = pde_navier_stokes_2d(u0, v0, x, y, t, nu,
+                                    obstacle_mask=M, rho=rho)
+    u_sol   = result[0]   // (nt, nx, ny)
+    v_sol   = result[1]
+    p_sol   = result[2]
+    F_hist  = result[3]   // (nt, 2)  [Fx, Fy] pro Zeitschritt
+
+    // Auswertung am letzten Schritt
+    drag = F_hist[80][0]
+    lift = F_hist[80][1]
+    print("Drag Fx am Ende:", drag, "N/m")
+    print("Lift Fy am Ende:", lift, "N/m")
+
+    // Geschwindigkeit innerhalb und außerhalb des Zylinders
+    ux = 16
+    uy = 12
+    u_in  = u_sol[80][ux][uy]
+    u_out = u_sol[80][ux][0]
+    print("u im Zylinderzentrum (soll ~0):", u_in)
+    print("u außerhalb Zylinder:", u_out)
+
+    // Plausibilitätsprüfungen
+    assert(drag > 0.0)                   // Drag muss positiv sein
+    assert(abs(u_in) < 1e-6)            // No-slip im Solid
+    assert(u_out > abs(u_in))           // Fluid bewegt sich
+
+    print("Chorin + IBM: BESTANDEN — Brinkman-Penalisierung erzwingt No-Slip.")
+}
+
+main()

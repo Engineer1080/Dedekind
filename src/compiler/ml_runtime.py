@@ -2464,13 +2464,31 @@ def pde_maxwell_2d(Ez0, Hx0, Hy0, x, y, t, c_light=1.0, bc="periodic"):
 
 # --- Navier-Stokes 2D (inkompressibel): Chorin-Projektionsmethode ---
 
-def pde_navier_stokes_2d(u0, v0, x, y, t, nu, bc="periodic"):
+def pde_navier_stokes_2d(u0, v0, x, y, t, nu, bc="periodic",
+                          obstacle_mask=None, eta=None, rho=1.0,
+                          body_force_x=0.0, body_force_y=0.0):
     """
     Differenzierbarer 2D-Navier-Stokes-Solver (inkompressibel): u_t + (u·∇)u = -∇p + ν∇²u, ∇·u = 0.
     Chorin-Projektionsmethode: 1) Prädiktor (Konvektion + Diffusion), 2) Druck-Poisson (FFT), 3) Projektion.
     u0, v0: Anfangsgeschwindigkeiten 2D (nx, ny); x, y: Ortsgitter; t: Zeitgitter; nu: kinematische Viskosität.
     bc: 'periodic' (default; FFT für Druck-Poisson). 'dirichlet' experimentell (Jacobi-Iteration).
-    Rückgabe: (u_sol, v_sol, p_sol) je (len(t), nx, ny). CFL: dt*max(|u|)/dx < 1 empfohlen.
+
+    Immersed-Boundary-Methode (Brinkman-Penalisierung): wenn `obstacle_mask`
+    (Tensor (nx, ny) in [0, 1]) übergeben wird, wird im Prädiktor ein
+    implizites Penalty-Forcing `-η·M·u` eingebracht, das die Geschwindigkeit
+    im Solid (M=1) zu Null treibt. Der Penalty-Schritt ist unbedingt stabil
+    (implizit), η = `eta` Parameter (default: 1/dt → Solid-Zeitskala = Schritt).
+    Nach der Projektion wird im Solid u = 0 erzwungen (direkte IBM-Erzwingung),
+    um Druckkorrektur-Drift zu verhindern.
+    Drag/Lift auf das Hindernis per Newtons drittem Gesetz aus der
+    Penalty-Reaktion: F = ρ·η·Σ M·u_star·damping · dx·dy (pro Tiefeneinheit, 2D).
+    `rho` ist die physikalische Dichte für die Force-Skalierung (default 1.0).
+
+    Rückgabe ohne Hindernis: (u_sol, v_sol, p_sol).
+    Rückgabe mit Hindernis:  (u_sol, v_sol, p_sol, F_history) wobei
+    F_history Shape (len(t), 2) hat — [F_x, F_y] pro Zeitschritt.
+    body_force_x/y: konstante Körperkraft (m/s²) für Strömungsantrieb in periodischen Setups.
+    CFL: dt·max(|u|)/dx < 1 empfohlen.
     """
     u0 = _to_tensor(u0).float()
     v0 = _to_tensor(v0).float().to(u0.device)
@@ -2495,9 +2513,13 @@ def pde_navier_stokes_2d(u0, v0, x, y, t, nu, bc="periodic"):
         dy = 1.0
     dx2, dy2 = dx * dx, dy * dy
 
-    # FFT-Wellenvektoren für periodische Druck-Poisson-Lösung
-    kx = torch.fft.fftfreq(nx, d=dx).to(u0.device)
-    ky = torch.fft.fftfreq(ny, d=dy).to(u0.device)
+    # FFT-Wellenvektoren für periodische Druck-Poisson-Lösung.
+    # fftfreq gibt Frequenzen f in Zyklen/Länge; der Laplace-Operator im
+    # Fourierraum braucht Winkelfrequenzen ω = 2πf → ω² = 4π²f².
+    import math as _math
+    _twopi = 2.0 * _math.pi
+    kx = _twopi * torch.fft.fftfreq(nx, d=dx).to(u0.device)
+    ky = _twopi * torch.fft.fftfreq(ny, d=dy).to(u0.device)
     KX = kx.reshape(-1, 1).expand(nx, ny)
     KY = ky.reshape(1, -1).expand(nx, ny)
     k_sq = KX * KX + KY * KY
@@ -2555,10 +2577,24 @@ def pde_navier_stokes_2d(u0, v0, x, y, t, nu, bc="periodic"):
         p_hat[0, 0] = 0.0
         return torch.fft.ifft2(p_hat).real
 
+    # IBM: Obstacle-Maske verarbeiten
+    has_obstacle = obstacle_mask is not None
+    M = None
+    if has_obstacle:
+        M = _to_tensor(obstacle_mask).float().to(u0.device)
+        if M.shape != (nx, ny):
+            raise ValueError(
+                f"pde_navier_stokes_2d: obstacle_mask muss Form (nx={nx}, ny={ny}) haben, "
+                f"bekam {tuple(M.shape)}."
+            )
+        M = M.clamp(0.0, 1.0)
+    rho_val = float(_to_tensor(rho).float().item())
+
     nt = t.numel()
     u_sol = torch.zeros(nt, nx, ny, device=u0.device, dtype=u0.dtype)
     v_sol = torch.zeros(nt, nx, ny, device=u0.device, dtype=u0.dtype)
     p_sol = torch.zeros(nt, nx, ny, device=u0.device, dtype=u0.dtype)
+    F_history = torch.zeros(nt, 2, device=u0.device, dtype=u0.dtype) if has_obstacle else None
     u_sol[0] = u0
     v_sol[0] = v0
     # p_sol[0] bleibt 0 (Druck ist bis auf Konstante bestimmt; t=0 ohne Vorgabe)
@@ -2569,13 +2605,24 @@ def pde_navier_stokes_2d(u0, v0, x, y, t, nu, bc="periodic"):
         dt = float((t[n + 1] - t[n]).item())
         if dt <= 0:
             continue
-        # 1) Prädiktor: u* = u - dt*(u·∇)u + dt*ν∇²u
+        # 1) Prädiktor: u* = u - dt*(u·∇)u + dt*ν∇²u + dt*f_body
         conv_u = _convective_upwind(u_cur, v_cur, u_cur)
         conv_v = _convective_upwind(u_cur, v_cur, v_cur)
         lap_u = _laplacian(u_cur)
         lap_v = _laplacian(v_cur)
-        u_star = u_cur + dt * (-conv_u + nu_val * lap_u)
-        v_star = v_cur + dt * (-conv_v + nu_val * lap_v)
+        u_star = u_cur + dt * (-conv_u + nu_val * lap_u + float(body_force_x))
+        v_star = v_cur + dt * (-conv_v + nu_val * lap_v + float(body_force_y))
+        # 1b) Brinkman-Penalisierung (implizit, unbedingt stabil)
+        if has_obstacle:
+            eta_val = float(eta) if eta is not None else 1.0 / dt
+            damping = 1.0 / (1.0 + dt * eta_val * M)
+            # Kraft = Newton III: Reaktion der Penalisierung auf das Fluid
+            Fx = float((rho_val * eta_val * M * u_star * damping).sum().item()) * dx * dy
+            Fy = float((rho_val * eta_val * M * v_star * damping).sum().item()) * dx * dy
+            F_history[n + 1, 0] = Fx
+            F_history[n + 1, 1] = Fy
+            u_star = u_star * damping
+            v_star = v_star * damping
         # 2) Druck-Poisson: ∇²p = ∇·u*/dt
         if bc == "periodic":
             div_star = _divergence(u_star, v_star)
@@ -2595,10 +2642,17 @@ def pde_navier_stokes_2d(u0, v0, x, y, t, nu, bc="periodic"):
         px, py = _gradient(p)
         u_cur = u_star - dt * px
         v_cur = v_star - dt * py
+        # 3b) Re-enforce solid no-slip: Druck-Projektion würde sonst
+        #     Geschwindigkeit im Solid aufbauen (direkte IBM-Erzwingung).
+        if has_obstacle:
+            u_cur = u_cur * (1.0 - M)
+            v_cur = v_cur * (1.0 - M)
         u_sol[n + 1] = u_cur
         v_sol[n + 1] = v_cur
         p_sol[n + 1] = p
 
+    if has_obstacle:
+        return u_sol, v_sol, p_sol, F_history
     return u_sol, v_sol, p_sol
 
 # --- Sparse PDE: 2D Laplacian und Diffusion ---
