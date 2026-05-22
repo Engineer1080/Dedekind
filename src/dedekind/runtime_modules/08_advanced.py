@@ -884,7 +884,9 @@ def smiles_descriptors(smiles):
     Liefert Dict mit: mw [g/mol], logp, num_atoms, num_heavy_atoms, num_rings,
     num_aromatic_rings, hbd, hba, tpsa [Angstrom^2] (oder [Angstrom]), num_rotatable_bonds.
     Falls rdkit nicht installiert ist, erfolgt ein Fallback auf den integrierten Parser
-    für die Basis-Deskriptoren (mw, logp, hbd, hba)."""
+    für die Basis-Deskriptoren (mw, logp, hbd, hba). Ringe und TPSA bleiben dabei
+    auf 0/None gesetzt; wer diese Felder zwingend braucht, muss rdkit installieren
+    (`pip install rdkit`)."""
     if not isinstance(smiles, str):
         raise TypeError(f"smiles_descriptors: erwarte String, erhalten {type(smiles).__name__}.")
     try:

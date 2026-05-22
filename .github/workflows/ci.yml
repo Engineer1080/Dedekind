@@ -38,9 +38,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install --index-url https://download.pytorch.org/whl/cpu "torch>=2.0"
 
-      - name: Install Dedekind (editable, with sci/plot extras)
+      - name: Install Dedekind (editable, with sci/plot/geo/ml/bio extras)
         run: |
-          pip install -e ".[sci,plot]"
+          pip install -e ".[sci,plot,geo,ml,bio]"
+
+      - name: Install OpenMM (best effort, used by md_simulate_lj_test)
+        run: |
+          pip install "openmm>=8.0" || echo "openmm unavailable on this runner; md test will skip"
 
       - name: Build ml_runtime.py
         run: |
@@ -69,9 +73,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install --index-url https://download.pytorch.org/whl/cpu "torch>=2.0"
 
-      - name: Install Dedekind (editable, with sci/plot extras)
+      - name: Install Dedekind (editable, with sci/plot/geo/ml/bio extras)
         run: |
-          pip install -e ".[sci,plot]"
+          pip install -e ".[sci,plot,geo,ml,bio]"
+
+      - name: Install OpenMM (best effort, used by md_simulate_lj_test)
+        run: |
+          pip install "openmm>=8.0" || echo "openmm unavailable on this runner; md test will skip"
 
       - name: Build ml_runtime.py
         run: |

@@ -49,6 +49,17 @@ def main():
         sys.exit(1)
 
     results = []
+    # Optional scientific dependencies. If a runtime/import error mentions
+    # one of these, the test is marked SKIP (not FAIL) so CI doesn't gate
+    # on packages that aren't always installable on every runner.
+    OPTIONAL_DEPS = ("scipy", "xarray", "openmm", "rdkit", "torch_geometric")
+    SKIP_HINTS = ("benoetigt", "benötigt", "benötigen", "benoetigen",
+                  "erfordert", "erfordern", "No module named", "requires", "pip install")
+
+    def _is_skip(err_msg: str) -> bool:
+        if not any(dep in err_msg for dep in OPTIONAL_DEPS):
+            return False
+        return any(h in err_msg for h in SKIP_HINTS)
     for filename in ddk_files:
         filepath = os.path.join(TESTS_DIR, filename)
         try:
@@ -87,10 +98,14 @@ def main():
                 traceback.print_exc()
         except Exception as e:
             sys.stdout = old_stdout
-            results.append((filename, False, f"Laufzeit: {e}"))
-            if args.verbose:
-                import traceback
-                traceback.print_exc()
+            msg = f"Laufzeit: {e}"
+            if _is_skip(msg):
+                results.append((filename, "skip", msg))
+            else:
+                results.append((filename, False, msg))
+                if args.verbose:
+                    import traceback
+                    traceback.print_exc()
         finally:
             sys.stdout = old_stdout
 
@@ -98,19 +113,26 @@ def main():
         print("=" * 50)
         print("Dedekind Mini-Tests (assert)")
         print("=" * 50)
-    passed = sum(1 for _, ok, _ in results if ok)
-    failed = len(results) - passed
+    passed  = sum(1 for _, ok, _ in results if ok is True)
+    skipped = sum(1 for _, ok, _ in results if ok == "skip")
+    failed  = sum(1 for _, ok, _ in results if ok is False)
     for filename, ok, err in results:
-        if args.quiet:
-            status = "OK" if ok else (err or "FAIL")
-            print(f"  {'[OK]' if ok else '[FAIL]'} {filename}  {'' if ok else status}")
+        if ok is True:
+            tag = "[OK]  "
+        elif ok == "skip":
+            tag = "[SKIP]"
         else:
-            print(f"  {'[OK] ' if ok else '[FAIL]'} {filename}")
-            if not ok and err:
+            tag = "[FAIL]"
+        if args.quiet:
+            extra = "" if ok is True else (err or "")
+            print(f"  {tag} {filename}  {extra}")
+        else:
+            print(f"  {tag} {filename}")
+            if ok is not True and err:
                 print(f"       {err}")
     if not args.quiet:
         print("=" * 50)
-        print(f"Ergebnis: {passed}/{len(results)} bestanden, {failed} fehlgeschlagen.")
+        print(f"Ergebnis: {passed}/{len(results)} bestanden, {failed} fehlgeschlagen, {skipped} uebersprungen (optionale Deps fehlen).")
     if failed:
         sys.exit(1)
     sys.exit(0)
