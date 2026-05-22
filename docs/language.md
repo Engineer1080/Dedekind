@@ -24,7 +24,7 @@ Living catalogue of every Dedekind built-in, operator and runtime function. Gene
 - **Netzwerk**: `http_get(url)`, `http_post(url, data)` (data String oder Dict/List als JSON); Antworttext UTF-8.
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
 - **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
-- **IDE**: **Dedekind Studio** ist ein Spyder-Fork (`DedekindStudio/`) mit **nativ Python und Dedekind**; siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md). Ein **Dedekind Jupyter Kernel** (`dedekind_jupyter_kernel/`) ermöglicht Dedekind in Jupyter/Spyder-Konsolen.
+- **IDE-Integration**: Der **Dedekind Jupyter Kernel** (`src/dedekind_jupyter_kernel/`, installiert via `python -m dedekind.install_kernel`) lässt Dedekind nativ in Jupyter, JupyterLab, Spyder und VS Code laufen. Eine eigenständige IDE — **Dedekind Studio** (Spyder-Fork) — wird in einem separaten, geschlossenen Repository gepflegt; die Sprache ist davon unabhängig.
 
 ## Chemistry & biology
 
@@ -89,14 +89,15 @@ main()
 
 The project consists of two main parts:
 
-1.  **Dedekind Compiler (`src/compiler`)**
-    *   Implemented in Python (Prototype Phase).
-    *   Transpiles Dedekind source code (`.ddk`) into optimized high-performance Python/NumPy code (future target: MLIR/LLVM).
-    *   Used by the CLI, the Dedekind Jupyter Kernel, and Dedekind Studio.
+1.  **Dedekind Compiler (`src/dedekind/`)**
+    *   Implemented in Python; transpiles `.ddk` source into Python/PyTorch (future target: MLIR/LLVM via the AOT path).
+    *   Used by the `dedekind` CLI and the Dedekind Jupyter Kernel.
 
-2.  **Dedekind Studio (Spyder-Fork in `DedekindStudio/`)**
-    *   Full IDE with **native Python** and **native Dedekind**: Editor, Konsolen (IPython + Dedekind-Kernel), Variable Explorer, Plots.
-    *   Siehe [Documentation/Dedekind_Studio_Spyder_Fork.md](Documentation/Dedekind_Studio_Spyder_Fork.md).
+2.  **Dedekind Jupyter Kernel (`src/dedekind_jupyter_kernel/`)**
+    *   Installed via `python -m dedekind.install_kernel`. Provides a persistent execution context for Dedekind in Jupyter, JupyterLab, Spyder and VS Code.
+
+3.  **Dedekind Studio** (separate closed-source repository)
+    *   A full IDE built on a Spyder fork. Optional — Dedekind itself is fully usable without Studio in any environment with the Jupyter kernel installed.
 
 
 ## Full example index

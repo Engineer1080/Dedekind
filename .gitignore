@@ -29,14 +29,21 @@ node_modules/
 # Dedekind
 *.log
 
+# Studio migration handoff (never commit -- belongs in dedekind-studio repo)
+/dedekind-studio.bundle
+/dedekind-studio.git.tar.gz
+
 # Test/example scratch files written at repo root by ddk tests/demos
 /temp_cube.stl
 /temp_messung.csv
 /dedekind_nb.html
 /dedekind_nb.md
+/dedekind_nb_src.ddk
 /dedekind_nb_src.md
 /notebook_export_demo.html
 /notebook_export_demo.md
 /dedekind_df_test.csv
 /dedekind_test_data.json
 /dedekind_test_output.txt
+/dummy_test.cif
+/dummy_test.pdb
