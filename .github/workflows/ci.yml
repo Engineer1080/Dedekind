@@ -38,13 +38,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install --index-url https://download.pytorch.org/whl/cpu "torch>=2.0"
 
-      - name: Install Dedekind requirements
+      - name: Install Dedekind (editable, with sci/plot extras)
         run: |
-          pip install -r requirements.txt
+          pip install -e ".[sci,plot]"
 
       - name: Build ml_runtime.py
         run: |
-          python src/compiler/build_runtime.py
+          python src/dedekind/build_runtime.py
 
       - name: Run Dedekind mini-tests
         run: |
@@ -69,13 +69,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install --index-url https://download.pytorch.org/whl/cpu "torch>=2.0"
 
-      - name: Install Dedekind requirements
+      - name: Install Dedekind (editable, with sci/plot extras)
         run: |
-          pip install -r requirements.txt
+          pip install -e ".[sci,plot]"
 
       - name: Build ml_runtime.py
         run: |
-          python src/compiler/build_runtime.py
+          python src/dedekind/build_runtime.py
 
       - name: Compile all examples
         env:

@@ -1,29 +1,26 @@
 """
 Dedekind Jupyter Kernel: executes Dedekind source in a persistent context.
-Requires the Dedekind compiler (src.compiler) on PYTHONPATH or repo root.
+Requires the `dedekind` package to be importable (installed via pip, or src/
+on PYTHONPATH for editable / dev runs).
 """
 import re
 import sys
 import io
 import os
 
-# Ensure Dedekind compiler is importable: repo root from this file or from PYTHONPATH
-_repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-if _repo_root not in sys.path:
-    sys.path.insert(0, _repo_root)
-# Fallback: if started with PYTHONPATH (e.g. by Dedekind Studio), prepend so src.compiler is found
-_pypath = os.environ.get("PYTHONPATH", "")
-if _pypath:
-    for _p in _pypath.split(os.pathsep):
-        _p = os.path.abspath(os.path.normpath(_p.strip()))
-        if _p and _p not in sys.path and os.path.isdir(os.path.join(_p, "src", "compiler")):
-            sys.path.insert(0, _p)
-            break
+# Dev/editable fallback: if `dedekind` is not installed and we're sitting next
+# to a src/dedekind tree, prepend that src to sys.path so imports resolve.
+try:
+    import dedekind as _ddk  # noqa: F401
+except ImportError:
+    _src = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src"))
+    if os.path.isdir(os.path.join(_src, "dedekind")) and _src not in sys.path:
+        sys.path.insert(0, _src)
 
 from ipykernel.kernelbase import Kernel
 
 try:
-    from src.compiler.ast_nodes import CompileError
+    from dedekind.ast_nodes import CompileError
 except ImportError:
     CompileError = Exception  # fallback if run outside repo
 
@@ -118,12 +115,13 @@ class DedekindKernel(Kernel):
         sys.stdout, sys.stderr = stdout_capture, stderr_capture
 
         try:
-            from src.compiler.compiler import compile_source, dedekind_exec
+            from dedekind import compile_source, dedekind_exec
         except ImportError as e:
             sys.stdout, sys.stderr = old_stdout, old_stderr
             msg = (
-                "Dedekind-Kernel: Compiler nicht gefunden. Bitte PYTHONPATH auf das "
-                "Dedekind-Repo-Root setzen (z. B. wo src/compiler und dedekind_jupyter_kernel liegen).\n"
+                "Dedekind-Kernel: das `dedekind`-Paket ist nicht importierbar. "
+                "Installiere via `pip install dedekind`, oder setze PYTHONPATH auf das "
+                "src/-Verzeichnis dieses Repos fuer einen Editable-Run.\n"
                 "ImportError: %s"
             ) % (e,)
             if not silent:

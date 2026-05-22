@@ -5,11 +5,8 @@ import io
 import traceback
 import os
 
-# Add src path to sys.path to allow imports
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
-from compiler.compiler import compile_source
-from compiler.aot_compiler import AOTCompiler
+from .compiler import compile_source
+from .aot_compiler import AOTCompiler
 
 app = Flask(__name__)
 CORS(app)

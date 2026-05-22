@@ -9908,7 +9908,7 @@ def export_notebook(source_path, output_path=None, format="html", title=None,
     # Quelltext kompilieren und in isoliertem Globals-Dict ausführen; Stdout abfangen.
     # Wir importieren lokal, um Zirkular-Imports beim Inlinen zu vermeiden.
     try:
-        from src.compiler.compiler import compile_source  # type: ignore[import-not-found]
+        from dedekind import compile_source  # type: ignore[import-not-found]
         py_code = compile_source(source, filepath=src_path)
         old_stdout = sys.stdout
         captured = io.StringIO()
