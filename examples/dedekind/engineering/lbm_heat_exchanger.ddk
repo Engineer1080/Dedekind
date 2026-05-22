@@ -1,0 +1,107 @@
+// Wärmetauscher-Geometrie-Studie mit Thermal LBM
+// ==============================================
+//
+// Industrielles Problem: Beim Design von Wärmetauschern (Verdampfern,
+// Kondensatoren, Kühlrohren) entstehen häufig Strukturen, die zwischen
+// heißen und kalten Wänden in einer Konvektionsströmung liegen. Die Position
+// dieser Stäbe beeinflusst den globalen Wärmedurchgang erheblich.
+//
+// Setup: Rayleigh-Bénard-Zelle (heiße Bodenwand, kalte Deckenwand) mit einem
+//        zusätzlichen Stab (Dirichlet-Temperatur = T_cold, simuliert ein
+//        Kühlrohr).  Wir variieren die Höhe des Stabes und messen die
+//        globale Nusselt-Zahl.
+//
+// Wissenschaftliche Aussage:
+//   - Stab nahe der heißen Wand: starker lokaler Heat-Sink, aber stört
+//     die globale Konvektionsrolle → globale Nu sinkt deutlich.
+//   - Stab nahe der kalten Wand: minimal-invasiv, bestehende Konvektion
+//     bleibt intakt → globale Nu nahe Baseline.
+//
+// Optimierungs-Workflow: weil soft_cylinder_mask in cy differenzierbar ist,
+// kann Adam die optimale Höhe direkt aus dem Gradienten finden — ohne
+// Brute-Force-Sweep, ohne separates Adjoint-Modul.
+//
+// Industrielle Relevanz:
+//   - Reaktorkern-Kühlung (Brennstab-Anordnung)
+//   - Server-Raum-Klimatisierung (Wärmequellen-Platzierung)
+//   - Solarthermische Speicher (Schichtungs-Erhalt)
+//   - Verdampfer-/Kondensator-Design
+
+use fluid_dynamics
+
+fn nu_for_rod_height(cy_pos) {
+    nx = 100
+    ny = 50
+    M  = soft_cylinder_mask(nx, ny, 25.0, cy_pos, 3.0, 0.5)
+    sim = lbm_thermal_with_obstacle(nx, ny, 0.6, 0.6, 1.0, 0.0, 8e-5, M, 0.0)
+
+    // Initial: lineares T mit kleiner Perturbation für Symmetriebrechung
+    T_init = thermal_temperature(sim)
+    rows = linspace(0.0, nx - 1.0, nx)
+    cols = linspace(0.0, ny - 1.0, ny)
+    IX = outer(rows, 1.0 + 0.0 * cols)
+    IY = outer(1.0 + 0.0 * rows, cols)
+    pert = 0.05 * sin(2.0 * pi * IX / 25.0) * sin(pi * IY / 49.0)
+    thermal_set_temperature(sim, T_init + pert)
+
+    thermal_run(sim, 2500)
+    return thermal_nusselt(sim)
+}
+
+fn main() {
+    print("=================================================================")
+    print("  Wärmetauscher: globale Nusselt-Zahl vs. Höhe des Kühlstabs       ")
+    print("=================================================================")
+    print("")
+
+    // Baseline ohne Stab
+    print("--- Baseline: Bénard-Konvektion ohne Stab ---")
+    sim_base = lbm_thermal_simulation(100, 50, 0.6, 0.6, 1.0, 0.0, 8e-5)
+    T_init = thermal_temperature(sim_base)
+    rows = linspace(0.0, 99.0, 100)
+    cols = linspace(0.0, 49.0, 50)
+    IX = outer(rows, 1.0 + 0.0 * cols)
+    IY = outer(1.0 + 0.0 * rows, cols)
+    pert = 0.05 * sin(2.0 * pi * IX / 25.0) * sin(pi * IY / 49.0)
+    thermal_set_temperature(sim_base, T_init + pert)
+    thermal_run(sim_base, 2500)
+    nu_base = thermal_nusselt(sim_base)
+    print("  Baseline Nu (ohne Stab):", nu_base)
+    print("")
+
+    // Sweep: Stab in verschiedenen Höhen
+    print("--- Studie: Kühlstab (T=T_cold) in verschiedenen Höhen ---")
+    nu_low    = nu_for_rod_height(10.0)
+    nu_mid    = nu_for_rod_height(25.0)
+    nu_high   = nu_for_rod_height(40.0)
+
+    print("  cy=10 (nahe heißer Boden): Nu =", nu_low,
+          "  Δ vs Baseline =", nu_low - nu_base)
+    print("  cy=25 (Mitte):             Nu =", nu_mid,
+          "  Δ vs Baseline =", nu_mid - nu_base)
+    print("  cy=40 (nahe kalter Decke): Nu =", nu_high,
+          "  Δ vs Baseline =", nu_high - nu_base)
+    print("")
+
+    // Industrielle Erkenntnis
+    print("Ergebnis: Stab nahe der heißen Wand stört die Konvektionsrolle")
+    print("am stärksten — globale Nusselt-Zahl sinkt am meisten.")
+    print("Stab nahe der kalten Wand ist minimal-invasiv: globale Nu nahe")
+    print("Baseline. Wärmetauscher-Designer können diesen Effekt nutzen,")
+    print("um Strömungsstörungen zu minimieren bei vorgegebener Stabposition.")
+    print("")
+
+    // Plausibilitätsprüfungen
+    assert(nu_base > 1.2)                       // Konvektion läuft
+    assert(nu_low < nu_base)                    // Stab unten reduziert Nu
+    assert(nu_high < nu_base)                   // Stab oben reduziert Nu auch
+    assert(nu_low < nu_high)                    // Aber unten reduziert mehr
+
+    print("=================================================================")
+    print("  Differenzierbar: Position cy ist via soft_cylinder_mask voll    ")
+    print("  Autograd-fähig — Adam kann direkt zur optimalen Geometrie       ")
+    print("  hin minimieren/maximieren.                                      ")
+    print("=================================================================")
+}
+
+main()

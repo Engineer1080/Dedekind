@@ -1,0 +1,96 @@
+// Tests für Thermal LBM (Double-Distribution, Boussinesq-Konvektion)
+
+use fluid_dynamics
+
+fn test_pure_conduction() {
+    print("Testing reine Konduktion (g·β=0) → linearer T-Verlauf, Nu=1...")
+    sim = lbm_thermal_simulation(40, 30, 1.0, 0.8, 1.0, 0.0, 0.0)
+    thermal_run(sim, 800)
+    T = thermal_temperature(sim)
+    Nu = thermal_nusselt(sim)
+
+    // Unten (j=0) muss T_hot, oben (j=ny-1) muss T_cold sein
+    print("  T(j=0)  =", T[20][0], "  (soll ≈ 1.0)")
+    print("  T(j=-1) =", T[20][29], " (soll ≈ 0.0)")
+    print("  Mitte   =", T[20][15], " (soll ≈ 0.5)")
+    print("  Nu      =", Nu)
+    assert(abs(T[20][0] - 1.0) < 0.02)
+    assert(abs(T[20][29] - 0.0) < 0.02)
+    assert(abs(T[20][15] - 0.5) < 0.05)
+    assert(abs(Nu - 1.0) < 0.05)
+    print("[OK] Konduktion: linearer T, Nu=1")
+}
+
+fn test_rayleigh_number_helper() {
+    print("Testing rayleigh_number Helper...")
+    // Ra = g·β·ΔT·H³ / (ν·α)
+    // ν = (τ_u - 0.5)/3, α = (τ_T - 0.5)/3
+    // Bei τ=0.8: ν=α=0.1 → Ra = g·β·ΔT·H³ / 0.01
+    Ra = rayleigh_number(0.8, 0.8, 1.0, 0.001, 30.0)
+    // Erwarteter Wert: 0.001 * 1.0 * 27000 / 0.01 = 2700
+    print("  Ra =", Ra, "(erwartet 2700)")
+    assert(abs(Ra - 2700.0) < 1.0)
+    print("[OK] Rayleigh-Zahl Helper")
+}
+
+fn test_convection_onset() {
+    print("Testing Konvektionseinsatz oberhalb kritischer Ra-Zahl...")
+    nx = 80
+    ny = 40
+    sim = lbm_thermal_simulation(nx, ny, 0.6, 0.6, 1.0, 0.0, 1.5e-4)
+
+    // Perturbation für Symmetriebrechung
+    T_init = thermal_temperature(sim)
+    rows = linspace(0.0, nx - 1.0, nx)
+    cols = linspace(0.0, ny - 1.0, ny)
+    IX = outer(rows, 1.0 + 0.0 * cols)
+    IY = outer(1.0 + 0.0 * rows, cols)
+    pert = 0.05 * sin(2.0 * pi * IX / 20.0) * sin(pi * IY / 39.0)
+    thermal_set_temperature(sim, T_init + pert)
+
+    thermal_run(sim, 2000)
+    Nu = thermal_nusselt(sim)
+    u = thermal_velocity(sim)
+    u_max = max(abs(u[1]))
+
+    print("  Nu nach Konvektion:", Nu)
+    print("  max|u_y|:           ", u_max)
+    assert(Nu > 1.15)               // Konvektion hat eingesetzt
+    assert(u_max > 1e-3)            // Sichtbare Strömung
+    print("[OK] Konvektionseinsatz oberhalb Ra_c")
+}
+
+fn test_velocity_zero_no_buoyancy() {
+    print("Testing kein Buoyancy (g·β=0) → keine Strömung...")
+    sim = lbm_thermal_simulation(40, 30, 1.0, 0.8, 1.0, 0.0, 0.0)
+    thermal_run(sim, 500)
+    u = thermal_velocity(sim)
+    u_max = max(abs(u[1]))
+    print("  max|u_y| ohne Buoyancy:", u_max)
+    assert(u_max < 1e-6)            // Bei g·β=0 KEIN Auftrieb → u bleibt 0
+    print("[OK] Ohne Buoyancy keine Strömung")
+}
+
+fn test_obstacle_dirichlet_T() {
+    print("Testing Hindernis mit fester Temperatur (Dirichlet-BC)...")
+    nx = 50
+    ny = 30
+    M  = soft_cylinder_mask(nx, ny, 25.0, 15.0, 4.0, 0.5)
+    sim = lbm_thermal_with_obstacle(nx, ny, 0.8, 0.8, 0.5, 0.5, 0.0, M, 1.0)
+    thermal_run(sim, 1000)
+    T  = thermal_temperature(sim)
+
+    // Im Hindernis-Zentrum muss T ≈ T_obstacle (1.0) sein
+    print("  T im Stab-Zentrum:", T[25][15], "(soll ≈ 1.0)")
+    assert(T[25][15] > 0.9)
+    print("[OK] Hindernis-Dirichlet-T")
+}
+
+fn main() {
+    test_pure_conduction()
+    test_rayleigh_number_helper()
+    test_convection_onset()
+    test_velocity_zero_no_buoyancy()
+    test_obstacle_dirichlet_T()
+}
+main()

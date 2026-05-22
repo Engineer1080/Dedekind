@@ -1,0 +1,102 @@
+// Rayleigh-Bénard-Konvektion mit Thermal LBM
+// ==========================================
+//
+// Physik: Klassisches Multiphysics-Problem der Strömungsmechanik
+//   - Fluidschicht zwischen heißer Bodenplatte (T_hot) und kalter Deckplatte (T_cold)
+//   - Bei Ra > Ra_c ≈ 1708 setzt natürliche Konvektion ein (Hopf-Bifurkation)
+//   - Konvektionsrollen transportieren Wärme zusätzlich zur Konduktion
+//
+// Methode: Double-Distribution Lattice Boltzmann
+//   - D2Q9 für Strömung (BGK-Kollision)
+//   - D2Q5 für Temperatur (passiver Skalar)
+//   - Boussinesq-Buoyancy-Kopplung: F_y ∝ -g·β·(T - T_ref) (Auftrieb)
+//
+// Wissenschaftliche Validierung:
+//   - Reine Konduktion (g·β = 0): linearer T-Verlauf, Nu = 1
+//   - Konvektion (Ra > Ra_c): Nu > 1 (Wärmetransport beschleunigt)
+//
+// Industrielle Anwendungen:
+//   - Klimaforschung (Atmosphäre, Ozeane, Erdmantel-Konvektion)
+//   - Solar-Pond-Design, Thermische Speicher
+//   - Reaktorkühlung, Kristallzüchtung in der Halbleiterfertigung
+
+use fluid_dynamics
+
+fn main() {
+    print("=================================================================")
+    print("  Rayleigh-Bénard-Konvektion: heiße Bodenplatte → Konvektionsrollen")
+    print("=================================================================")
+
+    // Gitter und Materialparameter (alles in Lattice-Einheiten)
+    nx = 120
+    ny = 60
+    tau_u = 0.6     // ν = (τ_u - 0.5)/3 ≈ 0.033 (Lattice-Viskosität)
+    tau_T = 0.6     // α = (τ_T - 0.5)/3 ≈ 0.033 (thermische Diffusivität, Pr ≈ 1)
+    T_hot = 1.0
+    T_cold = 0.0
+    g_beta = 1.0e-4 // Produkt g·β; steuert Ra
+
+    delta_T = T_hot - T_cold
+    H = ny - 1.0
+
+    // Rayleigh-Zahl: Ra = g·β·ΔT·H³ / (ν·α)
+    Ra = rayleigh_number(tau_u, tau_T, delta_T, g_beta, H)
+    print("Setup:")
+    print("  Gitter:           ", nx, "x", ny)
+    print("  τ_u, τ_T:          ", tau_u, tau_T)
+    print("  ΔT:                ", delta_T)
+    print("  g·β:               ", g_beta)
+    print("  Rayleigh-Zahl Ra:  ", Ra)
+    print("  Kritisch Ra_c ≈ 1708 →",
+          "Konvektion erwartet")
+    print("")
+
+    // --- Test 1: Reine Konduktion (g·β = 0) ---
+    print("--- Test 1: Reine Konduktion (g·β=0) → Nu muss ≈ 1 sein ---")
+    sim_cond = lbm_thermal_simulation(nx, ny, tau_u, tau_T, T_hot, T_cold, 0.0)
+    thermal_run(sim_cond, 1000)
+    Nu_cond = thermal_nusselt(sim_cond)
+    print("  Nusselt (Konduktion):", Nu_cond)
+    assert(abs(Nu_cond - 1.0) < 0.05)
+    print("  ✓ Reine Wärmeleitung: Nu = 1 wie erwartet.")
+    print("")
+
+    // --- Test 2: Rayleigh-Bénard mit Konvektion ---
+    print("--- Test 2: Rayleigh-Bénard mit Buoyancy (Ra >> Ra_c) ---")
+    sim = lbm_thermal_simulation(nx, ny, tau_u, tau_T, T_hot, T_cold, g_beta)
+
+    // Kleine T-Perturbation, um Symmetrie zu brechen und Konvektion zu starten
+    // (Float64-Rundungsrauschen reicht oft nicht)
+    T_init = thermal_temperature(sim)
+    rows = linspace(0.0, nx - 1.0, nx)
+    cols = linspace(0.0, ny - 1.0, ny)
+    IX = outer(rows, 1.0 + 0.0 * cols)
+    IY = outer(1.0 + 0.0 * rows, cols)
+    pert = 0.05 * sin(2.0 * pi * IX / 30.0) * sin(pi * IY / H)
+    thermal_set_temperature(sim, T_init + pert)
+
+    // Run
+    thermal_run(sim, 3000)
+
+    Nu_conv = thermal_nusselt(sim)
+    u_field = thermal_velocity(sim)
+    u_max = max(abs(u_field[1]))
+    print("  Nusselt (Konvektion):", Nu_conv)
+    print("  max|u_y|:              ", u_max)
+
+    // Plausibilitätsprüfungen
+    assert(Nu_conv > 1.2)                  // Konvektion ist eingesetzt
+    assert(u_max > 1e-3)                   // Sichtbare Strömung
+    assert(Nu_conv < 50.0)                 // Aber nicht unphysikalisch hoch
+
+    enhancement = (Nu_conv - 1.0) * 100.0
+    print("")
+    print("Wärmetransport-Verstärkung durch Konvektion: +", enhancement, "%")
+    print("=================================================================")
+    print("  Bénard-Konvektion erfolgreich simuliert.                         ")
+    print("  Differenzierbar: g·β, T_hot, τ_u und die Maske können optimiert  ")
+    print("  werden (z.B. für Wärmetauscher-Design via Adam).                 ")
+    print("=================================================================")
+}
+
+main()

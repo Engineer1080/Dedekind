@@ -134,6 +134,47 @@ pub fn fourier_shape_mask(nx, ny, cx, cy, r0, a_coeffs, b_coeffs, alpha) {
     return lbm_fourier_shape_mask_impl(nx, ny, cx, cy, r0, a_coeffs, b_coeffs, alpha)
 }
 
+// --- Thermal LBM (Boussinesq-Konvektion) -------------------------------
+
+pub fn lbm_thermal_simulation(nx, ny, tau_u, tau_T, T_hot, T_cold, gravity_beta) {
+    return lbm_thermal_simulation_impl(nx, ny, tau_u, tau_T, T_hot, T_cold,
+                                        gravity_beta)
+}
+
+pub fn lbm_thermal_with_obstacle(nx, ny, tau_u, tau_T, T_hot, T_cold,
+                                  gravity_beta, mask, T_obstacle) {
+    return lbm_thermal_simulation_impl(nx, ny, tau_u, tau_T, T_hot, T_cold,
+                                        gravity_beta, mask, T_obstacle)
+}
+
+pub fn thermal_set_temperature(sim, T_field) {
+    return thermal_set_temperature_impl(sim, T_field)
+}
+
+pub fn thermal_step(sim) {
+    return thermal_step_impl(sim)
+}
+
+pub fn thermal_run(sim, steps) {
+    return thermal_run_impl(sim, steps)
+}
+
+pub fn thermal_temperature(sim) {
+    return thermal_get_temperature_impl(sim)
+}
+
+pub fn thermal_velocity(sim) {
+    return thermal_get_velocity_impl(sim)
+}
+
+pub fn thermal_nusselt(sim) {
+    return thermal_nusselt_impl(sim)
+}
+
+pub fn rayleigh_number(tau_u, tau_T, delta_T, gravity_beta, height) {
+    return thermal_rayleigh_impl(tau_u, tau_T, delta_T, gravity_beta, height)
+}
+
 pub fn soft_airfoil_mask(nx, ny, t, c, beta, x_start, x_end, y_center, alpha) {
     return lbm_soft_airfoil_mask_impl(nx, ny, t, c, beta, x_start, x_end, y_center, alpha)
 }

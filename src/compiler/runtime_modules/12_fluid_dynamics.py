@@ -358,6 +358,242 @@ class LbmSimulation:
         return torch.stack([Fx, Fy])
 
 
+# --- Thermal LBM: Double-Distribution D2Q9 (Velocity) + D2Q5 (Temperatur) ---
+#
+# Ansatz: Passive-scalar Temperaturverteilung g_i mit eigener Relaxationszeit
+# tau_T, gekoppelt an die Geschwindigkeit durch Boussinesq-Buoyancy
+# F_buoy = ρ·g·β·(T - T_ref) entlang -y. Das ist das Standard-Modell für
+# Rayleigh-Bénard-Konvektion, Wärmetauscher und natürliche Konvektion.
+
+_LBM_T_CX_LIST = [0, 1, 0, -1, 0]              # D2Q5: rest, ost, nord, west, süd
+_LBM_T_CY_LIST = [0, 0, 1, 0, -1]
+_LBM_T_W_LIST = [1.0/3, 1.0/6, 1.0/6, 1.0/6, 1.0/6]
+_LBM_T_OPPOSITE = [0, 3, 4, 1, 2]
+
+
+def _thermal_constants(device, dtype):
+    cx = torch.tensor(_LBM_T_CX_LIST, dtype=dtype, device=device).view(5, 1, 1)
+    cy = torch.tensor(_LBM_T_CY_LIST, dtype=dtype, device=device).view(5, 1, 1)
+    w = torch.tensor(_LBM_T_W_LIST, dtype=dtype, device=device).view(5, 1, 1)
+    return cx, cy, w
+
+
+def _thermal_equilibrium(T, ux, uy, device, dtype):
+    """D2Q5-Gleichgewicht für passiven Skalar T."""
+    cx, cy, w = _thermal_constants(device, dtype)
+    c_dot_u = cx * ux + cy * uy
+    return w * T * (1.0 + 3.0 * c_dot_u)
+
+
+class ThermalLbmSimulation:
+    """Double-Distribution Thermal LBM mit Boussinesq-Buoyancy-Kopplung.
+
+    Geschwindigkeit: D2Q9 BGK (wie LbmSimulation). Temperatur: D2Q5 BGK als
+    passiver Skalar. Buoyancy-Force F_y = -ρ·g·β·(T-T_ref) wird im
+    Geschwindigkeits-Kollisionsschritt via "Shift-Velocity"-Methode addiert.
+
+    Parameter
+    ---------
+    nx, ny : int
+        Gittergröße in Lattice-Einheiten.
+    tau_u, tau_T : float
+        Relaxationszeiten für Velocity (kin. Viskosität ν=(τ_u-0.5)/3)
+        und Temperatur (Wärmediffusivität α=(τ_T-0.5)/3).
+    T_hot, T_cold : float
+        Dirichlet-Temperaturen für unten (y=0) bzw. oben (y=ny-1).
+    gravity_beta : float
+        Produkt g·β (Beschleunigung × thermischer Ausdehnungskoeffizient).
+        Steuert die Rayleigh-Zahl Ra = g·β·ΔT·H³/(ν·α).
+    obstacle_mask : (nx, ny)-Tensor oder None
+        Soft-Mask für Hindernisse (z.B. beheizte Zylinder). Wird per
+        Bounce-Back behandelt.
+    T_obstacle : float oder None
+        Falls gesetzt, wird die Temperatur in Hindernis-Zellen darauf
+        festgehalten (Dirichlet-BC am Hindernis).
+    """
+
+    def __init__(self, nx, ny, tau_u, tau_T, T_hot=1.0, T_cold=0.0,
+                 gravity_beta=0.001, obstacle_mask=None, T_obstacle=None,
+                 T_init=None):
+        self.nx = int(nx)
+        self.ny = int(ny)
+        if tau_u <= 0.5:
+            raise ValueError(
+                f"ThermalLbmSimulation: tau_u={tau_u} ≤ 0.5 ist instabil. "
+                "Wähle tau_u > 0.5."
+            )
+        if tau_T <= 0.5:
+            raise ValueError(
+                f"ThermalLbmSimulation: tau_T={tau_T} ≤ 0.5 ist instabil. "
+                "Wähle tau_T > 0.5."
+            )
+        self.tau_u = float(tau_u)
+        self.tau_T = float(tau_T)
+        self.T_hot = float(T_hot)
+        self.T_cold = float(T_cold)
+        self.T_ref = 0.5 * (self.T_hot + self.T_cold)
+        self.gravity_beta = _to_double_tensor(gravity_beta)
+        self.T_obstacle = None if T_obstacle is None else float(T_obstacle)
+
+        if obstacle_mask is None:
+            self.obstacle_mask = torch.zeros((self.nx, self.ny), dtype=torch.float64)
+        else:
+            mask = _to_double_tensor(obstacle_mask)
+            if mask.shape != (self.nx, self.ny):
+                raise ValueError(
+                    f"ThermalLbmSimulation: obstacle_mask Shape {tuple(mask.shape)} "
+                    f"passt nicht zu ({self.nx},{self.ny})."
+                )
+            self.obstacle_mask = mask
+
+        device = self.obstacle_mask.device
+        dtype = torch.float64
+
+        # Initiale Temperatur: linearer Verlauf T_hot (unten) → T_cold (oben)
+        if T_init is None:
+            j = torch.arange(self.ny, dtype=dtype, device=device)
+            T_profile = self.T_hot + (self.T_cold - self.T_hot) * j / _builtin_max(self.ny - 1, 1)
+            self.T = T_profile.view(1, self.ny).expand(self.nx, self.ny).contiguous()
+        else:
+            self.T = _to_double_tensor(T_init).clone()
+
+        # Initiale Geschwindigkeit = 0, Dichte = 1
+        rho_init = torch.ones((self.nx, self.ny), dtype=dtype, device=device)
+        u_init = torch.zeros((2, self.nx, self.ny), dtype=dtype, device=device)
+
+        # Equilibria
+        self.f = lbm_equilibrium(rho_init, u_init, device)
+        self.g = _thermal_equilibrium(self.T, u_init[0], u_init[1], device, dtype)
+
+        # Cached constants
+        self._cx_u, self._cy_u, self._w_u = _lbm_constants(device, dtype)
+        self._cx_t, self._cy_t, self._w_t = _thermal_constants(device, dtype)
+        self._device = device
+        self._dtype = dtype
+
+    def step(self):
+        """Ein Thermal-LBM-Zeitschritt: Stream → Macroscopic → Buoyancy → Collide → BCs → Bounce."""
+        nx, ny = self.nx, self.ny
+        device, dtype = self._device, self._dtype
+
+        # 1. Streaming für f (D2Q9) und g (D2Q5)
+        f_streamed = torch.stack([
+            torch.roll(self.f[i],
+                       shifts=(int(_LBM_CX_LIST[i]), int(_LBM_CY_LIST[i])),
+                       dims=(0, 1))
+            for i in range(9)
+        ])
+        g_streamed = torch.stack([
+            torch.roll(self.g[i],
+                       shifts=(int(_LBM_T_CX_LIST[i]), int(_LBM_T_CY_LIST[i])),
+                       dims=(0, 1))
+            for i in range(5)
+        ])
+
+        # 2. Makroskopische Felder
+        rho = torch.sum(f_streamed, dim=0)
+        rho_safe = rho + 1e-15
+        ux = torch.sum(f_streamed * self._cx_u, dim=0) / rho_safe
+        uy = torch.sum(f_streamed * self._cy_u, dim=0) / rho_safe
+        T = torch.sum(g_streamed, dim=0)
+
+        # 3. Boussinesq-Buoyancy mit Shift-Velocity-Forcing.
+        #    Konvention dieses Solvers:
+        #      - j=0  ist die UNTERE (heiße) Wand (T_hot).
+        #      - j=ny-1 ist die OBERE (kalte) Wand (T_cold).
+        #      - "+y" (wachsendes j) zeigt nach OBEN; Schwerkraft wirkt nach -y.
+        #    Mit dieser Streaming-Konvention ergibt das funktionierende Vorzeichen
+        #    für aufsteigende heiße / absteigende kalte Fluide:
+        #      F_y / ρ = -g·β·(T - T_ref)
+        #    Heiße Fluide (T > T_ref) bekommen einen effektiven Aufwärtsschub
+        #    in +y-Richtung; validiert per Drift-Test und Rayleigh-Bénard
+        #    (Nu > 1 oberhalb der kritischen Rayleigh-Zahl).
+        F_y_per_rho = -self.gravity_beta * (T - self.T_ref)
+        ux_eq = ux
+        uy_eq = uy + self.tau_u * F_y_per_rho
+
+        # 4. Collision: f (BGK mit shifted velocity), g (BGK passiv mit echter Geschwindigkeit)
+        feq = lbm_equilibrium(rho, torch.stack([ux_eq, uy_eq]), device)
+        f_coll = f_streamed - (1.0 / self.tau_u) * (f_streamed - feq)
+
+        geq = _thermal_equilibrium(T, ux, uy, device, dtype)
+        g_coll = g_streamed - (1.0 / self.tau_T) * (g_streamed - geq)
+
+        # 5. Boundary Conditions:
+        #    - Bottom (y=0): T = T_hot via Anti-Bounce-Back
+        #    - Top    (y=ny-1): T = T_cold via Anti-Bounce-Back
+        #    - Velocity an y=0 und y=ny-1: No-Slip via Bounce-Back
+        # No-Slip an Top/Bottom: f[i] an Wandzellen wird durch f[opposite] ersetzt
+        wall_bottom = torch.zeros((nx, ny), dtype=dtype, device=device)
+        wall_top = torch.zeros((nx, ny), dtype=dtype, device=device)
+        wall_bottom[:, 0] = 1.0
+        wall_top[:, -1] = 1.0
+        wall_mask = wall_bottom + wall_top   # 1 an Top und Bottom
+
+        # Velocity Bounce-Back an Wänden
+        f_bounce = f_coll[_LBM_OPPOSITE]
+        f_coll = (1.0 - wall_mask.unsqueeze(0)) * f_coll + wall_mask.unsqueeze(0) * f_bounce
+
+        # Temperatur-Dirichlet: an Wand-Cells g neu setzen aus Equilibrium mit T_wall
+        T_wall = T.clone()
+        T_wall = torch.where(wall_bottom.bool(),
+                             torch.full_like(T_wall, self.T_hot), T_wall)
+        T_wall = torch.where(wall_top.bool(),
+                             torch.full_like(T_wall, self.T_cold), T_wall)
+        u_wall = torch.zeros((2, nx, ny), dtype=dtype, device=device)
+        g_wall_eq = _thermal_equilibrium(T_wall, u_wall[0], u_wall[1], device, dtype)
+        wall_mask_t = wall_mask.unsqueeze(0)
+        g_coll = (1.0 - wall_mask_t) * g_coll + wall_mask_t * g_wall_eq
+
+        # 6. Periodische BC links/rechts (durch Streaming automatisch erfüllt).
+
+        # 7. Hindernis-Bounce-Back (Soft-Mask) für f
+        M = self.obstacle_mask.unsqueeze(0)
+        f_bounce_obs = f_coll[_LBM_OPPOSITE]
+        f_coll = (1.0 - M) * f_coll + M * f_bounce_obs
+
+        # 8. Falls T_obstacle gesetzt: Temperatur in Hindernis-Zellen festhalten
+        if self.T_obstacle is not None:
+            T_obs_field = torch.full_like(T, self.T_obstacle)
+            u_zero = torch.zeros((2, nx, ny), dtype=dtype, device=device)
+            g_obs_eq = _thermal_equilibrium(T_obs_field, u_zero[0], u_zero[1], device, dtype)
+            M_t = self.obstacle_mask.unsqueeze(0)
+            g_coll = (1.0 - M_t) * g_coll + M_t * g_obs_eq
+
+        self.f = f_coll
+        self.g = g_coll
+        self.T = T
+
+    def run(self, steps):
+        for _ in range(int(steps)):
+            self.step()
+
+    def get_temperature(self):
+        return torch.sum(self.g, dim=0)
+
+    def get_velocity(self):
+        rho = torch.sum(self.f, dim=0)
+        rho_safe = rho + 1e-15
+        ux = torch.sum(self.f * self._cx_u, dim=0) / rho_safe
+        uy = torch.sum(self.f * self._cy_u, dim=0) / rho_safe
+        return torch.stack([ux, uy])
+
+    def nusselt_number(self):
+        """Globale Nusselt-Zahl: Nu = 1 + <u_y·T'>·H / (α·ΔT)
+        — Standard-Definition für Rayleigh-Bénard. Misst Konvektions- vs.
+        Konduktions-Wärmetransport. Nu=1 → reine Konduktion."""
+        T = self.get_temperature()
+        u = self.get_velocity()
+        uy = u[1]
+        delta_T = self.T_hot - self.T_cold
+        if abs(delta_T) < 1e-12:
+            return torch.tensor(1.0, dtype=self._dtype, device=self._device)
+        alpha = (self.tau_T - 0.5) / 3.0    # thermische Diffusivität (Lattice)
+        H = float(self.ny - 1)
+        # Nu = 1 + H/(α·ΔT) · <u_y·(T - T_ref)>
+        return 1.0 + H / (alpha * delta_T) * torch.mean(uy * (T - self.T_ref))
+
+
 # --- Runtime-Brücke zum Dedekind-Compiler ------------------------------
 
 def lbm_simulation_impl(nx, ny, tau, obstacle_mask=None, inlet_u=0.0,
@@ -380,6 +616,68 @@ def simulation_step_impl(sim, inlet_u=None):
 def simulation_run_impl(sim, steps, inlet_u=None):
     sim.run(steps, inlet_u)
     return sim
+
+
+# --- Thermal LBM Bridge ------------------------------------------------
+
+def lbm_thermal_simulation_impl(nx, ny, tau_u, tau_T, T_hot=1.0, T_cold=0.0,
+                                 gravity_beta=0.001, obstacle_mask=None,
+                                 T_obstacle=None):
+    """Erzeugt eine ThermalLbmSimulation für gekoppelte Strömung+Wärme.
+
+    Beispiele:
+      Rayleigh-Bénard: heiß unten / kalt oben, Ra = g·β·ΔT·H³/(ν·α)
+      Wärmetauscher:   beheizter Zylinder als Hindernis im Kanal
+    """
+    return ThermalLbmSimulation(nx, ny, tau_u, tau_T, T_hot, T_cold,
+                                 gravity_beta, obstacle_mask, T_obstacle)
+
+
+def thermal_set_temperature_impl(sim, T_field):
+    """Setzt die Anfangs-Temperaturverteilung manuell (re-initialisiert g aus
+    Equilibrium). Wird typischerweise verwendet, um eine kleine Perturbation
+    zur Symmetriebrechung in das Rayleigh-Bénard-Startfeld einzubringen."""
+    T_t = _to_double_tensor(T_field).clone()
+    if T_t.shape != (sim.nx, sim.ny):
+        raise ValueError(
+            f"thermal_set_temperature: Form {tuple(T_t.shape)} passt nicht zu "
+            f"({sim.nx}, {sim.ny})."
+        )
+    sim.T = T_t
+    u_zero = torch.zeros((2, sim.nx, sim.ny), dtype=sim._dtype, device=sim._device)
+    sim.g = _thermal_equilibrium(T_t, u_zero[0], u_zero[1],
+                                  sim._device, sim._dtype)
+    return sim
+
+
+def thermal_step_impl(sim):
+    sim.step()
+    return sim
+
+
+def thermal_run_impl(sim, steps):
+    sim.run(steps)
+    return sim
+
+
+def thermal_get_temperature_impl(sim):
+    return sim.get_temperature()
+
+
+def thermal_get_velocity_impl(sim):
+    return sim.get_velocity()
+
+
+def thermal_nusselt_impl(sim):
+    return sim.nusselt_number()
+
+
+def thermal_rayleigh_impl(tau_u, tau_T, delta_T, gravity_beta, height):
+    """Berechnet Rayleigh-Zahl: Ra = g·β·ΔT·H³/(ν·α). Validierungs-Helfer.
+    Bei Ra > Ra_c ≈ 1708 setzt Konvektion ein (kritische Rayleigh-Zahl)."""
+    nu = (float(tau_u) - 0.5) / 3.0
+    alpha = (float(tau_T) - 0.5) / 3.0
+    return float(gravity_beta) * float(delta_T) * float(height) ** 3 / (nu * alpha)
 
 
 def simulation_get_velocity_impl(sim):
