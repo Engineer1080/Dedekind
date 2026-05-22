@@ -1,27 +1,34 @@
 # Dedekind Jupyter Kernel
 
-Jupyter-Kernel für die Sprache **Dedekind**. Erlaubt die Ausführung von Dedekind-Code in Jupyter Notebooks, JupyterLab und **Spyder** (IPython Console → „Connect to an existing kernel“ oder nach Integration als Standard-Kernel).
+Jupyter kernel for the **Dedekind** language. Lets you run `.ddk` code in
+Jupyter Notebooks, JupyterLab, and Spyder.
 
-## Abhängigkeiten
-
-- Python 3.10+
-- Dedekind-Compiler (dieses Repo, `src.compiler`)
-- `ipykernel` (z. B. `pip install ipykernel` oder aus dem Repo-Root: `pip install -r requirements.txt`)
-
-## Installation (aus DedekindLanguage-Repo-Root)
+## Install
 
 ```bash
-# Repo-Root: DedekindLanguage/ (oder DedekindLanguage/)
-pip install ipykernel
-cd dedekind_jupyter_kernel
-jupyter kernelspec install kernelspec --user --name dedekind
+pip install "dedekind[jupyter]"
+python -m dedekind.install_kernel
 ```
 
-Damit wird der Kernel unter dem Namen „Dedekind“ registriert. In Spyder: **Consoles** → **Connect to an existing kernel** → Kernel „Dedekind“ wählen (falls Spyder Jupyter-Kernel auflistet) oder Verbindungsdatei angeben.
+That's it. Start `jupyter notebook` / `jupyter lab` / Spyder and pick
+**Dedekind** from the kernel list.
 
-## Nutzung in Spyder / Dedekind Studio
+## What this gives you
 
-- **Spyder:** Neue Konsole starten und als Kernel „Dedekind“ auswählen (sofern der Dedekind-Kernel in Spyder sichtbar ist), oder „Connect to an existing kernel“ und einen laufenden Dedekind-Kernel verbinden.
-- **Jupyter:** Beim Erstellen eines neuen Notebooks „Dedekind“ als Kernel wählen.
+- Each cell is compiled by the Dedekind compiler and executed in a
+  **persistent** Python interpreter — variables carry across cells.
+- LaTeX output via `print_latex(...)` renders in the rich console.
+- Errors are mapped back to `.ddk` line numbers.
 
-Der Kernel kompiliert jede Zelle mit dem Dedekind-Compiler und führt den generierten Python-Code in einem **persistenten Kontext** aus (Variablen bleiben über Zellen hinweg erhalten).
+## Editable / dev install
+
+If you're hacking on the language itself:
+
+```bash
+git clone <repo>
+cd Dedekind
+pip install -e ".[jupyter]"
+python -m dedekind.install_kernel
+```
+
+The kernel will pick up `src/dedekind/` automatically.

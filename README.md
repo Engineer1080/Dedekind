@@ -641,9 +641,11 @@ cd DedekindLanguage
 
 ### 2. Compiler & Runtime
 ```bash
-pip install -r requirements.txt
+pip install dedekind                  # Core: torch + numpy + sympy
+pip install "dedekind[jupyter,plot]"  # + Jupyter-Kernel und matplotlib
+pip install "dedekind[all]"           # + sci, geo, bio, md, ml, plot, jupyter
 ```
-**Abhängigkeiten:** `torch` (PyTorch für Tensoren, FFT, ML), `matplotlib` (für `plot()`-Visualisierung), `ipykernel` (für Dedekind Jupyter Kernel).
+**Optionale Extras:** `jupyter` (Kernel), `plot` (matplotlib), `sci` (scipy), `geo` (xarray), `bio` (rdkit), `md` (openmm), `ml` (torch_geometric), `server` (Flask für Studio-Backend).
 
 ### 3. Dedekind Studio starten (Spyder-Fork)
 Aus dem Projektroot:
@@ -659,8 +661,8 @@ Beim ersten Start werden ggf. Spyder-Abhängigkeiten (PyQt5, qtpy, …) aus `Ded
 
 1.  **Dedekind Studio** starten (siehe oben). Im Editor `.ddk`-Dateien öffnen, in der Konsole „Dedekind“ als Kernel wählen oder Python nutzen.
 2.  Code ausführen: `.ddk`-Datei mit Run/F5 ausführen oder Dedekind-Code in der Dedekind-Konsole eingeben.
-3.  **CLI** (ohne IDE): `python -m src.compiler.compiler examples/dedekind/hello.ddk`
-4.  **Jupyter/Spyder** (ohne Fork): Dedekind-Kernel installieren (`jupyter kernelspec install dedekind_jupyter_kernel/kernelspec`), dann Kernel „Dedekind“ wählen.
+3.  **CLI** (ohne IDE): `dedekind examples/dedekind/basics/hello.ddk`
+4.  **Jupyter/Spyder** (ohne Fork): `python -m dedekind.install_kernel`, dann Kernel „Dedekind“ wählen.
 
 ### Examples
 Example programs are in `examples/dedekind/`, including:
