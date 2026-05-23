@@ -8,7 +8,7 @@ January 2026 · Updated with language features v0.6
 
 ## 1. Overview
 
-This document collects the key scientific papers and research results that serve as the foundation for the architecture of the Dedekind programming language. Dedekind is designed to enable GPU/TPU-accelerated, parallelized computations for machine learning and graphics rendering.
+This document collects the key scientific papers and research results that serve as the foundation for the architecture of the Dedekind programming language. Dedekind is designed to enable GPU/TPU-accelerated, parallelized computations for machine learning and scientific computing.
 
 Core areas: MLIR, Triton, work-stealing scheduler, automatic differentiation, linear and affine type systems.
 

@@ -1,4 +1,4 @@
-# Dedekind — A Modern Programming Language for Machine Learning and Graphics
+# Dedekind — A Modern Programming Language for Machine Learning and Scientific Computing
 
 **Language Specification v2.0**  
 Mario Michael Heinrich · github.com/Engineer1080  
@@ -29,7 +29,7 @@ Draft: January 2026 · Updated for v0.6 (Physical Units), v0.7 (ODE), v0.8 (Prob
 
 ## 1. Introduction
 
-Dedekind is a modern, high-performance programming language designed specifically for compute-intensive workloads in machine learning and graphics rendering. Named after Richard Dedekind, whose work on real numbers (Dedekind cuts) and algebraic structures laid foundations for rigorous mathematical computation, the language embodies the principle of precise, structured transformation of data through parallel computation.
+Dedekind is a modern, high-performance programming language designed specifically for compute-intensive workloads in machine learning and scientific computing. Named after Richard Dedekind, whose work on real numbers (Dedekind cuts) and algebraic structures laid foundations for rigorous mathematical computation, the language embodies the principle of precise, structured transformation of data through parallel computation.
 
 Unlike general-purpose languages retrofitted with parallel computing capabilities, Dedekind is built from the ground up with GPU/TPU acceleration and automatic parallelization as core features.
 
@@ -81,7 +81,7 @@ Modules for ML, linalg, signal (FFT), visualization (`plot()`), scientific conso
 
 ## 11. Use Cases
 
-ML training/inference, graphics rendering, scientific computing, signal processing, physics simulations (with units and constants).
+ML training/inference, scientific computing, signal processing, physics simulations (with units and constants).
 
 ## 12. Implementation Roadmap
 
