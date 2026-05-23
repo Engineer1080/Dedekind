@@ -22,9 +22,9 @@ fn main() {
     print("geometric(1, 2, 6) = [1, 2, 4, 8, 16, 32]:")
     print(geometric(1, 2, 6))
 
-    // Allgemeine Folge: sequence(f, n) = [f(0), f(1), ..., f(n-1)]
+    // General sequence: sequence(f, n) = [f(0), f(1), ..., f(n-1)]
     fn quad(k) { return k * k }
-    print("sequence(quad, 6) = Quadratzahlen [0,1,4,9,16,25]:")
+    print("sequence(quad, 6) = square numbers [0,1,4,9,16,25]:")
     print(sequence(quad, 6))
 
     //for loop with arange
