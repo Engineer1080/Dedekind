@@ -23,7 +23,7 @@ _RUNTIME_BUILTIN_NAMES = frozenset({
     'sparse_laplacian_2d', 'sparse_diffusion_step', 'sparse_diffusion_simulate',
     'Normal', 'Uniform', 'Bernoulli', 'Exponential', 'Gamma', 'Beta', 'Poisson', 'Dirichlet',
     'dirichlet_function',
-    'sample', 'log_prob', 'metropolis', 'hmc',
+    'sample', 'log_prob', 'metropolis', 'hmc', 'nuts', 'vi',
     'sin', 'cos', 'tan', 'exp', 'log', 'log10', 'sqrt', 'abs',
     'asin', 'acos', 'atan', 'atan2', 'deg_to_rad', 'rad_to_deg', 'sinh', 'cosh', 'tanh', 'erf', 'erfc', 'gamma', 'lgamma',
     'bessel_j0', 'bessel_j1', 'bessel_j', 'legendre', 'hypergeom',

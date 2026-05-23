@@ -144,6 +144,19 @@ def fit(loss_fn, params_init, data, method="gd", lr=0.01, steps=500):
         def log_likelihood(d, p):
             return -loss_fn(p, d)
         return hmc(log_prior, log_likelihood, data_t, params.detach(), steps, step_size=lr, num_leapfrog=10)
+    if method == "nuts":
+        def log_prior(p):
+            return torch.tensor(0.0)
+        def log_likelihood(d, p):
+            return -loss_fn(p, d)
+        return nuts(log_prior, log_likelihood, data_t, params.detach(), steps, step_size=lr)
+    if method == "vi":
+        def log_prior(p):
+            return torch.tensor(0.0)
+        def log_likelihood(d, p):
+            return -loss_fn(p, d)
+        mu, sigma = vi(log_prior, log_likelihood, data_t, params.detach(), num_steps=steps, lr=lr)
+        return mu
 
     # Gradient Descent
     for _ in range(steps):

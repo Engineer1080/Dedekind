@@ -1433,6 +1433,158 @@ def hmc(log_prior_fn, log_likelihood_fn, data, init_theta, num_steps, step_size=
         samples.append(theta.clone())
     return torch.stack(samples, dim=0)
 
+def nuts(log_prior_fn, log_likelihood_fn, data, init_theta, num_steps, step_size=0.1, max_depth=5):
+    """
+    No-U-Turn Sampler (NUTS) MCMC.
+    log_prior_fn(theta), log_likelihood_fn(data, theta) return log-probs.
+    init_theta: starting point (tensor/list).
+    num_steps: number of steps.
+    step_size: leapfrog step size.
+    max_depth: maximum tree depth.
+    Returns: Tensor (num_steps, *theta_shape) containing samples.
+    """
+    theta = _to_tensor(init_theta).float().clone().detach()
+    data_t = _to_tensor(data)
+    samples = [theta.clone()]
+
+    def log_joint(th):
+        th_grad = th.detach().clone().requires_grad_(True)
+        lp = log_prior_fn(th_grad)
+        ll = log_likelihood_fn(data_t, th_grad)
+        lp_t = _to_tensor(lp).sum()
+        ll_t = _to_tensor(ll).sum()
+        log_p = lp_t + ll_t
+        if th_grad.grad is not None:
+            th_grad.grad.zero_()
+        log_p.backward()
+        grad = th_grad.grad.clone() if th_grad.grad is not None else torch.zeros_like(th_grad)
+        return log_p.detach().item(), grad
+
+    def leapfrog(theta, r, grad, step_size):
+        r_new = r + 0.5 * step_size * grad
+        theta_new = theta + step_size * r_new
+        logp, grad_new = log_joint(theta_new)
+        r_new = r_new + 0.5 * step_size * grad_new
+        return theta_new, r_new, logp, grad_new
+
+    def build_tree(theta, r, grad, log_u, v, j, step_size, logp_init):
+        if j == 0:
+            theta_prime, r_prime, logp_prime, grad_prime = leapfrog(theta, r, grad, v * step_size)
+            h_prime = logp_prime - 0.5 * (r_prime ** 2).sum().item()
+            n_prime = 1.0 if log_u <= h_prime else 0.0
+            s_prime = 1.0 if h_prime > log_u - 1000.0 else 0.0
+            return theta_prime, r_prime, grad_prime, theta_prime, r_prime, grad_prime, theta_prime, n_prime, s_prime
+
+        (theta_minus, r_minus, grad_minus,
+         theta_plus, r_plus, grad_plus,
+         theta_prime, n_prime, s_prime) = build_tree(theta, r, grad, log_u, v, j - 1, step_size, logp_init)
+
+        if s_prime == 1.0:
+            if v == -1:
+                (theta_minus, r_minus, grad_minus, _, _, _,
+                 theta_prime_prime, n_prime_prime, s_prime_prime) = build_tree(theta_minus, r_minus, grad_minus, log_u, v, j - 1, step_size, logp_init)
+            else:
+                (_, _, _, theta_plus, r_plus, grad_plus,
+                 theta_prime_prime, n_prime_prime, s_prime_prime) = build_tree(theta_plus, r_plus, grad_plus, log_u, v, j - 1, step_size, logp_init)
+
+            total_n = n_prime + n_prime_prime
+            if total_n > 0:
+                accept_prob = n_prime_prime / total_n
+                if torch.rand(1).item() < accept_prob:
+                    theta_prime = theta_prime_prime.clone()
+
+            d_theta = theta_plus - theta_minus
+            uturn_minus = (d_theta * r_minus).sum().item() >= 0
+            uturn_plus = (d_theta * r_plus).sum().item() >= 0
+            s_prime = s_prime_prime * float(uturn_minus and uturn_plus)
+            n_prime = total_n
+
+        return theta_minus, r_minus, grad_minus, theta_plus, r_plus, grad_plus, theta_prime, n_prime, s_prime
+
+    for _ in range(num_steps - 1):
+        r0 = torch.randn_like(theta)
+        logp_init, grad_init = log_joint(theta)
+        h_init = logp_init - 0.5 * (r0 ** 2).sum().item()
+        log_u = (torch.log(torch.rand(1)) + h_init).item()
+
+        theta_minus = theta.clone()
+        theta_plus = theta.clone()
+        r_minus = r0.clone()
+        r_plus = r0.clone()
+        grad_minus = grad_init.clone()
+        grad_plus = grad_init.clone()
+
+        j = 0
+        n = 1.0
+        s = 1.0
+        theta_m = theta.clone()
+
+        while s == 1.0 and j < max_depth:
+            v = 1 if torch.rand(1).item() < 0.5 else -1
+            if v == -1:
+                (theta_minus, r_minus, grad_minus, _, _, _,
+                 theta_prime, n_prime, s_prime) = build_tree(theta_minus, r_minus, grad_minus, log_u, v, j, step_size, logp_init)
+            else:
+                (_, _, _, theta_plus, r_plus, grad_plus,
+                 theta_prime, n_prime, s_prime) = build_tree(theta_plus, r_plus, grad_plus, log_u, v, j, step_size, logp_init)
+
+            if s_prime == 1.0:
+                accept_prob = _builtin_min(1.0, n_prime / n)
+                if torch.rand(1).item() < accept_prob:
+                    theta_m = theta_prime.clone()
+
+            n = n + n_prime
+            d_theta = theta_plus - theta_minus
+            uturn_minus = (d_theta * r_minus).sum().item() >= 0
+            uturn_plus = (d_theta * r_plus).sum().item() >= 0
+            s = s_prime * float(uturn_minus and uturn_plus)
+            j = j + 1
+
+        theta = theta_m.clone()
+        samples.append(theta.clone())
+
+    return torch.stack(samples, dim=0)
+
+def vi(log_prior_fn, log_likelihood_fn, data, init_theta, num_steps=1000, lr=0.01, num_samples=10):
+    """
+    Mean-Field Variational Inference (VI) with diagonal Gaussian approximation.
+    Fits q(theta) = N(mu, sigma^2 * I) maximizing ELBO.
+    Returns: (mu, sigma) - detached tensors.
+    """
+    init_theta_t = _to_tensor(init_theta).float()
+    mu = init_theta_t.clone().detach().requires_grad_(True)
+    log_sigma = (torch.zeros_like(init_theta_t) - 2.3).requires_grad_(True)
+
+    data_t = _to_tensor(data)
+    optimizer = torch.optim.Adam([mu, log_sigma], lr=float(lr))
+
+    for _ in range(int(num_steps)):
+        optimizer.zero_grad()
+        sigma = torch.exp(log_sigma)
+        
+        elbo = 0.0
+        for _ in range(int(num_samples)):
+            eta = torch.randn_like(mu)
+            theta = mu + sigma * eta
+            
+            lp = log_prior_fn(theta)
+            ll = log_likelihood_fn(data_t, theta)
+            lp_t = _to_tensor(lp).sum()
+            ll_t = _to_tensor(ll).sum()
+            log_p = lp_t + ll_t
+            elbo = elbo + log_p
+            
+        elbo = elbo / float(num_samples)
+        
+        entropy = 0.5 * torch.sum(1.0 + _math.log(2.0 * 3.141592653589793) + 2.0 * log_sigma)
+        elbo = elbo + entropy
+        
+        loss = -elbo
+        loss.backward()
+        optimizer.step()
+
+    return mu.detach(), torch.exp(log_sigma).detach()
+
 # --- Standard Library: Math (for integration and expressions) ---
 # Alle Funktionen: Tensor oder Skalar (via _to_tensor), elementweise, differenzierbar.
 

@@ -46,6 +46,8 @@ PURE_CONTEXT_CALLS: Dict[str, List[int]] = {
     "fit":         [0],
     "metropolis":  [0, 1],
     "hmc":         [0, 1],
+    "nuts":        [0, 1],
+    "vi":          [0, 1],
     "sde_solve":   [0, 1],
 }
 
