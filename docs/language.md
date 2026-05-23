@@ -146,5 +146,5 @@ From the `src/` directory: `python -m compiler.compiler ../examples/dedekind/hel
 - **Symbolic Simplification**: `docs/Symbolic_Simplification_Roadmap.md` — Implementierungs-Roadmap (Phasen, Optionen, Integration).
 - **Features Roadmap**: `docs/Features_Implementation_Roadmap.md` — naturwissenschaftliche Features (Phase 1 abgeschlossen: Verteilungen, Integration).
 - **Chemie & Biologie**: `docs/Chemistry_Biology_Roadmap.md` — Einheiten mol/L/M/ppm, Beispiele (Kinetik, Dosis-Wirkung, Wachstum), Convenience-Funktionen.
-- Legacy PDFs (v0.1) remain in `docs/assets/` and `docs/internal/`; the Markdown sources are the up-to-date references.
+- Legacy PDFs (v0.1) remain in `docs/internal/`; the Markdown sources are the up-to-date references.
 
