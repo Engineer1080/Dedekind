@@ -166,7 +166,7 @@ def pde_heat_1d(u0, x, t, k, bc="dirichlet"):
     if x.numel() != n:
         raise ValueError("pde_heat_1d: len(u0) must equal len(x).")
     if n < 3:
-        raise ValueError("pde_heat_1d: mindestens 3 Gitterpunkte.")
+        raise ValueError("pde_heat_1d: at least 3 grid points required.")
     dx = (x[-1] - x[0]) / (n - 1.0)
     dx2 = dx * dx
 
@@ -227,9 +227,9 @@ def pde_advection_1d(u0, x, t, v, bc="periodic"):
     v_val = float(_to_tensor(v).float().item())
     n = u0.numel()
     if x.numel() != n:
-        raise ValueError("pde_advection_1d: len(u0) muss len(x) entsprechen.")
+        raise ValueError("pde_advection_1d: len(u0) must equal len(x).")
     if n < 2:
-        raise ValueError("pde_advection_1d: mindestens 2 Gitterpunkte.")
+        raise ValueError("pde_advection_1d: at least 2 grid points required.")
     dx = float((x[-1] - x[0]).item()) / _builtin_max(n - 1, 1)
     if abs(dx) < 1e-14:
         dx = 1.0
@@ -259,7 +259,7 @@ def pde_advection_2d(u0, x, y, t, vx, vy, bc="periodic"):
     """
     u0 = _to_tensor(u0).float()
     if u0.dim() == 1:
-        raise ValueError("pde_advection_2d: u0 muss 2D-Gitter (nx, ny) sein.")
+        raise ValueError("pde_advection_2d: u0 must be a 2D grid (nx, ny).")
     nx, ny = u0.shape[0], u0.shape[1]
     x = _to_tensor(x).float().flatten().to(u0.device)
     y = _to_tensor(y).float().flatten().to(u0.device)
@@ -267,7 +267,7 @@ def pde_advection_2d(u0, x, y, t, vx, vy, bc="periodic"):
     vx_val = float(_to_tensor(vx).float().item())
     vy_val = float(_to_tensor(vy).float().item())
     if x.numel() != nx or y.numel() != ny:
-        raise ValueError("pde_advection_2d: x/y Länge muss zu u0 passen.")
+        raise ValueError("pde_advection_2d: x/y length must match u0.")
     dx = float((x[-1] - x[0]).item()) / _builtin_max(nx - 1, 1)
     dy = float((y[-1] - y[0]).item()) / _builtin_max(ny - 1, 1)
     if abs(dx) < 1e-14:
@@ -317,9 +317,9 @@ def pde_wave_1d(u0, x, t, c, v0=None, bc="periodic"):
     c_val = float(_to_tensor(c).float().item())
     n = u0.numel()
     if x.numel() != n or v0.numel() != n:
-        raise ValueError("pde_wave_1d: len(u0), len(v0), len(x) müssen übereinstimmen.")
+        raise ValueError("pde_wave_1d: len(u0), len(v0), len(x) must match.")
     if n < 3:
-        raise ValueError("pde_wave_1d: mindestens 3 Gitterpunkte.")
+        raise ValueError("pde_wave_1d: at least 3 grid points required.")
     dx = float((x[-1] - x[0]).item()) / _builtin_max(n - 1, 1)
     if abs(dx) < 1e-14:
         dx = 1.0
@@ -352,7 +352,7 @@ def pde_wave_2d(u0, x, y, t, c, v0=None, bc="periodic"):
     """
     u0 = _to_tensor(u0).float()
     if u0.dim() == 1:
-        raise ValueError("pde_wave_2d: u0 muss 2D-Gitter (nx, ny) sein.")
+        raise ValueError("pde_wave_2d: u0 must be a 2D grid (nx, ny).")
     nx, ny = u0.shape[0], u0.shape[1]
     v0 = _to_tensor(v0).float().to(u0.device) if v0 is not None else torch.zeros_like(u0)
     if v0.shape != u0.shape:
@@ -362,7 +362,7 @@ def pde_wave_2d(u0, x, y, t, c, v0=None, bc="periodic"):
     t = _to_tensor(t).float().flatten().to(u0.device)
     c_val = float(_to_tensor(c).float().item())
     if x.numel() != nx or y.numel() != ny:
-        raise ValueError("pde_wave_2d: x/y Länge muss zu u0 passen.")
+        raise ValueError("pde_wave_2d: x/y length must match u0.")
     dx = float((x[-1] - x[0]).item()) / _builtin_max(nx - 1, 1)
     dy = float((y[-1] - y[0]).item()) / _builtin_max(ny - 1, 1)
     if abs(dx) < 1e-14:
@@ -411,9 +411,9 @@ def pde_burgers_1d(u0, x, t, nu, bc="periodic"):
     nu_val = float(_to_tensor(nu).float().item())
     n = u0.numel()
     if x.numel() != n:
-        raise ValueError("pde_burgers_1d: len(u0) muss len(x) entsprechen.")
+        raise ValueError("pde_burgers_1d: len(u0) must equal len(x).")
     if n < 3:
-        raise ValueError("pde_burgers_1d: mindestens 3 Gitterpunkte.")
+        raise ValueError("pde_burgers_1d: at least 3 grid points required.")
     dx = float((x[-1] - x[0]).item()) / _builtin_max(n - 1, 1)
     if abs(dx) < 1e-14:
         dx = 1.0
@@ -443,16 +443,16 @@ def pde_burgers_2d(u0, x, y, t, nu, bc="periodic"):
     """
     u0 = _to_tensor(u0).float()
     if u0.dim() == 1:
-        raise ValueError("pde_burgers_2d: u0 muss 2D-Gitter (nx, ny) sein.")
+        raise ValueError("pde_burgers_2d: u0 must be a 2D grid (nx, ny).")
     nx, ny = u0.shape[0], u0.shape[1]
     x = _to_tensor(x).float().flatten().to(u0.device)
     y = _to_tensor(y).float().flatten().to(u0.device)
     t = _to_tensor(t).float().flatten().to(u0.device)
     nu_val = float(_to_tensor(nu).float().item())
     if x.numel() != nx or y.numel() != ny:
-        raise ValueError("pde_burgers_2d: x/y Länge muss zu u0 passen.")
+        raise ValueError("pde_burgers_2d: x/y length must match u0.")
     if nx < 3 or ny < 3:
-        raise ValueError("pde_burgers_2d: mindestens 3×3 Gitterpunkte.")
+        raise ValueError("pde_burgers_2d: at least 3x3 grid points required.")
     dx = float((x[-1] - x[0]).item()) / _builtin_max(nx - 1, 1)
     dy = float((y[-1] - y[0]).item()) / _builtin_max(ny - 1, 1)
     if abs(dx) < 1e-14:
@@ -499,9 +499,9 @@ def pde_reaction_diffusion_1d(u0, x, t, D, r, reaction="fisher", bc="periodic"):
     r_val = float(_to_tensor(r).float().item())
     n = u0.numel()
     if x.numel() != n:
-        raise ValueError("pde_reaction_diffusion_1d: len(u0) muss len(x) entsprechen.")
+        raise ValueError("pde_reaction_diffusion_1d: len(u0) must equal len(x).")
     if n < 3:
-        raise ValueError("pde_reaction_diffusion_1d: mindestens 3 Gitterpunkte.")
+        raise ValueError("pde_reaction_diffusion_1d: at least 3 grid points required.")
     dx = float((x[-1] - x[0]).item()) / _builtin_max(n - 1, 1)
     if abs(dx) < 1e-14:
         dx = 1.0
@@ -535,10 +535,10 @@ def pde_reaction_diffusion_2d(u0, v0, x, y, t, Du, Dv, a, b, bc="periodic"):
     u0 = _to_tensor(u0).float()
     v0 = _to_tensor(v0).float().to(u0.device)
     if u0.dim() == 1 or v0.dim() == 1:
-        raise ValueError("pde_reaction_diffusion_2d: u0 und v0 müssen 2D-Gitter (nx, ny) sein.")
+        raise ValueError("pde_reaction_diffusion_2d: u0 and v0 must be 2D grids (nx, ny).")
     nx, ny = u0.shape[0], u0.shape[1]
     if v0.shape != u0.shape:
-        raise ValueError("pde_reaction_diffusion_2d: u0 und v0 müssen gleiche Form haben.")
+        raise ValueError("pde_reaction_diffusion_2d: u0 and v0 must have the same shape.")
     x = _to_tensor(x).float().flatten().to(u0.device)
     y = _to_tensor(y).float().flatten().to(u0.device)
     t = _to_tensor(t).float().flatten().to(u0.device)
@@ -547,9 +547,9 @@ def pde_reaction_diffusion_2d(u0, v0, x, y, t, Du, Dv, a, b, bc="periodic"):
     a_val = float(_to_tensor(a).float().item())
     b_val = float(_to_tensor(b).float().item())
     if x.numel() != nx or y.numel() != ny:
-        raise ValueError("pde_reaction_diffusion_2d: x/y Länge muss zu u0 passen.")
+        raise ValueError("pde_reaction_diffusion_2d: x/y length must match u0.")
     if nx < 3 or ny < 3:
-        raise ValueError("pde_reaction_diffusion_2d: mindestens 3×3 Gitterpunkte.")
+        raise ValueError("pde_reaction_diffusion_2d: at least 3x3 grid points required.")
     dx = float((x[-1] - x[0]).item()) / _builtin_max(nx - 1, 1)
     dy = float((y[-1] - y[0]).item()) / _builtin_max(ny - 1, 1)
     if abs(dx) < 1e-14:
@@ -606,9 +606,9 @@ def pde_advection_diffusion_1d(u0, x, t, v, D, bc="periodic"):
     D_val = float(_to_tensor(D).float().item())
     n = u0.numel()
     if x.numel() != n:
-        raise ValueError("pde_advection_diffusion_1d: len(u0) muss len(x) entsprechen.")
+        raise ValueError("pde_advection_diffusion_1d: len(u0) must equal len(x).")
     if n < 3:
-        raise ValueError("pde_advection_diffusion_1d: mindestens 3 Gitterpunkte.")
+        raise ValueError("pde_advection_diffusion_1d: at least 3 grid points required.")
     dx = float((x[-1] - x[0]).item()) / _builtin_max(n - 1, 1)
     if abs(dx) < 1e-14:
         dx = 1.0
@@ -641,7 +641,7 @@ def pde_advection_diffusion_2d(u0, x, y, t, vx, vy, D, bc="periodic"):
     """
     u0 = _to_tensor(u0).float()
     if u0.dim() == 1:
-        raise ValueError("pde_advection_diffusion_2d: u0 muss 2D-Gitter (nx, ny) sein.")
+        raise ValueError("pde_advection_diffusion_2d: u0 must be a 2D grid (nx, ny).")
     nx, ny = u0.shape[0], u0.shape[1]
     x = _to_tensor(x).float().flatten().to(u0.device)
     y = _to_tensor(y).float().flatten().to(u0.device)
@@ -650,9 +650,9 @@ def pde_advection_diffusion_2d(u0, x, y, t, vx, vy, D, bc="periodic"):
     vy_val = float(_to_tensor(vy).float().item())
     D_val = float(_to_tensor(D).float().item())
     if x.numel() != nx or y.numel() != ny:
-        raise ValueError("pde_advection_diffusion_2d: x/y Länge muss zu u0 passen.")
+        raise ValueError("pde_advection_diffusion_2d: x/y length must match u0.")
     if nx < 3 or ny < 3:
-        raise ValueError("pde_advection_diffusion_2d: mindestens 3×3 Gitterpunkte.")
+        raise ValueError("pde_advection_diffusion_2d: at least 3x3 grid points required.")
     dx = float((x[-1] - x[0]).item()) / _builtin_max(nx - 1, 1)
     dy = float((y[-1] - y[0]).item()) / _builtin_max(ny - 1, 1)
     if abs(dx) < 1e-14:
@@ -707,9 +707,9 @@ def pde_maxwell_1d(E0, B0, x, t, c_light=1.0, bc="periodic"):
     c_val = float(_to_tensor(c_light).float().item())
     n = E0.numel()
     if B0.numel() != n or x.numel() != n:
-        raise ValueError("pde_maxwell_1d: len(E0), len(B0), len(x) müssen übereinstimmen.")
+        raise ValueError("pde_maxwell_1d: len(E0), len(B0), len(x) must match.")
     if n < 3:
-        raise ValueError("pde_maxwell_1d: mindestens 3 Gitterpunkte.")
+        raise ValueError("pde_maxwell_1d: at least 3 grid points required.")
     dx = float((x[-1] - x[0]).item()) / _builtin_max(n - 1, 1)
     if abs(dx) < 1e-14:
         dx = 1.0
@@ -752,18 +752,18 @@ def pde_maxwell_2d(Ez0, Hx0, Hy0, x, y, t, c_light=1.0, bc="periodic"):
     Hx0 = _to_tensor(Hx0).float().to(Ez0.device)
     Hy0 = _to_tensor(Hy0).float().to(Ez0.device)
     if Ez0.dim() == 1 or Hx0.dim() == 1 or Hy0.dim() == 1:
-        raise ValueError("pde_maxwell_2d: Ez0, Hx0, Hy0 müssen 2D-Gitter (nx, ny) sein.")
+        raise ValueError("pde_maxwell_2d: Ez0, Hx0, Hy0 must be 2D grids (nx, ny).")
     nx, ny = Ez0.shape[0], Ez0.shape[1]
     if Hx0.shape != (nx, ny) or Hy0.shape != (nx, ny):
-        raise ValueError("pde_maxwell_2d: Ez0, Hx0, Hy0 müssen gleiche Form haben.")
+        raise ValueError("pde_maxwell_2d: Ez0, Hx0, Hy0 must have the same shape.")
     x = _to_tensor(x).float().flatten().to(Ez0.device)
     y = _to_tensor(y).float().flatten().to(Ez0.device)
     t = _to_tensor(t).float().flatten().to(Ez0.device)
     c_val = float(_to_tensor(c_light).float().item())
     if x.numel() != nx or y.numel() != ny:
-        raise ValueError("pde_maxwell_2d: x/y Länge muss zu Ez0 passen.")
+        raise ValueError("pde_maxwell_2d: x/y length must match Ez0.")
     if nx < 3 or ny < 3:
-        raise ValueError("pde_maxwell_2d: mindestens 3×3 Gitterpunkte.")
+        raise ValueError("pde_maxwell_2d: at least 3x3 grid points required.")
     dx = float((x[-1] - x[0]).item()) / _builtin_max(nx - 1, 1)
     dy = float((y[-1] - y[0]).item()) / _builtin_max(ny - 1, 1)
     if abs(dx) < 1e-14:
@@ -842,18 +842,18 @@ def pde_navier_stokes_2d(u0, v0, x, y, t, nu, bc="periodic",
     u0 = _to_tensor(u0).float()
     v0 = _to_tensor(v0).float().to(u0.device)
     if u0.dim() == 1 or v0.dim() == 1:
-        raise ValueError("pde_navier_stokes_2d: u0 und v0 müssen 2D-Gitter (nx, ny) sein.")
+        raise ValueError("pde_navier_stokes_2d: u0 and v0 must be 2D grids (nx, ny).")
     nx, ny = u0.shape[0], u0.shape[1]
     if v0.shape != (nx, ny):
-        raise ValueError("pde_navier_stokes_2d: u0 und v0 müssen gleiche Form haben.")
+        raise ValueError("pde_navier_stokes_2d: u0 and v0 must have the same shape.")
     x = _to_tensor(x).float().flatten().to(u0.device)
     y = _to_tensor(y).float().flatten().to(u0.device)
     t = _to_tensor(t).float().flatten().to(u0.device)
     nu_val = float(_to_tensor(nu).float().item())
     if x.numel() != nx or y.numel() != ny:
-        raise ValueError("pde_navier_stokes_2d: x/y Länge muss zu u0 passen.")
+        raise ValueError("pde_navier_stokes_2d: x/y length must match u0.")
     if nx < 3 or ny < 3:
-        raise ValueError("pde_navier_stokes_2d: mindestens 3×3 Gitterpunkte.")
+        raise ValueError("pde_navier_stokes_2d: at least 3x3 grid points required.")
     dx = float((x[-1] - x[0]).item()) / _builtin_max(nx - 1, 1)
     dy = float((y[-1] - y[0]).item()) / _builtin_max(ny - 1, 1)
     if abs(dx) < 1e-14:
@@ -933,8 +933,8 @@ def pde_navier_stokes_2d(u0, v0, x, y, t, nu, bc="periodic",
         M = _to_tensor(obstacle_mask).float().to(u0.device)
         if M.shape != (nx, ny):
             raise ValueError(
-                f"pde_navier_stokes_2d: obstacle_mask muss Form (nx={nx}, ny={ny}) haben, "
-                f"bekam {tuple(M.shape)}."
+                f"pde_navier_stokes_2d: obstacle_mask must have shape (nx={nx}, ny={ny}), "
+                f"got {tuple(M.shape)}."
             )
         M = M.clamp(0.0, 1.0)
     rho_val = float(_to_tensor(rho).float().item())
@@ -1015,7 +1015,7 @@ def sparse_laplacian_2d(N, dx=None):
     """
     N = int(N)
     if N < 2:
-        raise ValueError("sparse_laplacian_2d: N muss >= 2 sein.")
+        raise ValueError("sparse_laplacian_2d: N must be >= 2.")
     if dx is None:
         dx = 1.0 / _builtin_max(N - 1, 1)
     dx2 = dx * dx
@@ -1055,10 +1055,10 @@ def sparse_diffusion_step(T, L, dt, alpha):
     """
     T = _to_tensor(T).float()
     if T.dim() != 2 or T.shape[0] != T.shape[1]:
-        raise ValueError("sparse_diffusion_step: T muss quadratische 2D-Matrix sein.")
+        raise ValueError("sparse_diffusion_step: T must be a square 2D matrix.")
     N = T.shape[0]
     if L.shape != (N * N, N * N):
-        raise ValueError("sparse_diffusion_step: L muss zu T passen (N²×N²).")
+        raise ValueError("sparse_diffusion_step: L must match T (N^2 x N^2).")
     dt = float(dt)
     alpha = float(alpha)
     T_flat = T.flatten().unsqueeze(1)
@@ -1080,7 +1080,7 @@ def sparse_diffusion_simulate(T0, n_steps, dt, alpha):
     """
     T0 = _to_tensor(T0).float()
     if T0.dim() != 2 or T0.shape[0] != T0.shape[1]:
-        raise ValueError("sparse_diffusion_simulate: T0 muss quadratische 2D-Matrix sein.")
+        raise ValueError("sparse_diffusion_simulate: T0 must be a square 2D matrix.")
     N = T0.shape[0]
     L = sparse_laplacian_2d(N)
     result = [T0.clone()]
@@ -1146,7 +1146,7 @@ def Dirichlet(alpha):
     """
     alpha = _to_tensor(alpha).float().flatten()
     if alpha.numel() < 2:
-        raise ValueError("Dirichlet: alpha muss mindestens 2 Komponenten haben.")
+        raise ValueError("Dirichlet: alpha must have at least 2 components.")
     alpha = alpha.clamp(min=1e-6)
     return torch.distributions.Dirichlet(concentration=alpha)
 
@@ -1257,7 +1257,7 @@ def dedekind_cut_from_rational(p, q):
     p_val = int(_to_tensor(p).squeeze().item())
     q_val = int(_to_tensor(q).squeeze().item())
     if q_val == 0:
-        raise ValueError("dedekind_cut_from_rational: Nenner darf nicht 0 sein.")
+        raise ValueError("dedekind_cut_from_rational: denominator must not be 0.")
     return DedekindCut(p_val / q_val)
 
 
@@ -1275,7 +1275,7 @@ def ideal_factor(i):
     """Zerlege Ideal in Primideale. Für Z: (n) = ∏ (p_i)^(e_i). Rückgabe: [(p, e), ...]."""
     if isinstance(i, DedekindIdeal):
         return i.factor()
-    raise TypeError("ideal_factor: Argument muss DedekindIdeal sein.")
+    raise TypeError("ideal_factor: argument must be a DedekindIdeal.")
 
 
 # --- Dedekind-Ringe: Integritätsbereiche mit eindeutiger Ideal-Faktorisierung ---
@@ -1714,7 +1714,7 @@ def bessel_j(n, x):
     try:
         import scipy.special as sc  # type: ignore[import-untyped]
     except ImportError:
-        raise RuntimeError("bessel_j(n, x) erfordert scipy. Bitte installieren: pip install scipy")
+        raise RuntimeError("bessel_j(n, x) requires scipy. Please install: pip install scipy")
     x_t = _to_tensor(x).float()
     n_val = int(n) if hasattr(n, "__int__") else float(_to_tensor(n).float().item())
     out = sc.jv(n_val, x_t.detach().cpu().numpy())
@@ -1728,7 +1728,7 @@ def legendre(n, x):
     try:
         import scipy.special as sc  # type: ignore[import-untyped]
     except ImportError:
-        raise RuntimeError("legendre(n, x) erfordert scipy. Bitte installieren: pip install scipy")
+        raise RuntimeError("legendre(n, x) requires scipy. Please install: pip install scipy")
     x_t = _to_tensor(x).float()
     n_val = int(n)
     out = sc.eval_legendre(n_val, x_t.detach().cpu().numpy())
@@ -1743,7 +1743,7 @@ def hypergeom(a, b, c, z):
     try:
         import scipy.special as sc  # type: ignore[import-untyped]
     except ImportError:
-        raise RuntimeError("hypergeom(a, b, c, z) erfordert scipy. Bitte installieren: pip install scipy")
+        raise RuntimeError("hypergeom(a, b, c, z) requires scipy. Please install: pip install scipy")
     z_t = _to_tensor(z).float()
     a_val = float(a)
     b_val = float(b)
@@ -1782,7 +1782,7 @@ def mod(a, m):
     a_val = int(_to_tensor(a).float().squeeze().item()) if hasattr(a, "__float__") else int(a)
     m_val = int(_to_tensor(m).float().squeeze().item()) if hasattr(m, "__float__") else int(m)
     if m_val <= 0:
-        raise ValueError("mod: m muss positiv sein.")
+        raise ValueError("mod: m must be positive.")
     r = a_val % m_val
     return r if r >= 0 else r + m_val
 
@@ -1791,10 +1791,10 @@ def mod_inv(a, m):
     a_val = int(_to_tensor(a).float().squeeze().item()) if hasattr(a, "__float__") else int(a)
     m_val = int(_to_tensor(m).float().squeeze().item()) if hasattr(m, "__float__") else int(m)
     if m_val <= 0:
-        raise ValueError("mod_inv: m muss positiv sein.")
+        raise ValueError("mod_inv: m must be positive.")
     a_val = a_val % m_val
     if gcd(a_val, m_val) != 1:
-        raise ValueError("mod_inv: a und m müssen teilerfremd sein.")
+        raise ValueError("mod_inv: a and m must be coprime.")
     t, t_new = 0, 1
     r, r_new = m_val, a_val
     while r_new:
@@ -1809,7 +1809,7 @@ def mod_pow(base, exp, m):
     exp_val = int(_to_tensor(exp).float().squeeze().item()) if hasattr(exp, "__float__") else int(exp)
     m_val = int(_to_tensor(m).float().squeeze().item()) if hasattr(m, "__float__") else int(m)
     if m_val <= 0:
-        raise ValueError("mod_pow: m muss positiv sein.")
+        raise ValueError("mod_pow: m must be positive.")
     base_val = base_val % m_val
     result = 1
     while exp_val:
@@ -1831,7 +1831,7 @@ def factorial(n):
     t_float = t.float()
     # Prüfe auf negative Werte
     if torch.any(t_float < 0):
-        raise ValueError("factorial: Argument muss nicht-negativ sein.")
+        raise ValueError("factorial: argument must be non-negative.")
     # n! = gamma(n+1)
     result = gamma(t_float + 1.0)
     # Wenn Eingabe Integer war, runde Ergebnis (Gamma gibt Float zurück)
@@ -1848,7 +1848,7 @@ def binom(n, k):
     n_val = int(n)
     k_val = int(k)
     if n_val < 0 or k_val < 0:
-        raise ValueError("binom: n und k müssen nichtnegativ sein.")
+        raise ValueError("binom: n and k must be non-negative.")
     if k_val > n_val:
         return 0
     if k_val == 0 or k_val == n_val:
@@ -1870,7 +1870,7 @@ def ttest_one_sample(x, mu0):
     t = _to_tensor(x).float().flatten()
     n = t.numel()
     if n < 2:
-        raise ValueError("ttest_one_sample: mindestens 2 Beobachtungen nötig.")
+        raise ValueError("ttest_one_sample: at least 2 observations required.")
     m = t.mean().item()
     s = t.std(unbiased=True).item()
     if s < 1e-14:
@@ -1893,7 +1893,7 @@ def ttest_two_sample(x, y):
     ty = _to_tensor(y).float().flatten()
     n1, n2 = tx.numel(), ty.numel()
     if n1 < 2 or n2 < 2:
-        raise ValueError("ttest_two_sample: mindestens 2 Beobachtungen pro Stichprobe nötig.")
+        raise ValueError("ttest_two_sample: at least 2 observations per sample required.")
     m1, m2 = tx.mean().item(), ty.mean().item()
     v1, v2 = tx.var(unbiased=True).item(), ty.var(unbiased=True).item()
     se = (v1 / n1 + v2 / n2) ** 0.5
@@ -1968,12 +1968,12 @@ def graph_laplacian(adj, normalized=False):
         return _graph_laplacian_sparse(adj, normalized)
     adj_t = _to_tensor(adj)
     if not isinstance(adj_t, torch.Tensor):
-        raise TypeError(f"graph_laplacian: Eingabe muss tensor-artig sein, erhielt {type(adj).__name__}.")
+        raise TypeError(f"graph_laplacian: input must be tensor-like, got {type(adj).__name__}.")
     adj_t = adj_t.float()
     if adj_t.dim() != 2 or adj_t.shape[0] != adj_t.shape[1]:
         raise ValueError(
-            f"graph_laplacian: Adjazenz muss quadratisch (N,N) sein, "
-            f"erhalten {tuple(adj_t.shape)}."
+            f"graph_laplacian: adjacency must be square (N,N), "
+            f"got {tuple(adj_t.shape)}."
         )
     deg = adj_t.sum(dim=1)
     if normalized:
@@ -2010,7 +2010,7 @@ def _milp_units_compat(u1, u2, where):
         return u1
     if _units_dimensionally_equal(u1, u2):
         return u1
-    raise ValueError(f"MILP-Einheiten passen nicht in {where}: [{u1}] vs [{u2}].")
+    raise ValueError(f"MILP units do not match in {where}: [{u1}] vs [{u2}].")
 
 class _MILPVariable:
     """Entscheidungsvariable. Hashbar via Identitaet (kein __eq__-Override)."""
@@ -2152,10 +2152,10 @@ class _MILPConstraint:
         if isinstance(lhs, _MILPVariable):
             lhs = lhs._as_expr()
         if not isinstance(lhs, _MILPExpression):
-            raise TypeError(f"MILP-Constraint linke Seite: erwartet Variable/Expression, bekam {type(lhs).__name__}.")
+            raise TypeError(f"MILP constraint left-hand side: expected Variable/Expression, got {type(lhs).__name__}.")
         rhs_expr = lhs._coerce(rhs)
         if rhs_expr is None:
-            raise TypeError(f"MILP-Constraint rechte Seite: erwartet Variable/Expression/Quantity/Zahl, bekam {type(rhs).__name__}.")
+            raise TypeError(f"MILP constraint right-hand side: expected Variable/Expression/Quantity/number, got {type(rhs).__name__}.")
         _milp_units_compat(lhs.unit, rhs_expr.unit, "Constraint")
         diff = lhs - rhs_expr
         self.coeffs = dict(diff.coeffs)
@@ -2199,8 +2199,8 @@ def optimize_milp(objective, constraints=None, sense="minimize"):
         obj_expr = objective
     else:
         raise TypeError(
-            f"optimize_milp: objective muss Variable oder MILP-Expression sein, "
-            f"bekam {type(objective).__name__}."
+            f"optimize_milp: objective must be a Variable or MILP expression, "
+            f"got {type(objective).__name__}."
         )
 
     # constraints kann eine Python-Liste sein ODER ein leerer torch.Tensor
@@ -2231,7 +2231,7 @@ def optimize_milp(objective, constraints=None, sense="minimize"):
             _reg(v)
     N = len(var_order)
     if N == 0:
-        raise ValueError("optimize_milp: keine Variablen in objective/constraints gefunden.")
+        raise ValueError("optimize_milp: no variables found in objective/constraints.")
 
     c = _np.zeros(N, dtype=float)
     for v, coef in obj_expr.coeffs.items():
@@ -2239,7 +2239,7 @@ def optimize_milp(objective, constraints=None, sense="minimize"):
     if sense == "maximize":
         c = -c
     elif sense != "minimize":
-        raise ValueError(f"optimize_milp: sense muss 'minimize'/'maximize' sein, nicht {sense!r}.")
+        raise ValueError(f"optimize_milp: sense must be 'minimize'/'maximize', not {sense!r}.")
 
     lb = _np.full(N, -_np.inf)
     ub = _np.full(N, _np.inf)
@@ -2267,7 +2267,7 @@ def optimize_milp(objective, constraints=None, sense="minimize"):
         elif con.op == "==":
             eq_rows.append(row); eq_b.append(bnd)
         else:
-            raise ValueError(f"optimize_milp: Operator {con.op!r} nicht unterstuetzt.")
+            raise ValueError(f"optimize_milp: operator {con.op!r} not supported.")
 
     sci_constraints = []
     if ub_rows:
@@ -2278,7 +2278,7 @@ def optimize_milp(objective, constraints=None, sense="minimize"):
     res = _milp(c, constraints=sci_constraints if sci_constraints else None,
                 bounds=bounds, integrality=integrality)
     if not res.success:
-        raise RuntimeError(f"optimize_milp: keine Loesung. {res.message}")
+        raise RuntimeError(f"optimize_milp: no solution. {res.message}")
 
     out = {v.name: float(res.x[i]) for i, v in enumerate(var_order)}
     obj_val = float(res.fun)
@@ -2293,8 +2293,8 @@ def _md_convert_to_unit(q, target_unit, dimension, arg_name):
     """Validiert Quantity-Dimension und liefert numerischen Wert in target_unit."""
     if not isinstance(q, Quantity):
         raise TypeError(
-            f"md_simulate_lj: {arg_name} muss Quantity sein (z. B. 0.34[nm]), "
-            f"bekam {type(q).__name__}."
+            f"md_simulate_lj: {arg_name} must be a Quantity (e.g. 0.34[nm]), "
+            f"got {type(q).__name__}."
         )
     dim = _get_dimension(q.unit)
     expected_dim = _get_dimension(target_unit)
@@ -2349,7 +2349,7 @@ def md_simulate_lj(n_particles, sigma, epsilon, mass, temperature, dt, n_steps,
     # OpenMM: amu numerisch gleich g/mol fuer Avogadro-Skalierung
     mass_amu = mass_g_per_mol / 1.66053906660e-24
     if not isinstance(temperature, Quantity) or temperature.unit != "K":
-        raise ValueError(f"md_simulate_lj: temperature muss in [K] sein, bekam {temperature}.")
+        raise ValueError(f"md_simulate_lj: temperature must be in [K], got {temperature}.")
     temp_K = float(temperature.value)
     dt_ps = _md_convert_to_unit(dt, "ps", "time", "dt")
     box_nm = _md_convert_to_unit(box_size, "nm", "length", "box_size") if box_size is not None else None
@@ -2437,7 +2437,7 @@ def _unwrap_q(x):
     if isinstance(x, Quantity):
         if x.unit not in ("", "rad", None):
             raise ValueError(
-                f"Rotationswinkel muss dimensionslos oder [rad] sein, bekam [{x.unit}]."
+                f"Rotation angle must be dimensionless or [rad], got [{x.unit}]."
             )
         return float(x.value) if hasattr(x.value, 'item') else float(x.value)
     if hasattr(x, 'item'):
@@ -2541,7 +2541,7 @@ def statevec_sim(circuit, shots: int = 0):
     """
     shots = int(shots.item() if hasattr(shots, 'item') else shots)
     if not isinstance(circuit, QuantumCircuit):
-        raise TypeError(f"statevec_sim: Erwartet QuantumCircuit, bekam {type(circuit).__name__}.")
+        raise TypeError(f"statevec_sim: expected QuantumCircuit, got {type(circuit).__name__}.")
     n = circuit.n_qubits
     dim = 1 << n
     # Startzustand |0...0>
@@ -2616,11 +2616,11 @@ def statevec_expectation(circuit, observable):
         Erwartungswert (float)
     """
     if not isinstance(circuit, QuantumCircuit):
-        raise TypeError("statevec_expectation: Erwartet QuantumCircuit.")
+        raise TypeError("statevec_expectation: expected QuantumCircuit.")
     n = circuit.n_qubits
     if not isinstance(observable, str) or len(observable) != n:
         raise ValueError(
-            f"Observable muss ein {n}-Zeichen-Pauli-String sein (z.B. 'ZI'), bekam {observable!r}."
+            f"Observable must be an {n}-character Pauli string (e.g. 'ZI'), got {observable!r}."
         )
     sv = statevec_sim(circuit)
     # Baue Observ.-Matrix als Tensor-Produkt

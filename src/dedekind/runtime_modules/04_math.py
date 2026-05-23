@@ -109,7 +109,7 @@ def cov(x, y=None, unbiased=True):
     t = _to_tensor(x).float().flatten() if _to_tensor(x).dim() == 1 else _to_tensor(x).float()
     if y is None:
         if t.dim() == 1:
-            raise ValueError("cov: Bei einem Argument muss x 2D (Zeilen = Beobachtungen) sein.")
+            raise ValueError("cov: with one argument, x must be 2D (rows = observations).")
         n = t.shape[0]
         c = (n - 1) if unbiased and n > 1 else n
         centered = t - t.mean(dim=0)
@@ -117,7 +117,7 @@ def cov(x, y=None, unbiased=True):
     # zwei 1D-Vektoren
     tx, ty = _to_tensor(x).float().flatten(), _to_tensor(y).float().flatten()
     if tx.numel() != ty.numel():
-        raise ValueError("cov: x und y müssen gleiche Länge haben.")
+        raise ValueError("cov: x and y must have the same length.")
     n = tx.numel()
     c = (n - 1) if unbiased and n > 1 else n
     return ((tx - tx.mean()) * (ty - ty.mean())).sum() / c
@@ -130,7 +130,7 @@ def corrcoef(x, y=None):
     t = _to_tensor(x).float()
     if y is None:
         if t.dim() == 1:
-            raise ValueError("corrcoef: Bei einem Argument muss x 2D sein.")
+            raise ValueError("corrcoef: with one argument, x must be 2D.")
         c = cov(t, unbiased=True)
         if c.dim() == 0:
             return torch.tensor(1.0, device=c.device, dtype=c.dtype)
@@ -138,7 +138,7 @@ def corrcoef(x, y=None):
         return c / (std.unsqueeze(1) * std.unsqueeze(0))
     tx, ty = _to_tensor(x).float().flatten(), _to_tensor(y).float().flatten()
     if tx.numel() != ty.numel():
-        raise ValueError("corrcoef: x und y müssen gleiche Länge haben.")
+        raise ValueError("corrcoef: x and y must have the same length.")
     c = cov(tx, ty, unbiased=True)
     sx, sy = tx.std(unbiased=True), ty.std(unbiased=True)
     if sx < 1e-12 or sy < 1e-12:
@@ -185,7 +185,7 @@ def histogram(x, bins=10, range_lim=None):
     """
     t = _to_tensor(x).float().flatten()
     if t.numel() == 0:
-        raise ValueError("histogram: x darf nicht leer sein.")
+        raise ValueError("histogram: x must not be empty.")
     if isinstance(bins, (int, float)):
         n_bins = _builtin_max(1, int(bins))
         if range_lim is not None:
@@ -198,7 +198,7 @@ def histogram(x, bins=10, range_lim=None):
     else:
         edges = _to_tensor(bins).float().flatten()
         if edges.numel() < 2:
-            raise ValueError("histogram: bins als Kanten müssen mindestens 2 Werte haben.")
+            raise ValueError("histogram: bins as edges must have at least 2 values.")
         n_bins = edges.numel() - 1
     # Bin i = [edges[i], edges[i+1]). searchsorted(edges, t, side='right') - 1 = Bin-Index; clamp für Randwerte.
     idx = torch.searchsorted(edges, t, side="right") - 1
@@ -251,14 +251,14 @@ def det(A):
     """Determinante der Matrix A (2D-Tensor)."""
     t = _to_tensor(A).float()
     if t.dim() != 2:
-        raise ValueError("det: Erwartet 2D-Matrix.")
+        raise ValueError("det: expected a 2D matrix.")
     return torch.linalg.det(t)
 
 def trace(A):
     """Spur der Matrix A (Summe der Diagonalelemente)."""
     t = _to_tensor(A).float()
     if t.dim() != 2:
-        raise ValueError("trace: Erwartet 2D-Matrix.")
+        raise ValueError("trace: expected a 2D matrix.")
     return torch.trace(t)
 
 def solve(A, b):
@@ -269,7 +269,7 @@ def solve(A, b):
     A_t = _to_tensor(A).float()
     b_t = _to_tensor(b).float()
     if A_t.dim() != 2 or b_t.dim() not in (1, 2):
-        raise ValueError("solve: A muss 2D-Matrix sein, b Vektor oder Matrix.")
+        raise ValueError("solve: A must be a 2D matrix, b a vector or matrix.")
     if b_t.dim() == 1:
         b_t = b_t.unsqueeze(1)
     x = torch.linalg.solve(A_t, b_t)
@@ -282,7 +282,7 @@ def eigh(A):
     """
     A_t = _to_tensor(A).float()
     if A_t.dim() != 2:
-        raise ValueError("eigh: Erwartet 2D-Matrix.")
+        raise ValueError("eigh: expected a 2D matrix.")
     evals, evecs = torch.linalg.eigh(A_t)
     return evals, evecs
 
@@ -293,7 +293,7 @@ def eig(A):
     """
     A_t = _to_tensor(A).float()
     if A_t.dim() != 2:
-        raise ValueError("eig: Erwartet 2D-Matrix.")
+        raise ValueError("eig: expected a 2D matrix.")
     evals, evecs = torch.linalg.eig(A_t)
     return evals, evecs
 
@@ -305,7 +305,7 @@ def svd(A, full_matrices=True):
     """
     A_t = _to_tensor(A).float()
     if A_t.dim() != 2:
-        raise ValueError("svd: Erwartet 2D-Matrix.")
+        raise ValueError("svd: expected a 2D matrix.")
     U, S, Vh = torch.linalg.svd(A_t, full_matrices=full_matrices)
     return U, S, Vh
 
@@ -317,7 +317,7 @@ def lstsq(A, y, rcond=None):
     A_t = _to_tensor(A).float()
     y_t = _to_tensor(y).float()
     if A_t.dim() != 2 or y_t.dim() not in (1, 2):
-        raise ValueError("lstsq: A muss 2D-Matrix sein, y Vektor oder Matrix.")
+        raise ValueError("lstsq: A must be a 2D matrix, y a vector or matrix.")
     if y_t.dim() == 1:
         y_t = y_t.unsqueeze(1)
     result = torch.linalg.lstsq(
@@ -333,7 +333,7 @@ def cond(A, p=None):
     """
     t = _to_tensor(A).float()
     if t.dim() != 2:
-        raise ValueError("cond: Erwartet 2D-Matrix.")
+        raise ValueError("cond: expected a 2D matrix.")
     p_val = p if p is not None else 2
     return torch.linalg.cond(t, p=p_val)
 
@@ -344,7 +344,7 @@ def rank(A, tol=None):
     """
     t = _to_tensor(A).float()
     if t.dim() != 2:
-        raise ValueError("rank: Erwartet 2D-Matrix.")
+        raise ValueError("rank: expected a 2D matrix.")
     if tol is not None:
         return torch.linalg.matrix_rank(t, tol=float(tol))
     return torch.linalg.matrix_rank(t)
@@ -356,7 +356,7 @@ def pinv(A, rcond=None):
     """
     t = _to_tensor(A).float()
     if t.dim() != 2:
-        raise ValueError("pinv: Erwartet 2D-Matrix.")
+        raise ValueError("pinv: expected a 2D matrix.")
     r = rcond if rcond is not None else 1e-15
     return torch.linalg.pinv(t, rcond=r)
 
@@ -367,7 +367,7 @@ def expm(A):
     """
     t = _to_tensor(A).float()
     if t.dim() != 2 or t.shape[0] != t.shape[1]:
-        raise ValueError("expm: Erwartet quadratische 2D-Matrix.")
+        raise ValueError("expm: expected a square 2D matrix.")
     return torch.linalg.matrix_exp(t)
 
 def logm(A):
@@ -378,7 +378,7 @@ def logm(A):
     """
     t = _to_tensor(A).float()
     if t.dim() != 2 or t.shape[0] != t.shape[1]:
-        raise ValueError("logm: Erwartet quadratische 2D-Matrix.")
+        raise ValueError("logm: expected a square 2D matrix.")
     evals, evecs = torch.linalg.eig(t)
     log_evals = torch.log(evals)
     # evecs: Spalten = Eigenvektoren; A = evecs @ diag(evals) @ inv(evecs)
@@ -397,7 +397,7 @@ def interp(x, xp, fp):
     xp_t = _to_tensor(xp).float().flatten()
     fp_t = _to_tensor(fp).float().flatten()
     if xp_t.numel() != fp_t.numel():
-        raise ValueError("interp: xp und fp müssen gleiche Länge haben.")
+        raise ValueError("interp: xp and fp must have the same length.")
     x_np = x_t.detach().cpu().numpy()
     xp_np = xp_t.detach().cpu().numpy()
     fp_np = fp_t.detach().cpu().numpy()
@@ -416,7 +416,7 @@ def trapz(y, x=None):
     if x is not None:
         x_t = _to_tensor(x).float().flatten()
         if x_t.numel() != y_t.numel():
-            raise ValueError("trapz: x und y müssen gleiche Länge haben.")
+            raise ValueError("trapz: x and y must have the same length.")
         x_np = x_t.detach().cpu().numpy()
         result = np.trapezoid(y_np, x_np) if hasattr(np, 'trapezoid') else np.trapz(y_np, x_np)
     else:
@@ -434,7 +434,7 @@ def root_bisect(f, a, b, tol=1e-8, max_iter=200):
     b_val = float(_to_tensor(b).float().squeeze().item())
     fa, fb = f(a_val), f(b_val)
     if fa * fb > 0:
-        raise ValueError("root_bisect: f(a) und f(b) müssen unterschiedliche Vorzeichen haben.")
+        raise ValueError("root_bisect: f(a) and f(b) must have opposite signs.")
     for _ in range(max_iter):
         c = (a_val + b_val) / 2.0
         if (b_val - a_val) / 2.0 < tol:
@@ -455,7 +455,7 @@ def qr(A):
     """
     t = _to_tensor(A).float()
     if t.dim() != 2:
-        raise ValueError("qr: Erwartet 2D-Matrix.")
+        raise ValueError("qr: expected a 2D matrix.")
     Q, R = torch.linalg.qr(t)
     return Q, R
 
@@ -466,7 +466,7 @@ def cholesky(A):
     """
     t = _to_tensor(A).float()
     if t.dim() != 2 or t.shape[0] != t.shape[1]:
-        raise ValueError("cholesky: Erwartet quadratische 2D-Matrix.")
+        raise ValueError("cholesky: expected a square 2D matrix.")
     return torch.linalg.cholesky(t)
 
 def lu(A):
@@ -476,7 +476,7 @@ def lu(A):
     """
     t = _to_tensor(A).float()
     if t.dim() != 2 or t.shape[0] != t.shape[1]:
-        raise ValueError("lu: Erwartet quadratische 2D-Matrix.")
+        raise ValueError("lu: expected a square 2D matrix.")
     P, L, U = torch.linalg.lu(t)
     return P, L, U
 
@@ -487,7 +487,7 @@ def matrix_power(A, n):
     t = _to_tensor(A).float()
     n_int = int(n)
     if t.dim() != 2 or t.shape[0] != t.shape[1]:
-        raise ValueError("matrix_power: Erwartet quadratische 2D-Matrix.")
+        raise ValueError("matrix_power: expected a square 2D matrix.")
     return torch.linalg.matrix_power(t, n_int)
 
 def kron(A, B):
@@ -525,10 +525,10 @@ def matrix_sqrt(A):
     """
     t = _to_tensor(A).float()
     if t.dim() != 2 or t.shape[0] != t.shape[1]:
-        raise ValueError("matrix_sqrt: Erwartet quadratische 2D-Matrix.")
+        raise ValueError("matrix_sqrt: expected a square 2D matrix.")
     evals, evecs = torch.linalg.eigh(t)
     if (evals < -1e-10).any():
-        raise ValueError("matrix_sqrt: Matrix muss positiv semidefinit sein.")
+        raise ValueError("matrix_sqrt: matrix must be positive semidefinite.")
     evals_sqrt = torch.clamp(evals, min=0.0).sqrt()
     return evecs @ torch.diag(evals_sqrt) @ evecs.T
 
@@ -540,7 +540,7 @@ def matrix_norm(A, ord=None):
     """
     t = _to_tensor(A).float()
     if t.dim() != 2:
-        raise ValueError("matrix_norm: Erwartet 2D-Matrix.")
+        raise ValueError("matrix_norm: expected a 2D matrix.")
     return torch.linalg.norm(t, ord=ord if ord is not None else "fro")
 
 def cdist(X, Y, p=2):
@@ -551,7 +551,7 @@ def cdist(X, Y, p=2):
     X_t = _to_tensor(X).float()
     Y_t = _to_tensor(Y).float()
     if X_t.dim() != 2 or Y_t.dim() != 2 or X_t.shape[1] != Y_t.shape[1]:
-        raise ValueError("cdist: X und Y müssen 2D mit gleicher Spaltenanzahl sein.")
+        raise ValueError("cdist: X and Y must be 2D with the same number of columns.")
     return torch.cdist(X_t, Y_t, p=p)
 
 def polyfit(x, y, deg):
@@ -563,7 +563,7 @@ def polyfit(x, y, deg):
     x_t = _to_tensor(x).float().flatten()
     y_t = _to_tensor(y).float().flatten()
     if x_t.numel() != y_t.numel():
-        raise ValueError("polyfit: x und y müssen gleiche Länge haben.")
+        raise ValueError("polyfit: x and y must have the same length.")
     d = _builtin_max(0, int(deg))
     n = x_t.numel()
     # Vandermonde: Zeile i = [1, x_i, x_i^2, ...]
@@ -615,7 +615,7 @@ def convolve1d(a, v, mode="full"):
     v_t = _to_tensor(v).float().flatten()
     na, nv = a_t.numel(), v_t.numel()
     if nv == 0:
-        raise ValueError("convolve1d: Kernel v darf nicht leer sein.")
+        raise ValueError("convolve1d: kernel v must not be empty.")
     # Faltung als conv1d: a als Signal (1, 1, L), v als Kernel (1, 1, K); groups=1.
     a_2 = a_t.unsqueeze(0).unsqueeze(0)  # (1, 1, na)
     v_2 = v_t.flip(0).unsqueeze(0).unsqueeze(0)  # (1, 1, nv) für Korrelation = Faltung
@@ -635,7 +635,7 @@ def minimize_scalar(f, bounds, tol=1e-6, max_iter=100):
     a_val = float(_to_tensor(bounds[0]).float().squeeze().item())
     b_val = float(_to_tensor(bounds[1]).float().squeeze().item())
     if a_val >= b_val:
-        raise ValueError("minimize_scalar: bounds muss (a, b) mit a < b sein.")
+        raise ValueError("minimize_scalar: bounds must be (a, b) with a < b.")
     phi = (1.0 + 5.0 ** 0.5) / 2.0  # golden ratio
     c = b_val - (b_val - a_val) / phi
     d = a_val + (b_val - a_val) / phi
@@ -744,7 +744,7 @@ def fsolve(f, x0, tol=1e-8, max_iter=50):
         fx = f(x)
         fx = _to_tensor(fx).float().flatten()
         if fx.numel() != x.numel():
-            raise ValueError("fsolve: f(x) muss gleiche Länge wie x haben.")
+            raise ValueError("fsolve: f(x) must have the same length as x.")
         if torch.linalg.norm(fx).item() < tol:
             return x
         J = jacobian(f, x)
@@ -769,7 +769,7 @@ def integrate(f, a, b, n=100):
     y = f(x)
     y = _to_tensor(y).float().flatten()
     if y.numel() != n_int:
-        raise ValueError("integrate: f(x) muss gleiche Länge wie x haben.")
+        raise ValueError("integrate: f(x) must have the same length as x.")
     dx = (b_val - a_val) / (n_int - 1.0)
     result = (dx / 2.0) * (y[0] + 2.0 * y[1:-1].sum() + y[-1])
     return result.squeeze()
@@ -788,7 +788,7 @@ def simpson(y, x=None):
     if x is not None:
         x_t = _to_tensor(x).float().flatten()
         if x_t.numel() != n:
-            raise ValueError("simpson: x und y müssen gleiche Länge haben.")
+            raise ValueError("simpson: x and y must have the same length.")
         h = (x_t[-1] - x_t[0]).item() / (n - 1.0)
     else:
         h = 1.0
@@ -829,7 +829,7 @@ def riemann_sum(f, a, b, n=100, method="midpoint"):
     y = f(x)
     y = _to_tensor(y).float().flatten()
     if y.numel() != n_int:
-        raise ValueError("riemann_sum: f(x) muss gleiche Länge wie Stützstellen haben.")
+        raise ValueError("riemann_sum: f(x) must have the same length as the sample points.")
     return (dx * y.sum()).squeeze()
 
 def zeta(s):
@@ -841,7 +841,7 @@ def zeta(s):
     try:
         import scipy.special as sc  # type: ignore[import-untyped]
     except ImportError:
-        raise RuntimeError("zeta(s) erfordert scipy. Bitte installieren: pip install scipy")
+        raise RuntimeError("zeta(s) requires scipy. Please install: pip install scipy")
     s_t = _to_tensor(s).float()
     _abs = builtins.abs  # Python built-in für komplexe Zahlen
     if s_t.dim() == 0:
@@ -929,7 +929,7 @@ def pappus_volume_vertical(f, a, b, x0, n=100):
     x = torch.linspace(a_val, b_val, n_int)
     y = _to_tensor(f(x)).float().flatten()
     if y.numel() != n_int:
-        raise ValueError("pappus_volume_vertical: f(x) muss gleiche Länge wie Stützstellen haben.")
+        raise ValueError("pappus_volume_vertical: f(x) must have the same length as the sample points.")
     dx = (b_val - a_val) / (n_int - 1.0)
     A = (dx / 2.0) * (y[0] + 2.0 * y[1:-1].sum() + y[-1])
     My = (dx / 2.0) * ((x[0] * y[0]) + 2.0 * (x[1:-1] * y[1:-1]).sum() + (x[-1] * y[-1]))
@@ -950,7 +950,7 @@ def pappus_volume_horizontal(f, a, b, y0, n=100):
     x = torch.linspace(a_val, b_val, n_int)
     y = _to_tensor(f(x)).float().flatten()
     if y.numel() != n_int:
-        raise ValueError("pappus_volume_horizontal: f(x) muss gleiche Länge wie Stützstellen haben.")
+        raise ValueError("pappus_volume_horizontal: f(x) must have the same length as the sample points.")
     dx = (b_val - a_val) / (n_int - 1.0)
     A = (dx / 2.0) * (y[0] + 2.0 * y[1:-1].sum() + y[-1])
     y_sq = y * y
@@ -984,9 +984,9 @@ def partial(u, x, order=1):
         residual = u_t - alpha * u_xx
     """
     if not isinstance(u, torch.Tensor):
-        raise TypeError(f"partial: u muss torch.Tensor sein, bekam {type(u).__name__}.")
+        raise TypeError(f"partial: u must be a torch.Tensor, got {type(u).__name__}.")
     if not isinstance(x, torch.Tensor):
-        raise TypeError(f"partial: x muss torch.Tensor sein, bekam {type(x).__name__}.")
+        raise TypeError(f"partial: x must be a torch.Tensor, got {type(x).__name__}.")
     if not x.requires_grad:
         raise ValueError(
             "partial: x.requires_grad ist False. Markiere den Eingabe-Tensor mit "
@@ -1252,7 +1252,7 @@ def rotate(v, R):
     """Rotation eines Multivectors via Sandwich-Produkt: v' = R v ~R.
     Fuer einen Unit-Rotor (||R|| = 1) ist ~R = R^{-1}."""
     if not isinstance(v, MultiVector):
-        raise TypeError(f"rotate: v muss MultiVector sein, bekam {type(v).__name__}.")
+        raise TypeError(f"rotate: v must be a MultiVector, got {type(v).__name__}.")
     if not isinstance(R, MultiVector):
-        raise TypeError(f"rotate: R muss MultiVector sein, bekam {type(R).__name__}.")
+        raise TypeError(f"rotate: R must be a MultiVector, got {type(R).__name__}.")
     return R * v * R.reverse()

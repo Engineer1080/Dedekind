@@ -118,8 +118,8 @@ class LbmSimulation:
 
         if self.tau <= 0.5:
             raise ValueError(
-                f"LbmSimulation: tau={self.tau} muss > 0.5 sein "
-                f"(BGK-Stabilität; nu_lattice = (tau-0.5)/3 muss > 0)."
+                f"LbmSimulation: tau={self.tau} must be > 0.5 "
+                f"(BGK stability; nu_lattice = (tau-0.5)/3 must be > 0)."
             )
         if abs(self._inlet_u) > self.MAX_LATTICE_U:
             # Kein Fehler, nur Warnung über Print — Mach-Zahl in LBM ist u*sqrt(3)
@@ -777,7 +777,7 @@ def lbm_reynolds_impl(u_lattice, l_lattice, tau):
     """Reynolds-Zahl aus Lattice-Größen: Re = u*L / nu, nu = (tau-0.5)/3."""
     tau_val = float(tau) if not isinstance(tau, torch.Tensor) else float(tau.item())
     if tau_val <= 0.5:
-        raise ValueError(f"lbm_reynolds: tau={tau_val} muss > 0.5 sein.")
+        raise ValueError(f"lbm_reynolds: tau={tau_val} must be > 0.5.")
     nu = (tau_val - 0.5) / 3.0
     u_val = float(u_lattice) if not isinstance(u_lattice, torch.Tensor) else float(u_lattice.item())
     l_val = float(l_lattice) if not isinstance(l_lattice, torch.Tensor) else float(l_lattice.item())
@@ -790,13 +790,13 @@ def lbm_tau_from_reynolds_impl(re, u_lattice, l_lattice):
     u_v = float(u_lattice) if not isinstance(u_lattice, torch.Tensor) else float(u_lattice.item())
     l_v = float(l_lattice) if not isinstance(l_lattice, torch.Tensor) else float(l_lattice.item())
     if re_v <= 0:
-        raise ValueError("lbm_tau_from_reynolds: Re muss > 0 sein.")
+        raise ValueError("lbm_tau_from_reynolds: Re must be > 0.")
     nu = u_v * l_v / re_v
     tau = 3.0 * nu + 0.5
     if tau <= 0.5:
         raise ValueError(
-            f"lbm_tau_from_reynolds: berechnetes tau={tau:.4f} <= 0.5 (instabil); "
-            f"erhöhe Re oder reduziere u_lattice/l_lattice."
+            f"lbm_tau_from_reynolds: computed tau={tau:.4f} <= 0.5 (unstable); "
+            f"increase Re or reduce u_lattice/l_lattice."
         )
     return tau
 
@@ -1107,8 +1107,8 @@ def _lbm_to_si_length(x, name="length"):
     if u in table:
         return v * table[u]
     raise ValueError(
-        f"LBM Physical API: Parameter '{name}' braucht Längeneinheit "
-        f"(m, cm, mm, km, um, nm), bekam [{u}]."
+        f"LBM Physical API: parameter '{name}' requires a length unit "
+        f"(m, cm, mm, km, um, nm), got [{u}]."
     )
 
 
@@ -1120,8 +1120,8 @@ def _lbm_to_si_velocity(x, name="velocity"):
     if u in table:
         return v * table[u]
     raise ValueError(
-        f"LBM Physical API: Parameter '{name}' braucht Geschwindigkeit "
-        f"(m/s, km/h, cm/s, mm/s), bekam [{u}]."
+        f"LBM Physical API: parameter '{name}' requires a velocity unit "
+        f"(m/s, km/h, cm/s, mm/s), got [{u}]."
     )
 
 
@@ -1138,8 +1138,8 @@ def _lbm_to_si_kviscosity(x, name="nu"):
     if u in table:
         return v * table[u]
     raise ValueError(
-        f"LBM Physical API: Parameter '{name}' braucht kinematische Viskosität "
-        f"(m^2/s, mm^2/s, cSt, St), bekam [{u}]."
+        f"LBM Physical API: parameter '{name}' requires a kinematic viscosity unit "
+        f"(m^2/s, mm^2/s, cSt, St), got [{u}]."
     )
 
 
@@ -1154,8 +1154,8 @@ def _lbm_to_si_density(x, name="rho"):
     if u in table:
         return v * table[u]
     raise ValueError(
-        f"LBM Physical API: Parameter '{name}' braucht Dichte "
-        f"(kg/m^3, g/cm^3), bekam [{u}]."
+        f"LBM Physical API: parameter '{name}' requires a density unit "
+        f"(kg/m^3, g/cm^3), got [{u}]."
     )
 
 
@@ -1168,8 +1168,8 @@ def _lbm_to_si_time(x, name="time"):
     if u in table:
         return v * table[u]
     raise ValueError(
-        f"LBM Physical API: Parameter '{name}' braucht Zeit "
-        f"(s, ms, min, h), bekam [{u}]."
+        f"LBM Physical API: parameter '{name}' requires a time unit "
+        f"(s, ms, min, h), got [{u}]."
     )
 
 
@@ -1204,15 +1204,15 @@ class PhysicalLbmSimulation:
         self.rho_phys = _lbm_to_si_density(rho, "rho")
 
         if self.L_x <= 0 or self.L_y <= 0:
-            raise ValueError("PhysicalLbmSimulation: domain_x/domain_y müssen > 0 sein.")
+            raise ValueError("PhysicalLbmSimulation: domain_x/domain_y must be > 0.")
         if self.U_in <= 0:
-            raise ValueError("PhysicalLbmSimulation: inlet_u muss > 0 sein.")
+            raise ValueError("PhysicalLbmSimulation: inlet_u must be > 0.")
         if self.nu_phys <= 0:
-            raise ValueError("PhysicalLbmSimulation: nu muss > 0 sein.")
+            raise ValueError("PhysicalLbmSimulation: nu must be > 0.")
 
         self.nx = int(nx)
         if self.nx < 8:
-            raise ValueError(f"PhysicalLbmSimulation: nx={self.nx} zu klein (min 8).")
+            raise ValueError(f"PhysicalLbmSimulation: nx={self.nx} too small (min 8).")
 
         # dx aus Domänenlänge und Auflösung
         self.dx = self.L_x / self.nx  # [m / lattice unit]
@@ -1226,8 +1226,8 @@ class PhysicalLbmSimulation:
         u_lat = float(u_lattice_target) if u_lattice_target is not None else self.DEFAULT_U_LATTICE
         if u_lat <= 0 or u_lat > 0.1:
             raise ValueError(
-                f"PhysicalLbmSimulation: u_lattice_target={u_lat} muss in (0, 0.1] liegen "
-                f"(Mach-Stabilität)."
+                f"PhysicalLbmSimulation: u_lattice_target={u_lat} must lie in (0, 0.1] "
+                f"(Mach stability)."
             )
         self.u_lattice = u_lat
         self.dt = u_lat * self.dx / self.U_in  # [s / lattice step]
@@ -1485,7 +1485,7 @@ class Lbm3dSimulation:
         self.smagorinsky_constant = smagorinsky_constant
         
         if self.tau <= 0.5:
-            raise ValueError(f"Lbm3dSimulation: tau={self.tau} muss > 0.5 sein.")
+            raise ValueError(f"Lbm3dSimulation: tau={self.tau} must be > 0.5.")
             
         if obstacle_mask is not None:
             mask_t = _to_double_tensor(obstacle_mask)

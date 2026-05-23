@@ -21,7 +21,7 @@ def benchmark(fn, n=10, warmup=2, label=None):
     (in Dedekind: anonyme Lambda via einer normalen Funktion ohne Argumente)."""
     import time
     if not callable(fn):
-        raise TypeError("benchmark: fn muss eine aufrufbare Funktion ohne Argumente sein.")
+        raise TypeError("benchmark: fn must be a callable function with no arguments.")
     for _ in range(int(warmup)):
         try: fn()
         except Exception: pass
@@ -65,7 +65,7 @@ def profile(fn, label=None, top=5):
     import cProfile
     import pstats
     if not callable(fn):
-        raise TypeError("profile: fn muss eine aufrufbare Funktion ohne Argumente sein.")
+        raise TypeError("profile: fn must be a callable function with no arguments.")
     tracemalloc.start()
     pr = cProfile.Profile()
     t0 = time.perf_counter()
@@ -90,7 +90,7 @@ def time_block(label, fn):
     Praktisch für Ad-hoc-Messungen: `result = time_block("solve", fn() => ode_solve(...))`."""
     import time
     if not callable(fn):
-        raise TypeError("time_block: fn muss eine aufrufbare Funktion ohne Argumente sein.")
+        raise TypeError("time_block: fn must be a callable function with no arguments.")
     t0 = time.perf_counter()
     out = fn()
     t1 = time.perf_counter()
@@ -123,7 +123,7 @@ def jit(fn):
     Backend, sodass Dedekind-Code, der zu PyTorch-Operationen transpiliert wird, durch denselben
     Compiler-Stack läuft wie reines PyTorch-Modell-Code."""
     if not callable(fn):
-        raise TypeError("jit: fn muss eine aufrufbare Funktion sein.")
+        raise TypeError("jit: fn must be a callable function.")
     compiler = getattr(torch, "compile", None)
     if compiler is None:
         # PyTorch < 2.0 oder Stub: einfach Original zurückgeben.
@@ -152,7 +152,7 @@ def sde_solve(drift, diffusion, y0, t, method="euler_maruyama", seed_value=None)
     y0 = _to_tensor(y0).float()
     t_grid = _to_tensor(t).float().flatten()
     if t_grid.numel() < 2:
-        raise ValueError("sde_solve: t braucht mindestens 2 Stützstellen.")
+        raise ValueError("sde_solve: t requires at least 2 sample points.")
     if seed_value is not None:
         torch.manual_seed(int(seed_value))
     out = [y0]
@@ -200,7 +200,7 @@ def least_squares(residuals, x0, jacobian=None, bounds=None, method="trf"):
     try:
         from scipy.optimize import least_squares as _ls  # type: ignore[import-untyped]
     except ImportError:
-        raise RuntimeError("least_squares benötigt scipy.")
+        raise RuntimeError("least_squares requires scipy.")
     import numpy as _np  # type: ignore[reportMissingImports]
     x0_np = _np.asarray(_to_tensor(x0).detach().cpu().numpy(), dtype=float).reshape(-1)
 
@@ -247,7 +247,7 @@ def minimize_constrained(f, x0, constraints=None, bounds=None, method="SLSQP", t
     try:
         from scipy.optimize import minimize as _min  # type: ignore[import-untyped]
     except ImportError:
-        raise RuntimeError("minimize_constrained benötigt scipy.")
+        raise RuntimeError("minimize_constrained requires scipy.")
     import numpy as _np  # type: ignore[reportMissingImports]
     x0_np = _np.asarray(_to_tensor(x0).detach().cpu().numpy(), dtype=float).reshape(-1)
 
@@ -309,7 +309,7 @@ def milp(c, A_ub=None, b_ub=None, A_eq=None, b_eq=None, bounds=None, integrality
     try:
         from scipy.optimize import milp as _milp, LinearConstraint, Bounds  # type: ignore[import-untyped]
     except ImportError:
-        raise RuntimeError("milp benötigt scipy>=1.9 (scipy.optimize.milp).")
+        raise RuntimeError("milp requires scipy>=1.9 (scipy.optimize.milp).")
     import numpy as _np  # type: ignore[reportMissingImports]
     c_np = _np.asarray(_to_tensor(c).detach().cpu().numpy(), dtype=float).reshape(-1)
 
@@ -362,7 +362,7 @@ def mesh_unit_square(n):
     import numpy as _np  # type: ignore[reportMissingImports]
     n_i = int(n)
     if n_i < 1:
-        raise ValueError("mesh_unit_square: n muss >= 1 sein.")
+        raise ValueError("mesh_unit_square: n must be >= 1.")
     xs = _np.linspace(0.0, 1.0, n_i + 1)
     ys = _np.linspace(0.0, 1.0, n_i + 1)
     nodes = _np.array([[x, y] for y in ys for x in xs], dtype=float)
@@ -477,7 +477,7 @@ def _require_sympy():
         import sympy  # type: ignore[reportMissingImports]
         return sympy
     except ImportError:
-        raise ImportError("Symbolische Operation erfordert sympy. Bitte installieren: pip install sympy")
+        raise ImportError("Symbolic operation requires sympy. Please install: pip install sympy")
 
 
 def _sympify_expr(sympy_mod, expr_str):
@@ -562,7 +562,7 @@ def _to_scipy_sparse(A):
     try:
         import scipy.sparse as _sps  # type: ignore[import-untyped]
     except ImportError:
-        raise RuntimeError("Sparse-Solver benötigen scipy.")
+        raise RuntimeError("Sparse solvers require scipy.")
     if _sps.issparse(A):
         return A.tocsr().astype(float)
     if hasattr(A, "is_sparse") and A.is_sparse:
@@ -597,7 +597,7 @@ def _iterative_solve_dispatch(method_name, A, b, x0, tol, max_iter, precondition
     try:
         import scipy.sparse.linalg as _ssl  # type: ignore[import-untyped]
     except ImportError:
-        raise RuntimeError("Sparse-Solver benötigen scipy.")
+        raise RuntimeError("Sparse solvers require scipy.")
     A_sp = _to_scipy_sparse(A)
     b_np = _to_numpy_vector(b)
     x0_np = _to_numpy_vector(x0) if x0 is not None else None
@@ -643,7 +643,7 @@ def jacobi_preconditioner(A):
     try:
         import scipy.sparse.linalg as _ssl  # type: ignore[import-untyped]
     except ImportError:
-        raise RuntimeError("jacobi_preconditioner benötigt scipy.")
+        raise RuntimeError("jacobi_preconditioner requires scipy.")
     import numpy as _np  # type: ignore[reportMissingImports]
     A_sp = _to_scipy_sparse(A)
     diag = _np.asarray(A_sp.diagonal(), dtype=float)
@@ -662,7 +662,7 @@ def ilu_preconditioner(A, drop_tol=1e-4, fill_factor=10):
     try:
         import scipy.sparse.linalg as _ssl  # type: ignore[import-untyped]
     except ImportError:
-        raise RuntimeError("ilu_preconditioner benötigt scipy.")
+        raise RuntimeError("ilu_preconditioner requires scipy.")
     A_sp = _to_scipy_sparse(A).tocsc()
     ilu = _ssl.spilu(A_sp, drop_tol=float(drop_tol), fill_factor=float(fill_factor))
     n = A_sp.shape[0]
@@ -723,7 +723,7 @@ def quantum_circuit(n_qubits):
     if isinstance(n_qubits, Quantity):
         if n_qubits.unit not in ("", None):
             raise ValueError(
-                f"quantum_circuit: n_qubits muss dimensionslos sein, bekam [{n_qubits.unit}]."
+                f"quantum_circuit: n_qubits must be dimensionless, got [{n_qubits.unit}]."
             )
         n_qubits = int(float(n_qubits.value))
     else:
@@ -820,7 +820,7 @@ def gc_content(dna):
     """Liefert den Anteil G+C in einer DNA-Sequenz (0..1).
     Akzeptiert auch RNA ÔÇö N wird ignoriert."""
     if not isinstance(dna, str):
-        raise TypeError(f"gc_content: erwarte String, erhalten {type(dna).__name__}.")
+        raise TypeError(f"gc_content: expected string, got {type(dna).__name__}.")
     s = dna.upper()
     if not s:
         return 0.0
@@ -833,7 +833,7 @@ def gc_content(dna):
 def reverse_complement(dna):
     """Liefert das Reverse-Complement einer DNA-Sequenz."""
     if not isinstance(dna, str):
-        raise TypeError(f"reverse_complement: erwarte String, erhalten {type(dna).__name__}.")
+        raise TypeError(f"reverse_complement: expected string, got {type(dna).__name__}.")
     s = dna.upper()
     bad = [c for c in s if c not in _DNA_COMPLEMENT]
     if bad:
@@ -846,7 +846,7 @@ def reverse_complement(dna):
 def transcribe(dna):
     """DNA -> RNA: ersetzt T durch U."""
     if not isinstance(dna, str):
-        raise TypeError(f"transcribe: erwarte String, erhalten {type(dna).__name__}.")
+        raise TypeError(f"transcribe: expected string, got {type(dna).__name__}.")
     return dna.upper().replace("T", "U")
 
 def translate(rna, stop_at_stop=True):
@@ -854,7 +854,7 @@ def translate(rna, stop_at_stop=True):
     stop_at_stop=True (Default): bricht beim ersten Stop-Codon (*) ab.
     """
     if not isinstance(rna, str):
-        raise TypeError(f"translate: erwarte String, erhalten {type(rna).__name__}.")
+        raise TypeError(f"translate: expected string, got {type(rna).__name__}.")
     s = rna.upper().replace("T", "U")
     out = []
     for i in range(0, len(s) - 2, 3):
@@ -868,10 +868,10 @@ def translate(rna, stop_at_stop=True):
 def k_mer_count(seq, k):
     """Liefert ein Dict {k_mer: count} fuer alle ueberlappenden k-Mere."""
     if not isinstance(seq, str):
-        raise TypeError(f"k_mer_count: erwarte String, erhalten {type(seq).__name__}.")
+        raise TypeError(f"k_mer_count: expected string, got {type(seq).__name__}.")
     k = int(k)
     if k < 1:
-        raise ValueError(f"k_mer_count: k muss >= 1 sein, bekam {k}.")
+        raise ValueError(f"k_mer_count: k must be >= 1, got {k}.")
     s = seq.upper()
     counts = {}
     for i in range(0, len(s) - k + 1):
@@ -888,7 +888,7 @@ def smiles_descriptors(smiles):
     auf 0/None gesetzt; wer diese Felder zwingend braucht, muss rdkit installieren
     (`pip install rdkit`)."""
     if not isinstance(smiles, str):
-        raise TypeError(f"smiles_descriptors: erwarte String, erhalten {type(smiles).__name__}.")
+        raise TypeError(f"smiles_descriptors: expected string, got {type(smiles).__name__}.")
     try:
         from rdkit import Chem  # type: ignore[import-untyped]
         from rdkit.Chem import Descriptors, Lipinski  # type: ignore[import-untyped]

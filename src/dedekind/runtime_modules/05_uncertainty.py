@@ -17,11 +17,11 @@ class UncertainQuantity:
     def __add__(self, other):
         if isinstance(other, (int, float)):
             if self.unit:
-                raise ValueError("UncertainQuantity: Kann Zahl nicht zu Größe mit Einheit addieren.")
+                raise ValueError("UncertainQuantity: cannot add a number to a quantity with units.")
             return UncertainQuantity(self.value + other, self.std, "")
         if isinstance(other, UncertainQuantity):
             if not self._compatible_add_sub(other):
-                raise ValueError(f"Einheiten passen nicht: [{self.unit}] vs [{other.unit}] (gleiche Einheit oder kompatible Dimension).")
+                raise ValueError(f"Units do not match: [{self.unit}] vs [{other.unit}] (same unit or compatible dimension required).")
             dim = _get_dimension(self.unit)
             if dim is not None and dim == _get_dimension(other.unit):
                 ov, os_ = _convert_between_units(other.value, other.std, other.unit, self.unit, dim)
@@ -39,11 +39,11 @@ class UncertainQuantity:
     def __sub__(self, other):
         if isinstance(other, (int, float)):
             if self.unit:
-                raise ValueError("UncertainQuantity: Kann Zahl nicht subtrahieren.")
+                raise ValueError("UncertainQuantity: cannot subtract a number from a quantity with units.")
             return UncertainQuantity(self.value - other, self.std, "")
         if isinstance(other, UncertainQuantity):
             if not self._compatible_add_sub(other):
-                raise ValueError(f"Einheiten passen nicht: [{self.unit}] vs [{other.unit}] (gleiche Einheit oder kompatible Dimension).")
+                raise ValueError(f"Units do not match: [{self.unit}] vs [{other.unit}] (same unit or compatible dimension required).")
             dim = _get_dimension(self.unit)
             if dim is not None and dim == _get_dimension(other.unit):
                 ov, os_ = _convert_between_units(other.value, other.std, other.unit, self.unit, dim)
@@ -83,12 +83,12 @@ class UncertainQuantity:
     def __truediv__(self, other):
         if isinstance(other, (int, float)):
             if other == 0:
-                raise ValueError("UncertainQuantity: Division durch null.")
+                raise ValueError("UncertainQuantity: division by zero.")
             return UncertainQuantity(self.value / other, self.std / abs(other), self.unit)
         if isinstance(other, UncertainQuantity):
             v = self.value / other.value
             if other.value == 0:
-                raise ValueError("UncertainQuantity: Division durch null.")
+                raise ValueError("UncertainQuantity: division by zero.")
             r1 = (self.std / self.value) ** 2 if self.value != 0 else 0.0
             r2 = (other.std / other.value) ** 2
             s = abs(v) * (r1 + r2) ** 0.5
@@ -228,10 +228,10 @@ def linear_regression(x, y):
     x_t = _to_tensor(x).float().flatten()
     y_t = _to_tensor(y).float().flatten()
     if x_t.numel() != y_t.numel():
-        raise ValueError("linear_regression: x und y müssen gleiche Länge haben.")
+        raise ValueError("linear_regression: x and y must have the same length.")
     n = x_t.numel()
     if n < 2:
-        raise ValueError("linear_regression: mindestens 2 Punkte nötig.")
+        raise ValueError("linear_regression: at least 2 points required.")
     params_init = torch.tensor([0.0, 0.0], dtype=torch.float32)
     data = [x_t, y_t]
 
@@ -359,7 +359,7 @@ def confidence_interval(x, alpha=0.05):
     t = _to_tensor(x).float().flatten()
     n = t.numel()
     if n < 2:
-        raise ValueError("confidence_interval: mindestens 2 Beobachtungen nötig.")
+        raise ValueError("confidence_interval: at least 2 observations required.")
     m = t.mean().item()
     s = t.std(unbiased=True).item()
     se = s / (n ** 0.5)
@@ -522,7 +522,7 @@ def atomic_mass(symbol):
     """
     s = str(symbol).strip()
     if s not in ATOMIC_MASSES:
-        raise ValueError(f"atomic_mass: unbekanntes Element '{s}'. Bekannt: H, C, N, O, S, P, Cl, Na, K, Fe, ...")
+        raise ValueError(f"atomic_mass: unknown element '{s}'. Known: H, C, N, O, S, P, Cl, Na, K, Fe, ...")
     return Quantity(ATOMIC_MASSES[s], "g/mol")
 
 
@@ -534,7 +534,7 @@ def atomic_number(symbol):
     """
     s = str(symbol).strip()
     if s not in ATOMIC_NUMBERS:
-        raise ValueError(f"atomic_number: unbekanntes Element '{s}'.")
+        raise ValueError(f"atomic_number: unknown element '{s}'.")
     return ATOMIC_NUMBERS[s]
 
 def concentration_to_pH(c_M):
@@ -560,7 +560,7 @@ def christoffel_symbols(g_func, x, h=1e-5):
     n = x_t.shape[0]
     g0 = _to_tensor(g_func(x_t)).float()
     if g0.dim() != 2 or g0.shape[0] != g0.shape[1] or g0.shape[0] != n:
-        raise ValueError("christoffel_symbols: g_func(x) muss (n,n)-Matrix liefern, n = len(x).")
+        raise ValueError("christoffel_symbols: g_func(x) must return an (n,n) matrix, n = len(x).")
     g_inv = torch.linalg.inv(g0)
     Gamma = torch.zeros(n, n, n, device=g0.device, dtype=g0.dtype)
     for k in range(n):
@@ -632,7 +632,7 @@ def covariant_derivative(T, g_func, x, h=1e-5):
             x_plus[i] = x_plus[i] + h
             grad[i] = (_to_tensor(T(x_plus)).float().item() - T0.item()) / h
         return grad
-    raise NotImplementedError("covariant_derivative: nur für Skalarfelder implementiert.")
+    raise NotImplementedError("covariant_derivative: only implemented for scalar fields.")
 
 # --- Standard Library: Stöchiometrie ---
 def _parse_formula(s):
@@ -666,7 +666,7 @@ def balance_equation(reactants_str, products_str):
     _, _, vh = np.linalg.svd(A_np)
     null_vec = vh[-1]
     if np.allclose(np.abs(null_vec), 0):
-        raise ValueError("balance_equation: Reaktion nicht ausbalancierbar.")
+        raise ValueError("balance_equation: reaction cannot be balanced.")
     if np.min(null_vec) <= 0:
         null_vec = -null_vec
     min_pos = np.min(null_vec[null_vec > 0.001]) if np.any(null_vec > 0.001) else 1.0
@@ -752,7 +752,7 @@ def _parse_smiles(smiles):
         elif c == '[':
             j = smiles.find(']', i)
             if j == -1:
-                raise ValueError(f"SMILES-Parser: Fehlende schließende Klammer bei Position {i}")
+                raise ValueError(f"SMILES parser: missing closing parenthesis at position {i}")
             content = smiles[i+1:j]
             i = j + 1
             
@@ -907,7 +907,7 @@ def pubchem_get_molecular_formula(name):
     except Exception:
         if n in PUBCHEM_CACHE:
             return PUBCHEM_CACHE[n]
-        raise ValueError(f"pubchem_get_molecular_formula: Verbindung fehlgeschlagen und Name '{name}' nicht im lokalen Cache.")
+        raise ValueError(f"pubchem_get_molecular_formula: connection failed and name '{name}' not in local cache.")
 
 def chembl_get_ic50(target, compound):
     """
@@ -946,12 +946,12 @@ def chembl_get_ic50(target, compound):
                     val = act.get("standard_value")
                     if val is not None:
                         return Quantity(float(val), "nM")
-            raise ValueError("Keine Aktivitäten gefunden.")
+            raise ValueError("No activities found.")
     except Exception:
         key = (tgt, cmpd)
         if key in CHEMBL_CACHE:
             return Quantity(CHEMBL_CACHE[key], "nM")
-        raise ValueError(f"chembl_get_ic50: Verbindung fehlgeschlagen und Paar ({target}, {compound}) nicht im lokalen Cache.")
+        raise ValueError(f"chembl_get_ic50: connection failed and pair ({target}, {compound}) not in local cache.")
 
 
 # --- Standard Library: Life Sciences Extension (Phase 2) ---
@@ -1460,7 +1460,7 @@ def seismic_wave_velocities(K, G, rho):
 def fidelity(sv1, sv2):
     """Fidelitaet |Ôƒ¿¤ê1|¤ê2Ôƒ®|┬▓ zwischen zwei Statevektoren."""
     if len(sv1) != len(sv2):
-        raise ValueError(f"fidelity: Vektoren muessen gleiche Laenge haben, bekam {len(sv1)} und {len(sv2)}.")
+        raise ValueError(f"fidelity: vectors must have the same length, got {len(sv1)} and {len(sv2)}.")
     inner = sum(a.conjugate() * b for a, b in zip(sv1, sv2))
     return abs(inner) ** 2
 

@@ -189,7 +189,7 @@ class _Parser:
                     arg = self._parse_expr()
                     rp = self._advance()
                     if rp is None or rp[0] != "RPAREN":
-                        raise ValueError("Fehlende ')' nach " + name)
+                        raise ValueError("Missing ')' after " + name)
                     if name == "sin":
                         return Sin(arg)
                     if name == "cos":
@@ -207,7 +207,7 @@ class _Parser:
             e = self._parse_expr()
             rp = self._advance()
             if rp is None or rp[0] != "RPAREN":
-                raise ValueError("Fehlende ')'")
+                raise ValueError("Missing ')'")
             return e
         raise ValueError(f"Unerwartetes Token: {p}")
 

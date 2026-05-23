@@ -314,7 +314,7 @@ class _SymParser:
                     arg = self._parse_expr()
                     rp = self._advance()
                     if rp is None or rp[0] != "RPAREN":
-                        raise ValueError("Fehlende ')' nach " + name)
+                        raise ValueError("Missing ')' after " + name)
                     if name == "sin":
                         return _SymSin(arg)
                     if name == "cos":
@@ -677,7 +677,7 @@ def _plot_contour_inner(X, Y, Z, title=None, xlabel=None, ylabel=None, levels=10
         import matplotlib.pyplot as plt  # type: ignore[import-untyped]
         import numpy as np  # type: ignore[reportMissingImports]
     except ImportError:
-        print("contour(): matplotlib nicht installiert. pip install matplotlib")
+        print("contour(): matplotlib not installed. pip install matplotlib")
         return
     fig, ax = plt.subplots()
     nlev = int(levels) if levels is not None else 10

@@ -164,7 +164,7 @@ def write_csv(path, df, include_units_in_header=True):
     """Schreibt eine DataFrame als CSV. Bei `include_units_in_header=True` wird `name [unit]` ausgegeben."""
     import csv
     if not isinstance(df, DataFrame):
-        raise TypeError("write_csv: df muss DataFrame sein.")
+        raise TypeError("write_csv: df must be a DataFrame.")
     p = str(path)
     with open(p, "w", encoding="utf-8", newline="") as f:
         w = csv.writer(f)
