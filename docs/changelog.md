@@ -500,7 +500,7 @@ Historical record of Dedekind releases. Most recent first.
 ### What's New in v0.9.7
 - **Dedekind für Chemie & Biologie**: Chemische Einheiten **mol**, **L**, **M** (= mol/L), **ppm** in Runtime und Compile-Check; M und mol/L gelten als gleiche Einheit. Einheiten-Literal `[1/s]` im Parser unterstützt (z. B. `0.05[1/s]`).
 - **Beispiele**: `chemistry_kinetics.ddk` (Reaktion 1. Ordnung mit `ode_solve`, [M], [1/s]), `dose_response.ddk` (Dosis-Wirkung/EC50 mit `fit`), `biology_growth.ddk` (logistisches Wachstum mit `ode_solve`).
-- **Dokumentation**: Abschnitt „Dedekind für Chemie & Biologie“ im README; Verweis auf `Documentation/Chemistry_Biology_Roadmap.md`.
+- **Dokumentation**: Abschnitt „Dedekind für Chemie & Biologie“ im README; Verweis auf `docs/Chemistry_Biology_Roadmap.md`.
 
 ### What's New in v0.9.6
 - **Grundlegende Math-Funktionen**: Erweiterung der Standard-Bibliothek um `tan`, `exp`, `log`, `log10`, `sqrt`, `abs`; Arkusfunktionen `asin`, `acos`, `atan`, `atan2(y,x)`; Hyperbelfunktionen `sinh`, `cosh`, `tanh`. Alle elementweise, differenzierbar; LaTeX-Export angepasst.

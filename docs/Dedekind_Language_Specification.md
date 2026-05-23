@@ -1472,5 +1472,5 @@ Example: `tests/dedekind/molecular_test.ddk` and `tests/dedekind/crystallography
 
 ---
 
-*This document is the Markdown source for the Language Specification. PDF can be generated e.g. with `pandoc Dedekind_Language_Specification.md -o Dedekind_Language_Specification_v0.2.pdf`. See Documentation/README.md for build instructions.*
+*This document is the Markdown source for the Language Specification. PDF can be generated e.g. with `pandoc Dedekind_Language_Specification.md -o Dedekind_Language_Specification_v0.2.pdf`.*
 

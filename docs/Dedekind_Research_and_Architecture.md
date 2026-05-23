@@ -58,4 +58,4 @@ These features are described in detail in the **Language Specification v0.2** (Â
 
 ---
 
-*A PDF can be generated from this Markdown source; see Documentation/README.md.*
+*A PDF can be generated from this Markdown source.*

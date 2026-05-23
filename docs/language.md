@@ -1,6 +1,6 @@
 # Dedekind Language Reference
 
-Living catalogue of every Dedekind built-in, operator and runtime function. Generated from the original README feature list; the canonical specification is `Documentation/Dedekind_Language_Specification.md`.
+Living catalogue of every Dedekind built-in, operator and runtime function. Generated from the original README feature list; the canonical specification is `docs/Dedekind_Language_Specification.md`.
 
 ## Core features
 
@@ -40,7 +40,7 @@ Dedekind unterstützt **chemische und biologische Anwendungen** mit denselben Ba
 - **Chemische Elemente**: `atomic_mass("C")` → Atommasse in g/mol (Quantity); `atomic_number("C")` → Ordnungszahl; IUPAC-nah für H, C, N, O, S, P, Na, Cl, Fe, … (ca. 50 Elemente). Beispiel: Molare Masse H₂O = 2*atomic_mass("H") + atomic_mass("O"); `chemistry_elements.ddk`.
 - **Medizin, Pharmakologie & Epidemiologie**: `hill_equation`, `one_compartment_pk`, `half_life` (Pharmakokinetik); `sir_model`, `basic_reproduction_number` (Epidemiologie); `confidence_interval`, `odds_ratio`, `sensitivity_specificity` (Biostatistik) — Beispiele: `pharmacology_quickwins.ddk`, `epidemiology_sir.ddk`, `biostatistics_quickwins.ddk`.
 
-Konstanten wie `N_A`, `R_gas`, `F_faraday` sind als **Quantity** mit SI-Einheiten (`1/mol`, `J/(K*mol)`, `C/mol`) verfügbar. Ausführliche Roadmap: `Documentation/Chemistry_Biology_Roadmap.md`.
+Konstanten wie `N_A`, `R_gas`, `F_faraday` sind als **Quantity** mit SI-Einheiten (`1/mol`, `J/(K*mol)`, `C/mol`) verfügbar. Ausführliche Roadmap: `docs/Chemistry_Biology_Roadmap.md`.
 
 
 ## ML example
@@ -141,10 +141,10 @@ From the `src/` directory: `python -m compiler.compiler ../examples/dedekind/hel
 
 ## 📚 Documentation
 
-- **Language Specification**: `Documentation/Dedekind_Language_Specification.md` (v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9/v0.9.6; Chemie/Biologie v0.9.7; I/O/JSON v0.9.8; Stand v1.0.10). PDF can be generated with `pandoc` (see `Documentation/README.md`).
-- **Research & Architecture**: `Documentation/Dedekind_Research_and_Architecture.md` (includes §10 Sprachfeatures v0.6).
-- **Symbolic Simplification**: `Documentation/Symbolic_Simplification_Roadmap.md` — Implementierungs-Roadmap (Phasen, Optionen, Integration).
-- **Features Roadmap**: `Documentation/Features_Implementation_Roadmap.md` — naturwissenschaftliche Features (Phase 1 abgeschlossen: Verteilungen, Integration).
-- **Chemie & Biologie**: `Documentation/Chemistry_Biology_Roadmap.md` — Einheiten mol/L/M/ppm, Beispiele (Kinetik, Dosis-Wirkung, Wachstum), Convenience-Funktionen.
-- Legacy PDFs (v0.1) remain in `Documentation/`; the Markdown sources are the up-to-date references.
+- **Language Specification**: `docs/Dedekind_Language_Specification.md` (v0.2; §15 Physical Units v0.6, §15.7 ODE v0.7, §15.8 Probabilistic v0.8, §15.9 PDE v0.8, §15.10 Integration & Math v0.9/v0.9.6; Chemie/Biologie v0.9.7; I/O/JSON v0.9.8; Stand v1.0.10). PDF can be generated with `pandoc`.
+- **Research & Architecture**: `docs/Dedekind_Research_and_Architecture.md` (includes §10 Sprachfeatures v0.6).
+- **Symbolic Simplification**: `docs/Symbolic_Simplification_Roadmap.md` — Implementierungs-Roadmap (Phasen, Optionen, Integration).
+- **Features Roadmap**: `docs/Features_Implementation_Roadmap.md` — naturwissenschaftliche Features (Phase 1 abgeschlossen: Verteilungen, Integration).
+- **Chemie & Biologie**: `docs/Chemistry_Biology_Roadmap.md` — Einheiten mol/L/M/ppm, Beispiele (Kinetik, Dosis-Wirkung, Wachstum), Convenience-Funktionen.
+- Legacy PDFs (v0.1) remain in `docs/assets/` and `docs/internal/`; the Markdown sources are the up-to-date references.
 

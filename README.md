@@ -123,7 +123,7 @@ Compile and run every example at once:
 - Current release: **v2.8.0** (May 2026)
 - Roadmap: [docs/roadmap.md](docs/roadmap.md)
 - Full changelog: [docs/changelog.md](docs/changelog.md)
-- Formal spec: [Documentation/Dedekind_Language_Specification.md](Documentation/Dedekind_Language_Specification.md)
+- Formal spec: [docs/Dedekind_Language_Specification.md](docs/Dedekind_Language_Specification.md)
 
 ## Dedekind Studio
 

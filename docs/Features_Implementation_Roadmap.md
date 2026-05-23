@@ -27,7 +27,7 @@ Since the original roadmap (January 2026), most of the planned phases have been 
 - **NUTS** (No-U-Turn Sampler) in addition to HMC — not implemented.
 - **Variational Inference** (VI) — not implemented.
 
-**Added since v1.7** (beyond the original roadmap): standard library modules, `pyimport`, purity check, shape annotations, PINN, graph methods, MILP DSL, MD bridge, labeled tensors, bioinformatics, try/catch, slicing. See `Documentation/README.md` and `Dedekind_Language_Specification.md` §15.12–§15.23.
+**Added since v1.7** (beyond the original roadmap): standard library modules, `pyimport`, purity check, shape annotations, PINN, graph methods, MILP DSL, MD bridge, labeled tensors, bioinformatics, try/catch, slicing. See `docs/README.md` and `Dedekind_Language_Specification.md` §15.12–§15.23.
 
 ---
 
