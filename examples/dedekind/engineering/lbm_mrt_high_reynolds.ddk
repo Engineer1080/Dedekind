@@ -1,7 +1,7 @@
 //MRI collision: stability at high Reynolds.
 //
 //BGK (Single Relaxation Time) becomes numerically unstable at Re > ~300
-// divergiert. MRT (Multiple-Relaxation-Time, Lallemand & Luo 2000) relaxiert
+// and diverges. MRT (Multiple-Relaxation-Time, Lallemand & Luo 2000) relaxes
 //each moment separately — the “ghost modes” (heat flow qx, qy) and the
 //Bulk viscosity (e, eps) get their own relaxation rates, which are higher
 //Re keeps stable.
@@ -29,7 +29,7 @@ fn main() {
     print("Expected Reynolds on cylinder: 1000")
     print("")
 
-    // --- BGK Versuch ---
+    // --- BGK Attempt ---
     print("--- BGK (Single-Relaxation-Time) ---")
     sim_bgk = lbm_physical(domain_x, domain_y, 200, inlet, nu_water, rho)
     lbm_set_cylinder(sim_bgk, 0.01[m], 0.0075[m], 0.0025[m])
@@ -39,11 +39,11 @@ fn main() {
     drag_bgk = F_bgk[0].value
     print("BGK Drag =", drag_bgk, "N/m")
     bgk_stable = (drag_bgk > -1e6 and drag_bgk < 1e6)
-    print("  BGK stabil:", bgk_stable)
+    print("  BGK stable:", bgk_stable)
 
     print("")
 
-    // --- MRT Versuch (selbes Setup, andere Collision) ---
+    // --- MRT Attempt (same setup, different collision) ---
     print("--- MRT (Multiple-Relaxation-Time, Lallemand & Luo 2000) ---")
     sim_mrt = lbm_physical_mrt(domain_x, domain_y, 200, inlet, nu_water, rho)
     lbm_set_cylinder(sim_mrt, 0.01[m], 0.0075[m], 0.0025[m])
@@ -51,15 +51,15 @@ fn main() {
     lbm_run_steps(sim_mrt, 1500)
     F_mrt = lbm_drag_lift(sim_mrt)
     drag_mrt = F_mrt[0].value
-    print("MRI Drag =", drag_mrt, "N/m")
+    print("MRT Drag =", drag_mrt, "N/m")
     mrt_stable = (drag_mrt > -1e6 and drag_mrt < 1e6)
-    print("  MRT stabil:", mrt_stable)
+    print("  MRT stable:", mrt_stable)
 
     print("")
-    print("Ergebnis:")
-    print("- MRI must remain stable at Re=1000")
+    print("Result:")
+    print("- MRT must remain stable at Re=1000")
     assert(mrt_stable)
-    print("- MRI drag must be finite and positive")
+    print("- MRT drag must be finite and positive")
     assert(drag_mrt > 0.0)
     print("")
     print("Note: BGK can diverge at this Re number (Drag→∞);")

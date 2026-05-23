@@ -8,8 +8,8 @@ fn main() {
     c1 = DedekindCut(0.5)
     print("DedekindCut(0.5):")
     print(c1)
-    print("0.4 in unterer Menge (0.4 < 0.5)?", c1.lower_set_contains(0.4))
-    print("0.6 in unterer Menge (0.6 < 0.5)?", c1.lower_set_contains(0.6))
+    print("0.4 in lower set (0.4 < 0.5)?", c1.lower_set_contains(0.4))
+    print("0.6 in lower set (0.6 < 0.5)?", c1.lower_set_contains(0.6))
     print("to_float:", c1.to_float())
     
     c2 = dedekind_cut_from_rational(1, 3)
@@ -29,7 +29,7 @@ fn main() {
     print("Ideal (12) in Z:")
     print(i12)
     factors = i12.factor()
-    print("Faktorisierung (12) = (2)^2 * (3)^1:", factors)
+    print("Factorization (12) = (2)^2 * (3)^1:", factors)
     
     i7 = ideal(7)
     print("ideal(7).factor():", i7.factor())
@@ -37,7 +37,7 @@ fn main() {
     i100 = ideal(100)
     print("ideal(100).factor():", ideal_factor(i100))
     
-    // Ideal-Multiplikation: (4)(25) = (100)
+    // Ideal multiplication: (4)(25) = (100)
     i4 = ideal(4)
     i25 = ideal(25)
     prod = i4 * i25

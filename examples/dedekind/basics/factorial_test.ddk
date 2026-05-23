@@ -3,10 +3,10 @@ fn main() {
     print("--- Dedekind: factorial with n! syntax ---")
 
     // Simple factorials
-    beispiel = 5
-    faculty = beispiel!
+    example = 5
+    fact = example!
     print("5! =")
-    print(faculty)
+    print(fact)
 
     // More examples
     print("3! =")

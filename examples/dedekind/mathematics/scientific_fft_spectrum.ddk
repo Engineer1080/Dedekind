@@ -18,10 +18,10 @@ fn main() {
     spectrum = fft(signal)
     magnitude = abs(spectrum)
 
-    plot(magnitude, title="FFT-Betrag |F(w)|", xlabel="Frequenz-Index", ylabel="|F|")
+    plot(magnitude, title="FFT Magnitude |F(w)|", xlabel="Frequency Index", ylabel="|F|")
 
     //Time range for comparison
-    plot(t, signal, title="Zeitsignal: sin(5t) + 0.4*sin(13t)", xlabel="t [rad]", ylabel="Amplitude")
+    plot(t, signal, title="Time Signal: sin(5t) + 0.4*sin(13t)", xlabel="t [rad]", ylabel="Amplitude")
 
     print("FFT and time signal plot. Dedekind: fft(), sin(), abs() on tensors natively.")
 }

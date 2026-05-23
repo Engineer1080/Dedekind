@@ -20,13 +20,13 @@ fn main() {
     right_s = riemann_sum(f, a, b, n, "right")
     mid_s = riemann_sum(f, a, b, n, "midpoint")
     print("Riemann sums for int_0^1 x^2 dx = 1/3:")
-    print("  links (left):", left_s)
-    print("  rechts (right):", right_s)
-    print("  Mittelpunkt (midpoint):", mid_s)
+    print("  left (left):", left_s)
+    print("  right (right):", right_s)
+    print("  midpoint (midpoint):", mid_s)
     
     //Comparison with integrate (trapezoid)
     trapz_val = integrate(f, a, b, n)
-    print("  Trapez (integrate):", trapz_val)
+    print("  trapezoid (integrate):", trapz_val)
     
     //sin(x) from 0 to pi = 2
     fn g(x) { return sin(x) }

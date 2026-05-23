@@ -7,7 +7,7 @@
 //fixed → b = V/a → 1 free parameter remains. Adam differentiates through
 //the ENTIRE LBM simulation (200 steps D2Q9) via PyTorch-Autograd.
 //
-// Killer-Feature: keine Adjoint-Codes, keine Finite-Differenzen — Dedekind
+// Killer feature: no adjoint codes, no finite differences — Dedekind
 //inherits differentiability directly from the compiler.
 //
 //Expectation: Adam reduces the drag by ~15-20% compared to the circle (a/b=1).
@@ -20,7 +20,7 @@ fn drag_for_aspect(x_arr) {
     aspect     = exp(aspect_log)          // a/b
     V          = 12.0                     //constant "volume"
     a          = sqrt(V * aspect)         //x semi-axis (parallel to the flow)
-    b          = V / a                    // y-Halbachse (quer)
+    b          = V / a                    // y semi-axis (transverse)
 
     nx = 80
     ny = 40
@@ -36,7 +36,7 @@ fn main() {
     print("Shape optimization: Adam finds the optimal ellipse shape")
     print("===============================================================")
 
-    // Startpunkt: Kreis (a/b = 1 → log(a/b) = 0)
+    // Starting point: circle (a/b = 1 → log(a/b) = 0)
     x0       = [0.0]
     d0       = drag_for_aspect(x0)[0]
     aspect_0 = exp(x0[0])
@@ -53,15 +53,15 @@ fn main() {
     print("  a/b  =", aspect_opt)
     print("drag =", d_opt)
 
-    // Vergleich
+    // Comparison
     reduction = (d0 - d_opt) / d0 * 100.0
     print("")
     print("Drag reduction versus circle:", reduction, " %")
 
     //Plausibility checks
-    assert(aspect_opt > 1.5)      //Optimum is significantly slimmer than Kreis
+    assert(aspect_opt > 1.5)      //Optimum is significantly slimmer than circle
     assert(d_opt < d0)            //Drag has actually been reduced
-    assert(reduction > 5.0)       // Mindestens 5 % Reduktion
+    assert(reduction > 5.0)       // At least 5% reduction
 
     print("")
     print("===============================================================")
