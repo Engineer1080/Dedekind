@@ -3,6 +3,12 @@
 Historical record of Dedekind releases. Most recent first.
 
 
+### What's New in v2.9.0 (Standard Library Consolidation & Redundancy Cleanups)
+
+- **Atomic Module Consolidation (`use atomic`):** Merged the `molecular` (Molecular Dynamics) and `crystallography` (Structure Analysis) modules into a single, unified `atomic.ddk` library. Function signatures like `molecular_lj_simulate` and `cryst_symmetry_apply` are preserved.
+- **Geometry Consolidation:** Abolished the standalone `geometry` module, integrating all area and volume geometry functions directly into `math.ddk`.
+- **Legacy Mathlib Removal:** Deleted the deprecated `mathlib` example module and integrated its helpers (`square`, `cube`) into the official `math.ddk` standard library.
+
 ### What's New in v2.3.0 (Space Physics & Orbital Mechanics)
 
 - **Differentiable N-Body Simulation (`use space`):** Native differenzierbare N-Körper-Integration mittels Runge-Kutta-Verfahren 4. Ordnung (RK4) mit optionalem Softening-Parameter.

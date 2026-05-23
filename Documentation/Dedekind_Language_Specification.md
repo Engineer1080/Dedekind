@@ -313,7 +313,7 @@ Examples: \(\int_0^1 x^2\,dx = 1/3\), \(\int_0^\pi \sin(x)\,dx = 2\); see `examp
 - **`use fluid_dynamics`** — Lattice Boltzmann Method CFD solvers (`lbm_simulation`, `lbm_simulation_with_mask`), simulation iteration handlers (`simulation_step`, `simulation_run`), field extractors (`simulation_get_velocity`, `simulation_get_density`), force calculators (`simulation_get_drag_lift`, `simulation_get_drag_lift_for_mask`), dynamic obstacle modifier (`simulation_set_obstacle`), and soft masks (`soft_cylinder_mask`, `soft_airfoil_mask`, `add_wind_tunnel_walls`).
 - **`use quantum`** — Quantum Computing bridge wrappers (`make_bell`, `make_ghz`, `make_grover`, `make_vqe_ansatz`, `simulate`, `sample_circuit`, `expectation`, `probs`, `state_fidelity`, `vn_entropy`).
 - **`use robotics`** — Kinematic chains (`kinematic_chain`), revolute/prismatic joints (`add_revolute_joint`, `add_prismatic_joint`), forward kinematics solver (`forward_kinematics`), and end-effector extraction (`end_effector_pos`, `end_effector_rot`).
-- **`use molecular`** — Differentiable Molecular Dynamics (`molecular_lj_simulate`, `molecular_lj_simulate_advanced`), Morse potential (`morse_potential`), and geometry descriptors (`molecular_distance`, `molecular_angle`, `molecular_dihedral`).
+- **`use atomic`** — Differentiable Atomic & Molecular physics/chemistry, combining Molecular Dynamics (`molecular_lj_simulate`, `morse_potential`, etc.) and Crystallography / structural analysis (`cryst_symmetry_apply`, `cryst_structure_factor_atoms`, etc.).
 
 **User-defined units** are declared at top level with the `unit` keyword (a *soft* keyword — `q.unit` member access and `unit="V"` kwargs remain valid):
 
@@ -1420,9 +1420,9 @@ Example: `tests/dedekind/dsp_test.ddk`.
 
 ---
 
-### 15.36 Differentiable Molecular Dynamics & Chemistry (v2.0)
+### 15.36 Differentiable Atomic & Molecular Physics / Chemistry (use atomic)
 
-Dedekind v2.0 introduces support for Differentiable Molecular Dynamics (MD) and chemical geometry calculations. All solvers and descriptors are fully differentiable, allowing analytical gradients of potential energies, temperatures, and geometric variables to be computed automatically via PyTorch autograd.
+Dedekind introduces support for differentiable molecular dynamics simulations and crystallography calculations under the unified `use atomic` module. All solvers, structure factor calculators, and geometry descriptors are fully differentiable, enabling analytical gradients to be computed automatically via PyTorch autograd.
 
 #### 15.36.1 Velocity Verlet LJ Simulation Solvers
 
@@ -1442,8 +1442,17 @@ These descriptors are numerically stabilized with a small $\epsilon = 10^{-12}$ 
 - **`molecular_angle(pos1, pos2, pos3)`**: Calculates the bond angle (in radians) formed by the three positions, with `pos2` as the central atom.
 - **`molecular_dihedral(pos1, pos2, pos3, pos4)`**: Calculates the dihedral (torsional) angle (in radians) formed by four connected atomic positions.
 
+#### 15.36.4 Crystallography & Structure Analysis
+
+- **`cryst_symmetry_apply(coords, R, t)`**: Applies a Seitz matrix (rotation $R$, translation $t$) to fractional coordinates and wraps the coordinates periodically modulo 1.0.
+- **`cryst_generate_equivalent_atoms(coords, R_ops, t_ops)`**: Vectorized application of a set of symmetry operations ($R_{ops}$, $t_{ops}$) to a set of coordinates.
+- **`cryst_find_symmetries(coords, elements, R_ops, t_ops)`**: Evaluates which candidate symmetry operations are active for a given atomic structure within a default tolerance of $10^{-3}$.
+- **`cryst_find_symmetries_advanced(coords, elements, R_ops, t_ops, tol)`**: Similar to `cryst_find_symmetries`, but with an explicit distance tolerance parameter `tol`.
+- **`cryst_structure_factor_atoms(coords, scattering_factors, hkl_indices)`**: Computes the complex structure factor $F(hkl)$ directly from atomic coordinates, allowing differentiable crystal structure refinement.
+- **`cryst_structure_factor_density(density_map)`**: Calculates structure factors from a 3D electron density grid using the Fast Fourier Transform (3D FFT).
+
 ```dedekind
-use molecular
+use atomic
 
 // Compute Morse potential and its derivative
 De = 1.0
@@ -1459,7 +1468,7 @@ fn get_morse_pe(r_arr) {
 jac = jacobian(get_morse_pe, [1.0])
 ```
 
-Example: `tests/dedekind/molecular_test.ddk`.
+Example: `tests/dedekind/molecular_test.ddk` and `tests/dedekind/crystallography_test.ddk`.
 
 ---
 

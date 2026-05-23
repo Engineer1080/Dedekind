@@ -1,4 +1,4 @@
-use molecular
+use atomic
 
 fn test_molecular_geometry() {
     pos1 = [0.0, 0.0, 0.0]

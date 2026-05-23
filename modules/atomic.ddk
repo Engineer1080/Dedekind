@@ -1,0 +1,54 @@
+// modules/atomic.ddk — Dedekind Standard Library: Atomic & Molecular Physics/Chemistry
+// Aktivierung: `use atomic`
+
+// --- Molecular Dynamics & Chemistry ------------------------------------------
+
+pub fn molecular_lj_simulate(positions, velocities, masses, box_size, dt, steps) {
+    return molecular_lj_simulate_impl(positions, velocities, masses, box_size, dt, steps)
+}
+
+pub fn molecular_lj_simulate_advanced(positions, velocities, masses, box_size, dt, steps, epsilon, sigma, cutoff, thermostat_tau, target_temp) {
+    return molecular_lj_simulate_impl(positions, velocities, masses, box_size, dt, steps, epsilon, sigma, cutoff, thermostat_tau, target_temp)
+}
+
+pub fn morse_potential(r, De, a, re) {
+    return morse_potential_impl(r, De, a, re)
+}
+
+pub fn molecular_distance(pos1, pos2) {
+    return molecular_distance_impl(pos1, pos2)
+}
+
+pub fn molecular_angle(pos1, pos2, pos3) {
+    return molecular_angle_impl(pos1, pos2, pos3)
+}
+
+pub fn molecular_dihedral(pos1, pos2, pos3, pos4) {
+    return molecular_dihedral_impl(pos1, pos2, pos3, pos4)
+}
+
+// --- Crystallography & Structure Analysis -----------------------------------
+
+pub fn cryst_symmetry_apply(coords, R, t) {
+    return cryst_symmetry_apply_impl(coords, R, t)
+}
+
+pub fn cryst_generate_equivalent_atoms(coords, R_ops, t_ops) {
+    return cryst_generate_equivalent_atoms_impl(coords, R_ops, t_ops)
+}
+
+pub fn cryst_find_symmetries(coords, elements, R_ops, t_ops) {
+    return cryst_find_symmetries_impl(coords, elements, R_ops, t_ops, 1e-3)
+}
+
+pub fn cryst_find_symmetries_advanced(coords, elements, R_ops, t_ops, tol) {
+    return cryst_find_symmetries_impl(coords, elements, R_ops, t_ops, tol)
+}
+
+pub fn cryst_structure_factor_atoms(coords, scattering_factors, hkl_indices) {
+    return cryst_structure_factor_atoms_impl(coords, scattering_factors, hkl_indices)
+}
+
+pub fn cryst_structure_factor_density(density_map) {
+    return cryst_structure_factor_density_impl(density_map)
+}

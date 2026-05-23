@@ -9340,7 +9340,9 @@ def smiles_descriptors(smiles):
     Liefert Dict mit: mw [g/mol], logp, num_atoms, num_heavy_atoms, num_rings,
     num_aromatic_rings, hbd, hba, tpsa [Angstrom^2] (oder [Angstrom]), num_rotatable_bonds.
     Falls rdkit nicht installiert ist, erfolgt ein Fallback auf den integrierten Parser
-    für die Basis-Deskriptoren (mw, logp, hbd, hba)."""
+    für die Basis-Deskriptoren (mw, logp, hbd, hba). Ringe und TPSA bleiben dabei
+    auf 0/None gesetzt; wer diese Felder zwingend braucht, muss rdkit installieren
+    (`pip install rdkit`)."""
     if not isinstance(smiles, str):
         raise TypeError(f"smiles_descriptors: erwarte String, erhalten {type(smiles).__name__}.")
     try:
@@ -13644,8 +13646,9 @@ def cartesian_to_kepler_impl(r, v, mu):
             "omega": omega.squeeze(-1),
             "nu": nu.squeeze(-1)
         }
-# Dedekind Standard Library: Differentiable Molecular Dynamics & Chemistry
+# Dedekind Standard Library: Atomic & Molecular Physics/Chemistry
 import torch
+import torch.fft
 import math
 import builtins
 
@@ -13653,6 +13656,8 @@ def _get_val(v):
     if hasattr(v, "value"):
         return v.value
     return v
+
+# --- Molecular Dynamics & Chemistry ---
 
 def _compute_lj_forces_and_pe(pos, box_size, epsilon, sigma, cutoff):
     N = pos.shape[0]
@@ -13811,16 +13816,8 @@ def molecular_dihedral_impl(pos1, pos2, pos3, pos4):
     y = torch.dot(m1, n2_norm)
     
     return torch.atan2(y, x)
-# Dedekind Standard Library: Crystallography & Differentiable Structure Analysis
-import torch
-import torch.fft
-import math
-import builtins
 
-def _get_val(v):
-    if hasattr(v, "value"):
-        return v.value
-    return v
+# --- Crystallography & Structure Analysis ---
 
 def cryst_symmetry_apply_impl(coords, R, t):
     c = _to_tensor(coords).double()
@@ -13832,7 +13829,6 @@ def cryst_symmetry_apply_impl(coords, R, t):
         c = c.unsqueeze(0)
         
     # Apply Seitz matrix (R, t) to fractional coordinates
-    # c @ R^T + t is equivalent to R @ c_i + t for each row
     res = torch.matmul(c, R_t.t()) + t_t
     res = torch.remainder(res, 1.0)
     
@@ -13850,8 +13846,6 @@ def cryst_generate_equivalent_atoms_impl(coords, R_ops, t_ops):
         c = c.unsqueeze(0)
         
     # Vectorized application of S operations to N atoms
-    # c: [N, 3], R_ops_t: [S, 3, 3], t_ops_t: [S, 3]
-    # rotated: [S, N, 3]
     rotated = torch.einsum("nj,skj->snk", c, R_ops_t)
     translated = rotated + t_ops_t.unsqueeze(1)
     res = torch.remainder(translated, 1.0)
@@ -13873,7 +13867,6 @@ def cryst_find_symmetries_impl(coords, elements, R_ops, t_ops, tol=1e-3):
     if isinstance(elements, torch.Tensor):
         elem_ids = elements
     else:
-        # elements could be a list of strings, integers, etc.
         if hasattr(elements, "tolist"):
             el_list = elements.tolist()
         elif hasattr(elements, "value"):
@@ -13885,17 +13878,17 @@ def cryst_find_symmetries_impl(coords, elements, R_ops, t_ops, tol=1e-3):
         mapping = {el: i for i, el in enumerate(unique_el)}
         elem_ids = torch.tensor([mapping[el] for el in el_list], device=c.device, dtype=torch.long)
         
-    # Generate all symmetry-equivalent coordinates: [S, N, 3]
+    # Generate all symmetry-equivalent coordinates
     eq_coords = cryst_generate_equivalent_atoms_impl(c, R_ops_t, t_ops_t)
     
-    # Pairwise periodic differences: [S, N, N, 3]
+    # Pairwise periodic differences
     diff = eq_coords.unsqueeze(2) - c.unsqueeze(0).unsqueeze(1)
     diff = diff - torch.round(diff)
     
-    # Distance squared: [S, N, N]
+    # Distance squared
     dist_sq = torch.sum(diff ** 2, dim=-1)
     
-    # Element matching mask: [N, N] -> [1, N, N]
+    # Element matching mask
     eq_mask = (elem_ids.unsqueeze(1) == elem_ids.unsqueeze(0))
     eq_mask = eq_mask.unsqueeze(0)
     
@@ -13903,8 +13896,8 @@ def cryst_find_symmetries_impl(coords, elements, R_ops, t_ops, tol=1e-3):
     valid_matches = (dist_sq < tol_val ** 2) & eq_mask
     
     # An operation is a valid symmetry if every mapped atom has a match
-    atom_has_match = torch.any(valid_matches, dim=2) # [S, N]
-    op_is_symmetry = torch.all(atom_has_match, dim=1) # [S]
+    atom_has_match = torch.any(valid_matches, dim=2)
+    op_is_symmetry = torch.all(atom_has_match, dim=1)
     
     return op_is_symmetry
 
@@ -13918,10 +13911,10 @@ def cryst_structure_factor_atoms_impl(coords, scattering_factors, hkl_indices):
     if hkl.dim() == 1:
         hkl = hkl.unsqueeze(0)
         
-    # Dot product of Miller indices and fractional coordinates: [M, N]
+    # Dot product of Miller indices and fractional coordinates
     angles = 2.0 * math.pi * torch.matmul(hkl, c.t())
     
-    # Complex exponentials: [M, N]
+    # Complex exponentials
     phases = torch.complex(torch.cos(angles), torch.sin(angles))
     
     # Broadcast scattering factors
@@ -13932,12 +13925,11 @@ def cryst_structure_factor_atoms_impl(coords, scattering_factors, hkl_indices):
     else:
         sf_bc = sf.view(1, -1)
         
-    # Sum over atoms to get structure factor for each reflection: [M]
+    # Sum over atoms to get structure factor for each reflection
     F = torch.sum(sf_bc * phases, dim=1)
     return F
 
 def cryst_structure_factor_density_impl(density_map):
     rho = _to_tensor(density_map)
-    # Perform Fast Fourier Transform (FFT) over all dimensions of the grid
     F = torch.fft.fftn(rho)
     return F

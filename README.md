@@ -1,6 +1,6 @@
 # Dedekind
 
-![Version](https://img.shields.io/badge/Version-2.8.0-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-2.9.0-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **A programming language for scientific computing.** Write your simulator
 once in readable code with units — and get inverse problems, topology
@@ -8,7 +8,7 @@ optimization, parameter estimation, and Bayesian inference on it for
 free, without hand-rolled adjoint code.
 
 ```dedekind
-use crystallography
+use atomic
 
 m = 1.0[kg]                                        // compile-time units
 k = 4.0[N/m]
@@ -109,7 +109,7 @@ A curated entry-point selection (full list:
 - `engineering/lbm3d_sphere_drag.ddk` — D3Q19 + autograd
 - `engineering/lbm_les_smagorinsky_tuning.ddk` — Smagorinsky LES calibration
 - `engineering/heat_sink_topology_optimization.ddk` — SIMP topology opt
-- `physics_astronomy/crystallography_structure_refinement.ddk` — structure refinement via differentiable SF
+- `physics_astronomy/crystallography_structure_refinement.ddk` — structure refinement via differentiable SF (using atomic)
 - `compiler_features/reproducibility_demo.ddk` — `--reproducibility-report`
 - `compiler_features/latex_demo.ddk` — `--latex`
 

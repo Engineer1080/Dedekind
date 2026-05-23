@@ -1,7 +1,7 @@
 // Differenzierbare Kristallstruktur-Verfeinerung gegen Strukturfaktoren
 //
 // Aufgabe: Ein Atom auf der "halben" Wyckoff-Position (0.5, 0.5, 0.5) wird
-// aus seiner idealen Lage ausgelenkt; wir nutzen das Modul `crystallography`,
+// aus seiner idealen Lage ausgelenkt; wir nutzen das Modul `atomic`,
 // um den Strukturfaktor F(hkl) zu berechnen, und finden die Verschiebung
 // per Autograd + Adam zurück — exakt das Vorgehen einer Rietveld-/SF-Refinement-
 // Schleife, nur dass die Gradienten direkt durch den Dedekind-Compiler fließen.
@@ -9,7 +9,7 @@
 // Killer-Feature: kein FD-Sweep, kein manueller Adjoint — `cryst_structure_factor_atoms`
 // ist nativ differenzierbar.
 
-use crystallography
+use atomic
 
 // Ziel-Strukturfaktor (Atom exakt auf 0.5, 0.5, 0.5)
 fn target_F() {
