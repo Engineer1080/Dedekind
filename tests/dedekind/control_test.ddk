@@ -96,6 +96,6 @@ fn main() {
     test_lti_step()
     test_closed_loop_pid()
     test_differentiable_control()
-    print("control_test: Alle Tests bestanden!")
+    print("control_test: All tests passed!")
 }
 main()

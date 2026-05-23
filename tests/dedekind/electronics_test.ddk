@@ -78,6 +78,6 @@ fn main() {
     test_differentiable_circuit()
     test_ac_circuit()
     test_differentiable_ac_circuit()
-    print("electronics_test: Alle Tests bestanden!")
+    print("electronics_test: All tests passed!")
 }
 main()

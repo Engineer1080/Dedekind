@@ -5,12 +5,12 @@ fn process(x) {
 fn main() {
     data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     
-    print("Verarbeite Daten sequentiell:")
+    print("Processing data sequentially:")
     for i in data {
         val = process(i)
         print(val)
     }
     
-    print("Verarbeitung abgeschlossen.")
+    print("Processing complete.")
 }
 main()

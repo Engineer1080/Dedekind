@@ -7,7 +7,6 @@ venv/
 venv_build/
 .env
 .venv/
-DedekindStudio/spyder_venv/
 *.egg-info/
 *.egg
 .eggs/
@@ -29,9 +28,6 @@ node_modules/
 # Dedekind
 *.log
 
-# Studio migration handoff (never commit -- belongs in dedekind-studio repo)
-/dedekind-studio.bundle
-/dedekind-studio.git.tar.gz
 
 # Test/example scratch files written at repo root by ddk tests/demos
 /temp_cube.stl

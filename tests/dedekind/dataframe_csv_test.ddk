@@ -1,15 +1,15 @@
-// DataFrame + CSV-I/O mit Einheiten in der Header-Zeile.
+// DataFrame + CSV I/O with units in the header row.
 
 fn main() {
     df = DataFrame({"t": [0.0, 1.0, 2.0], "T": [20.0, 22.0, 25.0]}, units={"t": "s", "T": "K"})
-    assert(df.shape[0] == 3, "3 Zeilen")
-    assert(df.shape[1] == 2, "2 Spalten")
+    assert(df.shape[0] == 3, "3 rows")
+    assert(df.shape[1] == 2, "2 columns")
 
     write_csv("./dedekind_df_test.csv", df)
     df2 = read_csv("./dedekind_df_test.csv")
-    assert(df2.shape[0] == 3, "CSV-Roundtrip Zeilen")
-    assert(df2.units["T"] == "K", "Einheit T aus CSV-Header gelesen")
-    assert(df2.units["t"] == "s", "Einheit t aus CSV-Header gelesen")
+    assert(df2.shape[0] == 3, "CSV roundtrip rows")
+    assert(df2.units["T"] == "K", "unit T read from CSV header")
+    assert(df2.units["t"] == "s", "unit t read from CSV header")
 
     print("dataframe_csv_test OK")
 }

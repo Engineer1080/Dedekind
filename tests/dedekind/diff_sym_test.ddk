@@ -1,4 +1,4 @@
-// Symbolische Ableitung: diff_sym(expr, x)
+// Symbolic derivative: diff_sym(expr, x)
 fn main() {
     d1 = diff_sym("x^2", "x")
     assert(d1 == "2*x")
@@ -11,6 +11,6 @@ fn main() {
     d5 = diff_sym("x*sin(x)", "x")
     print("diff_sym(x*sin(x), x):")
     print(d5)
-    print("diff_sym_test: bestanden.")
+    print("diff_sym_test: passed.")
 }
 main()

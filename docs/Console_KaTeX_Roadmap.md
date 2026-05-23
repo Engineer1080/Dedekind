@@ -17,7 +17,7 @@
 **Options:**
 
 1. **Web-based console (e.g. Qt WebEngine):**  
-   The console output runs in an HTML/JavaScript frontend (e.g. QWebEngineView). The kernel sends `text/latex`; the frontend renders with **KaTeX** (npm: `katex`) and displays the formula inline. Advantage: full LaTeX support as in the browser. Disadvantage: Dedekind Studio would need to switch the console to web technology or use a web view for output.
+   The console output runs in an HTML/JavaScript frontend (e.g. QWebEngineView). The kernel sends `text/latex`; the frontend renders with **KaTeX** (npm: `katex`) and displays the formula inline. Advantage: full LaTeX support as in the browser. Disadvantage: any IDE integration would need to switch the console to web technology or use a web view for output.
 
 2. **JupyterLab / Jupyter Notebook:**  
    There `text/latex` is already rendered with MathJax/KaTeX in the browser. Anyone using Dedekind in JupyterLab already has native formula rendering in the "console" (cell output).
@@ -25,7 +25,7 @@
 3. **Qt-based console with embedded renderer:**  
    Instead of web: a Qt widget that renders LaTeX to pixmap/SVG (e.g. via a small LaTeX render library or an embedded KaTeX-like module). Higher effort; platform-independent without a browser engine.
 
-**Reference:** KaTeX (https://katex.org/) — fast LaTeX renderer for the web, npm package `katex`. For Dedekind Studio, integration would only make sense if the console or part of it is switched to HTML/JS (e.g. WebEngine).
+**Reference:** KaTeX (https://katex.org/) — fast LaTeX renderer for the web, npm package `katex`. For IDE integration, this would only make sense if the console or part of it is switched to HTML/JS (e.g. WebEngine).
 
 ---
 

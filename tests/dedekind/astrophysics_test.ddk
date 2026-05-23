@@ -19,7 +19,7 @@ fn test_kepler_solver() {
     E_rad = solve_kepler(1.57079632679, 0.5)
     assert(abs(E_deg - E_rad) < 1e-5)
 
-    print("test_kepler_solver: bestanden.")
+    print("test_kepler_solver: passed.")
 }
 
 fn test_redshift() {
@@ -35,7 +35,7 @@ fn test_redshift() {
     assert(abs(v1.value - 28487053.4) < 100.0)
     assert(v1.unit == "m/s")
 
-    print("test_redshift: bestanden.")
+    print("test_redshift: passed.")
 }
 
 fn test_schwarzschild() {
@@ -48,7 +48,7 @@ fn test_schwarzschild() {
     // Rs = 2 * 6.6743e-11 * 1.98847e30 / (2.99792458e8)^2 ≈ 2953.25 m
     assert(abs(Rs.value - 2953.25) < 1.0)
 
-    print("test_schwarzschild: bestanden.")
+    print("test_schwarzschild: passed.")
 }
 
 fn test_stellar_properties() {
@@ -66,7 +66,7 @@ fn test_stellar_properties() {
     L10 = stellar_luminosity(10.0[M_sun])
     assert(abs(L10.value - 4427.1887) < 1.0)
 
-    print("test_stellar_properties: bestanden.")
+    print("test_stellar_properties: passed.")
 }
 
 fn test_astrophysics_autograd() {
@@ -85,7 +85,7 @@ fn test_astrophysics_autograd() {
     // For M=1, e=0.5, E ≈ 1.4987 -> cos(E) ≈ 0.072 -> dE/dM ≈ 1 / (1 - 0.036) ≈ 1.037
     assert(abs(J[0][0] - 1.037) < 0.05)
 
-    print("test_astrophysics_autograd: bestanden.")
+    print("test_astrophysics_autograd: passed.")
 }
 
 fn main() {
@@ -94,6 +94,6 @@ fn main() {
     test_schwarzschild()
     test_stellar_properties()
     test_astrophysics_autograd()
-    print("astrophysics_test: Alle Tests bestanden!")
+    print("astrophysics_test: All tests passed!")
 }
 main()

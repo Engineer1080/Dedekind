@@ -1,4 +1,4 @@
-// Benchmarking + Profiling: benchmark/profile/time_block messen Wandzeit & Speicher.
+// Benchmarking + Profiling: benchmark/profile/time_block measure wall time & memory.
 
 fn work() {
     s = 0.0
@@ -10,12 +10,12 @@ fn work() {
 
 fn main() {
     r = benchmark(work, n=5, warmup=1)
-    assert(r.n == 5, "benchmark läuft 5x")
-    assert(r.mean_s >= 0.0, "mean_s nicht-negativ")
+    assert(r.n == 5, "benchmark runs 5x")
+    assert(r.mean_s >= 0.0, "mean_s non-negative")
     assert(r.min_s <= r.max_s, "min_s <= max_s")
 
     p = profile(work, label="work")
-    assert(p.wall_s >= 0.0, "profile wall_s nicht-negativ")
+    assert(p.wall_s >= 0.0, "profile wall_s non-negative")
 
     out = time_block("inline-work", work)
     print("benchmark_profile_test OK")

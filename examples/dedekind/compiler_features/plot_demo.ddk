@@ -12,6 +12,6 @@ fn main() {
     y = [2.0, 4.0, 3.0, 5.0, 6.0]
     scatter(x, y, title="Scatter plot", xlabel="x", ylabel="y")
 
-    print("Plots are shown in Dedekind Studio (plot, scatter, contour).")
+    print("Plots are shown in Jupyter or the IDE console (plot, scatter, contour).")
 }
 main()

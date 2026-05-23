@@ -34,8 +34,7 @@ pip install "dedekind[all]"           # + sci, geo, bio, md, ml, plot, jupyter
 ```
 
 Extras: `jupyter`, `plot`, `sci` (scipy), `geo` (xarray), `bio` (rdkit),
-`md` (openmm), `ml` (torch_geometric), `server` (Flask, only for Studio
-backend).
+`md` (openmm), `ml` (torch_geometric).
 
 ### Jupyter / JupyterLab / Spyder
 
@@ -78,7 +77,7 @@ dedekind hello.ddk
   N-body integrators, control blocks, IIR filters — all are first-class
   AST nodes that autograd flows through. `minimize(...)` and `fit(...)`
   optimize through full simulations without writing adjoint code.
-- **Tafelnotation as syntax.** Einstein indices (`A^ij * v^j`), Ricci
+- **Blackboard notation as syntax.** Einstein indices (`A^ij * v^j`), Ricci
   contraction, Lagrangians (`lagrange_ode_rhs(L)`), partial derivatives
   (`partial(u, x, order=2)`) are language primitives, not library calls.
 - **Shape and semantic types.** `Vector[N]`, `Matrix[M, N]`,
@@ -125,12 +124,6 @@ Compile and run every example at once:
 - Full changelog: [docs/changelog.md](docs/changelog.md)
 - Formal spec: [docs/Dedekind_Language_Specification.md](docs/Dedekind_Language_Specification.md)
 
-## Dedekind Studio
-
-Dedekind Studio is a separate **closed-source IDE** built on Spyder. It
-is maintained independently of the language. The language itself is
-fully usable in any Python environment via the Jupyter kernel — Studio
-is one option among many.
 
 ## License
 

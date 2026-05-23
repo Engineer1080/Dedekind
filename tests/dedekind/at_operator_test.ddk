@@ -1,4 +1,4 @@
-// Test: Matrix-Operator @ (A @ B statt matmul(A, B))
+// Test: Matrix operator @ (A @ B instead of matmul(A, B))
 fn main() {
     A = [[1.0, 2.0], [3.0, 4.0]]
     B = [[5.0, 6.0], [7.0, 8.0]]
@@ -8,6 +8,6 @@ fn main() {
     // C[0,0] = 1*5+2*7 = 19
     assert(C[0][0] > 18.9)
     assert(C[0][0] < 19.1)
-    print("at_operator_test: bestanden.")
+    print("at_operator_test: passed.")
 }
 main()

@@ -1,310 +1,310 @@
-# Dedekind für vernachlässigte Wissenschaften — Roadmap
+# Dedekind for Underserved Sciences — Roadmap
 
 **Dedekind Language**  
-Draft: Januar 2026 · letzter Status-Update: v1.17.0 (März 2027)
+Draft: January 2026 · Last status update: v1.17.0 (March 2027)
 
 ---
 
-## Status-Update (v1.17.0)
+## Status Update (v1.17.0)
 
-Diese Roadmap ist **weitgehend ausgeliefert**:
+This roadmap is **largely delivered**:
 
-| Phase | Thema | Status | Geliefert in |
+| Phase | Topic | Status | Delivered in |
 |---|---|---|---|
-| 1 | Chemie/Biologie-Quick-Wins (siehe Chemistry_Biology_Roadmap) | ✅ erledigt | v0.9.7 – v1.16 |
-| 2 | Maschinenbau-Einheiten (kN, MPa, MN, kPa) | ✅ erledigt | v1.x |
-| 2 | Musik-Convenience (`cents_to_ratio`, `ratio_to_cents`, `equal_temperament`) | ✅ erledigt | v1.x |
-| 2 | Ökonomie-Convenience (`discount_factor`, `cobb_douglas`, `solow_rhs`) | ✅ erledigt | v1.x |
-| 2 | Geologie (Darcy-Einheit, `darcy_velocity`) | ✅ erledigt | v1.x |
-| 2 | Materialwissenschaft (`johnson_mehl_avrami`, `avrami_rate`) | ✅ erledigt | v1.x |
-| 3 | Geologie-/Materials-/Structural-Beispiele | ✅ erledigt | `geology_darcy.ddk`, `materials_jmak.ddk` etc. |
-| 4 | Ökonomie- und Musik-Beispiele | ✅ erledigt | `economics_solow.ddk`, `music_intervals.ddk` |
-| 5 (optional) | `nernst`, `van_t_hoff`, `rate_order`; `fick_diffusion_1d`, `beam_eigenmodes`, `truss_solve` | 📋 nicht prioritisiert — bei konkreter Forscher-Nachfrage nachreichbar |
-| 5 (optional) | Benutzerdefinierte Einheiten `unit Darcy = 9.87e-13[m^2]` | ✅ erledigt | v1.7 (`unit X = N[base]`) |
-| 6 (optional) | Formale Linguistik, Archäologie | 📋 nicht angefangen — als langfristig markiert; ohne konkreten Anwender wenig Sinn |
-| Bonus | **Molekulardynamik via OpenMM** (`md_simulate_lj`) — über die Roadmap hinausgehend | ✅ erledigt | v1.14 |
-| Bonus | **Bioinformatik/Cheminformatik** (`Sequence[DNA]`, `smiles_descriptors`) | ✅ erledigt | v1.16 |
-| Bonus | **Earth-Science Labeled Tensors** (`LabeledTensor[lat, lon, time]`) | ✅ erledigt | v1.15 |
+| 1 | Chemistry/Biology quick wins (see Chemistry_Biology_Roadmap) | ✅ completed | v0.9.7 – v1.16 |
+| 2 | Mechanical engineering units (kN, MPa, MN, kPa) | ✅ completed | v1.x |
+| 2 | Music convenience (`cents_to_ratio`, `ratio_to_cents`, `equal_temperament`) | ✅ completed | v1.x |
+| 2 | Economics convenience (`discount_factor`, `cobb_douglas`, `solow_rhs`) | ✅ completed | v1.x |
+| 2 | Geology (Darcy unit, `darcy_velocity`) | ✅ completed | v1.x |
+| 2 | Materials science (`johnson_mehl_avrami`, `avrami_rate`) | ✅ completed | v1.x |
+| 3 | Geology/Materials/Structural examples | ✅ completed | `geology_darcy.ddk`, `materials_jmak.ddk` etc. |
+| 4 | Economics and Music examples | ✅ completed | `economics_solow.ddk`, `music_intervals.ddk` |
+| 5 (optional) | `nernst`, `van_t_hoff`, `rate_order`; `fick_diffusion_1d`, `beam_eigenmodes`, `truss_solve` | 📋 not prioritized — available on concrete researcher request |
+| 5 (optional) | User-defined units `unit Darcy = 9.87e-13[m^2]` | ✅ completed | v1.7 (`unit X = N[base]`) |
+| 6 (optional) | Formal linguistics, Archaeology | 📋 not started — marked as long-term; makes little sense without concrete users |
+| Bonus | **Molecular Dynamics via OpenMM** (`md_simulate_lj`) — exceeding the roadmap | ✅ completed | v1.14 |
+| Bonus | **Bioinformatics/Cheminformatics** (`Sequence[DNA]`, `smiles_descriptors`) | ✅ completed | v1.16 |
+| Bonus | **Earth-Science Labeled Tensors** (`LabeledTensor[lat, lon, time]`) | ✅ completed | v1.15 |
 
-**Status:** Diese Roadmap ist effektiv geschlossen für Phasen 1–4. Phase 5 (zusätzliche Spezial-Funktionen) und Phase 6 (sehr nischige Disziplinen) bleiben **on-demand** — nicht von sich aus interessant, aber realisierbar wenn ein konkreter Forscher danach fragt.
-
----
-
-## 1. Ziel und Motivation
-
-R und Python dominieren die datengetriebene Wissenschaft (Statistik, ML, Bioinformatik, Physik). Viele Disziplinen nutzen jedoch weiterhin **Excel, Origin, Mathematica, Maple** oder **domänenspezifische Tools** — oft ohne Einheiten-Check, ohne einheitliche Notation und ohne die Vorteile einer wissenschaftlichen Programmiersprache.
-
-**Strategie:** Dedekind gezielt für Wissenschaften positionieren, die von R/Python **unterversorgt** sind. Dedekinds Stärken (Einheiten zur Compile-Zeit, Ricci-Notation, PDE-Suite, kompakte Syntax, LaTeX-Export) passen gut zu Domänen, in denen **physikalische Korrektheit**, **formale Notation** und **Lehrbarkeit** zählen.
-
-**Prototyp-Phase:** Dedekind ist aktuell ein privater Prototyp. **Größere Kern-Änderungen** sind noch möglich — neue Einheiten, domänenspezifische Built-ins, ggf. Sprachkonstrukte. Diese Roadmap schlägt sowohl **Beispiele/Doku** als auch **neue Kern-Features** vor.
+**Status:** This roadmap is effectively closed for phases 1–4. Phase 5 (additional specialized functions) and Phase 6 (very niche disciplines) remain **on-demand** — not interesting on their own, but implementable if a concrete researcher asks for them.
 
 ---
 
-## 2. Vernachlässigte Domänen — Übersicht
+## 1. Goal and Motivation
 
-| Domäne | R/Python-Nutzung | Typische Tools heute | Dedekind-Fit | Priorität |
+R and Python dominate data-driven science (statistics, ML, bioinformatics, physics). Many disciplines, however, continue to use **Excel, Origin, Mathematica, Maple** or **domain-specific tools** — often without unit checking, without a uniform notation, and without the benefits of a scientific programming language.
+
+**Strategy:** Position Dedekind specifically for sciences that are **underserved** by R/Python. Dedekind's strengths (compile-time unit checks, Ricci notation, PDE suite, compact syntax, LaTeX export) fit well in domains where **physical correctness**, **formal notation**, and **teachability** matter.
+
+**Prototype Phase:** Dedekind is currently a private prototype. **Major core changes** are still possible — new units, domain-specific built-ins, and language constructs. This roadmap proposes both **examples/documentation** and **new core features**.
+
+---
+
+## 2. Underserved Domains — Overview
+
+| Domain | R/Python Usage | Typical Tools Today | Dedekind Fit | Priority |
 |--------|------------------|----------------------|--------------|-----------|
-| **Chemie** | Python wächst (RDKit), R selten | Excel, Origin, Mathematica | mol, L, M, Kinetik, Stöchiometrie | 1 (bereits Roadmap) |
-| **Geologie / Geowissenschaften** | Nischenhaft | Petrel, ArcGIS, MATLAB | Einheiten, PDE (Diffusion, Advektion) | 2 |
-| **Werkstoffwissenschaften** | Nischenhaft | COMSOL, Abaqus, Origin | PDE, Einheiten, Arrhenius | 2 |
-| **Bauingenieurwesen / Statik** | Nischenhaft | SAP2000, ETABS, Excel | Einheiten, lineare Algebra, ODE | 2 |
-| **Theoretische Ökonomie** | R/Python für Empirie; Theorie oft Mathematica | Mathematica, Maple | ODE, dynamische Modelle, Fitting | 3 |
-| **Musiktheorie / Musikologie** | Nischenhaft | LilyPond, Max/MSP, spezialisierte Software | Frequenzverhältnisse, FFT, kompakte Notation | 3 |
-| **Formale Linguistik** | Spezialisierte Tools | Prolog, Coq, spezielle Parser | Typen, formale Strukturen (langfristig) | 4 |
-| **Archäologie / Kulturerbe** | GIS (Python), sonst spezialisiert | QGIS, 3D-Tools | Statistik, Fitting, Einheiten (Daten) | 4 |
-| **Lehre (MINT)** | GeoGebra, Taschenrechner, Python | Gemischt | Einheiten-Check, LaTeX, kompakte Syntax | 2 |
+| **Chemistry** | Python is growing (RDKit), R is rare | Excel, Origin, Mathematica | mol, L, M, kinetics, stoichiometry | 1 (already on Roadmap) |
+| **Geology / Earth Sciences** | Niche | Petrel, ArcGIS, MATLAB | units, PDE (diffusion, advection) | 2 |
+| **Materials Science** | Niche | COMSOL, Abaqus, Origin | PDE, units, Arrhenius | 2 |
+| **Structural / Civil Engineering** | Niche | SAP2000, ETABS, Excel | units, linear algebra, ODE | 2 |
+| **Theoretical Economics** | R/Python for empirical work; theory often Mathematica | Mathematica, Maple | ODE, dynamic models, fitting | 3 |
+| **Music Theory / Musicology** | Niche | LilyPond, Max/MSP, specialized software | frequency ratios, FFT, compact notation | 3 |
+| **Formal Linguistics** | Specialized tools | Prolog, Coq, custom parsers | types, formal structures (long-term) | 4 |
+| **Archaeology / Cultural Heritage** | GIS (Python), otherwise specialized | QGIS, 3D tools | statistics, fitting, units (data) | 4 |
+| **Teaching (STEM)** | GeoGebra, calculators, Python | Mixed | unit checks, LaTeX, compact syntax | 2 |
 
 ---
 
-## 3. Domänen im Detail
+## 3. Domains in Detail
 
-### 3.1 Chemie (bereits in Chemistry_Biology_Roadmap)
+### 3.1 Chemistry (already in Chemistry_Biology_Roadmap)
 
-- **Status:** Roadmap existiert; mol, L, M, ppm, Michaelis-Menten, Arrhenius, Stöchiometrie, Elemente.
-- **Warum vernachlässigt:** Viele Chemiker nutzen Excel/Origin; R ist kaum verbreitet; Python wächst, aber ohne Einheiten-Check und ohne chemische Konventionen als First-Class.
-- **Dedekind-Vorteil:** `0.1[M] + 50[ppm]` mit Compile-Check; `balance_equation("H2+O2","H2O")`; `atomic_mass("C")`.
-- **Nächste Schritte:** Chemistry_Biology_Roadmap Phase 4 (Tutorials, Sichtbarkeit).
-
----
-
-### 3.2 Geologie / Geowissenschaften
-
-- **Status:** Nicht adressiert.
-- **Warum vernachlässigt:** GIS (Python), Modellierung oft MATLAB oder domänenspezifisch; Einheiten (m, s, Pa, °C, mol) werden selten geprüft.
-- **Dedekind-Fit:**
-  - **Einheiten:** Druck [Pa], Temperatur [K], Konzentration [M], Durchlässigkeit [m²], Viskosität [Pa·s].
-  - **PDE:** Advektions-Diffusion (Transport in porösen Medien), Wärmeleitung (geothermisch), Reaktions-Diffusion (Mineralisation).
-  - **Beispiel-Idee:** `geology_transport.ddk` — 1D-Advektions-Diffusion mit Einheiten für Grundwasser- oder Öl-Reservoir-Simulation.
-- **Aufwand:** Gering–Mittel (PDE und Einheiten vorhanden; Beispiel + Doku).
+- **Status:** Roadmap exists; mol, L, M, ppm, Michaelis-Menten, Arrhenius, stoichiometry, elements.
+- **Why underserved:** Many chemists use Excel/Origin; R is barely used; Python is growing but lacks compile-time unit checking and chemical conventions as first-class citizens.
+- **Dedekind Advantage:** `0.1[M] + 50[ppm]` with compile checks; `balance_equation("H2+O2","H2O")`; `atomic_mass("C")`.
+- **Next Steps:** Chemistry_Biology_Roadmap Phase 4 (tutorials, visibility).
 
 ---
 
-### 3.3 Werkstoffwissenschaften
+### 3.2 Geology / Earth Sciences
 
-- **Status:** Nicht adressiert.
-- **Warum vernachlässigt:** FEM (COMSOL, Abaqus), Kinetik/Arrhenius oft in Excel oder Origin.
-- **Dedekind-Fit:**
-  - **Einheiten:** [Pa], [K], [J], [mol], [1/s] für Kinetik.
-  - **Arrhenius:** Bereits vorhanden — `arrhenius(T, A, Ea)`.
-  - **PDE:** Wärmeleitung, Reaktions-Diffusion (Oxidation, Phasenumwandlung).
-  - **Beispiel-Idee:** `materials_arrhenius.ddk` (bereits Arrhenius), `materials_diffusion.ddk` (C-Diffusion in Stahl).
-- **Aufwand:** Gering (Arrhenius da; Beispiel + Doku).
-
----
-
-### 3.4 Bauingenieurwesen / Statik
-
-- **Status:** Nicht adressiert.
-- **Warum vernachlässigt:** SAP2000, ETABS, Excel; Skripte selten; Einheiten oft manuell.
-- **Dedekind-Fit:**
-  - **Einheiten:** [N], [Pa], [m], [kg]; Compile-Check verhindert kN + MPa ohne Umrechnung.
-  - **Lineare Algebra:** `solve(A, b)` für Gleichungssysteme; `eigh` für Eigenfrequenzen.
-  - **Beispiel-Idee:** `structural_units.ddk` — Kräfte, Spannungen, Einheiten-Check; `structural_eigen.ddk` — Eigenfrequenzen eines Balkenmodells.
-- **Aufwand:** Gering (LA und Einheiten vorhanden; Beispiel + Doku).
+- **Status:** Unaddressed.
+- **Why underserved:** GIS (Python), modeling often MATLAB or domain-specific; units (m, s, Pa, °C, mol) are rarely checked automatically.
+- **Dedekind Fit:**
+  - **Units:** Pressure [Pa], temperature [K], concentration [M], permeability [m²], viscosity [Pa·s].
+  - **PDE:** Advection-diffusion (transport in porous media), heat conduction (geothermal), reaction-diffusion (mineralization).
+  - **Example Idea:** `geology_transport.ddk` — 1D advection-diffusion with units for groundwater or oil reservoir simulation.
+- **Effort:** Low–Medium (PDE and units available; example + docs).
 
 ---
 
-### 3.5 Theoretische Ökonomie
+### 3.3 Materials Science
 
-- **Status:** Nicht adressiert.
-- **Warum vernachlässigt:** Dynamische Modelle oft in Mathematica/Maple; R/Python für Empirie, nicht für formale Theorie.
-- **Dedekind-Fit:**
-  - **ODE:** `ode_solve` für Wachstumsmodelle, Ramsey, Solow.
-  - **Fitting:** `fit` für Kalibrierung an Daten.
-  - **Beispiel-Idee:** `economics_solow.ddk` — Solow-Wachstumsmodell mit Einheiten (Arbeitsstunden, Kapital).
-- **Aufwand:** Gering (ODE, fit vorhanden; Beispiel + Doku).
-
----
-
-### 3.6 Musiktheorie / Musikologie
-
-- **Status:** Nicht adressiert.
-- **Warum vernachlässigt:** LilyPond, Max/MSP, spezialisierte Software; keine Einheiten für Frequenzen/Intervalle.
-- **Dedekind-Fit:**
-  - **Frequenz:** [Hz]; Intervalle als Verhältnisse (z.B. Quinte = 3/2).
-  - **FFT:** Bereits vorhanden — Spektralanalyse.
-  - **Beispiel-Idee:** `music_intervals.ddk` — Frequenzverhältnisse, Cent-Berechnung; `music_spectrum.ddk` — FFT eines Tons.
-- **Aufwand:** Gering (FFT, Einheiten; Beispiel + Doku).
+- **Status:** Unaddressed.
+- **Why underserved:** FEM (COMSOL, Abaqus), kinetics/Arrhenius often in Excel or Origin.
+- **Dedekind Fit:**
+  - **Units:** [Pa], [K], [J], [mol], [1/s] for kinetics.
+  - **Arrhenius:** Already available — `arrhenius(T, A, Ea)`.
+  - **PDE:** Heat conduction, reaction-diffusion (oxidation, phase transformation).
+  - **Example Idea:** `materials_arrhenius.ddk` (already Arrhenius), `materials_diffusion.ddk` (C diffusion in steel).
+- **Effort:** Low (Arrhenius available; example + docs).
 
 ---
 
-### 3.7 Lehre (MINT)
+### 3.4 Civil / Structural Engineering
 
-- **Status:** Indirekt (Beispiele, LaTeX).
-- **Warum relevant:** GeoGebra, Taschenrechner, Python — oft ohne Einheiten-Check; Fehler (m + s) sind häufig.
-- **Dedekind-Fit:**
-  - **Einheiten-Check:** `1[m] + 1[s]` → Compiler-Fehler — didaktisch wertvoll.
-  - **LaTeX-Export:** Formeln aus Code; `print_latex` in Konsole.
-  - **Kompakte Syntax:** Weniger Boilerplate als Python.
-  - **Beispiel-Idee:** Tutorial „Physik mit Dedekind“ — Einheiten, ODE, Plot.
-- **Aufwand:** Gering (alles da; Tutorial + Doku).
+- **Status:** Unaddressed.
+- **Why underserved:** SAP2000, ETABS, Excel; scripting is rare; units are handled manually.
+- **Dedekind Fit:**
+  - **Units:** [N], [Pa], [m], [kg]; compile checks prevent kN + MPa without conversion.
+  - **Linear Algebra:** `solve(A, b)` for equation systems; `eigh` for natural frequencies.
+  - **Example Idea:** `structural_units.ddk` — forces, stresses, unit checks; `structural_eigen.ddk` — natural frequencies of a beam model.
+- **Effort:** Low (LA and units available; example + docs).
 
 ---
 
-## 4. Mögliche Kern-Features (Prototyp-Phase)
+### 3.5 Theoretical Economics
 
-Da Dedekind noch ein Prototyp ist, können **neue Sprach- und Runtime-Features** gezielt für vernachlässigte Domänen ergänzt werden. Die folgenden Vorschläge sind nach Domäne und Aufwand sortiert.
+- **Status:** Unaddressed.
+- **Why underserved:** Dynamic models often in Mathematica/Maple; R/Python for empirical work, not formal theory.
+- **Dedekind Fit:**
+  - **ODE:** `ode_solve` for growth models, Ramsey, Solow.
+  - **Fitting:** `fit` for calibration to data.
+  - **Example Idea:** `economics_solow.ddk` — Solow growth model with units (labor hours, capital).
+- **Effort:** Low (ODE, fit available; example + docs).
 
-### 4.1 Einheiten-Erweiterungen (quer zu mehreren Domänen)
+---
 
-| Feature | Domäne(n) | Beschreibung | Aufwand |
+### 3.6 Music Theory / Musicology
+
+- **Status:** Unaddressed.
+- **Why underserved:** LilyPond, Max/MSP, specialized software; no units for frequencies/intervals.
+- **Dedekind Fit:**
+  - **Frequency:** [Hz]; intervals as ratios (e.g., fifth = 3/2).
+  - **FFT:** Already available — spectral analysis.
+  - **Example Idea:** `music_intervals.ddk` — frequency ratios, cent calculation; `music_spectrum.ddk` — FFT of a sound.
+- **Effort:** Low (FFT, units; example + docs).
+
+---
+
+### 3.7 Teaching (STEM)
+
+- **Status:** Indirect (examples, LaTeX).
+- **Why relevant:** GeoGebra, calculators, Python — often without unit checks; errors (m + s) are common.
+- **Dedekind Fit:**
+  - **Unit Check:** `1[m] + 1[s]` → compiler error — didactically valuable.
+  - **LaTeX Export:** Formulas from code; `print_latex` in console.
+  - **Compact Syntax:** Less boilerplate than Python.
+  - **Example Idea:** Tutorial "Physics with Dedekind" — units, ODE, plot.
+- **Effort:** Low (everything available; tutorial + docs).
+
+---
+
+## 4. Possible Core Features (Prototype Phase)
+
+Since Dedekind is still a prototype, **new language and runtime features** can be added specifically for underserved domains. The following suggestions are sorted by domain and effort.
+
+### 4.1 Unit Extensions (cross-domain)
+
+| Feature | Domain(s) | Description | Effort |
 |---------|-----------|--------------|---------|
-| **rad, deg** | Physik, Lehre, Bau | Winkel mit automatischer Umrechnung; `deg_to_rad(x)`, `rad_to_deg(x)` | ✅ v1.2.6 |
-| **kN, MPa, MN** | Bau, Werkstoffe | Ingenieur-Konventionen: `1[kN] = 1000[N]`, `1[MPa] = 1e6[Pa]` | Gering |
-| **Darcy [D], mD** | Geologie | Durchlässigkeit: 1 D ≈ 9.87e−13 m² | Gering |
-| **wt%, at%** | Chemie, Werkstoffe | Gewichts-/Atomprozent als Einheit oder Konvention | Mittel |
-| **Cent [cent]** | Musik | 1 cent = 1/1200 Oktave; `cents_to_ratio(c)`, `ratio_to_cents(r)` | Gering |
-| **User-defined units** | Alle | `unit Darcy = 9.87e-13[m^2]` — benutzerdefinierte Einheiten zur Compile-Zeit | Hoch |
+| **rad, deg** | Physics, education, structural | Angles with automatic conversion; `deg_to_rad(x)`, `rad_to_deg(x)` | ✅ v1.2.6 |
+| **kN, MPa, MN** | Structural, materials | Engineering conventions: `1[kN] = 1000[N]`, `1[MPa] = 1e6[Pa]` | Low |
+| **Darcy [D], mD** | Geology | Permeability: 1 D ≈ 9.87e−13 m² | Low |
+| **wt%, at%** | Chemistry, materials | Weight/atom percent as unit or convention | Medium |
+| **Cent [cent]** | Music | 1 cent = 1/1200 octave; `cents_to_ratio(c)`, `ratio_to_cents(r)` | Low |
+| **User-defined units** | All | `unit Darcy = 9.87e-13[m^2]` — user-defined units at compile time | High |
 
-### 4.2 Geologie / Geowissenschaften
+### 4.2 Geology / Earth Sciences
 
-| Feature | Beschreibung | Aufwand |
+| Feature | Description | Effort |
 |---------|--------------|---------|
-| **`pde_porous_media_1d`** | Advektions-Diffusion mit Porosität φ und Durchlässigkeit: Transport in porösen Medien als Convenience-Wrapper | Mittel |
-| **Einheiten Darcy, mD** | Siehe oben | Gering |
-| **`darcy_velocity(K, grad_P, mu)`** | Darcy-Gesetz v = −(K/μ) ∇P als Built-in | Gering |
+| **`pde_porous_media_1d`** | Advection-diffusion with porosity φ and permeability: transport in porous media as convenience wrapper | Medium |
+| **Units Darcy, mD** | See above | Low |
+| **`darcy_velocity(K, grad_P, mu)`** | Darcy's law v = −(K/μ) ∇P as built-in | Low |
 
-### 4.3 Werkstoffwissenschaften
+### 4.3 Materials Science
 
-| Feature | Beschreibung | Aufwand |
+| Feature | Description | Effort |
 |---------|--------------|---------|
-| **`fick_diffusion_1d(c0, x, t, D)`** | Fick’sche Diffusion mit konzentrationsabhängigem D (optional) | Mittel |
-| **`johnson_mehl_avrami(t, k, n)`** | Phasenumwandlungskinetik (JMAK): f(t) = 1 − exp(−(k·t)^n) | Gering |
-| **`avrami_rate(f, k, n)`** | RHS für ode_solve aus JMAK | Gering |
-| **Einheiten wt%, at%** | Siehe oben | Mittel |
+| **`fick_diffusion_1d(c0, x, t, D)`** | Fickian diffusion with concentration-dependent D (optional) | Medium |
+| **`johnson_mehl_avrami(t, k, n)`** | Phase transformation kinetics (JMAK): f(t) = 1 − exp(−(k·t)^n) | Low |
+| **`avrami_rate(f, k, n)`** | RHS for `ode_solve` from JMAK | Low |
+| **Units wt%, at%** | See above | Medium |
 
-### 4.4 Bauingenieurwesen / Statik
+### 4.4 Civil / Structural Engineering
 
-| Feature | Beschreibung | Aufwand |
+| Feature | Description | Effort |
 |---------|--------------|---------|
-| **Einheiten kN, MPa, MN** | Siehe oben | Gering |
-| **`beam_eigenmodes(EI, m, L, n)`** | Eigenfrequenzen eines Euler-Bernoulli-Balkens (diskretisiert) | Mittel |
-| **`truss_solve(connectivity, loads, stiffness)`** | Stabwerk: Steifigkeitsmatrix + solve als Convenience | Mittel |
+| **Units kN, MPa, MN** | See above | Low |
+| **`beam_eigenmodes(EI, m, L, n)`** | Natural frequencies of an Euler-Bernoulli beam (discretized) | Medium |
+| **`truss_solve(connectivity, loads, stiffness)`** | Truss framework: stiffness matrix + solve as convenience | Medium |
 
-### 4.5 Theoretische Ökonomie
+### 4.5 Theoretical Economics
 
-| Feature | Beschreibung | Aufwand |
+| Feature | Description | Effort |
 |---------|--------------|---------|
-| **`discount_factor(r, t, discrete)`** | exp(−r·t) oder 1/(1+r)^t für Barwert | Gering |
-| **`cobb_douglas(K, L, alpha, A)`** | Produktionsfunktion Y = A·K^α·L^(1−α) | Gering |
-| **`solow_rhs(K, s, delta, n, g, alpha)`** | RHS für Solow-Modell: dK/dt = s·Y − (δ+n+g)·K | Gering |
-| **`ramsey_rhs(...)`** | Ramsey-Cass-Koopmans RHS (optional) | Mittel |
+| **`discount_factor(r, t, discrete)`** | exp(−r·t) or 1/(1+r)^t for present value | Low |
+| **`cobb_douglas(K, L, alpha, A)`** | Production function Y = A·K^α·L^(1−α) | Low |
+| **`solow_rhs(K, s, delta, n, g, alpha)`** | RHS for Solow model: dK/dt = s·Y − (δ+n+g)·K | Low |
+| **`ramsey_rhs(...)`** | Ramsey-Cass-Koopmans RHS (optional) | Medium |
 
-### 4.6 Musiktheorie / Musikologie
+### 4.6 Music Theory / Musicology
 
-| Feature | Beschreibung | Aufwand |
+| Feature | Description | Effort |
 |---------|--------------|---------|
-| **`cents_to_ratio(cents)`** | 2^(cents/1200) | Gering |
-| **`ratio_to_cents(ratio)`** | 1200·log2(ratio) | Gering |
-| **`equal_temperament(n)`** | Frequenz des n-ten Halbtons (A4 = 440 Hz Referenz) | Gering |
-| **`just_interval(name)`** | Reine Intervalle: "fifth"→3/2, "major_third"→5/4, etc. | Gering |
-| **Einheit [cent]** | Optional: Intervall als Quantity | Gering |
+| **`cents_to_ratio(cents)`** | 2^(cents/1200) | Low |
+| **`ratio_to_cents(ratio)`** | 1200·log2(ratio) | Low |
+| **`equal_temperament(n)`** | Frequency of the n-th semitone (A4 = 440 Hz reference) | Low |
+| **`just_interval(name)`** | Pure intervals: "fifth"→3/2, "major_third"→5/4, etc. | Low |
+| **Unit [cent]** | Optional: interval as Quantity | Low |
 
-### 4.7 Chemie (Erweiterung zur Chemistry_Biology_Roadmap)
+### 4.7 Chemistry (extension to Chemistry_Biology_Roadmap)
 
-| Feature | Beschreibung | Aufwand |
+| Feature | Description | Effort |
 |---------|--------------|---------|
-| **`nernst(E0, n, Q, T)`** | Nernst-Gleichung E = E0 − (R·T)/(n·F)·ln(Q) | Gering |
-| **`van_t_hoff(K1, T1, dH, T2)`** | Temperaturabhängigkeit der Gleichgewichtskonstante | Gering |
-| **`rate_order(conc, k, orders)`** | Allgemeines Geschwindigkeitsgesetz v = k·∏c_i^n_i | Gering |
-| **Einheiten wt%, at%, N (Normalität)** | Siehe oben | Mittel |
+| **`nernst(E0, n, Q, T)`** | Nernst equation E = E0 − (R·T)/(n·F)·ln(Q) | Low |
+| **`van_t_hoff(K1, T1, dH, T2)`** | Temperature dependence of the equilibrium constant | Low |
+| **`rate_order(conc, k, orders)`** | General rate law v = k·∏c_i^n_i | Low |
+| **Units wt%, at%, N (normality)** | See above | Medium |
 
-### 4.8 Sprach-Level: Domänen-Profile (langfristig)
+### 4.8 Language Level: Domain Profiles (long-term)
 
-| Feature | Beschreibung | Aufwand |
+| Feature | Description | Effort |
 |---------|--------------|---------|
-| **`use geology`** | Lädt Einheiten (Darcy, mD) und Built-ins (darcy_velocity, pde_porous_media) | Hoch |
-| **`use music`** | Lädt Cent-Funktionen, equal_temperament, just_interval | Mittel |
-| **`use structural`** | Lädt kN, MPa, beam_eigenmodes, truss_solve | Mittel |
+| **`use geology`** | Loads units (Darcy, mD) and built-ins (darcy_velocity, pde_porous_media) | High |
+| **`use music`** | Loads cent functions, equal_temperament, just_interval | Medium |
+| **`use structural`** | Loads kN, MPa, beam_eigenmodes, truss_solve | Medium |
 
-*Hinweis:* Domänen-Profile setzen ein Modul-/Import-System voraus, das aktuell fehlt. Alternative: Compiler-Flag `--domain geology` oder Pragma `#domain geology` am Dateianfang.
+*Note:* Domain profiles require a module/import system. Alternative: compiler flag `--domain geology` or pragma `#domain geology` at the start of the file.
 
 ---
 
-## 5. Implementierungs-Phasen
+## 5. Implementation Phases
 
-### Phase 1: Chemie abschließen (bereits in Arbeit)
+### Phase 1: Complete Chemistry (already in progress)
 
-- Chemistry_Biology_Roadmap Phase 4: Tutorials, Sichtbarkeit.
-- Keine neuen Features nötig.
+- Chemistry_Biology_Roadmap Phase 4: Tutorials, visibility.
+- No new features needed.
 
-### Phase 2: Kern-Features „Quick Wins“ (geschätzt: 2–3 Wochen) ✅
+### Phase 2: Core Features "Quick Wins" (estimated: 2–3 weeks) ✅
 
-*Geringer Aufwand, hoher Nutzen für mehrere Domänen. Umgesetzt.*
+*Low effort, high utility for multiple domains. Implemented.*
 
-| Schritt | Feature | Domäne(n) |
+| Step | Feature | Domain(s) |
 |---------|---------|-----------|
-| 1 | Einheiten **kN, MPa, MN, kPa** | Bau, Werkstoffe |
-| 2 | **cents_to_ratio**, **ratio_to_cents**, **equal_temperament** | Musik |
-| 3 | **discount_factor**, **cobb_douglas**, **solow_rhs** | Ökonomie |
-| 4 | **darcy_velocity**, Einheiten **D, mD** | Geologie |
-| 5 | **johnson_mehl_avrami**, **avrami_rate** | Werkstoffe |
-| 6 | Beispiele + Doku für alle | — |
+| 1 | Units **kN, MPa, MN, kPa** | Structural, materials |
+| 2 | **cents_to_ratio**, **ratio_to_cents**, **equal_temperament** | Music |
+| 3 | **discount_factor**, **cobb_douglas**, **solow_rhs** | Economics |
+| 4 | **darcy_velocity**, units **D, mD** | Geology |
+| 5 | **johnson_mehl_avrami**, **avrami_rate** | Materials |
+| 6 | Examples + docs for all | — |
 
-**Beispiele:** `quickwins_units.ddk`, `music_intervals.ddk`, `economics_solow.ddk`, `geology_darcy.ddk`, `materials_jmak.ddk`.
+**Examples:** `quickwins_units.ddk`, `music_intervals.ddk`, `economics_solow.ddk`, `geology_darcy.ddk`, `materials_jmak.ddk`.
 
-### Phase 3: Geowissenschaften, Werkstoffe, Bau (geschätzt: 2–3 Wochen)
+### Phase 3: Earth Sciences, Materials, Civil Engineering (estimated: 2–3 weeks)
 
-| Schritt | Domäne | Aktion |
+| Step | Domain | Action |
 |---------|--------|--------|
-| 1 | Geologie | Beispiel `geology_transport.ddk`; optional `pde_porous_media_1d`. |
-| 2 | Werkstoffe | Beispiel `materials_diffusion.ddk`, `materials_jmak.ddk`. |
-| 3 | Bauingenieurwesen | Beispiel `structural_units.ddk`, `structural_eigen.ddk`; optional `beam_eigenmodes`. |
-| 4 | Doku | Abschnitt „Dedekind für Geowissenschaften, Werkstoffe, Bauingenieurwesen“. |
+| 1 | Geology | Example `geology_transport.ddk`; optional `pde_porous_media_1d`. |
+| 2 | Materials | Example `materials_diffusion.ddk`, `materials_jmak.ddk`. |
+| 3 | Civil Engineering | Example `structural_units.ddk`, `structural_eigen.ddk`; optional `beam_eigenmodes`. |
+| 4 | Docs | Section "Dedekind for Earth Sciences, Materials, Civil Engineering". |
 
-### Phase 4: Ökonomie, Musik, Lehre (geschätzt: 1–2 Wochen)
+### Phase 4: Economics, Music, Teaching (estimated: 1–2 weeks)
 
-| Schritt | Domäne | Aktion |
+| Step | Domain | Action |
 |---------|--------|--------|
-| 1 | Ökonomie | Beispiel `economics_solow.ddk` mit `solow_rhs`, `discount_factor`. |
-| 2 | Musik | Beispiel `music_intervals.ddk`, `music_spectrum.ddk` mit `cents_to_ratio`, `equal_temperament`. |
-| 3 | Lehre | Tutorial „MINT mit Dedekind“ — Einheiten, ODE, LaTeX. |
+| 1 | Economics | Example `economics_solow.ddk` with `solow_rhs`, `discount_factor`. |
+| 2 | Music | Example `music_intervals.ddk`, `music_spectrum.ddk` with `cents_to_ratio`, `equal_temperament`. |
+| 3 | Teaching | Tutorial "STEM with Dedekind" — units, ODE, LaTeX. |
 
-### Phase 5: Chemie-Erweiterung, mittlere Features (optional)
+### Phase 5: Chemistry Extension, Medium Features (optional)
 
-| Schritt | Feature | Aufwand |
+| Step | Feature | Effort |
 |---------|---------|---------|
-| 1 | **nernst**, **van_t_hoff**, **rate_order** | Gering |
-| 2 | **fick_diffusion_1d**, **beam_eigenmodes**, **truss_solve** | Mittel |
-| 3 | Domänen-Profile (`use geology` etc.) — falls Import-System kommt | Hoch |
+| 1 | **nernst**, **van_t_hoff**, **rate_order** | Low |
+| 2 | **fick_diffusion_1d**, **beam_eigenmodes**, **truss_solve** | Medium |
+| 3 | Domain profiles (`use geology` etc.) — if import system is added | High |
 
-### Phase 6: Formale Linguistik, Archäologie (optional)
+### Phase 6: Formal Linguistics, Archaeology (optional)
 
-- Formale Linguistik: Langfristig; erfordert ggf. Typen, formale Strukturen.
-- Archäologie: Statistik, Fitting — mit bestehenden Mitteln möglich.
+- Formal linguistics: Long-term; may require types, formal structures.
+- Archaeology: Statistics, fitting — possible with existing tools.
 
 ---
 
-## 6. Erfolgskriterien
+## 6. Success Criteria
 
-| Phase | Kriterium |
+| Phase | Criterion |
 |-------|-----------|
-| 1 | Chemie-Tutorial oder Blogpost veröffentlicht. |
-| 2 | Mindestens 5 neue Kern-Features (Einheiten + Built-ins) implementiert; Beispiele laufen. |
-| 3 | Mindestens 3 neue Beispiele (Geologie, Werkstoffe, Bau); README-Abschnitt. |
-| 4 | Beispiele Ökonomie, Musik; Tutorial „MINT mit Dedekind“. |
+| 1 | Chemistry tutorial or blog post published. |
+| 2 | At least 5 new core features (units + built-ins) implemented; examples run. |
+| 3 | At least 3 new examples (geology, materials, structural); README section. |
+| 4 | Examples economics, music; tutorial "STEM with Dedekind". |
 | 5 | Optional: nernst, van_t_hoff, beam_eigenmodes, truss_solve. |
 
 ---
 
-## 7. Risiken und Mitigation
+## 7. Risks and Mitigation
 
-| Risiko | Mitigation |
+| Risk | Mitigation |
 |--------|------------|
-| Zielgruppen finden Dedekind nicht | Suchbegriffe, Tutorials, Fachbereichskontakte. |
-| Zu viele domänenspezifische Features | Priorisierung: nur Features mit breitem Nutzen oder klarer Zielgruppe. |
-| Konkurrenz durch Excel/Origin | Einheiten-Check und Reproduzierbarkeit als Alleinstellungsmerkmal. |
-| Kern-Features verkomplizieren die Sprache | Built-ins in `ml_runtime`; Einheiten als Erweiterung des bestehenden Systems. |
+| Target audiences do not find Dedekind | Search terms, tutorials, contact with academic departments. |
+| Too many domain-specific features | Prioritization: only features with broad utility or clear target audience. |
+| Competition from Excel/Origin | Unit checking and reproducibility as unique selling points. |
+| Core features complicate the language | Built-ins in `ml_runtime`; units as extension of existing system. |
 
 ---
 
-## 8. Referenzen
+## 8. References
 
-- **Chemistry_Biology_Roadmap.md** — Chemie/Biologie-Features und Beispiele.
-- **Features_Implementation_Roadmap.md** — Basis-Features (Einheiten, ODE, PDE, fit).
-- **Was_Dedekind_aktuell_kann.md** — Aktueller Funktionsumfang.
-- **Maturity_Assessment.md** — Ausgereiftheit pro Domäne.
+- **Chemistry_Biology_Roadmap.md** — Chemistry/biology features and examples.
+- **Features_Implementation_Roadmap.md** — Basic features (units, ODE, PDE, fit).
+- **What_Dedekind_Can_Currently_Do.md** — Current functional scope.
+- **Maturity_Assessment.md** — Maturity per domain.
 
 ---
 
-*Dieses Dokument identifiziert Wissenschaften, die von R und Python vernachlässigt werden, und skizziert, wie Dedekind sie ansprechen kann — sowohl mit bestehenden Stärken als auch mit neuen Kern-Features (Einheiten, Built-ins, ggf. Domänen-Profile), die in der Prototyp-Phase noch umsetzbar sind.*
+*This document identifies sciences underserved by R and Python, and outlines how Dedekind can address them — both with existing strengths and with new core features (units, built-ins, domain profiles) that are still feasible in the prototype phase.*

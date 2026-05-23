@@ -37,7 +37,7 @@ fn test_iir_filter() {
 fn test_freqz() {
     print("Testing freqz (Frequency Response)...")
     
-    // Einfacher Differenzierer: y[n] = x[n] - x[n-1]
+    // Simple differentiator: y[n] = x[n] - x[n-1]
     b = [1.0, -1.0]
     a = [1.0, 0.0]
     
@@ -48,9 +48,9 @@ fn test_freqz() {
     print("DC Frequency response (omega=0):", h[0])
     print("Nyquist Frequency response (omega=pi):", h[9])
     
-    // DC Magnitude muss 0 sein
+    // DC magnitude must be 0
     assert(abs(h[0]) < 1e-5)
-    // Nyquist Magnitude muss 2.0 sein (h = 1 - e^(-j*pi) = 1 - (-1) = 2)
+    // Nyquist magnitude must be 2.0 (h = 1 - e^(-j*pi) = 1 - (-1) = 2)
     assert(abs(abs(h[9]) - 2.0) < 1e-5)
     
     print("[OK] freqz")
@@ -69,7 +69,7 @@ fn test_differentiable_biquad() {
     deriv = jacobian(get_b0, fc)
     print("Derivative of biquad lowpass b0 w.r.t fc:", deriv)
     
-    // Die Ableitung muss numerisch vorhanden und ungleich null sein
+    // The derivative must be numerically present and non-zero
     assert(abs(deriv[0]) > 0.01)
     
     print("[OK] Differentiable Biquad")

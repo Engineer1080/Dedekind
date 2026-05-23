@@ -735,7 +735,7 @@ def print_latex(s):
 
 def plot(x=None, y=None, title=None, xlabel=None, ylabel=None, xscale="linear", yscale="linear"):
     """
-    Plots data (line) and displays it in Dedekind Studio.
+    Plots data (line).
     plot(y) -- y over index; plot(x, y) -- y over x.
     xscale, yscale: "linear" (default) or "log".
     """
@@ -753,7 +753,7 @@ def plot(x=None, y=None, title=None, xlabel=None, ylabel=None, xscale="linear", 
 def scatter(x=None, y=None, title=None, xlabel=None, ylabel=None):
     """
     Scatter plot: points (x, y). scatter(y) -- y over index; scatter(x, y) -- points.
-    Displayed in Dedekind Studio.
+    Displayed in Jupyter, the IDE console, or a matplotlib window.
     """
     if x is None and y is None:
         return
@@ -769,7 +769,7 @@ def scatter(x=None, y=None, title=None, xlabel=None, ylabel=None):
 def contour(X, Y, Z, title=None, xlabel=None, ylabel=None, levels=10):
     """
     Contour plot. X, Y: 1D or 2D coordinates (e.g. linspace); Z: 2D matrix (values).
-    levels: number of contour lines (default 10). Displayed in Dedekind Studio.
+    levels: number of contour lines (default 10). Displayed in Jupyter, the IDE console, or a matplotlib window.
     """
     import numpy as np  # type: ignore[reportMissingImports]
     X_t = _to_tensor(X).float().detach().cpu().numpy()

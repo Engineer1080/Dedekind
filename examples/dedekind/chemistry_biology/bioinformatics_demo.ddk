@@ -1,15 +1,15 @@
-// bioinformatics_demo.ddk — Bioinformatik- und Cheminformatik-Quick-Wins (v1.16).
+// bioinformatics_demo.ddk — Bioinformatics and cheminformatics quick wins (v1.16).
 //
-// Dedekind fuegt typisierte Bioinformatik-Primitiven hinzu, ohne den
-// numerischen Kern zu verlassen:
-//   - `Sequence[DNA]`, `Sequence[RNA]`, `Sequence[Protein]` als
-//     Shape-Annotationen mit Alphabet-Validierung.
-//   - native DNA/RNA-Operationen: gc_content, transcribe, translate,
+// Dedekind adds typed bioinformatics primitives without leaving the
+// numerical core:
+//   - `Sequence[DNA]`, `Sequence[RNA]`, `Sequence[Protein]` as
+//     shape annotations with alphabet validation.
+//   - native DNA/RNA operations: gc_content, transcribe, translate,
 //     reverse_complement, k_mer_count.
-//   - Cheminformatik via `pyimport rdkit`:
+//   - Cheminformatics via `pyimport rdkit`:
 //     smiles_descriptors, lipinski_rule_of_five.
 
-// --- 1. Zentrales Dogma: DNA -> RNA -> Protein -----------------------------
+// --- 1. Central Dogma: DNA -> RNA -> Protein -----------------------------
 fn dna_to_protein(dna: Sequence[DNA]) -> Sequence[Protein] {
     rna = transcribe(dna)
     return translate(rna)
@@ -20,61 +20,61 @@ fn validate_dna_only(seq: Sequence[DNA]) -> Scalar {
 }
 
 fn main() {
-    print("=== Bioinformatik / Pharma Quick-Wins (v1.16) ===")
+    print("=== Bioinformatics / Pharma Quick Wins (v1.16) ===")
     print("")
 
     // --- DNA -> Protein ---
-    print("[1] Zentrales Dogma")
+    print("[1] Central Dogma")
     insulin_start = "ATGGCCCTGTGGATGCGCCTCCTGCCCCTGCTGGCGCTGCTGGCCCTCTGGGGACCTGAC"
     print("DNA (60 bp):    " + insulin_start)
-    print("Laenge:         " + str(len(insulin_start)) + " bp")
-    print("GC-Content:     " + str(gc_content(insulin_start) * 100.0) + " %")
-    print("Rev-Complement: " + reverse_complement(insulin_start))
+    print("Length:         " + str(len(insulin_start)) + " bp")
+    print("GC content:     " + str(gc_content(insulin_start) * 100.0) + " %")
+    print("Rev complement: " + reverse_complement(insulin_start))
     print("")
     print("RNA:            " + transcribe(insulin_start))
     print("Protein:        " + dna_to_protein(insulin_start))
     print("")
 
-    // --- 2. k-Mer-Zaehlung ---
-    print("[2] k-Mer-Analyse (k=3)")
+    // --- 2. k-mer counting ---
+    print("[2] k-mer analysis (k=3)")
     short_seq = "ATGATGATGATG"
     counts = k_mer_count(short_seq, 3)
     print("Sequence: " + short_seq)
     print("3-mers:   " + str(counts))
     print("")
 
-    // --- 3. Cheminformatik: Aspirin ---
-    print("[3] Cheminformatik via rdkit")
+    // --- 3. Cheminformatics: Aspirin ---
+    print("[3] Cheminformatics via rdkit")
     aspirin = "CC(=O)Oc1ccccc1C(=O)O"
     desc = smiles_descriptors(aspirin)
     print("Aspirin (" + aspirin + "):")
-    print("  MW:                 " + str(desc["mw"]))
-    print("  LogP:               " + str(desc["logp"]))
-    print("  Schwere Atome:      " + str(desc["num_heavy_atoms"]))
-    print("  Aromatische Ringe:  " + str(desc["num_aromatic_rings"]))
-    print("  HBD / HBA:          " + str(desc["hbd"]) + " / " + str(desc["hba"]))
-    print("  TPSA:               " + str(desc["tpsa"]))
+    print("  MW:               " + str(desc["mw"]))
+    print("  LogP:             " + str(desc["logp"]))
+    print("  Heavy atoms:      " + str(desc["num_heavy_atoms"]))
+    print("  Aromatic rings:   " + str(desc["num_aromatic_rings"]))
+    print("  HBD / HBA:        " + str(desc["hbd"]) + " / " + str(desc["hba"]))
+    print("  TPSA:             " + str(desc["tpsa"]))
     print("")
 
-    // --- 4. Lipinski-Rule-of-Five ---
-    print("[4] Lipinski Rule of Five fuer drei Drug-Kandidaten")
+    // --- 4. Lipinski Rule of Five ---
+    print("[4] Lipinski Rule of Five for three drug candidates")
     candidates = ["CC(=O)Oc1ccccc1C(=O)O", "CN1C=NC2=C1C(=O)N(C(=O)N2C)C", "CC(C)Cc1ccc(cc1)C(C)C(=O)O"]
-    names = ["Aspirin", "Coffein", "Ibuprofen"]
+    names = ["Aspirin", "Caffeine", "Ibuprofen"]
     for i in arange(3) {
         sm = candidates[i]
         nm = names[i]
         lip = lipinski_rule_of_five(sm)
         if lip["passes"] {
-            print("  " + nm + ": PASS (alle 4 Kriterien erfuellt)")
+            print("  " + nm + ": PASS (all 4 criteria met)")
         } else {
-            print("  " + nm + ": " + str(lip["violations"]) + " Verletzungen")
+            print("  " + nm + ": " + str(lip["violations"]) + " violations")
         }
     }
     print("")
 
-    // --- 5. USP-Demo: typisierte Sequenz-Validierung ---
-    print("[5] Sequence[DNA] verhindert RNA-statt-DNA-Bugs")
-    print("    // validate_dna_only(ACGUACG)  -> ValueError: ungueltiges Zeichen U")
-    print("    // (in Python/Biopython: stiller Bug bei GC-Berechnung)")
+    // --- 5. USP demo: typed sequence validation ---
+    print("[5] Sequence[DNA] prevents RNA-instead-of-DNA bugs")
+    print("    // validate_dna_only(ACGUACG)  -> ValueError: invalid character U")
+    print("    // (in Python/Biopython: silent bug in GC calculation)")
 }
 main()

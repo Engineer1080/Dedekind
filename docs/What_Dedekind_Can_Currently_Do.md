@@ -131,7 +131,7 @@
 ## Tooling & IDE
 
 - **Compiler:** Transpilation of `.ddk` to Python; CLI `python -m src.compiler.compiler <file.ddk>`; options `--latex`, `--no-units-check`.
-- **Dedekind Studio:** Spyder fork with native Dedekind and Python kernel; editor with syntax highlighting (units, Ricci indices); plots pane for `plot()`; scientific examples as tabs; window/taskbar icon (Windows: .ico for sharp rendering).
+- **Editor Integration:** Text editors (like VS Code or Spyder) can run Dedekind files using the Jupyter kernel, with syntax highlighting support for physical units and Ricci indices.
 - **Jupyter kernel:** Dedekind in Jupyter/Spyder consoles; persistent context across cells.
 - **Examples:** Over 49 `.ddk` examples in `examples/dedekind/`; `pde_navier_stokes.ddk` for Navier-Stokes 2D; `angle_units.ddk` for angles rad/deg; `sequences.ddk` for sequences; `stats_binom_ttest.ddk` for binom and t-test. Batch test with `run_examples.py` (-q, -v, --compile, --filter). **Tests:** `assert(condition, message)`; mini test runner `run_tests.py` for `tests/dedekind/*.ddk`.
 - **Plots:** `plot(x, y, title=..., xscale="linear"|"log", yscale="log")`; `scatter(x, y)`; `contour(X, Y, Z, levels=...)`.

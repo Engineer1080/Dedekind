@@ -1,32 +1,31 @@
-// try_catch_slicing_demo.ddk — Sprachreife: Error-Handling + Python-Style Slicing (v1.17)
+// try_catch_slicing_demo.ddk — Language maturity: Error handling + Python-style slicing (v1.17)
 //
-// Zwei kleine, aber lange ueberfaellige Features, die Dedekind von einem
-// Notebook-DSL zu einer echten Skript-Sprache fuer wissenschaftliche
-// Anwendungen heben.
+// Two small but long-overdue features that elevate Dedekind from a
+// notebook DSL to a real scripting language for scientific applications.
 
 // --- try / catch ----------------------------------------------------------
 fn safe_divide(a, b) {
     try {
         return a / b
     } catch e {
-        print("  Fehler abgefangen:", e)
+        print("  Error caught:", e)
         return 0.0
     }
 }
 
-// Datei einlesen mit Fallback
+// Read file with fallback
 fn read_or_default(path, default) {
     try {
         return read_file(path)
     } catch e {
-        print("  Datei nicht lesbar, nutze Default:", e)
+        print("  File not readable, using default:", e)
         return default
     }
 }
 
-// --- Slicing-Syntax -------------------------------------------------------
+// --- Slicing syntax -------------------------------------------------------
 fn diff_first_last(data) {
-    // Slice nutzt erste 5 und letzte 5 Werte, vergleicht Mittelwerte.
+    // Slice uses the first 5 and last 5 values, compares their means.
     head_mean = data[:5].mean()
     tail_mean = data[-5:].mean()
     return tail_mean - head_mean
@@ -36,52 +35,52 @@ fn main() {
     print("=== try/catch + Slicing (v1.17) ===")
     print("")
 
-    // --- 1. Slicing-Vielfalt ---
-    print("[1] Slicing-Syntax")
+    // --- 1. Slicing variety ---
+    print("[1] Slicing syntax")
     x = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
     print("  x         =", x)
-    print("  x[3:7]    =", x[3:7])         // Standard-Range
-    print("  x[:5]     =", x[:5])          // Anfang bis 5
-    print("  x[5:]     =", x[5:])          // Ab 5 bis Ende
-    print("  x[::2]    =", x[::2])         // Jedes 2.
-    print("  x[1::2]   =", x[1::2])        // Jedes 2., ab Index 1
-    print("  x[2:8:2]  =", x[2:8:2])       // Range mit Schritt
-    // Hinweis: PyTorch erlaubt keinen negativen Step; fuer Reverse `torch.flip` nutzen.
+    print("  x[3:7]    =", x[3:7])         // Standard range
+    print("  x[:5]     =", x[:5])          // Start to 5
+    print("  x[5:]     =", x[5:])          // From 5 to end
+    print("  x[::2]    =", x[::2])         // Every 2nd
+    print("  x[1::2]   =", x[1::2])        // Every 2nd, starting at index 1
+    print("  x[2:8:2]  =", x[2:8:2])       // Range with step
+    // Note: PyTorch does not allow a negative step; for reverse use `torch.flip`.
     print("")
 
-    // --- 2. Praktische Anwendung: Head- vs. Tail-Vergleich ---
-    print("[2] Trend ueber 10 Datenpunkte (mean tail - mean head)")
+    // --- 2. Practical application: Head vs. tail comparison ---
+    print("[2] Trend over 10 data points (mean tail - mean head)")
     series = [1.0, 1.2, 1.5, 2.0, 2.3, 2.8, 3.1, 3.4, 3.9, 4.5]
     print("  diff:", diff_first_last(series))
     print("")
 
-    // --- 3. try/catch: kontrollierter Fehler ---
+    // --- 3. try/catch: controlled error ---
     print("[3] safe_divide")
     print("  10 / 2 =", safe_divide(10.0, 2.0))
     print("  10 / 0:")
     r = safe_divide(10.0, 0.0)
-    print("    -> fallback ergibt:", r)
+    print("    -> fallback yields:", r)
     print("")
 
-    // --- 4. try/catch: I/O mit Fallback ---
-    print("[4] Datei-Lesen mit Fallback")
+    // --- 4. try/catch: I/O with fallback ---
+    print("[4] File reading with fallback")
     content = read_or_default("/nicht/existent.txt", "DEFAULT_CONTENT")
-    print("  Inhalt:", content)
+    print("  Content:", content)
     print("")
 
-    // --- 5. Verschachtelte try-Bloecke ---
-    print("[5] Verschachtelte try-Bloecke")
+    // --- 5. Nested try blocks ---
+    print("[5] Nested try blocks")
     data = [100, 200, 300]
     try {
-        slice = data[1:5]                  // OK: gibt [200, 300]
+        slice = data[1:5]                  // OK: returns [200, 300]
         print("  Slice:", slice)
         try {
-            element = slice[10]            // Fehler im inneren Block
+            element = slice[10]            // Error in inner block
         } catch inner {
-            print("  Innerer Fehler:", inner)
+            print("  Inner error:", inner)
         }
     } catch outer {
-        print("  Aeusserer Fehler:", outer)
+        print("  Outer error:", outer)
     }
 }
 main()

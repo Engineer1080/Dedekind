@@ -1,174 +1,174 @@
-# Symbolic Simplification — Implementierungs-Roadmap
+# Symbolic Simplification — Implementation Roadmap
 
 **Dedekind Language**  
-Draft: January 2026 · letzter Status-Update: v1.17.0 (März 2027)
+Draft: January 2026 · last status update: v1.17.0 (March 2027)
 
 ---
 
-## Status-Update (v1.17.0)
+## Status Update (v1.17.0)
 
-| Phase | Thema | Status | Geliefert in |
+| Phase | Topic | Status | Delivered in |
 |---|---|---|---|
-| 1 MVP | `src/compiler/simplify.py` mit Constant-Folding, `x+0`, `0+x`, `x*1`, `1*x`, `x*0` → `0`, `x-0`, Literal-BinOp-Folding | ✅ erledigt | v1.3 |
-| 1 MVP | Hook nach Parse, vor Codegen | ✅ erledigt | v1.3 |
-| 2 | `x^0`→1, `x^1`→x, rekursive Sub-Ausdrücke, Ricci/Einsum-Regeln | ✅ teilweise (Power-Regeln; tiefere Tensor-Algebra nicht) |
-| 3 | `--no-units-check`-Flag (Analog zu `--simplify`) | ✅ erledigt | v0.9.5 |
-| 4 | SymPy-Integration als optionale Dep — `solve_sym`, `simplify_sym`, `series`, `diff_sym`, `integrate_sym` als Built-ins | ✅ erledigt | v1.3 – v1.6 |
-| 5 | Compile-Zeit-Unit-Dimension-Simplifikation | ⚠️ teilweise (Units-Checker validiert; volle dimensionale Reduktion nicht) |
+| 1 MVP | `src/compiler/simplify.py` with constant folding, `x+0`, `0+x`, `x*1`, `1*x`, `x*0` → `0`, `x-0`, literal BinOp folding | ✅ done | v1.3 |
+| 1 MVP | Hook after parse, before codegen | ✅ done | v1.3 |
+| 2 | `x^0`→1, `x^1`→x, recursive sub-expressions, Ricci/Einsum rules | ✅ partial (power rules; deeper tensor algebra not yet) |
+| 3 | `--no-units-check` flag (analogous to `--simplify`) | ✅ done | v0.9.5 |
+| 4 | SymPy integration as optional dep — `solve_sym`, `simplify_sym`, `series`, `diff_sym`, `integrate_sym` as built-ins | ✅ done | v1.3 – v1.6 |
+| 5 | Compile-time unit-dimension simplification | ⚠️ partial (units checker validates; full dimensional reduction not yet) |
 
-**Status:** Die wesentlichen Phasen sind durch eine Kombination aus internem `simplify.py` (Phase 1) und SymPy-Bridge-Built-ins (Phase 4) **abgedeckt**. Verbleibendes Feinkorn (vollständige Power-/Polynom-Vereinfachung am AST, automatische Dimensionsreduktion `m*s/s → m`) ist konzeptionell offen, hat aber niedrige Priorität, weil die SymPy-Brücke das praktisch löst.
+**Status:** The essential phases are **covered** through a combination of the internal `simplify.py` (Phase 1) and SymPy bridge built-ins (Phase 4). Remaining fine-grain work (full power/polynomial simplification on the AST, automatic dimension reduction `m*s/s → m`) is conceptually open, but low priority since the SymPy bridge solves this in practice.
 
-Für aktuelle Symbolik-Features siehe `Dedekind_Language_Specification.md` (Sektionen zu `diff_sym`, `integrate_sym`, `solve_sym`, `simplify_sym`, `series`).
-
----
-
-## 1. Ziel und Nutzen
-
-**Symbolic Simplification** bezeichnet die algebraische Vereinfachung von Ausdrücken **vor** der Code-Generierung (Python/MLIR). Ziele:
-
-- **Lesbarkeit**: Generierter Code enthält kürzere, klare Formeln statt aufgeblähter Zwischenausdrücke.
-- **Numerische Stabilität**: Redundante Operationen (z. B. `(x+1)-1` → `x`) vermeiden unnötige Rundungsfehler.
-- **Performance**: Weniger Operationen, bessere Chancen für Fused Ops und Compiler-Optimierungen; bei Ricci-Ausdrücken und langen Ableitungsketten spürbar.
-- **Physik/Units**: Konstanten zusammenfassen, Einheiten in Formeln vereinfachen (optional, wenn Units im AST repräsentiert sind).
-
-Diese Roadmap skizziert Phasen, technische Optionen und Integration in den Dedekind-Compiler.
+For current symbolic features see `Dedekind_Language_Specification.md` (sections on `diff_sym`, `integrate_sym`, `solve_sym`, `simplify_sym`, `series`).
 
 ---
 
-## 2. Scope: Was soll vereinfacht werden?
+## 1. Goal and Benefits
 
-| Kategorie | Beispiele | Priorität |
-|-----------|-----------|-----------|
-| **Konstantenfaltung** | `2*3` → `6`, `0*x` → `0`, `1*y` → `y` | Hoch |
-| **Arithmetik** | `(a+b)-b` → `a`, `x*1`, `x+0` | Hoch |
-| **Potenz/Log** | `x^0` → `1`, `x^1` → `x`, `exp(log(x))` → `x` (vorsichtig) | Mittel |
-| **Ricci / Einsum** | Kontraktionen vereinfachen, redundante Indizes | Mittel |
-| **Units** | `(kg*m/s^2)` als Typ vereinfachen (wenn Compile-Time-Units) | Später |
-| **Trigonometrie** | `sin(0)` → `0`, Summenformeln (optional) | Niedrig |
+**Symbolic Simplification** refers to the algebraic simplification of expressions **before** code generation (Python/MLIR). Goals:
 
-**MVP (Phase 1)** sollte: Konstantenfaltung, `+0`/`-0`, `*1`/`/1`, `*0` → `0` abdecken.
+- **Readability**: Generated code contains shorter, clearer formulas instead of bloated intermediate expressions.
+- **Numerical Stability**: Redundant operations (e.g. `(x+1)-1` → `x`) avoid unnecessary rounding errors.
+- **Performance**: Fewer operations, better chances for fused ops and compiler optimizations; noticeable for Ricci expressions and long differentiation chains.
+- **Physics/Units**: Combine constants, simplify units in formulas (optional, when units are represented in the AST).
+
+This roadmap outlines phases, technical options, and integration into the Dedekind compiler.
 
 ---
 
-## 3. Technische Optionen
+## 2. Scope: What Should Be Simplified?
 
-### Option A: SymPy integrieren
+| Category | Examples | Priority |
+|----------|----------|----------|
+| **Constant Folding** | `2*3` → `6`, `0*x` → `0`, `1*y` → `y` | High |
+| **Arithmetic** | `(a+b)-b` → `a`, `x*1`, `x+0` | High |
+| **Power/Log** | `x^0` → `1`, `x^1` → `x`, `exp(log(x))` → `x` (with care) | Medium |
+| **Ricci / Einsum** | Simplify contractions, redundant indices | Medium |
+| **Units** | `(kg*m/s^2)` simplify as type (when compile-time units) | Later |
+| **Trigonometry** | `sin(0)` → `0`, sum formulas (optional) | Low |
 
-- **Vorteil**: Mächtige Vereinfachung, Differenziation, LaTeX-Export möglich.
-- **Nachteil**: Externe Abhängigkeit, Dedekind-AST → SymPy → zurück: Übersetzung AST ↔ SymPy-Expr nötig; Overhead für kleine Ausdrücke.
-- **Einsatz**: Optionales Modul oder CLI „simplify-only“; oder nur in einer späteren Phase für schwere Fälle.
+**MVP (Phase 1)** should cover: constant folding, `+0`/`-0`, `*1`/`/1`, `*0` → `0`.
 
-### Option B: Eigenes Simplifier-Modul (AST-zu-AST)
+---
 
-- **Vorteil**: Keine neue Abhängigkeit, volle Kontrolle, an Dedekind-AST (BinaryOp, Literal, Identifier, etc.) angepasst.
-- **Nachteil**: Nur die Regeln, die man explizit implementiert; kein „vollständiges“ CAS.
-- **Einsatz**: Empfohlen für **Phase 1–2**; klar definierte Rewrite-Regeln auf dem bestehenden AST.
+## 3. Technical Options
+
+### Option A: Integrate SymPy
+
+- **Advantage**: Powerful simplification, differentiation, LaTeX export possible.
+- **Disadvantage**: External dependency, Dedekind AST → SymPy → back: AST ↔ SymPy-Expr translation needed; overhead for small expressions.
+- **Use**: Optional module or CLI "simplify-only"; or only in a later phase for heavy cases.
+
+### Option B: Custom Simplifier Module (AST-to-AST)
+
+- **Advantage**: No new dependency, full control, tailored to Dedekind AST (BinaryOp, Literal, Identifier, etc.).
+- **Disadvantage**: Only the rules that are explicitly implemented; no "complete" CAS.
+- **Use**: Recommended for **Phase 1–2**; clearly defined rewrite rules on the existing AST.
 
 ### Option C: Hybrid
 
-- Leichte Vereinfachung (Konstanten, ±0, ·1, ·0) im **eigenen Simplifier**.
-- Schwere oder nutzergetriebene Vereinfachung (z. B. `simplify(expr)`) optional über **SymPy**, wenn verfügbar.
+- Lightweight simplification (constants, ±0, ·1, ·0) in the **custom simplifier**.
+- Heavy or user-driven simplification (e.g. `simplify(expr)`) optionally via **SymPy**, when available.
 
 ---
 
-## 4. Implementierungs-Phasen
+## 4. Implementation Phases
 
-### Phase 1: MVP — Konstanten und triviale Arithmetik (geschätzt: 1–2 Wochen)
+### Phase 1: MVP — Constants and Trivial Arithmetic (estimated: 1–2 weeks)
 
-**Ziel**: Im Compiler-Pipeline nach Parser, vor Codegen, einen **Simplify-Pass** einbauen, der nur sichere, lokale Regeln anwendet.
+**Goal**: Insert a **simplify pass** into the compiler pipeline after the parser and before codegen, applying only safe, local rules.
 
-**Schritte**:
+**Steps**:
 
-1. **Neues Modul** `src/compiler/simplify.py` (oder `symbolic_simplify.py`).
-2. **Visitor über AST**: Ein Pass, der alle Ausdrücke (z. B. `BinaryOp`, `Literal`) traversiert und nach festen Regeln ersetzt:
-   - `Literal(0) + x` → `x` (und analog `x + 0`)
+1. **New module** `src/compiler/simplify.py` (or `symbolic_simplify.py`).
+2. **Visitor over AST**: A pass that traverses all expressions (e.g. `BinaryOp`, `Literal`) and replaces according to fixed rules:
+   - `Literal(0) + x` → `x` (and analogously `x + 0`)
    - `Literal(1) * x` → `x`, `x * 1` → `x`
-   - `Literal(0) * x` → `Literal(0)` (Vorsicht: wenn `x` Side-Effects hätte, in Dedekind aktuell nicht)
+   - `Literal(0) * x` → `Literal(0)` (caution: if `x` had side effects, currently not the case in Dedekind)
    - `x - Literal(0)` → `x`
-   - `BinaryOp(Literal(a), '+', Literal(b))` → `Literal(a+b)`; analog für `-`, `*`, `/` (Division nur wenn b≠0).
-3. **Integration**: In `compiler.py` nach `parser.parse()` und vor `codegen.generate(ast)` aufrufen:  
-   `ast = simplify.simplify_program(ast)` (oder pro Statement/Expression).
-4. **Tests**: Unit-Tests mit kleinen Dedekind-Snippets; erwarteter generierter Code ohne `x+0`, `1*y`, etc.
-5. **Dokumentation**: Kurz in Language Spec und README („Optional: Symbolic Simplification Pass“).
+   - `BinaryOp(Literal(a), '+', Literal(b))` → `Literal(a+b)`; analogous for `-`, `*`, `/` (division only if b≠0).
+3. **Integration**: In `compiler.py` after `parser.parse()` and before `codegen.generate(ast)` call:  
+   `ast = simplify.simplify_program(ast)` (or per statement/expression).
+4. **Tests**: Unit tests with small Dedekind snippets; expected generated code without `x+0`, `1*y`, etc.
+5. **Documentation**: Brief section in Language Spec and README ("Optional: Symbolic Simplification Pass").
 
-**Erfolgskriterium**: Einfache Ausdrücke wie `a + 0`, `b * 1`, `2 * 3` erscheinen im generierten Code vereinfacht, ohne Regression bei bestehenden Beispielen.
+**Success criterion**: Simple expressions like `a + 0`, `b * 1`, `2 * 3` appear simplified in the generated code, without regression in existing examples.
 
 ---
 
-### Phase 2: Erweiterte arithmetische und Potenz-Regeln (geschätzt: 1–2 Wochen)
+### Phase 2: Extended Arithmetic and Power Rules (estimated: 1–2 weeks)
 
-**Ziel**: Weitere sichere Regeln; keine Änderung der Semantik (keine Annahmen über Definitionsbereiche wie bei `log(exp(x))` ohne Vorsicht).
+**Goal**: Additional safe rules; no change in semantics (no assumptions about domains as with `log(exp(x))` without care).
 
-**Schritte**:
+**Steps**:
 
-1. **Weitere Regeln** in `simplify.py`:
-   - `x^0` → `1` (für numerische Literale/konstante Exponenten),
+1. **Additional rules** in `simplify.py`:
+   - `x^0` → `1` (for numeric literals/constant exponents),
    - `x^1` → `x`,
-   - `0^x` → `0` (für x > 0; bei Dedekind reell, optional nur für Literal-Exponenten).
-2. **Subausdrücke**: Simplification rekursiv auf alle Teilausdrücke (bereits in Phase 1 durch Visitor; hier mehr Fälle).
-3. **Ricci/Einsum**: Falls vorhanden, Identifikation von „trivialen“ Kontraktionen (z. B. Tensor mal Skalar 1) und Weitergabe an Codegen; optional.
-4. **Tests**: Erweiterte Tests; Regression-Suite (alle bestehenden Dedekind-Beispiele laufen unverändert).
+   - `0^x` → `0` (for x > 0; in Dedekind real-valued, optionally only for literal exponents).
+2. **Sub-expressions**: Simplification recursively on all sub-expressions (already in Phase 1 via visitor; more cases here).
+3. **Ricci/Einsum**: If present, identify "trivial" contractions (e.g. tensor times scalar 1) and pass to codegen; optional.
+4. **Tests**: Extended tests; regression suite (all existing Dedekind examples run unchanged).
 
-**Erfolgskriterium**: Ausdrücke mit Potenzen und Konstanten werden lesbarer und kürzer generiert; keine Fehlvereinfachungen.
-
----
-
-### Phase 3: Konfiguration und Sichtbarkeit (geschätzt: ca. 1 Woche)
-
-**Ziel**: Simplification steuerbar machen und für Nutzer nachvollziehbar.
-
-**Schritte**:
-
-1. **Compiler-Flag/Option**: z. B. `--simplify` / `--no-simplify` (Default: `--simplify` ab Phase 1, oder zunächst opt-in).
-2. **IDE/Server**: Option in Dedekind Studio (z. B. „Symbolic Simplification: Ein/Aus“); Übergabe an Backend.
-3. **Debug-Output**: Optional „vorher/nachher“ AST oder generierter Ausdruck bei aktiviertem Verbose-Modus.
-4. **Dokumentation**: Language Spec um einen kurzen Abschnitt „Symbolic Simplification“ ergänzen (Ziel, Option, Beispiele).
-
-**Erfolgskriterium**: Nutzer können Simplification ein- und ausschalten; Verhalten ist dokumentiert.
+**Success criterion**: Expressions with powers and constants are generated more readably and shorter; no incorrect simplifications.
 
 ---
 
-### Phase 4: SymPy-Integration (optional, geschätzt: 2–3 Wochen)
+### Phase 3: Configuration and Visibility (estimated: approx. 1 week)
 
-**Ziel**: Für komplexe Ausdrücke oder expliziten Nutzeraufruf eine starke Vereinfachung anbieten.
+**Goal**: Make simplification configurable and transparent for users.
 
-**Schritte**:
+**Steps**:
 
-1. **Abhängigkeit**: `sympy` als **optionale** Abhängigkeit (z. B. `extras` oder separates `requirements-simplify.txt`).
-2. **AST → SymPy**: Übersetzer von Dedekind-AST (nur unterstützte Teile: Literale, Identifier, +, -, *, /, ^) nach `sympy.Expr`.
-3. **SymPy → AST**: Rückübersetzung von `sympy.Expr` in Dedekind-AST (eingeschränkt auf erlaubte Konstrukte).
-4. **Nutzung**: Entweder als zweiter Pass nach dem eigenen Simplifier (nur wenn SymPy verfügbar) oder über eine explizite Funktion/Built-in `simplify(expr)` im Sprachkonzept (später).
-5. **Fallback**: Wenn SymPy nicht installiert oder Übersetzung fehlschlägt: Original-AST unverändert lassen.
+1. **Compiler flag/option**: e.g. `--simplify` / `--no-simplify` (default: `--simplify` from Phase 1, or initially opt-in).
+2. **IDE/Server**: Option in the IDE (e.g. "Symbolic Simplification: On/Off"); passed to backend.
+3. **Debug output**: Optionally "before/after" AST or generated expression in verbose mode.
+4. **Documentation**: Add a short section "Symbolic Simplification" to the Language Spec (goal, option, examples).
 
-**Erfolgskriterium**: Bei aktivierter SymPy-Option werden schwere Ausdrücke (z. B. mit vielen Klammern und Konstanten) stärker vereinfacht; ohne SymPy läuft der Compiler wie in Phase 2.
-
----
-
-### Phase 5: Einheiten und spezielle Domänen (langfristig)
-
-**Ziel**: Wenn **Compile-Time-Units** (Dimensionen als Typen) eingeführt werden, Simplification um Einheiten-Arithmetik erweitern; ggf. Vereinfachung von Ricci/Einsum-Strukturen.
-
-**Schritte**: Abhängig vom Design von Compile-Time-Units; eigene Roadmap. Hier nur als Platzhalter: „Symbolic Simplification berücksichtigt Dimensions-Typen und vereinfacht Einheiten-Terme.“
+**Success criterion**: Users can enable and disable simplification; behavior is documented.
 
 ---
 
-## 5. Integration in den Compiler
+### Phase 4: SymPy Integration (optional, estimated: 2–3 weeks)
 
-**Aktueller Ablauf** (vereinfacht):
+**Goal**: Offer strong simplification for complex expressions or explicit user invocation.
+
+**Steps**:
+
+1. **Dependency**: `sympy` as **optional** dependency (e.g. `extras` or separate `requirements-simplify.txt`).
+2. **AST → SymPy**: Translator from Dedekind AST (only supported parts: literals, identifiers, +, -, *, /, ^) to `sympy.Expr`.
+3. **SymPy → AST**: Back-translation from `sympy.Expr` to Dedekind AST (restricted to allowed constructs).
+4. **Usage**: Either as a second pass after the custom simplifier (only when SymPy is available) or via an explicit function/built-in `simplify(expr)` in the language concept (later).
+5. **Fallback**: If SymPy is not installed or translation fails: leave the original AST unchanged.
+
+**Success criterion**: With the SymPy option enabled, heavy expressions (e.g. with many brackets and constants) are simplified more aggressively; without SymPy the compiler runs as in Phase 2.
+
+---
+
+### Phase 5: Units and Special Domains (long-term)
+
+**Goal**: When **compile-time units** (dimensions as types) are introduced, extend simplification to include unit arithmetic; possibly simplification of Ricci/Einsum structures.
+
+**Steps**: Depends on the design of compile-time units; separate roadmap. Here only as a placeholder: "Symbolic simplification takes dimension types into account and simplifies unit terms."
+
+---
+
+## 5. Integration into the Compiler
+
+**Current flow** (simplified):
 
 ```
-Quelltext → Lexer → Parser → AST → Codegen → Python-Code
+Source code → Lexer → Parser → AST → Codegen → Python code
 ```
 
-**Mit Symbolic Simplification**:
+**With Symbolic Simplification**:
 
 ```
-Quelltext → Lexer → Parser → AST → [ Simplify-Pass ] → AST' → Codegen → Python-Code
+Source code → Lexer → Parser → AST → [ Simplify Pass ] → AST' → Codegen → Python code
 ```
 
-- **Eingabe**: Vollständiger AST (Program mit Statements, darin Expressions).
-- **Ausgabe**: AST gleicher Struktur, nur mit vereinfachten Ausdrücken (ersetzte Knoten).
-- **Ort**: In `compiler.py` (oder zentraler Pipeline), z. B.:
+- **Input**: Complete AST (Program with Statements, containing Expressions).
+- **Output**: AST of the same structure, only with simplified expressions (replaced nodes).
+- **Location**: In `compiler.py` (or central pipeline), e.g.:
 
   ```python
   from .parser import Parser
@@ -181,35 +181,35 @@ Quelltext → Lexer → Parser → AST → [ Simplify-Pass ] → AST' → Codege
   code = CodeGenerator().generate(ast)
   ```
 
-- **Keine Änderung** an Lexer, Parser oder Codegen-Syntax nötig; Codegen arbeitet weiter auf dem gleichen AST-Format.
+- **No changes** to lexer, parser, or codegen syntax needed; codegen continues to work on the same AST format.
 
 ---
 
-## 6. Risiken und Fallbacks
+## 6. Risks and Fallbacks
 
-| Risiko | Mitigation |
-|--------|------------|
-| Vereinfachung ändert Semantik (z. B. Floats, NaN/Inf) | Nur sichere Regeln; bei Zweifel (z. B. `0*expr`) optional nur für Literale oder explizit dokumentieren. |
-| Performance des Compilers | Simplifier nur einmal pro Programm; Regeln lokal (kein vollständiges CAS im MVP). |
-| SymPy-Abhängigkeit | Optional; ohne SymPy läuft der eigene Simplifier weiter. |
-| Ricci/Einsum falsch vereinfacht | Phase 2 nur sehr konservative Ricci-Regeln oder weglassen bis Phase 5. |
-
----
-
-## 7. Erfolgsmetriken (über alle Phasen)
-
-- **Korrektheit**: Alle bestehenden Dedekind-Beispiele (hello, universal_constants, differentiable_ode, probabilistic, …) liefern mit aktivierter Simplification dasselbe Ergebnis wie ohne (oder dokumentierte, gewollte Vereinfachung).
-- **Lesbarkeit**: Generierter Code für typische wissenschaftliche Ausdrücke enthält weniger redundante Terme (subjektiv oder per Metrik „Anzahl Binär-Ops“).
-- **Performance**: Laufzeit der generierten Programme nicht schlechter; idealerweise bei ausdrucksstarken Programmen leicht besser durch weniger Operationen.
+| Risk | Mitigation |
+|------|------------|
+| Simplification changes semantics (e.g. floats, NaN/Inf) | Only safe rules; when in doubt (e.g. `0*expr`), optionally only for literals or explicitly documented. |
+| Compiler performance | Simplifier runs only once per program; rules are local (no full CAS in the MVP). |
+| SymPy dependency | Optional; without SymPy the custom simplifier continues to work. |
+| Ricci/Einsum incorrectly simplified | Phase 2: only very conservative Ricci rules, or omit until Phase 5. |
 
 ---
 
-## 8. Referenzen und nächste Schritte
+## 7. Success Metrics (across all phases)
 
-- **Language Specification**: §12 Implementation Roadmap; „Beyond v1.0“ — Symbolic Simplification.
-- **Codebasis**: `src/compiler/ast_nodes.py` (AST-Definitionen), `src/compiler/parser.py` (AST-Erzeugung), `src/compiler/compiler.py` (Pipeline), `src/compiler/codegen.py` (AST → Code).
-- **Nächster konkreter Schritt**: Phase 1 — Modul `simplify.py` anlegen, Visitor für `BinaryOp`/`Literal` implementieren, in `compiler.py` einhängen, Tests schreiben.
+- **Correctness**: All existing Dedekind examples (hello, universal_constants, differentiable_ode, probabilistic, …) produce the same result with simplification enabled as without (or a documented, intended simplification).
+- **Readability**: Generated code for typical scientific expressions contains fewer redundant terms (subjective or via metric "number of binary ops").
+- **Performance**: Runtime of generated programs no worse; ideally slightly better for expression-heavy programs due to fewer operations.
 
 ---
 
-*Dieses Dokument ist die Implementierungs-Roadmap für Symbolic Simplification. Bei Änderungen am Compiler (z. B. neues AST, neue Optionen) sollte die Roadmap angepasst werden.*
+## 8. References and Next Steps
+
+- **Language Specification**: §12 Implementation Roadmap; "Beyond v1.0" — Symbolic Simplification.
+- **Codebase**: `src/compiler/ast_nodes.py` (AST definitions), `src/compiler/parser.py` (AST generation), `src/compiler/compiler.py` (pipeline), `src/compiler/codegen.py` (AST → code).
+- **Next concrete step**: Phase 1 — Create module `simplify.py`, implement visitor for `BinaryOp`/`Literal`, hook into `compiler.py`, write tests.
+
+---
+
+*This document is the implementation roadmap for Symbolic Simplification. When the compiler changes (e.g. new AST, new options), the roadmap should be updated accordingly.*

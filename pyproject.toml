@@ -49,8 +49,6 @@ bio     = ["rdkit>=2024.0"]
 md      = ["openmm>=8.0"]
 # Graph neural net demos: gnn_molecule_demo, gnn_materials_demo.
 ml      = ["torch_geometric>=2.7"]
-# Studio backend (Flask). Only needed when serving Dedekind Studio's REST endpoints.
-server  = ["flask>=2.0", "flask-cors>=3.0"]
 # Everything except server (curated researcher default).
 all     = [
     "ipykernel>=6.0", "jupyter_client>=7.0",

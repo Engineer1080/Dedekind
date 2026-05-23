@@ -3,7 +3,7 @@
 """
 Wrapper to start the Dedekind kernel with the repo root on sys.path and PYTHONPATH.
 Called as: python run_dedekind_kernel.py <connection_file>
-Use this when the kernel is started by Dedekind Studio/Spyder so the compiler is found
+Use this when the kernel is started by Spyder or other IDEs so the compiler is found
 even if PYTHONPATH is not passed through.
 """
 import os

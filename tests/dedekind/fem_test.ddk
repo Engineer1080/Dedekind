@@ -1,5 +1,5 @@
-// FEM: -Δu = 1 auf Einheitsquadrat mit u=0 am Rand.
-// Maximum der analytischen Lösung in der Mitte ist ungefähr 0.073671.
+// FEM: -Δu = 1 on unit square with u=0 at the boundary.
+// Maximum of the analytical solution at the center is approximately 0.073671.
 
 fn source(x, y) {
     return 1.0
@@ -10,19 +10,19 @@ fn main() {
     nodes = mesh["nodes"]
     elements = mesh["elements"]
     boundary = mesh["boundary"]
-    // Gitter: 17x17 = 289 Knoten, 2*16*16 = 512 Dreiecke.
-    assert(nodes.shape[0] == 289, "289 Knoten")
-    assert(elements.shape[0] == 512, "512 Dreiecke")
+    // Grid: 17x17 = 289 nodes, 2*16*16 = 512 triangles.
+    assert(nodes.shape[0] == 289, "289 nodes")
+    assert(elements.shape[0] == 512, "512 triangles")
 
     u = fem_poisson_2d(mesh, source, dirichlet_value=0.0)
     u_max = max(u)
-    // Analytischer Referenzwert für -Δu = 1, u|∂Ω = 0 auf [0,1]^2: ~0.073671 in der Mitte.
-    assert(u_max > 0.06 and u_max < 0.085, "u_max nahe 0.0737")
+    // Analytical reference value for -Δu = 1, u|∂Ω = 0 on [0,1]^2: ~0.073671 at the center.
+    assert(u_max > 0.06 and u_max < 0.085, "u_max close to 0.0737")
 
-    // Rand muss exakt 0 sein.
+    // Boundary must be exactly 0.
     for k in arange(0, boundary.shape[0]) {
         idx = boundary[k]
-        assert(abs(u[idx]) < 1e-9, "u am Rand = 0")
+        assert(abs(u[idx]) < 1e-9, "u at boundary = 0")
     }
     print("fem_test OK")
 }

@@ -5,12 +5,12 @@
 ### Phase 1: Foundation ✅
 *   [x] Language Specification & Design
 *   [x] Proof-of-Concept Compiler (Python Backend)
-*   [x] Dedekind Studio (Spyder-Fork)
+*   [x] IDE Integration (Jupyter Kernel)
 
 ### Phase 2: Core Development ✅
 *   [x] Build-in Core Algorithms (FFT, Conv, Linalg)
 *   [x] Robust Lexer & Parser (Windows Support, Unary Ops)
-*   [x] Resizable Studio Terminal & Tabs
+*   [x] IDE Terminal & Tab Support
 
 ### Phase 3: Hardware Acceleration ✅
 *   [x] Integration with **PyTorch** for GPU execution.
@@ -18,7 +18,7 @@
 
 ### Phase 4: Production (v0.2) ✅
 *   [x] **Native Performance**: Integration with PyTorch Inductor via `.fast()` (`torch.compile`).
-*   [x] **Studio Upgrade**: Resizable terminal and UI polish.
+*   [x] **IDE Integration Upgrade**: Terminal and UI polish.
 
 ### Phase 5: Advanced Mathematics ✅
 *   [x] **Autograd**: Native `grad()` operator for automatic differentiation.

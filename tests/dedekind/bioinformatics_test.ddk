@@ -1,4 +1,4 @@
-// Tests fuer Bioinformatik/Cheminformatik-Quick-Wins (v1.16).
+// Tests for Bioinformatics/Cheminformatics quick wins (v1.16).
 
 fn approx(a, b, tol) {
     d = a - b
@@ -6,32 +6,32 @@ fn approx(a, b, tol) {
     return d < tol
 }
 
-// Signaturen mit Sequence[...]-Annotation
+// Signatures with Sequence[...] annotation
 fn gc_pct(seq: Sequence[DNA]) -> Scalar { return gc_content(seq) }
 fn rna_to_prot(rna: Sequence[RNA]) -> Sequence[Protein] { return translate(rna) }
 
 fn main() {
-    // --- DNA-Validierung und GC-Content ---
+    // --- DNA validation and GC content ---
     assert(approx(gc_content("ATCG"), 0.5, 1e-9), "GC of ATCG = 50%")
     assert(approx(gc_content("GCGCGC"), 1.0, 1e-9), "GC of GCGCGC = 100%")
     assert(approx(gc_content("AAAATTTT"), 0.0, 1e-9), "GC of AAAATTTT = 0%")
     // Via Sequence[DNA]-Annotation
-    assert(approx(gc_pct("ACGT"), 0.5, 1e-9), "Sequence[DNA] erlaubt ACGT")
+    assert(approx(gc_pct("ACGT"), 0.5, 1e-9), "Sequence[DNA] allows ACGT")
 
     // --- Reverse Complement ---
     assert(reverse_complement("ATCG") == "CGAT", "rev-comp(ATCG)")
     assert(reverse_complement("AAAA") == "TTTT", "rev-comp(AAAA)")
-    assert(reverse_complement("ATGN") == "NCAT", "rev-comp mit N")
+    assert(reverse_complement("ATGN") == "NCAT", "rev-comp with N")
 
     // --- Transcription ---
     assert(transcribe("ATGC") == "AUGC", "DNA->RNA: T -> U")
-    assert(transcribe("TTTT") == "UUUU", "DNA->RNA: alle T -> U")
+    assert(transcribe("TTTT") == "UUUU", "DNA->RNA: all T -> U")
 
     // --- Translation ---
-    assert(translate("AUGUUUUAA") == "MF", "AUG-UUU-UAA stop nach 2 AA")
+    assert(translate("AUGUUUUAA") == "MF", "AUG-UUU-UAA stop after 2 AA")
     assert(translate("AUGCCCAAA") == "MPK", "Start-Met-Pro-Lys")
     // RNA-Annotation
-    assert(rna_to_prot("AUGAAA") == "MK", "Sequence[RNA] passt mit AUG")
+    assert(rna_to_prot("AUGAAA") == "MK", "Sequence[RNA] matches with AUG")
 
     // --- k-Mer Count ---
     km = k_mer_count("ATGATGATG", 3)
@@ -43,18 +43,18 @@ fn main() {
     asp = smiles_descriptors("CC(=O)Oc1ccccc1C(=O)O")
     assert(approx(asp["mw"].value, 180.158, 0.01), "Aspirin MW")
     assert(asp["mw"].unit == "g/mol", "Aspirin MW unit")
-    assert(asp["num_heavy_atoms"] == 13, "Aspirin 13 schwere Atome")
-    assert(asp["num_aromatic_rings"] == 1, "Aspirin 1 aromatischer Ring")
+    assert(asp["num_heavy_atoms"] == 13, "Aspirin 13 heavy atoms")
+    assert(asp["num_aromatic_rings"] == 1, "Aspirin 1 aromatic ring")
 
     // --- Lipinski Rule of Five ---
     lip = lipinski_rule_of_five("CC(=O)Oc1ccccc1C(=O)O")
-    assert(lip["passes"], "Aspirin besteht Lipinski")
-    assert(lip["violations"] == 0, "Aspirin 0 Verletzungen")
+    assert(lip["passes"], "Aspirin passes Lipinski")
+    assert(lip["violations"] == 0, "Aspirin 0 violations")
 
-    // Caffein
+    // Caffeine
     caf = lipinski_rule_of_five("CN1C=NC2=C1C(=O)N(C(=O)N2C)C")
-    assert(caf["passes"], "Caffein besteht Lipinski")
+    assert(caf["passes"], "Caffeine passes Lipinski")
 
-    print("bioinformatics_test: 18 Asserts bestanden")
+    print("bioinformatics_test: 18 assertions passed")
 }
 main()

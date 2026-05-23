@@ -17,7 +17,7 @@ The examples are organized into subfolders by file type:
 python -m src.compiler.compiler examples/dedekind/hello.ddk
 ```
 
-Dedekind Studio loads the **scientific plot examples** (`scientific_*.ddk`) from the bundled assets as tabs at startup (when there is no previous session). Additional examples from `examples/dedekind/` can be opened manually.
+You can open and run any of the scientific plot examples (`scientific_*.ddk`) in your Jupyter environment or via the CLI.
 
 ## Scientific plot examples (Dedekind features)
 
