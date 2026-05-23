@@ -2,7 +2,7 @@ fn main() {
     print("--- Dedekind: Advanced Signal & Image Processing ---")
 
     // 1. Convolution demonstration
-    // Build a simple "image" (4x4 matrix)
+    //Build a simple "image" (4x4 matrix)
     image = [
         [1.0, 1.0, 1.0, 1.0],
         [1.0, 2.0, 2.0, 1.0],
@@ -32,12 +32,12 @@ fn main() {
     print("Frequencies (FFT):")
     print(frequencies)
 
-    // Inverse transform
+    //Inverse transform
     reconstructed = ifft(frequencies)
     print("Reconstructed signal (IFFT):")
     print(reconstructed)
 
-    // 3. Matrix inversion & transposition
+    //3. Matrix inversion & transposition
     M = [[4.0, 7.0], [2.0, 6.0]]
     print("Matrix M:")
     print(M)

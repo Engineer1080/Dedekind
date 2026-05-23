@@ -1,10 +1,10 @@
-// Dedekind-Schnitte und Dedekind-Ringe (nach Richard Dedekind)
-// Schnitte: Konstruktion der reellen Zahlen aus Q; Ringe: Ideal-Faktorisierung in Z
+//Dedekind cuts and Dedekind rings (after Richard Dedekind)
+//Cuts: Construction of the real numbers from Q; Rings: Ideal factorization in Z
 
 fn main() {
-    print("--- Dedekind: Dedekind-Schnitte und Dedekind-Ringe ---")
+    print("--- Dedekind: Dedekind cuts and Dedekind rings ---")
     
-    // Dedekind-Schnitte: Repräsentation reeller Zahlen als untere Mengen A = {q in Q : q < x}
+    //Dedekind cuts: representation of real numbers as lower sets A = {q in Q : q < x}
     c1 = DedekindCut(0.5)
     print("DedekindCut(0.5):")
     print(c1)
@@ -18,12 +18,12 @@ fn main() {
     c3 = dedekind_cut_sqrt2()
     print("dedekind_cut_sqrt2() to_float:", c3.to_float())
     
-    // Arithmetik mit Schnitten
+    //Arithmetic with cuts
     sum_c = c1 + c2
     print("DedekindCut(0.5) + dedekind_cut_from_rational(1,3):")
     print(sum_c.to_float())
     
-    // Dedekind-Ringe: Z mit eindeutiger Ideal-Faktorisierung
+    //Dedekind rings: Z with unique ideal factorization
     ring = DedekindRingZ()
     i12 = ring.ideal(12)
     print("Ideal (12) in Z:")
@@ -44,6 +44,6 @@ fn main() {
     print("(4) * (25) =", prod)
     print("(4).norm() =", i4.norm())
     
-    print("Dedekind-Schnitte und Dedekind-Ringe aktiv.")
+    print("Dedekind cuts and Dedekind rings active.")
 }
 main()

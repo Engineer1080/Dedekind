@@ -1,67 +1,67 @@
-// Einheiten-bewusste CFD: Strömung um Zylinder in physikalischen Einheiten.
+//Unit-aware CFD: Flow around cylinders in physical units.
 //
-// Setup: Wasser (20°C) durchströmt einen 20 cm langen, 5 cm hohen Kanal mit
-// einem 1 cm dicken Zylinder als Hindernis. Inlet 4 mm/s → Re ≈ 40 am
-// Zylinder (steady-flow Bereich, kein Vortex-Shedding).
+//Setup: Water (20°C) flows through a 20 cm long, 5 cm high channel
+//a 1 cm thick cylinder as an obstacle. Inlet 4 mm/s → Re ≈ 40 am
+//Cylinder (steady-flow area, no vortex shedding).
 //
-// Alle Eingaben sind Quantities mit echten SI-Einheiten. Drag/Lift kommen
-// in [N/m] (2D, Kraft pro Tiefeneinheit), Geschwindigkeit in [m/s], Druck
-// in [Pa]. Der LBM-Solver wählt automatisch Lattice-Skalierung (dx, dt,
-// tau) so, dass die Mach- und BGK-Stabilitätsbedingungen erfüllt sind.
+//All inputs are quantities with real SI units. Drag/Lift come
+//in [N/m] (2D, force per unit depth), speed in [m/s], pressure
+//in [Pa]. The LBM solver automatically selects lattice scaling (dx, dt,
+//tau) such that the Mach and BGK stability conditions are met.
 
 use fluid_dynamics
 
 fn main() {
     print("==================================================================")
-    print("  Einheiten-bewusste LBM-Strömung um Zylinder (Wasser, Re ≈ 40)   ")
+    print("Unit-aware LBM flow around cylinders (water, Re ≈ 40)")
     print("==================================================================")
 
-    // 1. Physikalisches Setup in SI-Einheiten
+    //1. Physical setup in SI units
     sim = lbm_physical(
-        0.20[m],          // Kanal-Länge
-        0.05[m],          // Kanal-Höhe
-        200,              // Auflösung in x (→ dx = 1 mm)
-        0.004[m/s],       // Einström-Geschwindigkeit
-        1.0e-6[m^2/s],    // kinematische Viskosität Wasser bei 20°C
-        1000.0[kg/m^3]    // Dichte Wasser
+        0.20[m],          //Channel length
+        0.05[m],          //Channel height
+        200,              //Resolution in x (→ dx = 1 mm)
+        0.004[m/s],       //Inflow velocity
+        1.0e-6[m^2/s],    //kinematic viscosity water at 20°C
+        1000.0[kg/m^3]    //Dense water
     )
 
-    // 2. Hindernis: Zylinder mittig im Kanal
+    //2nd obstacle: cylinder in the middle of the channel
     lbm_set_cylinder(sim, 0.04[m], 0.025[m], 0.005[m])
     lbm_add_walls(sim)
 
     print("")
     print("Setup:")
     s = lbm_summary(sim)
-    print("  Lattice-Spacing dx       =", s["dx_m"], " m")
-    print("  Lattice-Step    dt       =", s["dt_s"], " s")
+    print("  Lattice-Spacing dx       =", s["dx_m"], "m")
+    print("  Lattice-Step    dt       =", s["dt_s"], "s")
     print("  BGK Relaxation  tau      =", s["tau"])
-    print("  Lattice-Viskosität       =", s["nu_lattice"])
-    print("  Reynolds (Kanalhöhe)     =", s["Reynolds_Ly"])
+    print("Lattice viscosity =", s["nu_lattice"])
+    print("Reynolds (channel height) =", s["Reynolds_Ly"])
     print("")
 
-    // 3. Lass die Strömung 100 s physikalisch einschwingen
-    print("Simulation: 100 s physikalische Zeit (~22 s Wall-Clock)...")
+    //3. Allow the flow to settle physically for 100 s
+    print("Simulation: 100 s physical time (~22 s wall clock)...")
     lbm_run_time(sim, 100.0[s])
 
-    // 4. Auswertung in SI-Einheiten
+    //4. Evaluation in SI units
     F = lbm_drag_lift(sim)
     print("")
     print("Ergebnis:")
-    print("  Drag-Kraft pro Tiefe     =", F)
+    print("Drag force per depth =", F)
     print("  Lift-Kraft pro Tiefe     =", F[1])
 
     p = lbm_pressure(sim)
-    print("  Druck (Range)            ist Quantity in [Pa]")
+    print("Pressure (Range) is Quantity in [Pa]")
 
     u = lbm_velocity(sim)
-    print("  Geschwindigkeit          ist Quantity in [m/s]")
+    print("Speed is Quantity in [m/s]")
 
-    // 5. Sanity-Check: Drag positiv (Hindernis bremst Strömung)
+    //5. Sanity check: Drag positive (obstacle slows down flow)
     F_drag_x = F[0]
     print("")
     assert(F_drag_x.value > 0.0)
-    print("Validierung: Drag > 0 — Hindernis erzeugt Widerstand wie erwartet.")
+    print("Validation: Drag > 0 — Obstacle creates resistance as expected.")
 }
 
 main()

@@ -1,8 +1,8 @@
-// Dedekind: 2D Navier-Stokes (inkompressibel) — Chorin-Projektionsmethode
+//Dedekind: 2D Navier-Stokes (incompressible) — Chorin projection method
 // u_t + (u·∇)u = -∇p + ν∇²u, ∇·u = 0
 
 fn main() {
-    print("--- Dedekind: Navier-Stokes 2D (inkompressibel) ---")
+    print("--- Dedekind: Navier-Stokes 2D (incompressible) ---")
     print_latex(r"u_t + (u \cdot \nabla) u = -\nabla p + \nu \nabla^2 u, \quad \nabla \cdot u = 0")
     
     nx = 41
@@ -12,7 +12,7 @@ fn main() {
     t = linspace(0, 0.2, 41)
     nu = 0.01
     
-    // Taylor-Green-ähnliche Anfangsbedingung: Wirbel
+    //Taylor-Green-like initial condition: vortex
     X = outer(x, 1.0 + 0.0 * y)
     Y = outer(1.0 + 0.0 * x, y)
     gx = 2.0 * pi * (X - 0.5)
@@ -24,17 +24,17 @@ fn main() {
     u_sol = result[0]
     v_sol = result[1]
     
-    print("Navier-Stokes: Taylor-Green-ähnliche Anfangsbedingung")
+    print("Navier-Stokes: Taylor-Green-like initial condition")
     print("Shape u_sol (Zeit, nx, ny):")
     print(u_sol.shape)
     
-    // Geschwindigkeitsbetrag zur Visualisierung
+    //Speed amount for visualization
     speed0 = sqrt(u_sol[0] * u_sol[0] + v_sol[0] * v_sol[0])
     speed_end = sqrt(u_sol[40] * u_sol[40] + v_sol[40] * v_sol[40])
     
     contour(x, y, speed0, title="|u| t=0 (Anfang)", levels=8)
     contour(x, y, speed_end, title="|u| t=0.2 (nach NS)", levels=8)
     
-    print("Navier-Stokes-Solver (Chorin-Projektion) aktiv.")
+    print("Navier-Stokes solver (Chorin projection) active.")
 }
 main()

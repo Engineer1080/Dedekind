@@ -1,7 +1,7 @@
 fn main() {
-    print("--- Dedekind: Grundlegende Math-Funktionen ---")
+    print("--- Dedekind: Basic Math Functions ---")
 
-    // Trigonometrie
+    //Trigonometry
     print("sin(0):")
     print(sin(0))
     print("cos(0):")
@@ -9,21 +9,21 @@ fn main() {
     print("tan(0):")
     print(tan(0))
 
-    // Exp und Log
-    print("exp(1) (soll ~e):")
+    //Exp and Log
+    print("exp(1) (should ~e):")
     print(exp(1))
-    print("log(e) (soll ~1):")
+    print("log(e) (should be ~1):")
     print(log(e))
     print("log10(100):")
     print(log10(100))
 
-    // Wurzel und Betrag
+    //root and amount
     print("sqrt(2):")
     print(sqrt(2))
     print("abs(-3):")
     print(abs(-3))
 
-    // Arkusfunktionen (Bogenmaß)
+    //Arc functions (radians)
     print("asin(0), acos(1), atan(0):")
     print(asin(0))
     print(acos(1))
@@ -35,16 +35,16 @@ fn main() {
     print(cosh(0))
     print(tanh(0))
 
-    // atan2(y, x) — Winkel
-    print("atan2(1, 1) (soll pi/4):")
+    //atan2(y, x) — angle
+    print("atan2(1, 1) (should be pi/4):")
     print(atan2(1, 1))
 
-    // Differenzierbar: exp(-x^2) integrieren (Gauß-Näherung)
+    //Differentiable: exp(-x^2) integrate (Gaussian approximation)
     fn gauss(x) {
         return exp(-x * x)
     }
     I = integrate(gauss, -3, 3, 200)
-    print("int_{-3}^{3} exp(-x^2) dx (Näherung sqrt(pi)):")
+    print("int_{-3}^{3} exp(-x^2) dx (approximation sqrt(pi)):")
     print(I)
 
     // Reduktionen: min, max, argmin, argmax
@@ -62,15 +62,15 @@ fn main() {
     print(floor(2.7))
     print(ceil(2.3))
 
-    // Lineare Algebra: norm, det, trace
+    //Linear algebra: norm, det, trace
     w = [3.0, 4.0]
-    print("norm([3,4]) (soll 5):")
+    print("norm([3,4]) (should be 5):")
     print(norm(w))
     M = [[1.0, 2.0], [3.0, 4.0]]
     print("det(M), trace(M):")
     print(det(M))
     print(trace(M))
 
-    print("Math-Funktionen aktiv.")
+    print("Math functions active.")
 }
 main()

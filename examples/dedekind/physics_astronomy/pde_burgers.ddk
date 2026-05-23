@@ -1,23 +1,23 @@
 fn main() {
-    print("--- Dedekind: Burgers-Gleichung (u_t + u*u_x = nu*u_xx) ---")
+    print("--- Dedekind: Burgers equation (u_t + u*u_x = nu*u_xx) ---")
     print_latex(r"u_t + u \, u_x = \nu \, u_{xx} \quad \mathrm{Burgers}")
     
-    // 1D: Viskose Burgers, periodische Ränder
+    //1D: Viscous burgers, periodic edges
     n = 101
     x = linspace(0, 1, n)
     t = linspace(0, 0.5, 101)
     nu = 0.01
     
-    // Anfangsbedingung: Gauß-Puls (wird zu Schock-artiger Form)
+    //Initial condition: Gaussian pulse (becomes shock-like form)
     u0_1d = exp(-100.0 * (x - 0.5) * (x - 0.5))
     
     sol_1d = pde_burgers_1d(u0_1d, x, t, nu)
-    print("1D Burgers: u(t=0) Puls in der Mitte")
-    print("1D Burgers: u(t=0.5) Advektion + Diffusion")
+    print("1D Burgers: u(t=0) pulse in the middle")
+    print("1D Burgers: u(t=0.5) advection + diffusion")
     print("Shape (Zeit, Raum):")
     print(sol_1d.shape)
     
-    // Plot: Anfang und Ende
+    //Plot: beginning and end
     plot(x, sol_1d[0], title="1D t=0 (Anfang)")
     plot(x, sol_1d[100], title="1D t=0.5 (nach Burgers)")
     
@@ -32,14 +32,14 @@ fn main() {
     u0_2d = outer(gx, gy)
     
     sol_2d = pde_burgers_2d(u0_2d, x2, y2, t2, nu)
-    print("2D Burgers: u(t=0) Gauß-Buckel in der Mitte")
-    print("2D Burgers: u(t=0.3) Advektion + Diffusion")
+    print("2D Burgers: u(t=0) Gaussian hump in the middle")
+    print("2D Burgers: u(t=0.3) advection + diffusion")
     print("Shape (Zeit, nx, ny):")
     print(sol_2d.shape)
     
     contour(x2, y2, sol_2d[0], title="2D t=0 (Anfang)", levels=8)
     contour(x2, y2, sol_2d[30], title="2D t=0.3 (nach Burgers)", levels=8)
     
-    print("Burgers-Solver (1D + 2D) aktiv.")
+    print("Burgers solver (1D + 2D) active.")
 }
 main()

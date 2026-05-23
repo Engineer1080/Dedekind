@@ -57,7 +57,7 @@ fn main() {
     // Initialize logits near 0 (which maps to sigmoid(0) = 0.5 density)
     init_logits = linspace(-0.4, -0.4, 300) // 30 * 10 elements
     
-    // Optimize using Dedekind's L-BFGS (minimize returns [opt_x, opt_f])
+    //Optimize using Dedekind's L-BFGS (minimize returns [opt_x, opt_f])
     opt_res = minimize(lbfgs_loss, init_logits, method="lbfgs", steps=15)
     opt_logits = opt_res[0]
     

@@ -1,7 +1,7 @@
 fn main() {
     print("--- Dedekind: Arrhenius (quick win) ---")
 
-    // k = A * exp(-Ea / (R*T)); T in K, Ea in J/mol
+    //k = A * exp(-Ea / (R*T)); T in K, Ea in J/mol
     T = 300.0
     A = 1.0e12
     Ea = 50000.0

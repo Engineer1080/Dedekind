@@ -19,16 +19,16 @@ fn main() {
     m = 2.0
     v = 3.0
     Ek = kinetic_energy(m, v)
-    print("E_kin(2 kg, 3 m/s) = " + str(Ek) + " J")
+    print("E_kin(2kg, 3m/s) =" + str(Ek) + " J")
 
     T_pend = pendulum_period(1.0, 9.81)
-    print("T_pendulum(1 m) = " + str(T_pend) + " s")
+    print("T_pendulum(1m) =" + str(T_pend) + "s")
 
     gamma_val = relativistic_gamma(0.5 * C_NUM)
     print("gamma(0.5c) = " + str(gamma_val))
 
     v_esc = escape_velocity(5.972e24, 6.371e6)
-    print("v_escape(Earth) = " + str(v_esc) + " m/s")
+    print("v_escape(Earth) = " + str(v_esc) + "m/s")
 
     P = ideal_gas_pressure(1.0, 300.0, 0.0245)
     print("P(1 mol, 300 K, 24.5 L) = " + str(P) + " Pa")
@@ -41,7 +41,7 @@ fn main() {
 
     sp = pooled_std(2.0, 2.5, 30, 30)
     d = cohens_d(105.0, 100.0, sp)
-    print("Cohen's d = " + str(d))
+    print("Cohen's d =" + str(d))
 
     y_true = [3.0, 5.0, 7.0, 9.0, 11.0]
     y_pred = [2.9, 5.1, 7.2, 8.8, 11.0]
@@ -52,7 +52,7 @@ fn main() {
     // --- Chemistry ---
     print("[chemistry]")
     pH = pH_from_concentration(1e-3)
-    print("pH(1e-3 M) = " + str(pH))
+    print("pH(1e-3M) =" + str(pH))
 
     pBuffer = henderson_hasselbalch(4.76, 0.2, 0.1)
     print("HH-pH(pKa=4.76, [A-]=0.2, [HA]=0.1) = " + str(pBuffer))
@@ -61,7 +61,7 @@ fn main() {
     print("Dilution 1M*25mL -> 0.1M: V2 = " + str(v2) + " L")
 
     P_gas = boyle_volume(101325.0, 0.01, 50000.0)
-    print("Boyle V2 = " + str(P_gas) + " m^3")
+    print("Boyle V2 = " + str(P_gas) + "m^3")
 
     E_cell = nernst_potential_25C(1.10, 2, 0.5)
     print("Nernst E(Cu/Zn, Q=0.5) = " + str(E_cell) + " V")
@@ -70,7 +70,7 @@ fn main() {
     // --- Biology ---
     print("[biology]")
     N5 = exponential_growth(100.0, 0.2, 5.0)
-    print("Exp.Growth(100, r=0.2, t=5) = " + str(N5))
+    print("Exp.Growth(100, r=0.2, t=5) =" + str(N5))
 
     td = doubling_time(0.05)
     print("Doubling time(r=0.05) = " + str(td))
@@ -83,7 +83,7 @@ fn main() {
     print("Hardy-Weinberg(p=0.7): " + str(hw))
 
     bmi_val = bmi(72.0, 1.78)
-    print("BMI(72 kg, 1.78 m) = " + str(bmi_val))
+    print("BMI(72 kg, 1.78 m) =" + str(bmi_val))
     print("")
 
     // --- Mathematics ---

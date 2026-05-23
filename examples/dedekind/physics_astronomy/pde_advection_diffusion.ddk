@@ -1,8 +1,8 @@
 fn main() {
-    print("--- Dedekind: Advektions-Diffusion (u_t + v*u_x = D*u_xx) ---")
+    print("--- Dedekind: Advection-Diffusion (u_t + v*u_x = D*u_xx) ---")
     print_latex(r"u_t + v \cdot \nabla u = D \nabla^2 u \quad \mathrm{Upwind} + \mathrm{Diffusion}")
     
-    // 1D: Gauß-Puls wird advehiert und diffundiert
+    //1D: Gaussian pulse advects and diffuses
     n = 101
     x = linspace(0, 1, n)
     t = linspace(0, 0.5, 101)
@@ -12,15 +12,15 @@ fn main() {
     u0 = exp(-80.0 * (x - 0.2) * (x - 0.2))
     
     sol = pde_advection_diffusion_1d(u0, x, t, v, D)
-    print("1D Advection-Diffusion: u(t=0) Puls bei x~0.2")
-    print("1D Advection-Diffusion: u(t=0.5) gewandert + verbreitert")
+    print("1D advection diffusion: u(t=0) pulse at x~0.2")
+    print("1D advection diffusion: u(t=0.5) migrated + broadened")
     print("Shape:")
     print(sol.shape)
     
     plot(x, sol[0], title="1D t=0 (Anfang)")
     plot(x, sol[100], title="1D t=0.5 (Advection+Diffusion)")
     
-    // 2D: Advektion in x-Richtung + Diffusion
+    //2D: Advection in x-direction + diffusion
     nx = 51
     ny = 51
     x2 = linspace(0, 1, nx)
@@ -34,7 +34,7 @@ fn main() {
     u0_2d = outer(gx, gy)
     
     sol_2d = pde_advection_diffusion_2d(u0_2d, x2, y2, t2, vx, vy, D)
-    print("2D Advection-Diffusion: Gauß-Buckel wandert nach rechts")
+    print("2D Advection Diffusion: Gaussian hump moves to the right")
     print("Shape:")
     print(sol_2d.shape)
     

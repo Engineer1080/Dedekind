@@ -1,6 +1,6 @@
-// multi_file_modules_demo.ddk - multi-file modules with visibility (v1.19)
+//multi_file_modules_demo.ddk - multi-file modules with visibility (v1.19)
 //
-// Two language features in one:
+//Two language features in one:
 //   1. `use foo.bar` resolves the dotted path to modules/foo/bar.ddk
 //   2. `pub fn name()` marks functions as public; every other function in
 //      the module is invisible from the outside (mangling).

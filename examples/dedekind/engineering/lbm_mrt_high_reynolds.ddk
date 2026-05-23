@@ -1,23 +1,23 @@
-// MRT-Collision: Stabilität bei hohem Reynolds.
+//MRI collision: stability at high Reynolds.
 //
-// BGK (Single-Relaxation-Time) wird bei Re > ~300 numerisch instabil und
+//BGK (Single Relaxation Time) becomes numerically unstable at Re > ~300
 // divergiert. MRT (Multiple-Relaxation-Time, Lallemand & Luo 2000) relaxiert
-// jedes Moment separat — die "Ghost-Modes" (Wärmestrom qx, qy) und die
-// Bulk-Viskosität (e, eps) bekommen eigene Relaxationsraten, was höhere
-// Re stabil hält.
+//each moment separately — the “ghost modes” (heat flow qx, qy) and the
+//Bulk viscosity (e, eps) get their own relaxation rates, which are higher
+//Re keeps stable.
 //
-// Dieses Beispiel zeigt eine Strömung bei effektivem Re ≈ 1000 (Wasser
-// um kleinen Zylinder), einmal mit BGK und einmal mit MRT, und vergleicht
-// das Drag-Resultat. BGK divergiert üblicherweise; MRT bleibt stabil.
+//This example shows a flow with effective Re ≈ 1000 (water
+//around small cylinder), once with BGK and once with MRT, and compares
+//the drag result. BGK usually diverges; MRI remains stable.
 
 use fluid_dynamics
 
 fn main() {
     print("====================================================================")
-    print("  MRT vs BGK Stabilitäts-Demo (Wasser, Re ≈ 1000 am Zylinder)       ")
+    print("MRT vs BGK stability demo (water, Re ≈ 1000 on the cylinder)")
     print("====================================================================")
 
-    // Wasser, 5 cm × 1.5 cm Domain, 5 mm Zylinder
+    //Water, 5 cm × 1.5 cm domain, 5 mm cylinder
     // Re_D = U * D / nu = 0.2 * 0.005 / 1e-6 = 1000
     domain_x = 0.05[m]
     domain_y = 0.015[m]
@@ -25,8 +25,8 @@ fn main() {
     nu_water = 1.0e-6[m^2/s]
     rho      = 1000.0[kg/m^3]
 
-    print("Setup: 5 cm Kanal, D=5 mm Zylinder, U=0.2 m/s, Wasser bei 20°C")
-    print("Erwartetes Reynolds am Zylinder: 1000")
+    print("Setup: 5 cm channel, D=5 mm cylinder, U=0.2 m/s, water at 20°C")
+    print("Expected Reynolds on cylinder: 1000")
     print("")
 
     // --- BGK Versuch ---
@@ -37,7 +37,7 @@ fn main() {
     lbm_run_steps(sim_bgk, 1500)
     F_bgk = lbm_drag_lift(sim_bgk)
     drag_bgk = F_bgk[0].value
-    print("  BGK Drag = ", drag_bgk, " N/m")
+    print("BGK Drag =", drag_bgk, "N/m")
     bgk_stable = (drag_bgk > -1e6 and drag_bgk < 1e6)
     print("  BGK stabil:", bgk_stable)
 
@@ -51,19 +51,19 @@ fn main() {
     lbm_run_steps(sim_mrt, 1500)
     F_mrt = lbm_drag_lift(sim_mrt)
     drag_mrt = F_mrt[0].value
-    print("  MRT Drag = ", drag_mrt, " N/m")
+    print("MRI Drag =", drag_mrt, "N/m")
     mrt_stable = (drag_mrt > -1e6 and drag_mrt < 1e6)
     print("  MRT stabil:", mrt_stable)
 
     print("")
     print("Ergebnis:")
-    print("  - MRT muss bei Re=1000 stabil bleiben")
+    print("- MRI must remain stable at Re=1000")
     assert(mrt_stable)
-    print("  - MRT-Drag muss endlich und positiv sein")
+    print("- MRI drag must be finite and positive")
     assert(drag_mrt > 0.0)
     print("")
-    print("Hinweis: BGK kann bei dieser Re-Zahl divergieren (Drag→∞);")
-    print("MRT relaxiert Ghost-Moden separat und bleibt stabil bis Re~2000.")
+    print("Note: BGK can diverge at this Re number (Drag→∞);")
+    print("MRT relaxes ghost modes separately and remains stable until Re~2000.")
 }
 
 main()

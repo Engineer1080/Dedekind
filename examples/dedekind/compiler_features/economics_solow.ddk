@@ -2,13 +2,13 @@
 fn main() {
     print("--- Dedekind: economics quick wins ---")
 
-    // Present-value factor: continuous exp(-r*t)
+    //Present-value factor: continuous exp(-r*t)
     r = 0.05
     t = 10.0
     print("Discount factor (r=5%, t=10, continuous):")
     print(discount_factor(r, t, false))
 
-    // Discrete: 1/(1+r)^t
+    //Discrete: 1/(1+r)^t
     print("Discount factor (r=5%, t=10, discrete):")
     print(discount_factor(r, t, true))
 
@@ -20,7 +20,7 @@ fn main() {
     print("Cobb-Douglas Y(K=100, L=50, alpha=0.33):")
     print(Y)
 
-    // Solow RHS: dK/dt = s*Y - (delta+n+g)*K
+    //Solow RHS: dK/dt = s*Y - (delta+n+g)*K
     s = 0.2
     delta = 0.05
     n = 0.01

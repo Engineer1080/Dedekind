@@ -2,7 +2,7 @@
 fn main() {
     print("--- Dedekind: music quick wins ---")
 
-    // Cents to ratio: 100 cents = semitone = 2^(1/12)
+    //Cents to ratio: 100 cents = semitone = 2^(1/12)
     print("100 cents (semitone) as frequency ratio:")
     print(cents_to_ratio(100))
 
@@ -10,7 +10,7 @@ fn main() {
     print("700 cents (fifth) as ratio:")
     print(cents_to_ratio(700))
 
-    // Ratio to cents
+    //Ratio to cents
     print("Fifth 3/2 in cents:")
     print(ratio_to_cents(1.5))
 

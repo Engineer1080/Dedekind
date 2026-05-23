@@ -1,4 +1,4 @@
-// Numerik und Statistik: mean, std, var, median, quantile, percentile, cov, corrcoef, skew, kurtosis, histogram,
+//Numerics and statistics: mean, std, var, median, quantile, percentile, cov, corrcoef, skew, kurtosis, histogram,
 // solve, eigh, svd, lstsq, cond, rank, pinv, expm, logm, interp, trapz, root_bisect
 fn main() {
     print("--- Dedekind: Numerik & Statistik ---")
@@ -37,21 +37,21 @@ fn main() {
     print("histogram(data, 3) bin_edges:")
     print(hist[1])
 
-    // Lineares Gleichungssystem: A x = b
+    //Linear system of equations: A x = b
     A = [[1.0, 2.0], [3.0, 4.0]]
     b = [1.0, 2.0]
     x = solve(A, b)
-    print("solve(A, b) fuer A*x = b:")
+    print("solve(A, b) for A*x = b:")
     print(x)
 
-    // Eigenwerte (symmetrische Matrix)
+    //Eigenvalues (symmetrical matrix)
     S = [[2.0, 1.0], [1.0, 2.0]]
     result = eigh(S)
     evals = result[0]
     evecs = result[1]
-    print("eigh(S) Eigenwerte:")
+    print("eigh(S) eigenvalues:")
     print(evals)
-    print("eigh(S) Eigenvektoren (Spalten):")
+    print("eigh(S) eigenvectors (columns):")
     print(evecs)
 
     // Least Squares
@@ -66,10 +66,10 @@ fn main() {
     print(cond(A))
     print("rank(A_ls):")
     print(rank(A_ls))
-    print("pinv(A) (Pseudo-Inverse):")
+    print("pinv(A) (pseudo-inverse):")
     print(pinv(A))
 
-    // Matrix-Exponential (kleine Matrix)
+    //Matrix exponential (small matrix)
     E = [[0.0, 1.0], [0.0, 0.0]]
     print("expm(E) (Nilpotent E):")
     print(expm(E))
@@ -81,7 +81,7 @@ fn main() {
     print("interp([0.5, 1.5], xp, fp):")
     print(interp(xi, xp, fp))
 
-    // Trapez-Integration diskrete Daten
+    //Trapezoid integration discrete data
     y_trap = [1.0, 2.0, 3.0, 2.0]
     x_trap = [0.0, 1.0, 2.0, 3.0]
     print("trapz(y, x):")
@@ -131,7 +131,7 @@ fn main() {
     print(cumsum(v))
     print("clip([-1,2,5], 0, 4):")
     print(clip([-1.0, 2.0, 5.0], 0.0, 4.0))
-    print("fftfreq(4, 0.5) (erste 4 Frequenzen, d=0.5):")
+    print("fftfreq(4, 0.5) (first 4 frequencies, d=0.5):")
     print(fftfreq(4, 0.5))
     s = shuffle([1.0, 2.0, 3.0, 4.0])
     print("shuffle([1,2,3,4]) (Permutation):")

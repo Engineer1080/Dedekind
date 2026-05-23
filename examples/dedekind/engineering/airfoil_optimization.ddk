@@ -1,8 +1,8 @@
-// Differentiable aerodynamics & CFD via LBM (use fluid_dynamics)
+//Differentiable aerodynamics & CFD via LBM (use fluid_dynamics)
 //
-// This example shows how Dedekind's differentiable lattice Boltzmann solver
+//This example shows how Dedekind's differentiable lattice Boltzmann solver
 // can be used to autonomously optimize the geometric shape of an airfoil
-// (thickness t and camber c) so that the aerodynamic drag in the flow
+//(thickness t and camber c) so that the aerodynamic drag in the flow
 // channel is minimized.
 //
 // The full flow simulation and force computation are represented as a
@@ -19,9 +19,9 @@ fn main() {
     nx = 80    // channel length
     ny = 40    // channel width
 
-    // 1. Definition of the optimization loss
-    // Parameter vector p = [t, c]
-    // t: relative thickness
+    //1. Definition of the optimization loss
+    //Parameter vector p = [t, c]
+    //t: relative thickness
     // c: relative camber
 
     fn airfoil_loss(p) {
@@ -43,7 +43,7 @@ fn main() {
             penalty = penalty + 10.0 * (c - 0.15)^2
         }
 
-        // We require a target wing thickness of about 0.12 (prevents t -> 0)
+        //We require a target wing thickness of about 0.12 (prevents t -> 0)
         penalty = penalty + 5.0 * (t - 0.12)^2
 
         // Generate a continuous airfoil mask
@@ -59,23 +59,23 @@ fn main() {
         // Simulate 25 time steps at inflow velocity u = 0.06
         simulation_run(sim, 25, 0.06)
 
-        // Compute the drag force specifically on the airfoil (mask)
+        //Compute the drag force specifically on the airfoil (mask)
         forces = simulation_get_drag_lift_for_mask(sim, mask)
         drag = forces[0]
 
         return drag + penalty
     }
 
-    // 2. Initial values (thicker, strongly cambered airfoil -> much drag)
+    //2. Initial values (thicker, strongly cambered airfoil -> much drag)
     p_init = [0.18, 0.08]
 
     print("Initial airfoil design:")
-    print("- thickness (t):    ", p_init[0])
+    print("- thickness (t):", p_init[0])
     print("- camber (c):       ", p_init[1])
 
-    // Compute initial drag
+    //Compute initial drag
     loss_init = airfoil_loss(p_init)
-    print("- initial drag loss (incl. penalty): ", loss_init)
+    print("- initial drag loss (including penalty):", loss_init)
     print("")
 
     // 3. Start the optimization
@@ -88,14 +88,14 @@ fn main() {
     print("Optimization complete!")
     print("Optimized airfoil design:")
     print("- thickness (t_opt):    ", p_opt[0], "  (expected: close to target thickness 0.12)")
-    print("- camber (c_opt):       ", p_opt[1], "  (expected: minimized camber for drag reduction)")
-    print("- final drag loss:      ", loss_opt)
+    print("- camber (c_opt):       ", p_opt[1], "(expected: minimized camber for drag reduction)")
+    print("- final drag loss:", loss_opt)
 
-    // 4. Verify the drag reduction
+    //4. Verify the drag reduction
     reduction = 100.0 * (loss_init - loss_opt) / loss_init
     print("")
     print("Optimization result:")
-    print("- drag reduction: ", reduction, " %")
+    print("- drag reduction:", reduction, " %")
 
     assert(loss_opt < loss_init)
 }

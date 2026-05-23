@@ -1,8 +1,8 @@
 // -------------------------------------------------------------
-// Dedekind v2.1 Example: Differentiable Circuit Simulation
+//Dedekind v2.1 Example: Differentiable Circuit Simulation
 // -------------------------------------------------------------
-// This example shows how Dedekind's SPICE replacement plays
-// nicely with PyTorch's autograd.
+//This example shows how Dedekind's SPICE replacement plays
+//nicely with PyTorch's autograd.
 //
 // We have a Wheatstone bridge or voltage divider, and we want to
 // tune (optimize) the value of an unknown resistor R_x so that a
@@ -37,8 +37,8 @@ fn main() {
 
     print("Initial loss at R_x = 10 ohm: " + str(circuit_loss(initial_guess)))
 
-    // Gradient descent (optimization)
-    // We use Dedekind's built-in differentiable optimizer
+    //Gradient descent (optimization)
+    //We use Dedekind's built-in differentiable optimizer
     print("Optimizing R_x with gradient descent...")
     opt_result = minimize(circuit_loss, initial_guess, method="adam", lr=1.0, steps=200)
 

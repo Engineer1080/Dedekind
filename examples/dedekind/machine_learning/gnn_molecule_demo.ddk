@@ -1,67 +1,67 @@
-// gnn_molecule_demo.ddk — Wirkstoff-/Chemie-GNN mit Unit-Awareness (v1.12).
+//gnn_molecule_demo.ddk — Drug/Chemistry GNN with Unit Awareness (v1.12).
 //
-// Demonstriert Dedekinds einzigartigen USP gegenueber reinem PyTorch Geometric:
-//   - `Graph[N, E]`-Shape-Annotation prueft zur Laufzeit, dass das uebergebene
-//     PyG-`Data`-Objekt genau N Knoten und E (gerichtete) Kanten hat.
-//   - Symbolische Dimensionen werden gebunden und konsistent gehalten.
-//   - Unit-Annotationen `[g/mol]`, `[pm]` auf Hilfsfunktionen geben Forschern
-//     die dimensionale Sicherheit, die PyG strukturell nicht bietet.
+//Demonstrates Dedekind's unique USP over pure PyTorch Geometric:
+//- `Graph[N, E]` shape annotation checks at runtime that the passed
+//PyG `Data` object has exactly N nodes and E (directed) edges.
+//- Symbolic dimensions are bound and kept consistent.
+//- Unit annotations `[g/mol]`, `[pm]` on auxiliary functions give researchers
+//the dimensional security that PyG structurally does not provide.
 //
-// Beispiel-Molekuel: Wasser H2O — 3 Atome, 2 Bindungen O-H (4 directed edges).
+//Example molecule: Water H2O — 3 atoms, 2 bonds O-H (4 directed edges).
 
 pyimport torch
 pyimport torch_geometric.data as pyg_data
 pyimport torch_geometric.nn as pyg_nn
 
-// Reine Hilfsfunktion mit Unit-Signatur: addiert atomare Massen mit Einheit
+//Pure auxiliary function with unit signature: adds atomic masses with unit
 fn add_mass(m1: [g/mol], m2: [g/mol]) -> [g/mol] {
     return m1 + m2
 }
 
-// Konvertiert die rohe Tensor-Summe in eine unit-bewusste Quantity
+//Converts the raw tensor sum into a unit-aware quantity
 fn molecular_mass(g: Graph[N, E]) -> [g/mol] {
     raw = g.x.sum().item()
     return Quantity(raw, "g/mol")
 }
 
-// GCN-Vorwaerts-Pass — pyimport-PyG erledigt die schwere Arbeit
+//GCN forward pass — pyimport-PyG does the heavy lifting
 fn gcn_forward(g: Graph[N, E]) {
     conv = pyg_nn.GCNConv(1, 4)
     return conv.forward(g.x, g.edge_index)
 }
 
 fn main() {
-    print("=== GNN auf Wassermolekuel (v1.12) ===")
+    print("=== GNN on water molecule (v1.12) ===")
     seed(7)
 
-    // Knoten-Features: atomare Masse (Sauerstoff, Wasserstoff, Wasserstoff) in [g/mol]
-    // Konstruktion via flachem Tensor + reshape (umgeht Dedekinds nested-list-flatten).
+    //Node features: atomic mass (oxygen, hydrogen, hydrogen) in [g/mol]
+    //Construction via flat tensor + reshape (bypasses Dedekind's nested-list-flattening).
     x = torch.tensor([15.999, 1.008, 1.008]).reshape(3, 1)
 
-    // Bindungen O-H1, O-H2 als gerichtete Kanten in beide Richtungen
+    //Bonds O-H1, O-H2 as directed edges in both directions
     // edge_index shape (2, E): row 0 = src, row 1 = dst
     edge_index = torch.tensor([0, 1, 0, 2,  1, 0, 2, 0]).reshape(2, 4)
 
     h2o = pyg_data.Data(x=x, edge_index=edge_index)
-    print("Graph aufgebaut: " + str(h2o.num_nodes) + " Atome, " + str(h2o.num_edges) + " gerichtete Bindungen")
+    print("Graph aufgebaut: " + str(h2o.num_nodes) + "atoms," + str(h2o.num_edges) + "directed bonds")
 
-    // 1) Shape- und Unit-Annotation: molecular_mass(Graph[N=3, E=4]) -> [g/mol]
+    //1) Shape and unit annotation: molecular_mass(Graph[N=3, E=4]) -> [g/mol]
     M = molecular_mass(h2o)
-    print("M(H2O) = " + str(M))
+    print("M(H2O) =" + str(M))
     print("   Erwartet: 15.999 + 1.008 + 1.008 = 18.015 g/mol")
 
-    // 2) Unit-Annotation: add_mass akzeptiert nur [g/mol] (Auto-Konvertierung kompatibel)
+    //2) Unit annotation: add_mass only accepts [g/mol] (auto-conversion compatible)
     mass_pair = add_mass(15.999[g/mol], 1.008[g/mol])
     print("add_mass(O, H) = " + str(mass_pair))
 
     // 3) GCN-Vorwaerts-Pass — pyimport torch_geometric uebernimmt den Mathematik-Teil,
     //    Dedekind validiert Graph-Struktur via Graph[N, E]-Annotation
     h = gcn_forward(h2o)
-    print("GCN-Output (3 Atome x 4 Features):")
+    print("GCN output (3 atoms x 4 features):")
     print(h)
 
     print("")
-    print("USP: PyG kann kein '15.999 + 1.008'-Einheiten-Mismatch erkennen.")
-    print("     Dedekind bricht ab, wenn jemand add_mass(15.999[g/mol], 0.5[m]) aufruft.")
+    print("USP: PyG cannot detect '15,999 + 1,008' unit mismatch.")
+    print("Dedekind aborts when someone calls add_mass(15.999[g/mol], 0.5[m]).")
 }
 main()

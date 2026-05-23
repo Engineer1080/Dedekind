@@ -1,8 +1,8 @@
 fn main() {
     print("--- Dedekind: Chemical kinetics (first-order reaction) ---")
 
-    // dc/dt = -k*c  =>  c(t) = c0 * exp(-k*t)
-    // Units: c in [M], t in [s], k in [1/s]
+    //dc/dt = -k*c => c(t) = c0 * exp(-k*t)
+    //Units: c in [M], t in [s], k in [1/s]
     c0_val = 0.1
     k_val = 0.05
     c0 = 0.1[M]

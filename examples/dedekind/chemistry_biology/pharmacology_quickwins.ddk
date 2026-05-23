@@ -8,7 +8,7 @@ E = hill_equation(dose, 3.0, 2.0, 1.5)
 print("Hill (Emax=3, EC50=2, n=1.5):")
 print(E)
 
-// One-compartment PK: C(t) = C0 * exp(-ke*t)
+//One-compartment PK: C(t) = C0 * exp(-ke*t)
 C0 = 100.0
 ke = 0.1
 t = linspace(0, 30, 61)

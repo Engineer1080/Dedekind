@@ -2,22 +2,22 @@ fn main() {
     print("--- Dedekind: Advection PDE (u_t + v*u_x = 0) ---")
     print_latex(r"u_t + v \cdot \nabla u = 0 \quad \mathrm{Upwind}")
     
-    // 1D: Gauß-Puls wandert mit v=1 nach rechts (periodische Ränder)
+    //1D: Gaussian pulse moves to the right with v=1 (periodic edges)
     n = 101
     x = linspace(0, 1, n)
     t = linspace(0, 0.5, 51)
     v = 1.0
     
-    // Anfangsbedingung: Gauß-Puls bei x=0.2
+    //Initial condition: Gaussian pulse at x=0.2
     u0 = exp(-50.0 * (x - 0.2) * (x - 0.2))
     
     sol_1d = pde_advection_1d(u0, x, t, v)
-    print("1D Advection: u(t=0) Maximum bei x~0.2")
-    print("1D Advection: u(t=0.5) Maximum gewandert nach x~0.7 (v*t=0.5)")
+    print("1D Advection: u(t=0) maximum at x~0.2")
+    print("1D Advection: u(t=0.5) Maximum moved to x~0.7 (v*t=0.5)")
     print("Shape (Zeit, Raum):")
     print(sol_1d.shape)
     
-    // Plot: Anfangs- und Endzustand
+    //Plot: initial and final states
     plot(x, sol_1d[0], title="t=0 (Anfang)")
     plot(x, sol_1d[50], title="t=0.5 (nach Advection)")
     

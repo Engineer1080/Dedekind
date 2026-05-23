@@ -5,7 +5,7 @@ fn pid_loss(params) {
     Ki = params[1]
     Kd = params[2]
     
-    // Spring-mass-damper plant G(s) = 1 / (s^2 + s + 4)
+    //Spring-mass-damper plant G(s) = 1 / (s^2 + s + 4)
     // num = [1.0], den = [1.0, 1.0, 4.0]
     
     ref = constant_block(1.0)

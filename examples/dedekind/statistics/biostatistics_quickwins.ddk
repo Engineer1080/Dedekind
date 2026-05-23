@@ -1,8 +1,8 @@
-// Dedekind: Biostatistik Quick Wins — Konfidenzintervall, Odds Ratio, Sensitivität/Spezifität
+//Dedekind: Biostatistics Quick Wins — Confidence Interval, Odds Ratio, Sensitivity/Specificity
 
-print("=== Biostatistik Quick Wins ===")
+print("=== Biostatistics Quick Wins ===")
 
-// Konfidenzintervall für Mittelwert (95%)
+//Confidence Interval for Mean (95%)
 x = [12.3, 11.8, 13.1, 12.5, 12.9, 11.7, 12.4]
 ci = confidence_interval(x, 0.05)
 lo = ci[0]
@@ -10,7 +10,7 @@ hi = ci[1]
 print("Daten:", x)
 print("95% Konfidenzintervall: [", lo, ",", hi, "]")
 
-// Odds Ratio aus 2x2-Tabelle:  | TP  FN |
+//Odds ratio from 2x2 table: | TP FN |
 //                               | FP  TN |
 TP = 80
 FN = 20
@@ -20,15 +20,15 @@ OR = odds_ratio(TP, FN, FP, TN)
 print("Odds Ratio (80,20,10,90):")
 print(OR)
 
-// Sensitivität, Spezifität, PPV, NPV
+//Sensitivity, specificity, PPV, NPV
 ss = sensitivity_specificity(TP, FN, FP, TN)
 sens = ss[0]
 spec = ss[1]
 ppv = ss[2]
 npv = ss[3]
-print("Sensitivität:", sens)
-print("Spezifität:", spec)
-print("PPV (positiver prädiktiver Wert):", ppv)
-print("NPV (negativer prädiktiver Wert):", npv)
+print("Sensitivity:", sens)
+print("Specificity:", spec)
+print("PPV (positive predictive value):", ppv)
+print("NPV (negative predictive value):", npv)
 
-print("Biostatistik Quick Wins aktiv.")
+print("Biostatistics Quick Wins active.")

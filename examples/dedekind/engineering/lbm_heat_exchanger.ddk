@@ -1,14 +1,14 @@
-// Wärmetauscher-Geometrie-Studie und Adam-Optimierung mit Thermal LBM
+//Heat exchanger geometry study and Adam optimization with Thermal LBM
 // ===================================================================
 //
-// Setup: Rayleigh-Bénard-Zelle (heiße Bodenwand, kalte Deckenwand) mit einem
-//        zusätzlichen Stab (Dirichlet-Temperatur = T_cold, simuliert ein
-//        Kühlrohr). Wir variieren die Höhe des Stabes und messen die
-//        globale Nusselt-Zahl.
+//Setup: Rayleigh-Bénard cell (hot bottom wall, cold top wall) with one
+//additional rod (Dirichlet temperature = T_cold, simulates a
+//cooling pipe). We vary the height of the rod and measure it
+//global Nusselt number.
 //
-// Optimierungs-Workflow: Weil soft_cylinder_mask in cy differenzierbar ist,
-// kann Adam die optimale Höhe direkt aus dem Gradienten finden — ohne
-// Brute-Force-Sweep, ohne separates Adjoint-Modul.
+//Optimization workflow: Because soft_cylinder_mask is differentiable in cy,
+//Adam can find the optimal height directly from the gradient — without
+//Brute force sweep, without a separate adjoint module.
 
 use fluid_dynamics
 
@@ -18,7 +18,7 @@ fn nu_for_rod_height(cy_pos, steps) {
     M  = soft_cylinder_mask(nx, ny, 25.0, cy_pos, 3.0, 0.5)
     sim = lbm_thermal_with_obstacle(nx, ny, 0.6, 0.6, 1.0, 0.0, 8e-5, M, 0.0)
 
-    // Initial: lineares T mit kleiner Perturbation für Symmetriebrechung
+    //Initial: linear T with small perturbation for symmetry breaking
     T_init = thermal_temperature(sim)
     rows = linspace(0.0, nx - 1.0, nx)
     cols = linspace(0.0, ny - 1.0, ny)
@@ -53,12 +53,12 @@ fn neg_nusselt(x) {
 
 fn main() {
     print("=================================================================")
-    print("  Wärmetauscher: globale Nusselt-Zahl vs. Höhe des Kühlstabs       ")
+    print("Heat exchanger: global Nusselt number vs. cooling rod height")
     print("=================================================================")
     print("")
 
-    // Baseline ohne Stab (2000 Schritte für voll entwickelte Konvektion)
-    print("--- Baseline: Bénard-Konvektion ohne Stab ---")
+    //Baseline without rod (2000 steps for fully developed convection)
+    print("--- Baseline: Bénard convection without rod ---")
     sim_base = lbm_thermal_simulation(100, 50, 0.6, 0.6, 1.0, 0.0, 8e-5)
     T_init = thermal_temperature(sim_base)
     rows = linspace(0.0, 99.0, 100)
@@ -69,16 +69,16 @@ fn main() {
     thermal_set_temperature(sim_base, T_init + pert)
     thermal_run(sim_base, 2000)
     nu_base = thermal_nusselt(sim_base)
-    print("  Baseline Nu (ohne Stab):", nu_base)
+    print("Baseline Nu (without rod):", nu_base)
     print("")
 
-    // Sweep: Stab in verschiedenen Höhen
-    print("--- Studie: Kühlstab (T=T_cold) in verschiedenen Höhen ---")
+    //Sweep: Rod at different heights
+    print("--- Study: Cooling rod (T=T_cold) at different heights ---")
     nu_low    = nu_for_rod_height(10.0, 2000)
     nu_mid    = nu_for_rod_height(25.0, 2000)
     nu_high   = nu_for_rod_height(40.0, 2000)
 
-    print("  cy=10 (nahe heißer Boden): Nu =", nu_low,
+    print("cy=10 (near hot ground): Nu =", nu_low,
           "  Delta vs Baseline =", nu_low - nu_base)
     print("  cy=25 (Mitte):             Nu =", nu_mid,
           "  Delta vs Baseline =", nu_mid - nu_base)
@@ -97,13 +97,13 @@ fn main() {
     nu_opt = nu_for_rod_height(cy_opt, 2000)
 
     print("  Optimized rod height cy after 5 steps:", cy_opt)
-    print("  Optimized Nusselt number:            ", nu_opt)
+    print("Optimized Nusselt number:", nu_opt)
     print("")
 
-    // Plausibilitätsprüfungen
-    assert(nu_base > 1.1)                       // Konvektion läuft
-    assert(nu_low < nu_base)                    // Stab unten reduziert Nu
-    assert(nu_high < nu_base)                   // Stab oben reduziert Nu auch
+    //Plausibility checks
+    assert(nu_base > 1.1)                       //Convection is ongoing
+    assert(nu_low < nu_base)                    //Rod below reduces Nu
+    assert(nu_high < nu_base)                   //Rod above reduces Nu also
     assert(nu_low < nu_high)                    // Aber unten reduziert mehr
     
     // Assert that the optimized rod height converges towards the top wall
@@ -111,7 +111,7 @@ fn main() {
     print("[OK] Optimization successfully pushed rod towards the top wall")
 
     print("=================================================================")
-    print("  Optimierung erfolgreich abgeschlossen!                        ")
+    print("Optimization successfully completed!")
     print("=================================================================")
 }
 

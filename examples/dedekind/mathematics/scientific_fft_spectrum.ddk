@@ -1,28 +1,28 @@
-// FFT-Spektrum: Ueberlagerung von Sinuswellen, dann Betrag des Spektrums
-// Dedekind-Features: fft(), komplexe Zahlen (Quaternion 1+0i), sin(), abs(), plot()
-// In Python muesste man numpy.fft und explizit komplexe Arrays bauen.
+//FFT spectrum: Superposition of sine waves, then magnitude of the spectrum
+//Dedekind features: fft(), complex numbers (Quaternion 1+0i), sin(), abs(), plot()
+//In Python you would have to use numpy.fft and explicitly build complex arrays.
 
 fn main() {
-    print("--- Dedekind: FFT-Spektrum (Signal -> Frequenzbereich) ---")
+    print("--- Dedekind: FFT spectrum (signal -> frequency range) ---")
 
-    // Zeitachse: 256 Punkte, 0 bis 2*pi (eine Periode der Grundfrequenz)
+    //Timeline: 256 points, 0 to 2*pi (one period of fundamental frequency)
     n = 256
     t = linspace(0, 2 * pi, n)
 
-    // Signal = Summe zweier Sinuswellen: f1=5, f2=13 (in Einheiten von 1/(2*pi))
+    //Signal = sum of two sine waves: f1=5, f2=13 (in units of 1/(2*pi))
     f1 = 5.0
     f2 = 13.0
     signal = sin(f1 * t) + 0.4 * sin(f2 * t)
 
-    // FFT (Runtime wandelt reelle Werte in komplexe um)
+    //FFT (Runtime converts real values into complex ones)
     spectrum = fft(signal)
     magnitude = abs(spectrum)
 
     plot(magnitude, title="FFT-Betrag |F(w)|", xlabel="Frequenz-Index", ylabel="|F|")
 
-    // Zeitbereich zum Vergleich
+    //Time range for comparison
     plot(t, signal, title="Zeitsignal: sin(5t) + 0.4*sin(13t)", xlabel="t [rad]", ylabel="Amplitude")
 
-    print("FFT- und Zeitsignal-Plot. Dedekind: fft(), sin(), abs() auf Tensoren nativ.")
+    print("FFT and time signal plot. Dedekind: fft(), sin(), abs() on tensors natively.")
 }
 main()

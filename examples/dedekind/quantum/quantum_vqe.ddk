@@ -1,23 +1,23 @@
-// quantum_vqe.ddk — Variationeller Quanteneigensolver (VQE) in Dedekind (v1.21)
-// Demonstriert: vqe_circuit(), statevec_expectation(), vqe_energy()
-// Problem: Minimiere ⟨H⟩ fuer H = 0.5*ZI - 0.5*IZ + 0.3*XX
-// Kleinster Eigenwert: analytisch ca. -0.866 (Singlett-Zustand)
+//quantum_vqe.ddk — Variational quantum eigensolver (VQE) in Dedekind (v1.21)
+//Demonstrated: vqe_circuit(), statevec_expectation(), vqe_energy()
+//Problem: Minimize ⟨H⟩ for H = 0.5*ZI - 0.5*IZ + 0.3*XX
+//Smallest eigenvalue: analytically approx. -0.866 (singlet state)
 
 // Hamiltonian als Pauli-Terme: [(Koeffizient, Pauli-String)]
-// H = 0.5 ZI - 0.5 IZ + 0.3 XX  (2-Qubit-System)
+//H = 0.5 ZI - 0.5 IZ + 0.3 XX (2-qubit system)
 
 n_qubits = 2
 n_layers = 2
 
-// Initiale Parameter (alle Null -> Produktzustand |00⟩)
+//Initial parameters (all zero -> product state |00⟩)
 params_init = [0.1, 0.2, 0.3, 0.4]
 
-// Manuelle VQE-Schleife mit Gradient-Descent
+//Manual VQE loop with gradient descent
 learning_rate = 0.1
 params = params_init
 
-print("VQE-Optimierung fuer H = 0.5*ZI - 0.5*IZ + 0.3*XX")
-print("Initiale Parameter:", params)
+print("VQE optimization for H = 0.5*ZI - 0.5*IZ + 0.3*XX")
+print("Initial parameters:", params)
 
 i = 0
 while i < 20 {
@@ -25,7 +25,7 @@ while i < 20 {
     terms = [[0.5, "ZI"], [-0.5, "IZ"], [0.3, "XX"]]
     e0 = vqe_energy(params, n_qubits, n_layers, terms)
 
-    // Numerischer Gradient via Parametershift
+    //Numerical gradient via parameter shift
     grad_params = [0.0, 0.0, 0.0, 0.0]
     shift = 0.1
     j = 0
@@ -46,7 +46,7 @@ while i < 20 {
     params[3] = params[3] - learning_rate * grad_params[3]
 
     if i == 0 or i == 9 or i == 19 {
-        print("Iteration", i + 1, "Energie:", e0)
+        print("Iteration", i + 1, "Energy:", e0)
     }
     i = i + 1
 }
@@ -54,5 +54,5 @@ while i < 20 {
 qc_final = vqe_circuit(n_qubits, n_layers, params)
 terms_final = [[0.5, "ZI"], [-0.5, "IZ"], [0.3, "XX"]]
 e_final = vqe_energy(params, n_qubits, n_layers, terms_final)
-print("Finale Energie:", e_final)
-print("Optimierte Parameter:", params)
+print("Final Energy:", e_final)
+print("Optimized parameters:", params)

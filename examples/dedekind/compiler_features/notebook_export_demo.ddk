@@ -21,7 +21,7 @@ fn main() {
     print("Data hash (SHA-256):")
     print(data_hash(x))
 
-    // Export the .ddk file itself as a standalone HTML and Markdown notebook.
+    //Export the .ddk file itself as a standalone HTML and Markdown notebook.
     src = "examples/dedekind/compiler_features/notebook_export_demo.ddk"
     html_path = export_notebook(src, output_path="./notebook_export_demo.html", format="html",
                                 title="Damped oscillator - measurement notes")

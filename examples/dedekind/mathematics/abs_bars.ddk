@@ -1,4 +1,4 @@
-// Betragsstriche: |x| = abs(x) - leichte mathematische Syntax
+//Amount dashes: |x| = abs(x) - easy mathematical syntax
 
 fn main() {
     print("--- Dedekind: Betragsstriche |x| = abs(x) ---")

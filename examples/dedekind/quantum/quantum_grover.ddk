@@ -1,17 +1,17 @@
-// quantum_grover.ddk — Grover-Suchalgorithmus in Dedekind (v1.21)
-// Demonstriert: grover_circuit(), statevec_probs(), statevec_sim()
+//quantum_grover.ddk — Grover search algorithm in Dedekind (v1.21)
+//Demonstrated: grover_circuit(), statevec_probs(), statevec_sim()
 
-// Suche nach |5⟩ = |101⟩ in einem 3-Qubit-Raum (8 Zustaende)
+//Search for |5⟩ = |101⟩ in a 3-qubit space (8 states)
 n_qubits = 3
 target = 5
 
 grover = grover_circuit(n_qubits, target)
-print("Grover-Schaltkreis:")
+print("Grover circuit:")
 print(grover)
 
-// Wahrscheinlichkeiten nach Grover-Suche
+//Grover search probabilities
 probs = statevec_probs(grover)
-print("Wahrscheinlichkeiten nach Grover (Index 5 sollte dominant sein):")
+print("Probabilities according to Grover (index 5 should be dominant):")
 print(probs)
 
 // Sampling: 500 Messungen — Zielzustand sollte haeufig auftreten
@@ -19,9 +19,9 @@ counts = statevec_sim(grover, 500)
 print("Sampling (500 Shots):")
 print(counts)
 
-// Entropie: sollte niedrig sein (konzentrierte Verteilung)
+//Entropy: should be low (concentrated distribution)
 s = entropy_von_neumann(probs)
-print("Entropie nach Grover (Bits):", s)
+print("Entropy according to Grover (bits):", s)
 
 // Vergleich: Gleichverteilung hat Entropie = log2(8) = 3.0 Bits
 print("Entropie Gleichverteilung 8 Zustaende:", 3.0)

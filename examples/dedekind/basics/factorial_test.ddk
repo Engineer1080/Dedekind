@@ -1,4 +1,4 @@
-// Test: postfix factorial n!
+//Test: postfix factorial n!
 fn main() {
     print("--- Dedekind: factorial with n! syntax ---")
 

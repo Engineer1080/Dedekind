@@ -10,7 +10,7 @@ fn main() {
     print("5 samples from Exponential(1):")
     print(x_exp_5)
     
-    // Gamma(concentration, rate): Summen von Exponentialen
+    //Gamma(concentration, rate): Sums of exponentials
     gamma_dist = Gamma(2.0, 1.0)
     x_gamma = sample(gamma_dist)
     print("Sample from Gamma(2, 1):")

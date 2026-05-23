@@ -10,7 +10,7 @@ fn main() {
     print("Tensor B:")
     print(B)
 
-    // 1. Standard Matrix Multiplication via Ricci Notation
+    //1. Standard Matrix Multiplication via Ricci Notation
     // C = A^ij * B_jk (result indices: i, k)
     // The compiler automatically lowers this to torch.einsum('ij,jk->ik', A, B)
     C = A^ij * B_jk
@@ -23,12 +23,12 @@ fn main() {
     print("2. Double Contraction (A^ij * B_ij) -> Scalar:")
     print(D)
 
-    // 3. Matrix-Vector Product
+    //3. Matrix-Vector Product
     V = [10.0, 20.0]
     Res = A^ij * V^j
     print("3. Matrix-Vector Product (A^ij * V^j):")
     print(Res)
 
-    print("--- Physics Success! Dedekind understands Einstein's Indices. ---")
+    print("---Physics Success! Dedekind understands Einstein's Indices. ---")
 }
 main()

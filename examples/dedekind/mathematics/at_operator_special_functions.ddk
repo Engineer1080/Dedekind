@@ -1,6 +1,6 @@
-// Matrix-Operator @ und Spezialfunktionen (bessel, legendre, hypergeom)
+//Matrix operator @ and special functions (bessel, legendre, hypergeom)
 fn main() {
-    print("--- Matrix-Operator @ ---")
+    print("--- Matrix operator @ ---")
     A = [[1.0, 2.0], [3.0, 4.0]]
     B = [[5.0, 6.0], [7.0, 8.0]]
     C = A @ B
@@ -8,7 +8,7 @@ fn main() {
     print(C)
 
     print("")
-    print("--- Spezialfunktionen ---")
+    print("--- Special functions ---")
     x = 0.5
     print("bessel_j0(0.5):")
     print(bessel_j0(x))
@@ -20,6 +20,6 @@ fn main() {
     print(hypergeom(1, 1, 2, x))
 
     print("")
-    print("@ und Spezialfunktionen aktiv.")
+    print("@ and special functions active.")
 }
 main()

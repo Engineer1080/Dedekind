@@ -1,7 +1,7 @@
 fn main() {
     print("--- Dedekind: Probabilistic Programming ---")
     
-    // 1. Verteilungen und Sampling
+    //1. Distributions and sampling
     d = Normal(0, 1)
     x = sample(d)
     print("Sample from Normal(0,1):")
@@ -22,13 +22,13 @@ fn main() {
     print("10 samples from Normal(0,1):")
     print(samples_10)
     
-    // 2. Log-Probability (fuer Bayesian Inference)
+    //2. Log Probability (for Bayesian Inference)
     lp = log_prob(d, x)
     print("Log-prob of x under Normal(0,1):")
     print(lp)
     
-    // 3. Bayesian Inference: Daten ~ Normal(theta, 1), Prior theta ~ Normal(0, 1)
-    // Wir erzeugen kuenstliche Daten mit wahrem theta = 2.5
+    //3. Bayesian Inference: Data ~ Normal(theta, 1), Prior theta ~ Normal(0, 1)
+    //We create artificial data with true theta = 2.5
     true_theta = 2.5
     data_dist = Normal(true_theta, 1)
     data = sample(data_dist, 20)

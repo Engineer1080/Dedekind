@@ -1,6 +1,6 @@
-// Unbestimmte Integrale (symbolische Integration): integrate_sym(expr, var)
+//Indefinite integrals (symbolic integration): integrate_sym(expr, var)
 
-print("=== Symbolische Integration in Dedekind ===")
+print("=== Symbolic integration in Dedekind ===")
 
 // Grundintegrale
 print("integrate_sym(x^2, x)     =", integrate_sym("x^2", "x"))
@@ -16,9 +16,9 @@ print("")
 print("integrate_sym(x^2 + 2*x, x) =", integrate_sym("x^2 + 2*x", "x"))
 print("integrate_sym(x*sin(x), x)  =", integrate_sym("x*sin(x)", "x"))
 
-// Verifizierung: Ableitung der Stammfunktion = Integrand
+//Verification: Derivation of the antiderivative = integrand
 f = integrate_sym("x^3 + cos(x)", "x")
 df = diff_sym(f, "x")
 print("")
-print("Stammfunktion von x^3 + cos(x):", f)
-print("Ableitung davon (sollte Integrand sein):", df)
+print("Antiderivative of x^3 + cos(x):", f)
+print("Derivation of this (should be integrand):", df)

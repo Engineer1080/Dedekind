@@ -1,20 +1,20 @@
-// pinn_oscillator_demo.ddk — PINN fuer harmonischen Oszillator (2. Ordnung).
+//pinn_oscillator_demo.ddk — PINN for harmonic oscillator (2nd order).
 //
-// Problem: u''(x) + u(x) = 0  mit  u(0) = 1, u'(0) = 0.
+//Problem: u''(x) + u(x) = 0 with u(0) = 1, u'(0) = 0.
 // Analytische Loesung: u(x) = cos(x).
 //
-// Demonstriert `partial(u, x, order=2)`: zweite Ableitung des Netz-Outputs nach
-// dem Netz-Input — der Schluessel, der Dedekind als Physics-Informed-NN-Framework
-// von reinem PyTorch abhebt.
+//Demonstrates `partial(u, x, order=2)`: second derivative of the network output by
+//the network input — the key, the Dedekind as a Physics-Informed-NN framework
+//stands out from pure PyTorch.
 //
-// HINWEIS: PINNs konvergieren nur mit sorgfaeltig abgestimmten Hyperparametern.
-// Wir loesen hier bewusst nur das Intervall [0, pi/2] (eine Viertelperiode):
-// cos faellt monoton von 1 auf 0, gut darstellbar von einem kleinen MLP. Auf
-// [0, 2pi] braeuchte man ein deutlich groesseres Netz, Fourier-Features oder
-// adaptive Loss-Gewichtung (Forschungsthema — siehe Stage 3 der PINN-Roadmap).
+//NOTE: PINNs only converge with carefully tuned hyperparameters.
+//Here we deliberately only solve the interval [0, pi/2] (a quarter period):
+//cos falls monotonically from 1 to 0, easily represented by a small MLP. Up
+//[0, 2pi] you would need a significantly larger network, Fourier features or
+//adaptive loss weighting (research topic — see Stage 3 of the PINN roadmap).
 
-// MLP: x ∈ R → u ∈ R, 1 Hidden-Layer mit 20 Tanh-Neuronen.
-// Pack: W1(1,20)=20, b1=20, W2(20,1)=20, b2=1  →  61 Parameter
+//MLP: x ∈ R → u ∈ R, 1 hidden layer with 20 Tanh neurons.
+//Pack: W1(1,20)=20, b1=20, W2(20,1)=20, b2=1 → 61 parameters
 fn mlp_eval(params, x) {
     W1 = params.narrow(0, 0, 20).reshape(1, 20)
     b1 = params.narrow(0, 20, 20)
@@ -27,8 +27,8 @@ fn mlp_eval(params, x) {
 fn pinn_loss(params, data) {
     x_bc = data[0]      // shape (1,1), x=0
     u_bc = data[1]      // shape (1,1), u(0)=1
-    x_bc_d = data[2]    // shape (1,1), x=0 mit .with_grad() fuer u'(0)
-    x_coll = data[3]    // shape (N,1) mit .with_grad()
+    x_bc_d = data[2]    //shape (1,1), x=0 with .with_grad() for u'(0)
+    x_coll = data[3]    //shape (N,1) with .with_grad()
 
     // 1) u(0) = 1
     u_pred_bc = mlp_eval(params, x_bc)
@@ -50,10 +50,10 @@ fn pinn_loss(params, data) {
 }
 
 fn main() {
-    print("=== PINN: u'' + u = 0,  u(0)=1, u'(0)=0   (v1.10) ===")
+    print("=== PINN: u'' + u = 0, u(0)=1, u'(0)=0 (v1.10) ===")
     seed(7)
 
-    // Randbedingungen
+    //Boundary conditions
     x_bc   = linspace(0.0, 0.0, 1).reshape(-1, 1)   // shape (1,1): nur x=0
     u_bc   = linspace(1.0, 1.0, 1).reshape(-1, 1)   // shape (1,1): u=1
     x_bc_d = linspace(0.0, 0.0, 1).reshape(-1, 1).with_grad()
@@ -63,7 +63,7 @@ fn main() {
 
     // Training
     params_init = random_vector(61) * 0.1
-    print("Training (5000 Schritte)...")
+    print("Training (5000 steps)...")
     params_opt = fit(pinn_loss, params_init, [x_bc, u_bc, x_bc_d, x_coll],
                      method="gd", lr=0.01, steps=5000)
 
@@ -71,12 +71,12 @@ fn main() {
     x_test = linspace(0.0, 1.5708, 5).reshape(-1, 1)
     u_pred = mlp_eval(params_opt, x_test)
     print("")
-    print("Vergleich (PINN vs. analytisch cos(x)):")
-    print("  x=0      :  PINN=" + str(u_pred[0]) + "   exact=1.0")
-    print("  x=pi/8   :  PINN=" + str(u_pred[1]) + "   exact=" + str(cos(0.3927)))
-    print("  x=pi/4   :  PINN=" + str(u_pred[2]) + "   exact=" + str(cos(0.7854)))
-    print("  x=3pi/8  :  PINN=" + str(u_pred[3]) + "   exact=" + str(cos(1.1781)))
-    print("  x=pi/2   :  PINN=" + str(u_pred[4]) + "   exact=" + str(cos(1.5708)))
+    print("Comparison (PINN vs. analytical cos(x)):")
+    print("x=0 : PIN=" + str(u_pred[0]) + "   exact=1.0")
+    print("x=pi/8 : PINN=" + str(u_pred[1]) + "   exact=" + str(cos(0.3927)))
+    print("x=pi/4 : PINN=" + str(u_pred[2]) + "   exact=" + str(cos(0.7854)))
+    print("x=3pi/8 : PINN=" + str(u_pred[3]) + "   exact=" + str(cos(1.1781)))
+    print("x=pi/2 : PINN=" + str(u_pred[4]) + "   exact=" + str(cos(1.5708)))
 }
 
 main()

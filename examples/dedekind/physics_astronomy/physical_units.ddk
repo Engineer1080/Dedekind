@@ -1,6 +1,6 @@
 fn main() {
-    // Physikalische Einheiten: Zahl[Einheit]
-    print("--- Physikalische Einheiten ---")
+    //Physical units: number[unit]
+    print("---Physical units ---")
 
     dist = 10[m]
     time = 2[s]
@@ -9,28 +9,28 @@ fn main() {
     print("Zeit:")
     print(time)
 
-    // Geschwindigkeit = Weg / Zeit
+    //Speed = distance / time
     speed = dist / time
-    print("Geschwindigkeit (Weg/Zeit):")
+    print("Speed (distance/time):")
     print(speed)
 
-    // Addition nur bei gleicher Einheit
+    //Addition only with the same unit
     total_dist = 10[m] + 20[m]
-    print("Strecke 10[m] + 20[m]:")
+    print("Distance 10[m] + 20[m]:")
     print(total_dist)
 
-    // Multiplikation: Einheiten werden mitgeführt
+    //Multiplication: Units are carried along
     area = 3[m] * 4[m]
-    print("Fläche 3[m] * 4[m]:")
+    print("Area 3[m] * 4[m]:")
     print(area)
 
-    // SI-Basis: Candela (cd); abgeleitete Einheiten vereinfacht (Pa, W, Hz, lm, lx, Gy, kat, ...)
+    //SI base: Candela (cd); derived units simplified (Pa, W, Hz, lm, lx, Gy, kat, ...)
     luminous = 1.0[cd]
     pressure = 100000[Pa]
     power = 60[W]
     freq = 50[Hz]
     illuminance = 100[lx]
-    print("Candela, Druck, Leistung, Frequenz, Beleuchtungsstärke:")
+    print("Candela, pressure, power, frequency, illuminance:")
     print(luminous)
     print(pressure)
     print(power)

@@ -1,6 +1,6 @@
 // md_lennard_jones_demo.ddk — Molecular dynamics via OpenMM bridge (v1.14).
 //
-// Demonstrates Dedekind's USP in the MD domain: unit-aware configuration of
+//Demonstrates Dedekind's USP in the MD domain: unit-aware configuration of
 // force-field parameters BEFORE the C++ kernel. OpenMM handles the heavy
 // simulation; Dedekind prevents dimensional bugs (kcal/mol vs eV, A vs nm)
 // that would silently produce wrong results in raw OpenMM.
@@ -33,7 +33,7 @@ fn main() {
     )
     print("   PE: " + str(eq["potential_energy"]))
     print("   KE: " + str(eq["kinetic_energy"]))
-    print("   T:  " + str(eq["temperature"]))
+    print("T:" + str(eq["temperature"]))
     print("")
 
     // [2] Production: at higher temperature, more steps
@@ -51,14 +51,14 @@ fn main() {
     )
     print("   PE: " + str(prod["potential_energy"]))
     print("   KE: " + str(prod["kinetic_energy"]))
-    print("   T:  " + str(prod["temperature"]))
+    print("T:" + str(prod["temperature"]))
     print("   End-positions shape: " + str(prod["positions"].shape))
     print("")
 
     // [3] USP: Unit mismatch is caught BEFORE the OpenMM call
     print("[3] Unit safety: kcal-vs-eV mix")
     print("    // res = md_simulate_lj(..., epsilon=0.238[eV], ...)")
-    print("    // -> ValueError: epsilon=0.238[eV] has wrong dimension;")
+    print("// -> ValueError: epsilon=0.238[eV] has wrong dimension;")
     print("    //                expected compatible with [kJ/mol] (molar_energy)")
     print("    // PyImport openmm would instead silently compute incorrect results.")
 }

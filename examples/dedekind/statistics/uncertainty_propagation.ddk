@@ -1,7 +1,7 @@
 fn main() {
     print("--- Dedekind: Uncertainty Propagation (value ± std) ---")
     
-    // Messwerte mit Unsicherheit: Gauß'sche Fehlerfortpflanzung
+    //Measured values with uncertainty: Gaussian error propagation
     x = uncertain(10.0, 0.5)
     y = uncertain(3.0, 0.2)
     print("x = 10 ± 0.5, y = 3 ± 0.2")
@@ -26,7 +26,7 @@ fn main() {
     print("x^2:")
     print(x_sq)
     
-    // Mit Einheit (optional)
+    //With unit (optional)
     L1 = uncertain(1.0, 0.01, "m")
     L2 = uncertain(2.0, 0.02, "m")
     L_sum = L1 + L2

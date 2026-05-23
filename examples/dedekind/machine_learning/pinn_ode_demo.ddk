@@ -1,17 +1,17 @@
-// pinn_ode_demo.ddk — Physics-Informed Neural Network fuer eine 1D-ODE.
+//pinn_ode_demo.ddk — Physics-Informed Neural Network for a 1D ODE.
 //
-// Problem: y'(x) + y(x) = 0 mit Randbedingung y(0) = 1.
+//Problem: y'(x) + y(x) = 0 with boundary condition y(0) = 1.
 // Analytische Loesung: y(x) = exp(-x).
 //
-// PINN-Idee: ein neuronales Netz lernt y(x), wobei die Loss-Funktion zwei Terme hat:
+//PINN idea: a neural network learns y(x), where the loss function has two terms:
 //   1. boundary_loss:  ||y_net(0) - 1||^2
-//   2. physics_loss:   Mittelwert von (y_net'(x) + y_net(x))^2 ueber Collocation-Punkte
+//2. physics_loss: Average of (y_net'(x) + y_net(x))^2 over collocation points
 //
-// Damit lernt das Netz, die ODE zu erfuellen, ohne dass je ein Loesungswert vorgegeben wird —
-// nur das Gesetz selbst und der Anfangswert.
+//In this way, the network learns to fulfill the ODE without ever specifying a solution value —
+//only the law itself and the initial value.
 
-// Kleines MLP: x ∈ R → u ∈ R, 1 Hidden-Layer mit 10 Tanh-Neuronen.
-// Parameter werden in einem flachen Tensor gepackt (Laenge 31) und in `mlp_eval` entpackt:
+//Small MLP: x ∈ R → u ∈ R, 1 hidden layer with 10 Tanh neurons.
+//Parameters are packed into a flat tensor (length 31) and unpacked into `mlp_eval`:
 //   W1: (1,10) = 10, b1: 10, W2: (10,1) = 10, b2: 1   →  31
 
 fn mlp_eval(params, x) {
@@ -23,13 +23,13 @@ fn mlp_eval(params, x) {
     return h @ W2 + b2
 }
 
-// Loss: Rand- + Physik-Residuum
+//Loss: marginal + physics residual
 fn pinn_loss(params, data) {
     x_bc = data[0]      // shape (1,1): x=0
     u_bc = data[1]      // shape (1,1): u(0)=1
-    x_coll = data[2]    // shape (N,1), .with_grad() — Collocation-Punkte fuer ODE-Residuum
+    x_coll = data[2]    //shape (N,1), .with_grad() — Collocation points for ODE residual
 
-    // 1) Randbedingung
+    //1) Boundary condition
     u_pred_bc = mlp_eval(params, x_bc)
     diff_bc = u_pred_bc - u_bc
     bc_loss = (diff_bc * diff_bc).sum()
@@ -44,12 +44,12 @@ fn pinn_loss(params, data) {
 }
 
 fn main() {
-    print("=== PINN: y' + y = 0, y(0) = 1  (v1.10) ===")
+    print("=== PINN: y' + y = 0, y(0) = 1 (v1.10) ===")
 
     // Reproduzierbarkeit
     seed(42)
 
-    // Randbedingung
+    //Boundary condition
     x_bc = [[0.0]]
     u_bc = [[1.0]]
 
@@ -60,19 +60,19 @@ fn main() {
     params_init = random_vector(31) * 0.1
 
     // Train
-    print("Training (2000 Schritte)...")
+    print("Training (2000 steps)...")
     params_opt = fit(pinn_loss, params_init, [x_bc, u_bc, x_coll], method="gd", lr=0.02, steps=2000)
 
     // Evaluate: 5 Testpunkte gleichmaessig in [0, 1]
     x_test = linspace(0.0, 1.0, 5).reshape(-1, 1)
     u_pred = mlp_eval(params_opt, x_test)
     print("")
-    print("Vergleich (PINN vs. analytisch exp(-x)):")
-    print("  x=0.00 :  PINN=" + str(u_pred[0]) + "   exact=1.0")
-    print("  x=0.25 :  PINN=" + str(u_pred[1]) + "   exact=" + str(exp(-0.25)))
-    print("  x=0.50 :  PINN=" + str(u_pred[2]) + "   exact=" + str(exp(-0.5)))
-    print("  x=0.75 :  PINN=" + str(u_pred[3]) + "   exact=" + str(exp(-0.75)))
-    print("  x=1.00 :  PINN=" + str(u_pred[4]) + "   exact=" + str(exp(-1.0)))
+    print("Comparison (PINN vs. analytical exp(-x)):")
+    print("x=0.00 : PIN=" + str(u_pred[0]) + "   exact=1.0")
+    print("x=0.25 : PIN=" + str(u_pred[1]) + "   exact=" + str(exp(-0.25)))
+    print("x=0.50 : PIN=" + str(u_pred[2]) + "   exact=" + str(exp(-0.5)))
+    print("x=0.75 : PIN=" + str(u_pred[3]) + "   exact=" + str(exp(-0.75)))
+    print("x=1.00 : PIN=" + str(u_pred[4]) + "   exact=" + str(exp(-1.0)))
 }
 
 main()

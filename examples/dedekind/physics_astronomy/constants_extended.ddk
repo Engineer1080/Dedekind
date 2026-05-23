@@ -1,36 +1,36 @@
 fn main() {
     print("--- Dedekind: Extended Constants (pi, e, CODATA) ---")
     
-    // Mathematische Konstanten
+    //Mathematical constants
     print("pi (Kreiszahl):")
     print(pi)
     print("e (Euler):")
     print(e)
     r = 1.0[m]
     circumference = 2 * pi * r
-    print("Umfang 2*pi*r fuer r=1[m]:")
+    print("Circumference 2*pi*r for r=1[m]:")
     print(circumference)
     
     // Quantenmechanik: E = hbar * omega
     omega = 1.0e15[Hz]
     E_quantum = hbar * omega
-    print("Energie hbar*omega (omega=1e15 Hz):")
+    print("Energy hbar*omega (omega=1e15 Hz):")
     print(E_quantum)
     
-    // Elementarladung und Faraday
+    //Elementary charge and Faraday
     n_mol = 1.0[mol]
     Q_faraday = F_faraday * n_mol
     print("Ladung 1 mol Elektronen (Faraday):")
     print(Q_faraday)
     
-    // Stefan-Boltzmann: Leistung P = sigma_SB * A * T^4
+    //Stefan-Boltzmann: Power P = sigma_SB * A * T^4
     A = 1.0[m^2]
     T = 300.0[K]
     P_rad = sigma_SB * A * T^4
-    print("Strahlungsleistung sigma_SB * A * T^4 (A=1m^2, T=300K):")
+    print("Radiation power sigma_SB * A * T^4 (A=1m^2, T=300K):")
     print(P_rad)
     
-    // Universelle Gaskonstante
+    //Universal gas constant
     n = 1.0[mol]
     T_gas = 273.15[K]
     pV = R_gas * n * T_gas

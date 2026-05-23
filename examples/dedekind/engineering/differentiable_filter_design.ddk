@@ -1,6 +1,6 @@
-// Differentiable Filter Design via Gradient Descent (use signals)
+//Differentiable filter design via gradient descent (use signals)
 //
-// This showcase demonstrates how Dedekind's autograd capabilities
+//This showcase demonstrates how Dedekind's autograd capabilities
 // can be used to autonomously optimize a biquad IIR filter (cutoff frequency fc, quality factor Q)
 // such that a noisy signal is filtered.
 //
@@ -37,9 +37,9 @@ fn main() {
     print("- Samples: ", N)
     print("")
     
-    // 2. Definition of the optimization loss
+    //2. Definition of the optimization loss
     // We want to optimize the cutoff frequency (fc) and quality factor (Q).
-    // Parameter vector p = [fc, Q]
+    //Parameter vector p = [fc, Q]
     
     fn filter_loss(p) {
         fc = p[0]
@@ -78,7 +78,7 @@ fn main() {
     }
     
     // 3. Initial values and optimization
-    // Starting value: cutoff frequency 150 Hz (much too high) and Q = 1.0
+    //Starting value: cutoff frequency 150 Hz (much too high) and Q = 1.0
     p_init = [150.0, 1.0]
     
     print("Initial filter state:")

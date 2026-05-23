@@ -1,40 +1,40 @@
-// user_defined_units.ddk — `unit NAME = NUMBER[base]` registriert eigene Einheiten.
+//user_defined_units.ddk — `unit NAME = NUMBER[base]` registers custom units.
 //
-// Voraussetzung: die Basiseinheit (rechte Seite) ist Dedekind bereits bekannt
-// (Länge m/cm/km, Masse kg/g/t, Zeit s/min/h, Energie J/kJ, Druck Pa/bar/MPa,
-// Volumen L/mL/m^3, Konzentration M/mol, Permeabilität m^2/D/mD, ...).
-// Mischrechnungen mit Built-in-Einheiten werden automatisch umgerechnet.
+//Prerequisite: the basic unit (right side) is already known to Dedekind
+//(Length m/cm/km, mass kg/g/t, time s/min/h, energy J/kJ, pressure Pa/bar/MPa,
+//Volume L/mL/m^3, concentration M/mol, permeability m^2/D/mD, ...).
+//Mixed invoices with built-in units are automatically converted.
 
-// --- Längen aus dem angloamerikanischen System ------------------------------
+//--- Lengths from the Anglo-American system --------------------------------
 unit Foot = 0.3048[m]
 unit Inch = 0.0254[m]
 unit Mile = 1609.344[m]
 unit Yard = 0.9144[m]
 
 // --- Astronomie & Atomphysik -------------------------------------------------
-unit AU       = 1.495978707e11[m]      // astronomische Einheit
+unit AU       = 1.495978707e11[m]      //astronomical unit
 unit ly       = 9.4607304725808e15[m]  // Lichtjahr
-unit Bohr     = 5.29177210903e-11[m]   // Bohr-Radius
+unit Bohr     = 5.29177210903e-11[m]   //Drill radius
 
-// --- Energie / Physik --------------------------------------------------------
+//--- Energy / Physics --------------------------------------------------------
 unit eV       = 1.602176634e-19[J]     // Elektronenvolt
 unit calorie  = 4.184[J]               // thermochemische Kalorie
 
-// --- Verkettung: neue Einheit kann auf einer benutzerdefinierten Einheit basieren
+//--- Chaining: new unit can be based on a user-defined unit
 unit MicroInch = 1.0e-6[Inch]
 unit kcal      = 1000.0[calorie]
-unit uDarcy    = 1.0e-6[D]            // Mikro-Darcy (Permeabilität)
+unit uDarcy    = 1.0e-6[D]            //Micro-Darcy (permeability)
 
 fn main() {
-    print("=== Benutzerdefinierte Einheiten (v1.7) ===")
+    print("=== Custom Units (v1.7) ===")
 
-    // 1) Längen mit Mix-Einheiten
+    //1) Lengths with mix units
     height = 6[Foot] + 2[Inch]
     print("Hoehe 6ft 2in = " + str(height))
 
-    // Mile + m: Ergebnis bleibt in der Einheit der LINKEN Seite
+    //Mile + m: Result remains in the unit of the LEFT side
     route = 1[Mile] + 1500[m]
-    print("Route 1 Mile + 1500 m = " + str(route))
+    print("Route 1 Mile + 1500 m =" + str(route))
 
     distance_m = 1[Mile] - 100[Foot]
     print("1 Mile - 100 ft = " + str(distance_m))
@@ -53,15 +53,15 @@ fn main() {
     food = 250[kcal]
     print("Mahlzeit = " + str(food))
 
-    // 4) Verkettete Einheiten
+    //4) Chained units
     micron = 100[MicroInch]
     print("100 microinch = " + str(micron))
 
-    // 5) Bohr-Radius mit SI-Anfrage mischen
+    //5) Mix drilling radius with SI request
     atom_box = 5[Bohr] + 1e-10[m]
     print("5 Bohr + 1 Aengstrom = " + str(atom_box))
 
-    // 6) Permeabilität: D und mD sind Built-in, uDarcy ist user-defined
+    //6) Permeability: D and mD are built-in, uDarcy is user-defined
     perm = 50[mD] + 1[D]
     print("50 mD + 1 D = " + str(perm))
 

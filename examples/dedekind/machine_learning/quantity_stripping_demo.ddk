@@ -1,17 +1,17 @@
 // quantity_stripping_demo.ddk — `unwrap(x)` entfernt Quantity-Wrapper
 // in performance-kritischen Pfaden.
 //
-// Hintergrund: Skalare Quantity-Objekte tragen Einheits-Metadaten mit.
-// Bei wenigen Aufrufen vernachlässigbar; in JIT/Autograd/MCMC-Loops mit
-// 10 000+ Iterationen wird der Wrapper-Overhead sichtbar — und
+//Background: Scalar quantity objects carry unit metadata.
+//Negligible for a few calls; in JIT/Autograd/MCMC loops
+//10,000+ iterations the wrapper overhead becomes visible — and
 // `torch.compile` mag keine Python-Objekte im Hot Path.
 //
-// Die Compile-Zeit-Einheitenprüfung hat die Dimensionen längst validiert;
-// zur Laufzeit reicht der nackte Float. `unwrap(x)`:
+//The compile-time unit check has long since validated the dimensions;
+//at runtime the bare float is sufficient. `unwrap(x)`:
 //
 //   - Quantity(value, "J")  ->  value (float)
 //   - UncertainQuantity     ->  value (std verworfen)
-//   - 0-d torch.Tensor      ->  .item()
+//- 0-d torch.Tensor -> .item()
 //   - Liste/Tuple           ->  elementweise
 //   - sonst                 ->  passthrough
 
@@ -22,7 +22,7 @@ fn pure_loss(params, data) {
     x = unwrap(data[0])
     y = unwrap(data[1])
 
-    // Ab hier nur noch Float-Arithmetik — kein Quantity-Wrap-/Unwrap-Overhead
+    //From here on out, just float arithmetic — no quantity wrap/unwrap overhead
     diff = a * x + b - y
     return diff * diff
 }
@@ -45,17 +45,17 @@ fn main() {
     print("Quantity vor unwrap: " + str(qE))
     print("unwrap(5[J])       = " + str(unwrap(qE)))
 
-    // 2) Liste mit gemischten Einheiten -> Liste von Floats
+    //2) List of mixed entities -> List of floats
     qs = [1.0[m], 2.0[m], 3.0[m]]
     print("unwrap([1m,2m,3m]) = " + str(unwrap(qs)))
 
-    // 3) Loss-Funktion mit Quantity-Eingaben — innerhalb der Funktion alles Float
-    params = [2.0[m], 0.5[m]]    // Parameter mit Einheit (z. B. aus Messung)
+    //3) Loss function with quantity inputs — everything floats within the function
+    params = [2.0[m], 0.5[m]]    //Parameter with unit (e.g. from measurement)
     data   = [1.5, 4.5]          // raw data
     L = pure_loss(params, data)
-    print("loss          = " + str(L))   // raw float, kein Quantity-Wrap
+    print("loss          = " + str(L))   //raw float, no quantity wrap
 
-    // 4) Nutzung in jit/sde_solve/fit — gleiche Funktion, keine Anpassung noetig
+    //4) Use in jit/sde_solve/fit — same function, no adjustment necessary
     fast_loss = jit(pure_loss)
     L2 = fast_loss(params, data)
     print("jit(loss)     = " + str(L2))

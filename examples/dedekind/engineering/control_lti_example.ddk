@@ -10,10 +10,10 @@ fn main() {
     print("Starting LTI system simulation...")
     
     // PT1 system: 
-    // T * dx/dt + x = K * u
-    // => dx/dt = -(1/T)*x + (K/T)*u
+    //T * dx/dt + x = K * u
+    //=> dx/dt = -(1/T)*x + (K/T)*u
     // 
-    // Parameters: K = 1.0 (gain), T = 2.0s (time constant)
+    //Parameters: K = 1.0 (gain), T = 2.0s (time constant)
     K = 1.0
     T = 2.0
     
@@ -29,13 +29,13 @@ fn main() {
     time_pts = linspace(0.0, 10.0, 50)
     
     // Simulate step response
-    // u(t) = 1 for t >= 0
+    //u(t) = 1 for t >= 0
     res = sys.step_response(time_pts)
     
     t_out = res[0]
     y_out = res[1]
     
-    print("Step response at t=10s: " + str(y_out[49][0]))
+    print("Step response at t=10s:" + str(y_out[49][0]))
     print("Expected asymptotic value: " + str(K))
     
     // Info for the user

@@ -1,11 +1,11 @@
-// Automatische Umrechnung bei Addition/Subtraktion: SI-Basis + abgeleitete Einheiten
+//Automatic conversion for addition/subtraction: SI base + derived units
 fn main() {
-    print("--- Dedekind: Automatische Einheiten-Umrechnung (SI + abgeleitet) ---")
+    print("--- Dedekind: Automatic unit conversion (SI + derived) ---")
 
-    // === Länge ===
+    //=== Length ===
     print("1[m] + 100[cm]:")
     print(1[m] + 100[cm])
-    // === Masse ===
+    //=== Mass ===
     print("1[kg] + 500[g]:")
     print(1[kg] + 500[g])
     // === Zeit ===
@@ -18,20 +18,20 @@ fn main() {
     // === Strom (A, mA, kA) ===
     print("1[A] + 500[mA]:")
     print(1[A] + 500[mA])
-    // === Temperatur (K, mK) ===
+    //=== Temperature (K, mK) ===
     print("300[K] + 1000[mK]:")
     print(300[K] + 1000[mK])
     // === Stoffmenge (mol, mmol, kmol) ===
     print("1[mol] + 500[mmol]:")
     print(1[mol] + 500[mmol])
-    // === Lichtstärke (cd, mcd) ===
+    //=== Luminous intensity (cd, mcd) ===
     print("1[cd] + 500[mcd]:")
     print(1[cd] + 500[mcd])
 
-    // === Volumen (L, mL) ===
+    //=== Volume (L, mL) ===
     print("1[L] + 250[mL]:")
     print(1[L] + 250[mL])
-    // === Energie (J, kJ, Wh) ===
+    //=== Energy (J, kJ, Wh) ===
     print("1[kJ] + 500[J]:")
     print(1[kJ] + 500[J])
     // === Spannung (V, mV, kV) ===
@@ -46,10 +46,10 @@ fn main() {
     // === Widerstand (ohm, kohm) ===
     print("1[kohm] + 500[ohm]:")
     print(1[kohm] + 500[ohm])
-    // === Leistung (W, kW) ===
+    //=== Power (W, kW) ===
     print("1[kW] + 200[W]:")
     print(1[kW] + 200[W])
 
-    print("Automatische Umrechnung (SI + abgeleitet) aktiv.")
+    print("Automatic conversion (SI + derived) active.")
 }
 main()

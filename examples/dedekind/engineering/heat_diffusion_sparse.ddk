@@ -1,22 +1,22 @@
-// 2D-Wärmediffusion via sparse 5-Punkt-Stencil-Laplace.
-// Hinweis: Dies ist KEIN CFD (keine Konvektion, kein Druckfeld). Für echte
-// inkompressible Strömung siehe physics_astronomy/pde_navier_stokes.ddk
-// oder engineering/airfoil_optimization.ddk (LBM).
+//2D thermal diffusion via sparse 5-point stencil Laplace.
+//Note: This is NOT a CFD (no convection, no pressure field). For real ones
+//incompressible flow see physics_astronomy/pde_navier_stokes.ddk
+//or engineering/airfoil_optimization.ddk (LBM).
 
 fn main() {
     print("--- Dedekind: Sparse 2D Heat Diffusion ---")
     print_latex(r"\frac{\partial T}{\partial t} = \alpha \nabla^2 T \quad \texttt{.sparse()}")
     
-    // Grid: 50x50 Punkte (2.500 Knoten), sparse Laplacian 2500x2500
+    //Grid: 50x50 points (2,500 nodes), sparse Laplacian 2500x2500
     N = 50
     total_nodes = N * N
     print("Simulating 2D grid with " + str(total_nodes) + " nodes.")
     
-    // Anfangsbedingung: Delta in der Mitte, Rand = 0 (Dirichlet)
+    //Initial condition: Delta in the middle, edge = 0 (Dirichlet)
     T = random_matrix(N, N) * 0.0
-    T[25][25] = 100.0  // Wärmequelle in der Mitte
+    T[25][25] = 100.0  //Heat source in the middle
     
-    // Stabilität: dt <= dx²/(4α); dx=1/(N-1), α=0.1 → dt_max ≈ 0.001
+    //Stability: dt <= dx²/(4α); dx=1/(N-1), α=0.1 → dt_max ≈ 0.001
     alpha = 0.1
     dt = 0.0005
     n_steps = 100
@@ -26,7 +26,7 @@ fn main() {
     nnz = L.values().numel()
     print("Sparse Laplacian: " + str(L.shape[0]) + "x" + str(L.shape[1]) + ", nnz=" + str(nnz))
     
-    print("Running " + str(n_steps) + " diffusion steps...")
+    print("Running " + str(n_steps) + "diffusion steps...")
     trajectory = sparse_diffusion_simulate(T, n_steps, dt, alpha)
     
     T_final = trajectory[-1]
@@ -34,7 +34,7 @@ fn main() {
     T_max = max(T_final.flatten())
     print("After diffusion: T[25,25]=" + str(T_center) + ", max(T)=" + str(T_max))
     
-    // Plot: Anfangs- und Endzustand
+    //Plot: initial and final states
     x = linspace(0, 1, N)
     y = linspace(0, 1, N)
     contour(x, y, T, title="Initial (Delta at center)", levels=8)

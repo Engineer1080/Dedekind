@@ -1,32 +1,32 @@
-// quantum_shapes.ddk — Shape-Annotationen fuer Quantum Computing (v1.21)
-// Demonstriert: Qubit[N], StateVec[N] Annotationen in Funktionssignaturen
+//quantum_shapes.ddk — Shape Annotations for Quantum Computing (v1.21)
+//Demonstrates: Qubit[N], StateVec[N] annotations in function signatures
 
-// Funktion mit Qubit[N]-Annotation: erwartet QuantumCircuit mit N Qubits
+//Function with Qubit[N] annotation: expects QuantumCircuit with N qubits
 fn apply_hadamard_all(qc: Qubit[2]) -> Qubit[2] {
     qc.h(0)
     qc.h(1)
     return qc
 }
 
-// Funktion die StateVec[N] verarbeitet
+//Function that processes StateVec[N].
 fn compute_fidelity(sv1: StateVec[2], sv2: StateVec[2]) {
     return fidelity(sv1, sv2)
 }
 
-// Bell-Zustand vorbereiten und Shape-Checks testen
+//Prepare bell state and test shape checks
 qc = quantum_circuit(2)
 qc_h = apply_hadamard_all(qc)
-print("Schaltkreis nach Hadamard-Anwendung:", qc_h.n_gates(), "Gatter")
+print("Circuit according to Hadamard application:", qc_h.n_gates(), "Gatter")
 
 // Statevektoren
 sv_bell = statevec_sim(bell_state(0))
 sv_psi  = statevec_sim(bell_state(2))
 
-// Fidelitaet mit Shape-Check
+//Fidelity with shape check
 f = compute_fidelity(sv_bell, sv_psi)
 print("Fidelitaet |Φ+⟩ vs |Ψ+⟩:", f)
 
-// Symbolische Dimension: Funktion fuer beliebig viele Qubits
+//Symbolic dimension: Function for any number of qubits
 fn entangle_chain(qc: Qubit[N]) {
     n = qc.n_qubits
     i = 0
@@ -41,5 +41,5 @@ qc3 = quantum_circuit(3)
 qc3.h(0)
 entangle_chain(qc3)
 sv3 = statevec_sim(qc3)
-print("3-Qubit GHZ-aehnlicher Zustand - Wahrscheinlichkeiten:")
+print("3-Qubit GHZ-like state - probabilities:")
 print(statevec_probs(qc3))

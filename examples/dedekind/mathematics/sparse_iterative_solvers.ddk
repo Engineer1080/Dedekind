@@ -1,9 +1,9 @@
-// Feature 12: Sparse iterative Solver — cg, gmres, bicgstab + Vorkonditionierer.
-// Demo: 2D-Wärmeleitung mit dem 5-Punkt-Laplacian, gelöst per CG mit Jacobi-Vorkonditionierer.
+//Feature 12: Sparse iterative solvers — cg, gmres, biggstab + preconditioners.
+//Demo: 2D heat conduction with the 5-point Laplacian solved via CG with Jacobi preconditioner.
 
 fn build_tridiag(n) {
     // 1D-Poisson-Operator: A[i,i] = 2, A[i,i-1] = A[i,i+1] = -1.
-    // Resultiert in einer symmetrisch-positiv-definiten Matrix (Standard-Testfall für CG).
+    //Resulting in a symmetric-positive-definite matrix (standard test case for CG).
     A = random_matrix(n, n) * 0.0
     for i in arange(0, n) {
         A[i][i] = 2.0
@@ -18,31 +18,31 @@ fn build_tridiag(n) {
 }
 
 fn main() {
-    print("--- Feature 12: Sparse iterative Solver ---")
+    print("---Feature 12: Sparse iterative solvers ---")
 
-    // Klassischer SPD-Testfall: 1D-Poisson auf n=200 Knoten.
+    //Classic SPD test case: 1D Poisson on n=200 nodes.
     n = 200
     A = build_tridiag(n)
-    // RHS gleichmäßig 1 (Lastfall: konstante Wärmequelle)
+    //RHS uniform 1 (load case: constant heat source)
     b = random_vector(n) * 0.0 + 1.0
 
-    print("Matrix-Form:")
+    print("Matrix form:")
     print(A.shape)
 
-    // 1) CG ohne Preconditioner
+    //1) CG without preconditioner
     sol_plain = cg(A, b, tol=1e-8, max_iter=5000)
-    print("CG ohne Preconditioner -> Iterationen:")
+    print("CG without preconditioner -> iterations:")
     print(sol_plain["iterations"])
     print("Residuum (∞-Norm):")
     print(sol_plain["residual_inf"])
 
-    // 2) CG mit Jacobi-Preconditioner — typisch 2–10× weniger Iterationen
+    //2) CG with Jacobi preconditioner — typically 2–10× fewer iterations
     M = jacobi_preconditioner(A)
     sol_pre = cg(A, b, tol=1e-8, max_iter=5000, preconditioner=M)
     print("CG + Jacobi -> Iterationen:")
     print(sol_pre["iterations"])
 
-    // 3) BiCGSTAB und GMRES funktionieren auch auf nicht-symmetrischen Matrizen
+    //3) BiCGSTAB and GMRES also work on non-symmetric matrices
     sol_bicg = bicgstab(A, b, tol=1e-8, max_iter=1000)
     print("BiCGSTAB konvergiert:")
     print(sol_bicg["converged"])
@@ -51,12 +51,12 @@ fn main() {
     print("GMRES konvergiert:")
     print(sol_gmres["converged"])
 
-    // 4) ILU-Preconditioner (stärker als Jacobi, aber teurer im Setup)
+    //4) ILU preconditioner (stronger than Jacobi, but more expensive to setup)
     M_ilu = ilu_preconditioner(A, drop_tol=0.001)
     sol_ilu = gmres(A, b, tol=1e-8, max_iter=500, preconditioner=M_ilu)
     print("GMRES + ILU -> Iterationen:")
     print(sol_ilu["iterations"])
 
-    print("Sparse iterative Solver aktiv.")
+    print("Sparse iterative solvers active.")
 }
 main()

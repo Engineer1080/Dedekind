@@ -1,6 +1,6 @@
-// Symbolische Ableitung: diff_sym(expr, x) – expr und x als Strings
+//Symbolic derivation: diff_sym(expr, x) – expr and x as strings
 fn main() {
-    print("--- Symbolische Ableitung (diff_sym) ---")
+    print("--- Symbolic derivation (diff_sym) ---")
 
     print("diff_sym(x^2, x):")
     print(diff_sym("x^2", "x"))
@@ -17,6 +17,6 @@ fn main() {
     print("diff_sym(tan(x), x):")
     print(diff_sym("tan(x)", "x"))
 
-    print("Symbolische Ableitung aktiv.")
+    print("Symbolic derivation active.")
 }
 main()

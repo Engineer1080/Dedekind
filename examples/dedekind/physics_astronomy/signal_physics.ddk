@@ -1,15 +1,15 @@
 fn main() {
     print("--- Dedekind: Signal Physics (Complex Numbers) Showcase ---")
     
-    // 1. Definition einer komplexen Schwingung (Phasor)
+    //1. Definition of a complex oscillation (phasor)
     // z = real + imag * i
-    // In Dedekind schreiben wir einfach: 1.0 + 2.0i
+    //In Dedekind we simply write: 1.0 + 2.0i
     z1 = 1.0 + 2.0i
     z2 = 3.0 - 1.5i
     
-    print("Komplexe Zahl z1:")
+    print("Complex number z1:")
     print(z1)
-    print("Komplexe Zahl z2:")
+    print("Complex number z2:")
     print(z2)
     
     // 2. Grundrechenarten
@@ -21,26 +21,26 @@ fn main() {
     print("Multiplikation (z1 * z2):")
     print(prod)
     
-    // 3. Signalverarbeitung: Fourier-Transformation (FFT)
-    // Wir erzeugen ein Signal aus komplexen Zahlen
+    //3. Signal processing: Fourier transform (FFT)
+    //We create a signal from complex numbers
     signal = [1.0 + 0i, 0.0 + 1.0i, -1.0 + 0i, 0.0 - 1.0i]
     
     print("Signal (Zeitbereich):")
     print(signal)
     
-    // Berechne die FFT
+    //Calculate the FFT
     spectrum = fft(signal)
     
-    print("Spektrum (Frequenzbereich nach FFT):")
+    print("Spectrum (frequency range according to FFT):")
     print(spectrum)
     
-    // 4. Eulersche Formel Test (vereinfacht)
+    //4. Euler's formula test (simplified)
     // e^(i*pi) = -1
-    // Da wir noch kein 'exp' Keyword haben, nutzen wir die Literale
+    //Since we don't have an 'exp' keyword yet, we'll use the literals
     print("Rotationstest:")
-    rotation = 0.0 + 1.0i // Imaginäre Einheit i
-    vector = [1.0, 0.0]   // Ein Vektor (der später komplex interpretiert werden kann)
+    rotation = 0.0 + 1.0i //Imaginary unit i
+    vector = [1.0, 0.0]   //A vector (which can later be interpreted in complex ways)
     
-    print("Dedekind beherrscht jetzt die Mathematik der Wellen! 🦅🌀")
+    print("Dedekind has now mastered the mathematics of waves! 🦅🌀")
 }
 main()

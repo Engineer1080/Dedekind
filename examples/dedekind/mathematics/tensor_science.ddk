@@ -16,36 +16,36 @@ fn main() {
     print("Matrix B:")
     print(B)
     
-    // 1. Matrix-Multiplikation via Einsum
-    // ii,jk -> ik bedeutet: Multipliziere Zeilen von A mit Spalten von B
+    //1. Matrix multiplication via Einsum
+    //ii,jk -> ik means: Multiply rows of A by columns of B
     C = einsum("ij,jk->ik", A, B)
     
-    print("1. Matrix-Multiplikation (A * B) via Einsum:")
+    print("1. Matrix multiplication (A * B) via Einsum:")
     print(C)
     
-    // 2. Trace (Spur) berechnen
-    // ii -> summiert die Diagonalelemente
+    //2. Calculate trace
+    //ii -> sums the diagonal elements
     trace_A = einsum("ii", A)
     
-    print("2. Trace von Matrix A (Summe der Diagonale):")
+    print("2. Trace of matrix A (sum of the diagonal):")
     print(trace_A)
     
-    // 3. Dot Product (Skalarprodukt)
-    // i,i -> summiert das elementweise Produkt zweier Vektoren
+    //3. Dot Product
+    //i,i -> sums the element-wise product of two vectors
     v1 = [1.0, 2.0, 3.0]
     v2 = [4.0, 5.0, 6.0]
     dot = einsum("i,i", v1, v2)
     
-    print("3. Dot Product von [1,2,3] und [4,5,6]:")
+    print("3. Dot Product of [1,2,3] and [4,5,6]:")
     print(dot)
     
-    // 4. Outer Product (Äußeres Produkt)
-    // i,j -> erzeugt eine Matrix aus zwei Vektoren
+    //4. Outer Product
+    //i,j -> creates a matrix of two vectors
     outer = einsum("i,j->ij", v1, v2)
     
-    print("4. Outer Product (Matrix-Erzeugung):")
+    print("4. Outer Product (matrix creation):")
     print(outer)
     
-    print("Erfolgreich ausgeführt! Dedekind beherrscht die Einstein-Notation. 🦅📐")
+    print("Executed successfully! Dedekind masters Einstein notation. 🦅📐")
 }
 main()

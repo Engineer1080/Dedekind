@@ -1,14 +1,14 @@
-// optimize_milp_demo.ddk — Deklarative MILP-DSL mit Unit-Awareness (v1.13).
+//optimize_milp_demo.ddk — Declarative MILP DSL with unit awareness (v1.13).
 //
-// Operations Research und Logistik mit erzwungener Dimensionssicherheit.
-// `Variable(...)`, `+`, `*`, `>=`, `<=`, `optimize_milp(...)` bilden eine
-// vollstaendige Constraint-DSL ueber scipy.optimize.milp — mit dem Bonus,
-// dass Einheiten-Mismatches (km vs kg) zur Laufzeit als ValueError
-// abgefangen werden, bevor der Solver Unsinn rechnet.
+//Operations research and logistics with enforced dimensional security.
+//`Variable(...)`, `+`, `*`, `>=`, `<=`, `optimize_milp(...)` form one
+//complete constraint DSL via scipy.optimize.milp — with the bonus,
+//that unit mismatches (km vs kg) appear as ValueError at runtime
+//be caught before the solver calculates nonsense.
 
 // --- Demo 1: Vehicle Routing -----------------------------------------------
 fn demo_vehicle_routing() {
-    print("[1] Vehicle Routing: minimiere Kosten ueber Strecke + Truck-Anzahl")
+    print("[1] Vehicle routing: minimize costs over route + number of trucks")
 
     x = Variable("strecke", lower=0[km])
     trucks = Variable("trucks", lower=1, integer=true)
@@ -49,9 +49,9 @@ fn demo_production_mix() {
     print("")
 }
 
-// --- Demo 3: Energie-Mix ---------------------------------------------------
+//--- Demo 3: Energy Mix --------------------------------------------------
 fn demo_energy_mix() {
-    print("[3] Energie-Mix: minimiere Kosten unter Bedarfs-Constraint")
+    print("[3] Energy mix: minimize costs under demand constraint")
 
     // 3 Quellen: Solar (billig, begrenzt), Wind (mittel), Gas (teuer, unbegrenzt)
     p_solar = Variable("solar", lower=0[kW], upper=300[kW])
@@ -71,12 +71,12 @@ fn demo_energy_mix() {
 
 // --- Demo 4: Unit-Check als Sicherheitsnetz --------------------------------
 fn demo_unit_safety() {
-    print("[4] Unit-Safety-Demo: ein km-vs-kg-Mismatch wird gefangen")
-    print("    (auskommentiert; wuerde optimize_milp() mit ValueError abbrechen)")
+    print("[4] Unit Safety Demo: a km vs kg mismatch is caught")
+    print("(commented out; would terminate optimize_milp() with ValueError)")
     print("")
     print("    // x = Variable(name=x, lower=0[km])")
     print("    // res = optimize_milp(2*x, [x >= 100[kg]])")
-    print("    // -> ValueError: MILP-Einheiten passen nicht in Constraint: [km] vs [kg]")
+    print("// -> ValueError: MILP units do not fit in constraint: [km] vs [kg]")
 }
 
 fn main() {

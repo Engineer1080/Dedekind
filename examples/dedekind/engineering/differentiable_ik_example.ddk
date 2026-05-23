@@ -1,22 +1,22 @@
-// Inverse Kinematics (IK) via Gradientenabstieg mit Gelenklimits
-// Vergleicht zwei Ansätze in Dedekind v2.1:
-// 1. Soft Constraints (Penalty Terms in der Loss-Funktion) via L-BFGS (minimize)
+//Inverse Kinematics (IK) via gradient descent with joint limits
+//Compares two approaches in Dedekind v2.1:
+//1. Soft Constraints (Penalty Terms in the Loss Function) via L-BFGS (minimize)
 // 2. Hard Constraints via SLSQP (minimize_constrained)
 
 use robotics
 
 fn main() {
     print("==================================================================")
-    print("Differentiable Robotics: Inverse Kinematik (IK) mit Gelenklimits")
+    print("Differentiable Robotics: Inverse Kinematics (IK) with joint limits")
     print("==================================================================")
     
-    // 1. Definition des Roboterarms (3-Gelenk planar)
+    //1. Definition of the robot arm (3-joint planar)
     arm = kinematic_chain()
     arm.add_revolute_joint(0.0[m], 1.0[m], 0.0[rad])
     arm.add_revolute_joint(0.0[m], 1.0[m], 0.0[rad])
     arm.add_revolute_joint(0.0[m], 1.0[m], 0.0[rad])
     
-    // 2. Definition des Ziels (wo der Greifer hin soll)
+    //2. Definition of the target (where the gripper should go)
     target_pos = [1.5, 1.5, 0.0]
     print("Zielkoordinate (x, y, z):", target_pos)
     
@@ -24,12 +24,12 @@ fn main() {
     q_init = [0.1, 0.2, 0.3]
     print("Start-Pose (q_init):", q_init)
     
-    // Gelenklimits festlegen: Wir wählen sehr enge Limits von -0.5 bis 0.5 rad (ca. -28.6° bis 28.6°),
-    // um den Einfluss der Beschränkungen drastisch zu demonstrieren.
-    // (Ohne Limits würde die unbeschränkte IK Winkel von ca. [-0.13, 0.85, 1.10] finden)
+    //Set joint limits: We choose very tight limits of -0.5 to 0.5 rad (approx. -28.6° to 28.6°),
+    //to dramatically demonstrate the impact of the restrictions.
+    //(Without limits, the unbounded IK would find angles of approximately [-0.13, 0.85, 1.10])
     q_min_val = -0.5
     q_max_val = 0.5
-    print("Gelenklimits: [", q_min_val, ", ", q_max_val, "] rad für alle Gelenke.")
+    print("Joint limits: [", q_min_val, ", ", q_max_val, "] wheel for all joints.")
     print("")
 
     // ==================================================================
@@ -46,7 +46,7 @@ fn main() {
         err_z = pos[2] - target_pos[2]
         pos_err = err_x^2 + err_y^2 + err_z^2
         
-        // Bestrafung, wenn Gelenkwinkel außerhalb von [q_min_val, q_max_val] liegen
+        //Penalty if joint angles are outside [q_min_val, q_max_val].
         p0 = relu(q[0] - q_max_val)^2 + relu(q_min_val - q[0])^2
         p1 = relu(q[1] - q_max_val)^2 + relu(q_min_val - q[1])^2
         p2 = relu(q[2] - q_max_val)^2 + relu(q_min_val - q[2])^2
@@ -62,7 +62,7 @@ fn main() {
     
     print("Gefundene Gelenkwinkel (Soft):", q_opt_soft)
     print("Erreichte Position (Soft):    ", pos_soft)
-    print("Maximale Limit-Überschreitung: ", max(abs(q_opt_soft) - q_max_val))
+    print("Maximum limit exceeded:", max(abs(q_opt_soft) - q_max_val))
     print("")
 
     // ==================================================================
@@ -70,7 +70,7 @@ fn main() {
     // ==================================================================
     print("--- Ansatz 2: Hard Constraints via SLSQP (minimize_constrained) ---")
     
-    // Standard-Loss ohne Penalty-Term
+    //Standard loss without penalty term
     fn ik_loss_pure(q) {
         T = arm.forward_kinematics(q)
         pos = end_effector_pos(T)
@@ -81,7 +81,7 @@ fn main() {
         return err_x^2 + err_y^2 + err_z^2
     }
     
-    // Bounds-Format für scipy.optimize: [[low, high], [low, high], ...]
+    //Bounds format for scipy.optimize: [[low, high], [low, high], ...]
     bnds = [[q_min_val, q_max_val], [q_min_val, q_max_val], [q_min_val, q_max_val]]
     
     res_hard = minimize_constrained(ik_loss_pure, q_init, bounds=bnds)
@@ -93,14 +93,14 @@ fn main() {
     
     print("Gefundene Gelenkwinkel (Hard):", q_opt_hard)
     print("Erreichte Position (Hard):    ", pos_hard)
-    print("Maximale Limit-Überschreitung: ", max(abs(q_opt_hard) - q_max_val))
+    print("Maximum limit exceeded:", max(abs(q_opt_hard) - q_max_val))
     print("")
     
     print("Fazit:")
     print("- Soft Constraints erlauben minimale Verletzungen (z.B. im Mikrorad-Bereich),")
-    print("  sind dafür aber extrem schnell und nutzen reinen PyTorch-Gradientenabstieg.")
-    print("- Hard Constraints garantieren die exakte Einhaltung der Limits, benötigen")
-    print("  jedoch einen Constrained Solver (SLSQP via SciPy).")
+    print("But they are extremely fast and use pure PyTorch gradient descent.")
+    print("- Hard constraints guarantee exact adherence to the limits required")
+    print("however, a constrained solver (SLSQP via SciPy).")
 }
 
 main()

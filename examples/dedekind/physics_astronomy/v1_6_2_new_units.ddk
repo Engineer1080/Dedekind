@@ -1,24 +1,24 @@
 // ============================================================================
-// Dedekind v1.6.2: Umfassende wissenschaftliche Einheiten
+//Dedekind v1.6.2: Comprehensive scientific units
 // ============================================================================
-// Dedekind versteht nun nativ eine enorme Bandbreite an Einheiten quer
-// durch alle Disziplinen. Additionen mit unterschiedlichen Einheiten
-// derselben Dimension werden automatisch skaliert!
+//Dedekind now understands an enormous range of units natively
+//through all disciplines. Additions with different units
+//of the same dimension are automatically scaled!
 
 print("--- 1. Quantenphysik ---")
-// Energie in Elektronenvolt
+//Energy in electron volts
 E_photon = 2.5[eV]
 E_thermal = 1.0[meV]
 
-// Automatische Addition und Konvertierung
+//Automatic addition and conversion
 E_diff = E_photon - E_thermal
-print("Energie-Differenz:      ", E_diff)
+print("Energy difference:", E_diff)
 
-// Umrechnung in Joule (die erste Einheit dominiert das Ergebnis)
+//Conversion to joules (the first unit dominates the result)
 E_joule = 0[J] + E_photon
 print("In Joule (SI):          ", E_joule)
 
-// Und noch ein Praxisbeispiel:
+//And another practical example:
 W_battery = 0[kWh] + 3.6[MJ]
 print("3.6 MJ als Batterie:    ", W_battery)
 
@@ -37,7 +37,7 @@ dist_sirius = 8.6[ly]          // Lichtjahre
 
 dist_total = dist_alpha_centauri + dist_sirius
 print("Distanz (Parsec + Ly):  ", dist_total)
-// Zurück in SI (Meter)
+//Back in SI (meters)
 dist_m = dist_total + 0[m]
 print("Distanz in Metern:      ", dist_m)
 
@@ -51,4 +51,4 @@ print("250 kcal in Megajoule:  ", snack_joule)
 // Molare Konzentrationen
 c_blutzucker = 5.5[mM] // Millimolar
 c_si = 0[M] + c_blutzucker // Mol pro Liter
-print("Blutzucker in M (mol/L):", c_si)
+print("Blood sugar in M (mol/L):", c_si)

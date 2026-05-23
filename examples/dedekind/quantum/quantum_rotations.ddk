@@ -17,13 +17,13 @@ fn main() {
     print(v)
 
     // 3. Perform rotation using the native .rotate() method
-    // In Dedekind, Quaternions support Hamilton product and specialized rotation
+    //In Dedekind, Quaternions support Hamilton product and specialized rotation
     v_new = q_rot.rotate(v)
     
     print("Rotated Vector (Should be along Y-axis):")
     print(v_new)
 
-    // 4. Verify Hamilton Product Property
+    //4. Verify Hamilton Product Property
     // i*j = k
     qi = 1.0i
     qj = 1.0j

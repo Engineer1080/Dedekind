@@ -1,12 +1,12 @@
 fn main() {
     print("--- Dedekind: Chemical elements (atomic masses) ---")
 
-    // Molar mass H2O: 2*M(H) + M(O)
+    //Molar mass H2O: 2*M(H) + M(O)
     M_H2O = 2 * atomic_mass("H") + atomic_mass("O")
     print("Molar mass H2O (g/mol):")
     print(M_H2O)
 
-    // Molar mass C2H6 (ethane): 2*M(C) + 6*M(H)
+    //Molar mass C2H6 (ethane): 2*M(C) + 6*M(H)
     M_ethane = 2 * atomic_mass("C") + 6 * atomic_mass("H")
     print("Molar mass C2H6 / ethane (g/mol):")
     print(M_ethane)

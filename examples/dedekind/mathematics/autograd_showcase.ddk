@@ -1,27 +1,27 @@
 fn main() {
     print("--- Dedekind: Native Autograd Showcase ---")
     
-    // 1. Definiere eine mathematische Funktion (Parabel)
+    //1. Define a mathematical function (parabola)
     fn parabola(x) {
         return x * x + 5.0
     }
     
-    // 2. Erzeuge einen Eingabewert mit Gradienten-Unterstützung
-    // Wir nutzen den .with_grad() Modifier
+    //2. Create an input value with gradient support
+    //We use the .with_grad() modifier
     x = [3.0].with_grad()
     
     print("Eingabewert x:")
     print(x)
     
-    // 3. Berechne die Ableitung an der Stelle x=3.0
-    // Die theoretische Ableitung von x^2 + 5 ist 2*x. Bei x=3 also 6.
+    //3. Calculate the derivative at x=3.0
+    //The theoretical derivative of x^2 + 5 is 2*x. At x=3 so 6.
     dx = grad(parabola, x)
     
-    print("Berechnete Ableitung (grad) an x=3:")
+    print("Calculated derivative (degree) at x=3:")
     print(dx)
     
-    // 4. Komplexeres Beispiel: Optimierungsschritt
-    print("--- Optimierung eines quadratischen Fehlers ---")
+    //4. More complex example: optimization step
+    print("--- Optimization of a squared error ---")
     
     target = 100.0
     weight = [2.0].with_grad()
@@ -35,13 +35,13 @@ fn main() {
     print("Start-Gewicht:")
     print(weight)
     
-    // Ein einfacher manueller Optimierungsschritt
+    //A simple manual optimization step
     g_w = grad(error_fn, weight)
     weight = weight - learning_rate * g_w
     
-    print("Gewicht nach einem Optimierungsschritt:")
+    print("Weight after an optimization step:")
     print(weight)
     
-    print("Erfolgreich ausgeführt! Dedekind versteht jetzt Analysis. 🦅📈")
+    print("Executed successfully! Dedekind now understands analysis. 🦅📈")
 }
 main()

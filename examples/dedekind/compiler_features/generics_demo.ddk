@@ -1,60 +1,60 @@
-// generics_demo.ddk — Generics / Typ-Parameter (v1.20)
+//generics_demo.ddk — Generics / type parameters (v1.20)
 //
-// `fn name<T, U, ...>(args)` deklariert polymorphe Typ-Parameter, die zur
-// Compile-Zeit Konsistenz erzwingen. Im Gegensatz zu Python's typing.TypeVar
-// ist die Pruefung in Dedekind *durchsetzungsfaehig*, nicht nur dokumentarisch.
+//`fn name<T, U, ...>(args)` declares polymorphic type parameters used for
+//Enforce compile-time consistency. Unlike Python's typing.TypeVar
+//the test in Dedekind is *assertive*, not just documentary.
 //
-// Was Typ-Parameter aktuell koennen:
-//   - polymorphe Einheits-Variablen: `<U>` mit Annotation `: [U]` erzwingt,
-//     dass mehrere Argumente DIESELBE Einheit (oder kompatible Dimension)
-//     haben. Erstes Argument bindet U, alle folgenden Args/Return werden
-//     gegen U geprueft, ggf. dimensional umgerechnet.
-//   - Shape-Parameter wie `<N>` mit `Vector[N]` arbeiten bereits seit v1.9
-//     (symbolische Dimensionen) — die explizite Deklaration <N> macht den
-//     Vertrag jetzt sichtbar.
+//What type parameters can currently do:
+//- polymorphic unit variables: `<U>` with annotation `: [U]` enforces,
+//that multiple arguments have the SAME unit (or compatible dimension)
+//have. First argument binds U, all subsequent args/returns
+//checked against U, converted dimensionally if necessary.
+//- Shape parameters like `<N>` with `Vector[N]` already work since v1.9
+//(symbolic dimensions) — the explicit declaration <N> does that
+//Contract now visible.
 
-// --- 1. Polymorphe Einheit ----------------------------------------------------
+//--- 1. Polymorphic Unit ------------------------------------------------------------------
 fn add_same_unit<U>(a: [U], b: [U]) -> [U] {
     return a + b
 }
 
-// --- 2. Mehrere Einheits-Parameter -------------------------------------------
+//--- 2. Multiple unit parameters -------------------------------------------
 fn convert_between<From, To>(value: [From], target: [To]) -> [To] {
-    // value wird auf To umgerechnet (falls dimensional kompatibel)
+    //value is converted to To (if dimensionally compatible)
     return target + (value - target) + value - value
-    // einfacher: gibt value in der Einheit "To" zurueck via Coerce.
-    // (Hier explizit konstruktiv; in der Praxis nutzt man Quantity-Auto-Conversion.)
+    //simpler: returns value in the unit "To" via Coerce.
+    //(Here explicitly constructive; in practice you use quantity auto-conversion.)
 }
 
-// --- 3. Shape-Parameter (existierende Mechanik, jetzt mit <N> dokumentiert) --
+//--- 3. Shape parameters (existing mechanics, now documented with <N>) --
 fn weighted_sum<N>(x: Vector[N], w: Vector[N]) -> Scalar {
     return x[0]*w[0] + x[1]*w[1] + x[2]*w[2]
 }
 
-// --- 4. Kombiniert: Shape + Einheit ------------------------------------------
+//--- 4. Combined: Shape + Unit ------------------------------------------
 fn pure_scale<N>(x: Vector[N]) -> Vector[N] {
     return x * 2.0
 }
 
 fn main() {
-    print("=== Generics / Typ-Parameter (v1.20) ===")
+    print("=== Generics / Type Parameters (v1.20) ===")
     print("")
 
-    // 1) Polymorphe Einheit: gleiche Einheit erzwungen
+    //1) Polymorphic unit: same unit forced
     print("[1] add_same_unit<U>")
-    print("  add(2[m], 3[m])    =", add_same_unit(2[m], 3[m]))
+    print("add(2[m], 3[m]) =", add_same_unit(2[m], 3[m]))
     print("  add(10[kg], 5[kg]) =", add_same_unit(10[kg], 5[kg]))
-    print("  add(2[m], 100[cm]) =", add_same_unit(2[m], 100[cm]),
+    print("add(2[m], 100[cm]) =", add_same_unit(2[m], 100[cm]),
           "  (auto-Konvertierung)")
     try {
         bad = add_same_unit(2[m], 3[kg])
         print("  UNERWARTET ok")
     } catch e {
-        print("  add(2[m], 3[kg]):  Dimensions-Mismatch -> ValueError")
+        print("add(2[m], 3[kg]): Dimension mismatch -> ValueError")
     }
     print("")
 
-    // 2) Shape-Parameter
+    //2) Shape parameters
     print("[2] weighted_sum<N>")
     a = [1.0, 2.0, 3.0]
     w = [0.5, 0.3, 0.2]
@@ -67,14 +67,14 @@ fn main() {
     }
     print("")
 
-    // 3) Kombinierter Parameter
+    //3) Combined parameter
     print("[3] pure_scale<N>")
     print("  pure_scale([1, 2, 3]) =", pure_scale([1.0, 2.0, 3.0]))
     print("")
 
-    print("USP: Python's typing.TypeVar ist rein dokumentarisch — der")
-    print("     Interpreter ignoriert sie. Dedekinds <T>-Parameter werden")
-    print("     vom Compiler aktiv durchgesetzt — sowohl fuer Einheiten")
-    print("     als auch fuer Shapes — mit Auto-Konvertierung wo moeglich.")
+    print("USP: Python's typing.TypeVar is purely documentary — the")
+    print("Interpreter ignores them. Dedekind's <T> parameters become")
+    print("actively enforced by the compiler — both for units")
+    print("as well as for shapes - with auto-conversion where possible.")
 }
 main()

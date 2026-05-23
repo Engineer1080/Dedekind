@@ -1,10 +1,10 @@
 // Feature 11: Tiefere Symbolik — solve_sym, simplify_sym, series.
-// Ergänzt das bestehende diff_sym / integrate_sym.
+//Supplements the existing diff_sym / integrate_sym.
 
 fn main() {
-    print("--- Feature 11: Symbolische Mathematik (vertieft) ---")
+    print("--- Feature 11: Symbolic Mathematics (in-depth) ---")
 
-    // 1) Algebraische Gleichungen lösen
+    //1) Solve algebraic equations
     sols = solve_sym("x^2 - 5*x + 6", "x")
     print("x^2 - 5x + 6 = 0  -> ")
     print(sols)    // ["2", "3"]
@@ -18,9 +18,9 @@ fn main() {
     print("x^2 + 1 = 0  -> ")
     print(img)     // ["-I", "I"]
 
-    // 3) Gleichungssystem
+    //3) System of equations
     sys_sol = solve_sym(["x + y = 5", "x - y = 1"], ["x", "y"])
-    print("Lineares 2x2-System x+y=5, x-y=1:")
+    print("Linear 2x2 system x+y=5, x-y=1:")
     print(sys_sol)
 
     // 4) Vereinfachung
@@ -31,19 +31,19 @@ fn main() {
     print("(x^2-1)/(x-1) =")
     print(s2)
 
-    // 5) Taylor-Reihen
+    //5) Taylor series
     sin_series = series("sin(x)", "x", 0, 8)
     exp_series = series("exp(x)", "x", 0, 5)
-    print("Taylor sin(x) um 0, Ordnung 8:")
+    print("Taylor sin(x) around 0, order 8:")
     print(sin_series)
-    print("Taylor exp(x) um 0, Ordnung 5:")
+    print("Taylor exp(x) around 0, order 5:")
     print(exp_series)
 
-    // 6) Reihenentwicklung um anderen Punkt
+    //6) Series development around another point
     log_series = series("log(x)", "x", 1, 5)
-    print("Taylor log(x) um 1:")
+    print("Taylor log(x) at 1:")
     print(log_series)
 
-    print("Symbolische Mathematik aktiv.")
+    print("Symbolic mathematics active.")
 }
 main()

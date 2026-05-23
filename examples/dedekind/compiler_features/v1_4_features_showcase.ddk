@@ -1,9 +1,9 @@
-// v1.4 features showcase: modules, seed, DataFrame+CSV, unit-aware plots, @units signatures
+//v1.4 features showcase: modules, seed, DataFrame+CSV, unit-aware plots, @units signatures
 
 use math  // loads modules/math.ddk -> square, cube, PHI
 
 fn kinetic_energy(m: [kg], v: [m/s]) -> [J] {
-    // Compile-time annotation: m in kg, v in m/s; return in J.
+    //Compile-time annotation: m in kg, v in m/s; return in J
     // With 2000[g] it is automatically converted to 2[kg].
     return 0.5 * m * v * v
 }

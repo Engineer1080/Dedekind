@@ -1,7 +1,7 @@
 fn main() {
     print("--- Dedekind Algorithm Showcase ---")
 
-    // 1. Matrix Operations
+    //1. Matrix Operations
     A = [[1.0, 2.0], [3.0, 4.0]]
     print("Matrix A:")
     print(A)

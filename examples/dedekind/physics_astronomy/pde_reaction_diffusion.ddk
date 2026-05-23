@@ -1,5 +1,5 @@
 fn main() {
-    print("--- Dedekind: Reaktions-Diffusion ---")
+    print("--- Dedekind: Reaction-Diffusion ---")
     print_latex(r"u_t = D \nabla^2 u + f(u) \quad \mathrm{Fisher-KPP}")
     
     // 1D: Fisher-KPP u_t = D*u_xx + r*u*(1-u)
@@ -12,8 +12,8 @@ fn main() {
     u0 = exp(-80.0 * (x - 0.5) * (x - 0.5))
     
     sol = pde_reaction_diffusion_1d(u0, x, t, D, r, "fisher")
-    print("1D Fisher-KPP: u(t=0) Gauß-Puls")
-    print("1D Fisher-KPP: u(t=2) Reaktion + Diffusion")
+    print("1D Fisher-KPP: u(t=0) Gaussian pulse")
+    print("1D Fisher-KPP: u(t=2) reaction + diffusion")
     print("Shape:")
     print(sol.shape)
     
@@ -47,6 +47,6 @@ fn main() {
     contour(x2, y2, v_sol[0], title="2D v t=0 (Anfang)", levels=8)
     contour(x2, y2, v_sol[50], title="2D v t=0.5 (Turing)", levels=8)
     
-    print("Reaktions-Diffusion aktiv.")
+    print("Reaction-diffusion active.")
 }
 main()

@@ -1,9 +1,9 @@
-// pyimport_demo.ddk — Direkter Zugriff auf PyPI-Bibliotheken via `pyimport`.
+//pyimport_demo.ddk — Direct access to PyPI libraries via `pyimport`.
 //
 // Syntax:  pyimport <modul[.untermodul]> [as <alias>]
-// Erzeugt im generierten Code ein `import ... as ...`. Werte aus dem importierten Modul
-// werden ueber `alias.name(...)` aufgerufen. Falls kein Alias angegeben wird, wird der
-// letzte Teil des Modulpfads als Alias verwendet (`pyimport math` → `math.pi`).
+//Creates an `import ... as ...` in the generated code. Values from the imported module
+//are called via `alias.name(...)`. If no alias is specified, the
+//last part of the module path used as an alias (`pyimport math` → `math.pi`).
 
 pyimport scipy.special as sp
 pyimport scipy.stats as st
@@ -13,7 +13,7 @@ pyimport math
 fn main() {
     print("=== pyimport-Demo (v1.8) ===")
 
-    // 1) scipy.special: Spezialfunktionen
+    //1) scipy.special: Special functions
     g5 = sp.gamma(5.0)              // gamma(5) = 4! = 24
     print("gamma(5) = " + str(g5))
 
@@ -24,12 +24,12 @@ fn main() {
     p = st.norm.cdf(1.96)
     print("Phi(1.96) = " + str(p))
 
-    // 3) numpy: Aggregationen ueber Listen
+    //3) numpy: Aggregations over lists
     arr = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
     print("np.mean = " + str(np.mean(arr)))
     print("np.std  = " + str(np.std(arr)))
 
-    // 4) Python-stdlib math (ohne Alias)
+    //4) Python stdlib math (without alias)
     print("math.pi   = " + str(math.pi))
     print("math.tau  = " + str(math.tau))
     print("math.log2(1024) = " + str(math.log2(1024.0)))

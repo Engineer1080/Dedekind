@@ -1,22 +1,22 @@
-// source_mapping_demo.ddk — Demonstriert Source-Mapping fuer Runtime-Fehler.
+//source_mapping_demo.ddk — Demonstrates source mapping for runtime errors.
 //
-// Dieses Beispiel laeuft GANZ DURCH (kein Crash). Wer einen Runtime-Fehler simulieren
-// moechte, kann unten die auskommentierten Zeilen aktivieren. Dedekind faengt den
-// Fehler ab und liefert einen Traceback, der direkt auf die `.ddk`-Datei und die
-// fehlerhafte Zeile zeigt — statt auf den generierten Python-Zwischencode.
+//This example runs ALL THE WAY THROUGH (no crash). Anyone simulating a runtime error
+//If you want, you can activate the commented lines below. Dedekind catches it
+//Error and provides a traceback that points directly to the `.ddk` file and the
+//points to the incorrect line instead of the generated intermediate Python code.
 //
-// Beispiel-Traceback (so wuerde es aussehen):
+//Example traceback (this is what it would look like):
 //
 //   Traceback (most recent call last):
-//     File "examples/dedekind/source_mapping_demo.ddk", line 23, in <module>
+//File "examples/dedekind/source_mapping_demo.ddk", line 23, in <module>
 //       main()
-//     File "examples/dedekind/source_mapping_demo.ddk", line 18, in main
+//File "examples/dedekind/source_mapping_demo.ddk", line 18, in main
 //       y = x[10]
-//   IndexError: index 10 is out of bounds for dimension 0 with size 3
+//IndexError: index 10 is out of bounds for dimension 0 with size 3
 
 fn risky(x) {
-    // Diese Zeile wuerde bei aktivem `x[10]` einen IndexError werfen,
-    // der direkt zurueck auf diese .ddk-Zeile gemappt wird.
+    //This line would throw an IndexError if `x[10]` was active,
+    //which is mapped directly back to this .ddk line.
     return x[0] + x[1]
 }
 
@@ -26,10 +26,10 @@ fn main() {
     s = risky(arr)
     print("sum first two = " + str(s))
 
-    // Aktivieren fuer Fehler-Demo:
-    // y = arr[42]                // → IndexError mit .ddk-Zeilennummer
-    // z = 1.0 / 0.0              // → ZeroDivisionError mit .ddk-Zeile
-    // bad = "hello" + 5          // → TypeError mit .ddk-Zeile
+    //Activate for error demo:
+    //y = arr[42] // → IndexError with .ddk line number
+    //z = 1.0 / 0.0 // → ZeroDivisionError with .ddk line
+    //bad = "hello" + 5 // → TypeError with .ddk line
 
     print("alles ok")
 }

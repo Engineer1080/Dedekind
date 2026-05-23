@@ -1,6 +1,6 @@
 // try_catch_slicing_demo.ddk — Language maturity: Error handling + Python-style slicing (v1.17)
 //
-// Two small but long-overdue features that elevate Dedekind from a
+//Two small but long-overdue features that elevate Dedekind from a
 // notebook DSL to a real scripting language for scientific applications.
 
 // --- try / catch ----------------------------------------------------------
@@ -13,12 +13,12 @@ fn safe_divide(a, b) {
     }
 }
 
-// Read file with fallback
+//Read file with fallback
 fn read_or_default(path, default) {
     try {
         return read_file(path)
     } catch e {
-        print("  File not readable, using default:", e)
+        print("File not readable, using default:", e)
         return default
     }
 }

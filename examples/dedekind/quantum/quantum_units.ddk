@@ -1,7 +1,7 @@
-// quantum_units.ddk — Physikalische Einheiten fuer Quanten-Hardware (v1.21)
-// Demonstriert: [GHz], [eV], [meV], [us], [mK], [THz] Einheitenchecks
+//quantum_units.ddk — Physical units for quantum hardware (v1.21)
+//Demonstrates: [GHz], [eV], [meV], [us], [mK], [THz] unit checks
 
-// Qubit-Frequenz eines supraleitenden Transmon-Qubits
+//Qubit frequency of a superconducting transmon qubit
 qubit_freq = 5.1[GHz]
 print("Transmon-Frequenz:", qubit_freq)
 
@@ -9,7 +9,7 @@ print("Transmon-Frequenz:", qubit_freq)
 energy_gap = 10.5[meV]
 print("Energielu*cke:", energy_gap)
 
-// Kohaerenzzeit T1 und T2
+//Coherence time T1 and T2
 T1 = 100.0[us]
 T2 = 80.0[us]
 print("T1-Zeit:", T1)
@@ -21,11 +21,11 @@ print("Betriebstemperatur:", temp)
 
 // Frequenzkonvertierung: 5 GHz <-> Hz
 freq_hz = 5.0[GHz] + 0.1[GHz]
-print("Summe Frequenzen:", freq_hz)
+print("Total frequencies:", freq_hz)
 
-// Einheitencheck fuer Qubit-Frequenz
+//Unit check for qubit frequency
 freq_checked = qubit_frequency_check(qubit_freq)
-print("Frequenz normiert auf GHz:", freq_checked)
+print("Frequency normalized to GHz:", freq_checked)
 
 // Kohaerenzzeit-Check
 t1_checked = coherence_time_check(T1)
@@ -35,10 +35,10 @@ print("Kohaerenzzeit gecheckt:", t1_checked)
 e_checked = energy_gap_check(energy_gap)
 print("Energielu*cke gecheckt:", e_checked)
 
-// Photon-Energie aus Frequenz (E = hf)
-// h = 6.626e-34 J*s, 5 GHz = 5e9 Hz
+//Photon energy from frequency (E = hf)
+//h = 6.626e-34 J*s, 5 GHz = 5e9 Hz
 E_photon = h * 5.0e9
-print("Photon-Energie bei 5 GHz:", E_photon)
+print("Photon energy at 5 GHz:", E_photon)
 
-// Energie in eV umrechnen (1 eV = 1.602e-19 J)
-print("Erwartete Energie: ~2.07e-5 eV")
+//Convert energy to eV (1 eV = 1.602e-19 J)
+print("Expected energy: ~2.07e-5 eV")

@@ -19,7 +19,7 @@ fn orbit_loss(params) {
     // Get final position of the satellite (index 1) at the end of the simulation (index 10)
     pos_sat_final = pos_history[10][1]
     
-    // Target position after 1000 seconds (matching a circular orbit)
+    //Target position after 1000 seconds (matching a circular orbit)
     tx = 3311000.0
     ty = 6167000.0
     tz = 0.0
@@ -28,7 +28,7 @@ fn orbit_loss(params) {
     dy = pos_sat_final[1] - ty
     dz = pos_sat_final[2] - tz
     
-    // Loss is scaled distance squared in kilometers to avoid numerical gradient scaling issues
+    //Loss is scaled distance squared in kilometers to avoid numerical gradient scaling issues
     loss = (dx^2 + dy^2 + dz^2) / 1.0e6
     return loss
 }
@@ -36,7 +36,7 @@ fn orbit_loss(params) {
 fn main() {
     print("=== Trajectory and Orbit Optimization Showcase ===")
     
-    // Initial guess: v_x = 0.0, v_y = 7000.0 m/s (slower than circular speed of ~7546 m/s)
+    //Initial guess: v_x = 0.0, v_y = 7000.0 m/s (slower than circular speed of ~7546 m/s)
     p_init = [0.0, 7000.0]
     
     loss_init = orbit_loss(p_init)

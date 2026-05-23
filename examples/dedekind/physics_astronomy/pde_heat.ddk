@@ -1,16 +1,16 @@
 fn main() {
     print("--- Dedekind: Differentiable PDE (Heat Equation) ---")
     
-    // 1D: u_t = k * u_xx; Anfangsbedingung: Spike in der Mitte, Rand 0
+    //1D: u_t = k * u_xx; Initial condition: Spike in the middle, edge 0
     x = linspace(0, 1, 11)
     t = linspace(0, 0.05, 6)
     k = 0.1
     u0 = [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     
     sol_1d = pde_heat_1d(u0, x, t, k)
-    print("1D Heat: u(t=0) Mitte (Index 5):")
+    print("1D Heat: u(t=0) middle (index 5):")
     print(sol_1d[0][5])
-    print("1D Heat: u(t=0.05) Mitte (abgekuehlt):")
+    print("1D Heat: u(t=0.05) Middle (cooled down):")
     print(sol_1d[5][5])
     print("1D Heat: Loesung Shape (Zeit, Raum):")
     print(sol_1d.shape)

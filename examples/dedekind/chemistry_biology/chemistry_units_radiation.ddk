@@ -1,5 +1,5 @@
 // Chemical units (bar, atm, g) and radioactivity (Bq, Sv, Gy)
-// Dedekind: bar, atm, Bq, Sv as first-class literals; Gy/Sv share the dimension J/kg.
+//Dedekind: bar, atm, Bq, Sv as first-class literals; Gy/Sv share the dimension J/kg.
 
 fn main() {
     print("--- Chemical units and radioactivity ---")
@@ -18,7 +18,7 @@ fn main() {
     print("Mass 12[g] (e.g. carbon):")
     print(m_g)
 
-    // Radioactivity: Bq (becquerel) = 1/s, activity
+    //Radioactivity: Bq (becquerel) = 1/s, activity
     activity = 1000[Bq]
     print("Activity 1000[Bq]:")
     print(activity)
