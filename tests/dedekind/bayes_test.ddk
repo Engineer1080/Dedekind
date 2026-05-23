@@ -5,6 +5,7 @@ fn approx(a, b, tol) {
 }
 
 fn main() {
+    seed(42)
     print("--- Dedekind: NUTS & VI Tests ---")
 
     data = [2.9, 3.1, 3.0, 3.2, 2.8] // mean is 3.0
