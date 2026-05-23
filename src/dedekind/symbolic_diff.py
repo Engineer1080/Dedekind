@@ -1,14 +1,14 @@
 """
-Symbolische Ableitung für Dedekind: parst mathematische Ausdrücke als String
-und liefert die Ableitung nach einer Variable als String zurück.
+Symbolic differentiation for Dedekind: parses mathematical expressions as strings
+and returns the derivative with respect to a variable as a string.
 
-Unterstützt: +, -, *, /, ^, Klammern, sin, cos, tan, exp, log, sqrt; Konstanten und Variablen.
+Supports: +, -, *, /, ^, parentheses, sin, cos, tan, exp, log, sqrt; constants and variables.
 """
 
 import re
 from typing import Optional, Union, List, Tuple
 
-# --- Einfacher AST für Ausdrücke ---
+# --- Simple AST for expressions ---
 class Expr:
     pass
 
@@ -215,18 +215,18 @@ class _Parser:
 def _parse(expr_str: str) -> Expr:
     s = expr_str.strip().replace(" ", "")
     if not s:
-        raise ValueError("Leerer Ausdruck")
+        raise ValueError("Empty expression")
     tokens = _tokenize(s)
     if not tokens:
-        raise ValueError("Keine gültigen Tokens")
+        raise ValueError("No valid tokens")
     p = _Parser(tokens)
     e = p._parse_expr()
     if p.pos < len(tokens):
-        raise ValueError("Rest nach Ausdruck")
+        raise ValueError("Trailing content after expression")
     return e
 
 
-# --- Ableitung (d/dvar) ---
+# --- Differentiation (d/dvar) ---
 def _diff(e: Expr, var: str) -> Expr:
     if isinstance(e, Var):
         return Const(1.0) if e.name == var else Const(0.0)
@@ -248,8 +248,8 @@ def _diff(e: Expr, var: str) -> Expr:
             Pow(e.right, Const(2.0))
         )
     if isinstance(e, Pow):
-        # d/dx(f^g): f^g * (g'*log(f) + g*f'/f)  wenn f,g von x abhängen
-        # Einfacher Fall: base^const -> const*base^(const-1)*base'
+        # d/dx(f^g): f^g * (g'*log(f) + g*f'/f)  when f,g depend on x
+        # Simple case: base^const -> const*base^(const-1)*base'
         if isinstance(e.exp, Const):
             c = e.exp.value
             if c == 0:
@@ -281,10 +281,10 @@ def _diff(e: Expr, var: str) -> Expr:
     if isinstance(e, Sqrt):
         # sqrt(x) = x^(1/2), (sqrt(x))' = 1/(2*sqrt(x)) * x'
         return Mul(Div(Const(1.0), Mul(Const(2.0), Sqrt(e.arg))), _diff(e.arg, var))
-    raise TypeError(f"Unbekannter Ausdruckstyp: {type(e)}")
+    raise TypeError(f"Unknown expression type: {type(e)}")
 
 
-# --- AST zu String (lesbar, mit Klammern wo nötig) ---
+# --- AST to string (readable, with parentheses where needed) ---
 def _to_string(e: Expr, parent_prec: int = 0) -> str:
     """parent_prec: 0=expr, 1=term, 2=factor, 3=unary, 4=atom."""
     if isinstance(e, Var):
@@ -399,16 +399,16 @@ def _simplify(e: Expr) -> Expr:
 
 def diff_sym(expr: str, var: str) -> str:
     """
-    Symbolische Ableitung: leitet den Ausdruck expr nach der Variable var ab.
-    expr: String, z.B. "x^2 + sin(x)", "exp(x)*log(x)".
-    var: Name der Variable, z.B. "x".
-    Rückgabe: Ableitung als String.
-    Unterstützt: +, -, *, /, ^, sin, cos, tan, exp, log, sqrt; Konstanten und Variablen.
+    Symbolic differentiation: differentiates the expression expr with respect to var.
+    expr: string, e.g. "x^2 + sin(x)", "exp(x)*log(x)".
+    var: name of the variable, e.g. "x".
+    Returns: derivative as string.
+    Supports: +, -, *, /, ^, sin, cos, tan, exp, log, sqrt; constants and variables.
     """
     expr = str(expr).strip()
     var = str(var).strip()
     if not var:
-        raise ValueError("Variable darf nicht leer sein")
+        raise ValueError("Variable must not be empty")
     ast = _parse(expr)
     d = _diff(ast, var)
     d = _simplify(d)

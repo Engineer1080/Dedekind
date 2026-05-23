@@ -1,17 +1,17 @@
 fn main() {
-    // Einfache Visualisierung: plot(y) zeichnet y über Index
+    // Simple visualization: plot(y) draws y over the index
     data = [1.0, 2.0, 1.5, 3.0, 2.5, 4.0]
-    plot(data, title="Beispieldaten")
+    plot(data, title="Example data")
 
-    // Zweiter Plot: Kurve mit Titel und Achsenbeschriftung
+    // Second plot: curve with title and axis labels
     curve = [0.0, 0.5, 1.0, 1.2, 1.0, 0.5, 0.0]
-    plot(curve, title="Kurve", xlabel="Index", ylabel="Wert")
+    plot(curve, title="Curve", xlabel="Index", ylabel="Value")
 
-    // Streudiagramm und optional Log-Skala
+    // Scatter plot and optional log scale
     x = [1.0, 2.0, 3.0, 4.0, 5.0]
     y = [2.0, 4.0, 3.0, 5.0, 6.0]
-    scatter(x, y, title="Streudiagramm", xlabel="x", ylabel="y")
+    scatter(x, y, title="Scatter plot", xlabel="x", ylabel="y")
 
-    print("Plots werden in Dedekind Studio angezeigt (plot, scatter, contour).")
+    print("Plots are shown in Dedekind Studio (plot, scatter, contour).")
 }
 main()

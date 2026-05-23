@@ -1,18 +1,18 @@
 class DataFrame:
-    """Leichte spaltenorientierte Tabelle mit optionalen Einheiten pro Spalte.
+    """Lightweight column-oriented table with optional per-column units.
 
-    Konstruktion:
+    Construction:
       df = DataFrame({"t": [0.0, 1.0, 2.0], "T": [20.0, 22.0, 25.0]}, units={"t": "s", "T": "K"})
-      df["T"]              -> Liste der Werte
+      df["T"]              -> list of values
       df.units["T"]        -> "K"
-      df.rows              -> Iterator über Zeilen (dict)
-      df.column_with_unit("T") -> Liste von Quantity-Werten
+      df.rows              -> iterator over rows (dict)
+      df.column_with_unit("T") -> list of Quantity values
     """
     def __init__(self, data=None, units=None):
         if data is None:
             data = {}
         def _to_plain_list(seq):
-            # Torch-Tensor: .tolist() liefert Plain-Python-Zahlen.
+            # Torch tensor: .tolist() returns plain Python numbers.
             if hasattr(seq, "detach") and hasattr(seq, "cpu") and hasattr(seq, "tolist"):
                 return list(seq.detach().cpu().tolist())
             out = []
@@ -32,11 +32,11 @@ class DataFrame:
             cols_names = list(data[0].keys())
             cols = [_to_plain_list([row.get(c) for row in data]) for c in cols_names]
         else:
-            raise TypeError("DataFrame: data muss dict of lists oder list of dicts sein.")
+            raise TypeError("DataFrame: data must be a dict of lists or a list of dicts.")
         n_rows = _builtin_max([len(c) for c in cols]) if cols else 0
         for c in cols:
             if len(c) != n_rows:
-                raise ValueError("DataFrame: alle Spalten müssen gleiche Länge haben.")
+                raise ValueError("DataFrame: all columns must have the same length.")
         self.columns = cols_names
         self._cols = cols
         self._units = {}
@@ -59,14 +59,14 @@ class DataFrame:
 
     def __getitem__(self, key):
         if key not in self.columns:
-            raise KeyError(f"DataFrame: Spalte '{key}' nicht gefunden. Verfügbar: {self.columns}.")
+            raise KeyError(f"DataFrame: column '{key}' not found. Available: {self.columns}.")
         return list(self._cols[self.columns.index(key)])
 
     def __contains__(self, key):
         return key in self.columns
 
     def column_with_unit(self, key):
-        """Spalte als Liste von Quantity-Werten (verwendet self.units[key] falls vorhanden)."""
+        """Column as a list of Quantity values (uses self.units[key] if present)."""
         vals = self[key]
         u = self._units.get(key, "")
         if not u:
@@ -84,7 +84,7 @@ class DataFrame:
         return DataFrame(head_cols, units=self._units)
 
     def __repr__(self):
-        # Kompakte Darstellung mit Einheiten in Spaltenüberschriften.
+        # Compact representation with units in column headers.
         if self.n_rows == 0:
             return f"DataFrame(0 rows, columns={self.columns})"
         widths = []
@@ -118,10 +118,10 @@ def _csv_parse_unit_in_header(header):
 
 
 def read_csv(path, units=None, has_header=True):
-    """Liest eine CSV-Datei in eine DataFrame ein.
-    - Header-Zeile darf Einheiten im Format `name [unit]` enthalten; diese werden in `df.units` übernommen.
-    - `units` (optional Dict) überschreibt erkannte Einheiten.
-    - Numerische Werte werden zu float konvertiert (Fallback: String belassen).
+    """Reads a CSV file into a DataFrame.
+    - The header row may contain units in the format `name [unit]`; these are stored in `df.units`.
+    - `units` (optional dict) overrides detected units.
+    - Numeric values are converted to float (fallback: leave as string).
     """
     import csv
     p = str(path)
@@ -180,52 +180,52 @@ def write_csv(path, df, include_units_in_header=True):
 
 
 def read_parquet(path):
-    """Liest eine Parquet-Datei (benötigt pyarrow). Einheiten werden nicht persistiert; nur Spalten."""
+    """Reads a Parquet file (requires pyarrow). Units are not persisted; only columns."""
     try:
         import pyarrow.parquet as pq  # type: ignore[import-untyped]
     except ImportError:
-        raise RuntimeError("read_parquet: pyarrow nicht installiert (pip install pyarrow).")
+        raise RuntimeError("read_parquet: pyarrow not installed (pip install pyarrow).")
     table = pq.read_table(str(path))
     data = {name: table.column(name).to_pylist() for name in table.column_names}
     return DataFrame(data)
 
 
 def write_parquet(path, df):
-    """Schreibt eine DataFrame als Parquet (benötigt pyarrow)."""
+    """Writes a DataFrame as Parquet (requires pyarrow)."""
     try:
         import pyarrow as pa  # type: ignore[import-untyped]
         import pyarrow.parquet as pq  # type: ignore[import-untyped]
     except ImportError:
-        raise RuntimeError("write_parquet: pyarrow nicht installiert (pip install pyarrow).")
+        raise RuntimeError("write_parquet: pyarrow not installed (pip install pyarrow).")
     if not isinstance(df, DataFrame):
-        raise TypeError("write_parquet: df muss DataFrame sein.")
+        raise TypeError("write_parquet: df must be a DataFrame.")
     table = pa.table({c: df._cols[j] for j, c in enumerate(df.columns)})
     pq.write_table(table, str(path))
 
 
 def read_hdf5(path, dataset=None):
-    """Liest ein HDF5-Dataset (benötigt h5py). Wenn `dataset=None`: erstes Dataset wird gewählt."""
+    """Reads an HDF5 dataset (requires h5py). If `dataset=None`: the first dataset is selected."""
     try:
         import h5py  # type: ignore[import-untyped]
     except ImportError:
-        raise RuntimeError("read_hdf5: h5py nicht installiert (pip install h5py).")
+        raise RuntimeError("read_hdf5: h5py not installed (pip install h5py).")
     import numpy as _np  # type: ignore[reportMissingImports]
     with h5py.File(str(path), "r") as f:
         if dataset is None:
             keys = list(f.keys())
             if not keys:
-                raise ValueError("read_hdf5: Datei enthält keine Datasets.")
+                raise ValueError("read_hdf5: file contains no datasets.")
             dataset = keys[0]
         arr = _np.array(f[dataset])
     return arr
 
 
 def write_hdf5(path, data, dataset="data"):
-    """Schreibt ein Tensor/Array in eine HDF5-Datei (benötigt h5py)."""
+    """Writes a tensor/array to an HDF5 file (requires h5py)."""
     try:
         import h5py  # type: ignore[import-untyped]
     except ImportError:
-        raise RuntimeError("write_hdf5: h5py nicht installiert (pip install h5py).")
+        raise RuntimeError("write_hdf5: h5py not installed (pip install h5py).")
     import numpy as _np  # type: ignore[reportMissingImports]
     if hasattr(data, "detach"):
         data = data.detach().cpu().numpy()
@@ -235,18 +235,18 @@ def write_hdf5(path, data, dataset="data"):
 
 
 def read_netcdf(path, variable=None):
-    """Liest eine NetCDF-Variable (benötigt netCDF4). Wenn `variable=None`: erste Variable wird gewählt."""
+    """Reads a NetCDF variable (requires netCDF4). If `variable=None`: the first variable is selected."""
     try:
         import netCDF4  # type: ignore[import-untyped]
     except ImportError:
-        raise RuntimeError("read_netcdf: netCDF4 nicht installiert (pip install netCDF4).")
+        raise RuntimeError("read_netcdf: netCDF4 not installed (pip install netCDF4).")
     import numpy as _np  # type: ignore[reportMissingImports]
     ds = netCDF4.Dataset(str(path), "r")
     try:
         if variable is None:
             names = list(ds.variables.keys())
             if not names:
-                raise ValueError("read_netcdf: Datei enthält keine Variablen.")
+                raise ValueError("read_netcdf: file contains no variables.")
             variable = names[0]
         arr = _np.array(ds.variables[variable][:])
     finally:
@@ -255,11 +255,11 @@ def read_netcdf(path, variable=None):
 
 
 # ============================================================================
-# Einheiten-Annotationen für Funktionssignaturen (`fn f(x: [m]) -> [J]`)
+# Unit annotations for function signatures (`fn f(x: [m]) -> [J]`)
 # ============================================================================
 
-# Abgeleitete SI-Einheiten -> Basisdimensionen (kg, m, s, A, K, mol, cd)
-# Wir tracken nur die 7 SI-Basisdimensionen.
+# Derived SI units -> base dimensions (kg, m, s, A, K, mol, cd)
+# We only track the 7 SI base dimensions.
 _DERIVED_UNIT_TO_BASE = {
     "":     {},
     "1":    {},
@@ -389,17 +389,17 @@ _DERIVED_UNIT_TO_BASE = {
 
 
 def _parse_unit_to_base_dims(unit_str):
-    """Wandelt einen Einheiten-String ('kg*m^2/s^2', '(kg)*(m/s)*(m/s)', 'J', ...) in
-    ein Dict {base_unit: exponent} der 7 SI-Basisdimensionen um.
+    """Converts a unit string ('kg*m^2/s^2', '(kg)*(m/s)*(m/s)', 'J', ...) into
+    a dict {base_unit: exponent} over the 7 SI base dimensions.
 
-    Tokenizer-ähnlich: zerlegt nach *, /, ^ und Klammern; jeder atomare Einheiten-Token
-    wird über _DERIVED_UNIT_TO_BASE in Basisdimensionen aufgelöst. Unbekannte Tokens
-    erzeugen None (Vergleich schlägt dann fehl).
+    Tokenizer-like: splits on *, /, ^ and parentheses; each atomic unit token
+    is resolved to base dimensions via _DERIVED_UNIT_TO_BASE. Unknown tokens
+    produce None (comparison then fails).
     """
     s = (unit_str or "").strip()
     if not s:
         return {}
-    # Tokenize: Klammern, *, /, ^, atomare Einheiten (Buchstabenfolge), Zahlen (für Exponenten).
+    # Tokenize: parentheses, *, /, ^, atomic units (letter sequences), numbers (for exponents).
     import re as _re
     tokens = _re.findall(r"\(|\)|\*|/|\^|-?\d+|[A-Za-z][A-Za-z_]*", s)
     if not tokens:
@@ -416,7 +416,7 @@ def _parse_unit_to_base_dims(unit_str):
             if pos[0] < len(tokens) and tokens[pos[0]] == ")":
                 pos[0] += 1
             return val
-        # Atomare Einheit oder Zahl
+        # Atomic unit or number
         if t and t[0].isalpha():
             pos[0] += 1
             base = _DERIVED_UNIT_TO_BASE.get(t)
@@ -436,7 +436,7 @@ def _parse_unit_to_base_dims(unit_str):
                     pos[0] += 1
                     return {k: v * exp for k, v in base.items()}
             return dict(base)
-        # Pure Zahl als Faktor (z.B. konstante 1) -> dimensionslos
+        # Plain number as a factor (e.g. constant 1) -> dimensionless
         try:
             int(t)
             pos[0] += 1
@@ -462,12 +462,12 @@ def _parse_unit_to_base_dims(unit_str):
     result = parse_term()
     if result is None:
         return None
-    # Null-Exponenten entfernen
+    # Remove zero exponents
     return {k: v for k, v in result.items() if v != 0}
 
 
 def _units_dimensionally_equal(u1, u2):
-    """True, wenn u1 und u2 sich auf dieselbe SI-Basisdimension reduzieren (z.B. J == kg*m²/s²)."""
+    """True if u1 and u2 reduce to the same SI base dimensions (e.g. J == kg*m^2/s^2)."""
     d1 = _parse_unit_to_base_dims(u1)
     d2 = _parse_unit_to_base_dims(u2)
     if d1 is None or d2 is None:
@@ -476,14 +476,14 @@ def _units_dimensionally_equal(u1, u2):
 
 
 def _coerce_to_expected_unit(value, expected_unit, context_label):
-    """Bringt `value` auf `expected_unit`, wenn dimensional kompatibel.
+    """Coerces `value` to `expected_unit` if dimensionally compatible.
 
-    Pfade (in Reihenfolge):
-    1) String-Gleichheit (gleiche Einheit) → unverändert
-    2) Gleiche eindeutige Dimension (Länge, Masse, Zeit, …) → numerisch umrechnen
-    3) Gleiche SI-Basisdimensionen (kg·m²/s² == J) → Wert als Quantity in expected_unit übernehmen
-    4) Reine Zahl + expected_unit → mit Einheit wrappen
-    Wirft sonst ValueError.
+    Paths (in order):
+    1) String equality (same unit) -> unchanged
+    2) Same unique dimension (length, mass, time, ...) -> numeric conversion
+    3) Same SI base dimensions (kg*m^2/s^2 == J) -> value adopted as Quantity in expected_unit
+    4) Plain number + expected_unit -> wrap with unit
+    Otherwise raises ValueError.
     """
     expected = (expected_unit or "").strip()
     if isinstance(value, Quantity):
@@ -504,7 +504,7 @@ def _coerce_to_expected_unit(value, expected_unit, context_label):
         if _units_dimensionally_equal(value.unit, expected):
             return Quantity(value.value, expected)
         raise ValueError(
-            f"Einheitenfehler in {context_label}: erwartet [{expected}], erhalten [{value.unit}]."
+            f"Unit error in {context_label}: expected [{expected}], got [{value.unit}]."
         )
     if isinstance(value, (int, float)):
         if expected:
@@ -518,18 +518,18 @@ def _check_signature_unit(value, expected_unit, fn_name, arg_name):
 
 
 def _check_return_unit(value, expected_unit, fn_name):
-    return _coerce_to_expected_unit(value, expected_unit, f"return von {fn_name}")
+    return _coerce_to_expected_unit(value, expected_unit, f"return of {fn_name}")
 
 
 # ============================================================================
-# Unit-aware Plotting: Quantity-Listen erhalten automatisch Achsenbeschriftung "[unit]"
+# Unit-aware plotting: lists of Quantity automatically receive axis labels "[unit]"
 # ============================================================================
 
 def _strip_unit_from_seq(seq):
-    """Wenn `seq` eine Liste/Tuple von Quantity ist, gib (values_list, unit_str) zurück; sonst (seq, None)."""
+    """If `seq` is a list/tuple of Quantity, returns (values_list, unit_str); otherwise (seq, None)."""
     if isinstance(seq, (list, tuple)) and seq and all(isinstance(v, Quantity) for v in seq):
         unit = seq[0].unit
-        # Wenn Einheiten in der Liste variieren, lieber neutral lassen.
+        # If units vary across the list, leave it neutral.
         if all(v.unit == unit for v in seq):
             return [v.value for v in seq], unit
     if isinstance(seq, Quantity):
@@ -554,7 +554,7 @@ _dedekind_contour_inner = contour
 
 
 def plot(x=None, y=None, title=None, xlabel=None, ylabel=None, xscale="linear", yscale="linear"):
-    """Wie `plot`, aber wenn x/y Listen von Quantity sind, werden Werte extrahiert und Einheiten als Achsenbeschriftung übernommen."""
+    """Like `plot`, but when x/y are lists of Quantity, values are extracted and units used as axis labels."""
     new_x, ux = _strip_unit_from_seq(x) if x is not None else (None, None)
     new_y, uy = _strip_unit_from_seq(y) if y is not None else (None, None)
     if y is None and x is not None and ux:

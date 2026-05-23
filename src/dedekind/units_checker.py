@@ -1,6 +1,6 @@
 """
-Einheiten-Check zur Compile-Zeit (Phase 3b).
-1[m] + 1[s] → CompileError mit Zeile. Verhindert Unit-Bugs vor dem Lauf.
+Compile-time unit check (Phase 3b).
+1[m] + 1[s] -> CompileError with line. Prevents unit bugs before runtime.
 """
 from typing import Optional, Dict, Any, List
 from .ast_nodes import (
@@ -11,7 +11,7 @@ from .ast_nodes import (
 )
 from .ml_runtime import ADDITIVE_DIMENSION_UNIT_SETS, _parse_unit_to_base_dims, _register_user_unit
 
-# Bekannte Konstanten und ihre Einheiten (wie in ml_runtime)
+# Known constants and their units (matches ml_runtime)
 KNOWN_UNITS: Dict[str, str] = {
     "c": "m/s", "G": "m^3/(kg*s^2)", "h": "J*s", "hbar": "J*s",
     "k_B": "J/K", "k_e": "N*m^2/C^2", "e_charge": "C", "epsilon_0": "F/m",
@@ -21,7 +21,7 @@ KNOWN_UNITS: Dict[str, str] = {
 }
 
 class Environment:
-    """Trackt lokale und globale Variablen und ihre abgeleiteten Einheiten."""
+    """Tracks local and global variables and their inferred units."""
     def __init__(self):
         self.scopes: List[Dict[str, Optional[str]]] = [{}]
 
@@ -42,7 +42,7 @@ class Environment:
 
 
 def _normalize_chemical_unit(u: Optional[str]) -> Optional[str]:
-    """Normalisiert chemische Einheiten für Vergleich: mol/L und M gelten als gleich."""
+    """Normalizes chemical units for comparison: mol/L and M are treated as equal."""
     if u is None or u == "":
         return u
     u = u.strip()
@@ -52,7 +52,7 @@ def _normalize_chemical_unit(u: Optional[str]) -> Optional[str]:
 
 
 def _same_dimension(u1: Optional[str], u2: Optional[str]) -> bool:
-    """True, wenn beide Einheiten addierbar/subtrahierbar sind."""
+    """True if both units are addable/subtractable."""
     if u1 is None or u2 is None:
         return False
     u1 = (u1 or "").strip()
@@ -65,10 +65,10 @@ def _same_dimension(u1: Optional[str], u2: Optional[str]) -> bool:
     if n1 is not None and n2 is not None and n1 == n2:
         return True
 
-    # Kanonische Dimensionen (SI Basis) vergleichen
+    # Compare canonical dimensions (SI base)
     d1 = _parse_unit_to_base_dims(u1)
     d2 = _parse_unit_to_base_dims(u2)
-    # _parse_unit_to_base_dims gibt None zurück, wenn Parse-Error
+    # _parse_unit_to_base_dims returns None on parse error
     if d1 is not None and d2 is not None and d1 == d2:
         return True
 
@@ -106,7 +106,7 @@ def _unit_pow(u: str, exp: Any) -> str:
 
 
 def _infer_unit(node: Node, env: Environment) -> Optional[str]:
-    """Inferiert die Einheit eines Ausdrucks; None = unbekannt."""
+    """Infers the unit of an expression; None = unknown."""
     if node is None:
         return None
     if isinstance(node, Literal):
@@ -142,7 +142,7 @@ def _infer_unit(node: Node, env: Environment) -> Optional[str]:
 
 
 def _check_expr(node: Node, env: Environment, filepath: Optional[str]) -> None:
-    """Prüft einen Ausdruck rekursiv; wirft CompileError bei Einheiten-Mismatch."""
+    """Checks an expression recursively; raises CompileError on unit mismatch."""
     if node is None:
         return
     if isinstance(node, BinaryOp):
@@ -151,19 +151,19 @@ def _check_expr(node: Node, env: Environment, filepath: Optional[str]) -> None:
         if node.op in ("+", "-"):
             left_u = _infer_unit(node.left, env)
             right_u = _infer_unit(node.right, env)
-            # Unäres Minus: 0 - x → erlaubt (Ergebnis hat Einheit von x)
+            # Unary minus: 0 - x -> allowed (result has unit of x)
             if node.op == "-" and isinstance(node.left, Literal):
                 try:
                     if float(getattr(node.left, "value", 1)) == 0:
                         return
                 except (TypeError, ValueError):
                     pass
-            # Check Dimension
+            # Check dimension
             if left_u is not None and right_u is not None and not _same_dimension(left_u, right_u):
                 line = getattr(node, "line", None)
                 raise CompileError(
-                    f"Einheiten passen nicht für {node.op}: [{left_u}] vs [{right_u}]. "
-                    "Gleiche Einheit oder kompatible Dimension (Länge/Masse/Zeit/Druck/Winkel rad/deg) erforderlich.",
+                    f"Units do not match for {node.op}: [{left_u}] vs [{right_u}]. "
+                    "Same unit or compatible dimension (length/mass/time/pressure/angle rad/deg) required.",
                     line=line,
                     filepath=filepath,
                 )
@@ -225,10 +225,10 @@ def _check_stmt(stmt: Node, env: Environment, filepath: Optional[str]) -> None:
     if stmt is None:
         return
     if isinstance(stmt, UnitDef):
-        return  # bereits in check_units() vorab registriert
+        return  # already registered in check_units() pre-pass
     if isinstance(stmt, Assignment):
         _check_expr(stmt.value, env, filepath)
-        # Type Inference für Variablenzuweisung
+        # Type inference for variable assignment
         if isinstance(stmt.target, str):
             inferred_unit = _infer_unit(stmt.value, env)
             env.set(stmt.target, inferred_unit)
@@ -247,17 +247,17 @@ def _check_stmt(stmt: Node, env: Environment, filepath: Optional[str]) -> None:
 
 def check_units(ast: Program, filepath: Optional[str] = None) -> None:
     """
-    Durchläuft das AST und wirft CompileError, wenn bei + oder -
-    zwei Größen mit inkompatiblen Einheiten verwendet werden.
+    Traverses the AST and raises CompileError if + or - is applied
+    to two quantities with incompatible units.
     """
-    # Pre-Pass: alle UnitDef-Statements registrieren, damit Checker neue Units kennt
+    # Pre-pass: register all UnitDef statements so the checker knows new units
     for stmt in ast.statements:
         if isinstance(stmt, UnitDef):
             try:
                 _register_user_unit(stmt.name, stmt.factor, stmt.base_unit)
             except Exception as e:
                 raise CompileError(
-                    f"Einheit registrieren fehlgeschlagen: {e}",
+                    f"Failed to register unit: {e}",
                     line=getattr(stmt, "line", None),
                     filepath=filepath,
                 )

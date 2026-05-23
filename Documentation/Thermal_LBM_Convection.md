@@ -1,14 +1,14 @@
-# Thermal LBM in Dedekind — Konvektion und Wärmetauscher
+# Thermal LBM in Dedekind — Convection and Heat Exchangers
 
-Diese Dokumentation beschreibt den Thermal-LBM-Solver in Dedekind: einen
-vollständig differenzierbaren Double-Distribution-Solver für gekoppelte
-Strömungs-Wärme-Probleme.
+This documentation describes the Thermal LBM solver in Dedekind: a
+fully differentiable double-distribution solver for coupled
+flow-heat problems.
 
-## Mathematische Grundlage
+## Mathematical Foundation
 
-### Boussinesq-Approximation
+### Boussinesq Approximation
 
-Inkompressible Strömung mit kleiner thermischer Dichteanomalie:
+Incompressible flow with small thermal density anomaly:
 
 ```
 ∂u/∂t + (u·∇)u = -∇p/ρ₀ + ν∇²u - g·β·(T - T_ref)·ŷ
@@ -16,46 +16,46 @@ Inkompressible Strömung mit kleiner thermischer Dichteanomalie:
 ∇·u = 0
 ```
 
-mit kinematischer Viskosität ν, thermischer Diffusivität α, thermischem
-Ausdehnungskoeffizienten β, Schwerebeschleunigung g, Referenztemperatur T_ref.
+with kinematic viscosity ν, thermal diffusivity α, thermal
+expansion coefficient β, gravitational acceleration g, reference temperature T_ref.
 
 ### Double-Distribution LBM
 
-- **Strömung:** D2Q9-Verteilung f_i mit BGK-Kollision, Relaxationszeit τ_u.
-  ν = (τ_u - 0.5)/3 in Lattice-Einheiten.
-- **Temperatur:** D2Q5-Verteilung g_i (rest + 4 Achsenrichtungen) als
-  passiver Skalar, Relaxationszeit τ_T. α = (τ_T - 0.5)/3.
-- **Kopplung:** Boussinesq-Buoyancy als "Shift-Velocity"-Forcing im
-  Strömungs-Equilibrium: u_eq_y = u_y + τ_u · F_y/ρ.
+- **Flow:** D2Q9 distribution f_i with BGK collision, relaxation time τ_u.
+  ν = (τ_u - 0.5)/3 in lattice units.
+- **Temperature:** D2Q5 distribution g_i (rest + 4 axial directions) as
+  a passive scalar, relaxation time τ_T. α = (τ_T - 0.5)/3.
+- **Coupling:** Boussinesq buoyancy as "shift-velocity" forcing in the
+  flow equilibrium: u_eq_y = u_y + τ_u · F_y/ρ.
 
-### Dimensionslose Kennzahlen
+### Dimensionless Numbers
 
-- **Rayleigh-Zahl:** Ra = g·β·ΔT·H³ / (ν·α)
-  - Ra < 1708 (Ra_c): reine Konduktion, Nu = 1
-  - Ra > 1708: Konvektionsrollen, Nu > 1 (Hopf-Bifurkation)
-- **Prandtl-Zahl:** Pr = ν/α. Für τ_u = τ_T gilt Pr = 1 (Modell-Standard).
-- **Nusselt-Zahl:** Nu = 1 + H/(α·ΔT) · ⟨u_y · (T - T_ref)⟩
-  Misst den konvektiven Anteil am Gesamtwärmetransport relativ zu reiner
-  Konduktion.
+- **Rayleigh number:** Ra = g·β·ΔT·H³ / (ν·α)
+  - Ra < 1708 (Ra_c): pure conduction, Nu = 1
+  - Ra > 1708: convection rolls, Nu > 1 (Hopf bifurcation)
+- **Prandtl number:** Pr = ν/α. For τ_u = τ_T, Pr = 1 (model default).
+- **Nusselt number:** Nu = 1 + H/(α·ΔT) · ⟨u_y · (T - T_ref)⟩
+  Measures the convective share of total heat transport relative to pure
+  conduction.
 
 ## API
 
-Aktivierung: `use fluid_dynamics`
+Activation: `use fluid_dynamics`
 
-### Konstruktoren
+### Constructors
 
 ```dedekind
 sim = lbm_thermal_simulation(nx, ny, tau_u, tau_T,
                               T_hot, T_cold, gravity_beta)
 ```
 
-- `(nx, ny)`: Gittergröße in Lattice-Einheiten.
-- `tau_u, tau_T`: Relaxationszeiten (beide > 0.5 für Stabilität).
-- `T_hot`: Temperatur an der unteren Wand (j=0).
-- `T_cold`: Temperatur an der oberen Wand (j=ny-1).
-- `gravity_beta`: Produkt g·β. Steuert die Buoyancy-Stärke.
+- `(nx, ny)`: grid size in lattice units.
+- `tau_u, tau_T`: relaxation times (both > 0.5 for stability).
+- `T_hot`: temperature at the lower wall (j=0).
+- `T_cold`: temperature at the upper wall (j=ny-1).
+- `gravity_beta`: product g·β. Controls the buoyancy strength.
 
-Mit Hindernis (Dirichlet-T):
+With obstacle (Dirichlet-T):
 
 ```dedekind
 sim = lbm_thermal_with_obstacle(nx, ny, tau_u, tau_T,
@@ -63,30 +63,30 @@ sim = lbm_thermal_with_obstacle(nx, ny, tau_u, tau_T,
                                  mask, T_obstacle)
 ```
 
-- `mask`: Soft-Maske (Tensor (nx, ny) in [0, 1]) für Hindernis-Zellen.
-- `T_obstacle`: feste Temperatur des Hindernisses (Dirichlet-BC).
+- `mask`: soft mask (tensor (nx, ny) in [0, 1]) for obstacle cells.
+- `T_obstacle`: fixed temperature of the obstacle (Dirichlet BC).
 
-### Zeitintegration
+### Time Integration
 
 ```dedekind
-thermal_step(sim)            // Ein Zeitschritt
-thermal_run(sim, n_steps)    // Mehrere Schritte
+thermal_step(sim)            // One time step
+thermal_run(sim, n_steps)    // Multiple steps
 ```
 
-### Felder & Diagnostik
+### Fields & Diagnostics
 
 ```dedekind
-T  = thermal_temperature(sim)   // (nx, ny) Temperaturfeld
-u  = thermal_velocity(sim)      // (2, nx, ny) Geschwindigkeitsfeld
-Nu = thermal_nusselt(sim)       // Skalare globale Nusselt-Zahl
+T  = thermal_temperature(sim)   // (nx, ny) temperature field
+u  = thermal_velocity(sim)      // (2, nx, ny) velocity field
+Nu = thermal_nusselt(sim)       // scalar global Nusselt number
 Ra = rayleigh_number(tau_u, tau_T, delta_T, gravity_beta, H)  // Helper
 ```
 
-### Initialisierung mit Perturbation
+### Initialization with Perturbation
 
-Die Default-Initial-T-Verteilung ist linear (konduktiv). Float64-Rundungsrauschen
-reicht oft nicht zur Symmetriebrechung — eine deterministische Perturbation
-beschleunigt den Konvektionseinsatz dramatisch:
+The default initial T distribution is linear (conductive). Float64 rounding noise
+is often not enough to break symmetry — a deterministic perturbation
+dramatically accelerates the onset of convection:
 
 ```dedekind
 T_init = thermal_temperature(sim)
@@ -98,42 +98,42 @@ pert = 0.05 * sin(2.0 * pi * IX / 25.0) * sin(pi * IY / (ny - 1.0))
 thermal_set_temperature(sim, T_init + pert)
 ```
 
-## Validierung
+## Validation
 
-- **Reine Konduktion (g·β = 0):** linearer T-Verlauf, Nu = 1.000 exakt.
-- **Bei g·β = 0:** Geschwindigkeitsfeld bleibt strikt 0 (keine Drift).
-- **Konvektionseinsatz:** Ra > 1708 erzeugt Nu > 1, sichtbare Konvektionsrollen.
-- **Dirichlet-Hindernis:** T_obstacle wird im Stab-Zentrum erreicht (T ≈ T_obstacle).
+- **Pure conduction (g·β = 0):** linear T profile, Nu = 1.000 exactly.
+- **At g·β = 0:** velocity field remains strictly 0 (no drift).
+- **Onset of convection:** Ra > 1708 produces Nu > 1, visible convection rolls.
+- **Dirichlet obstacle:** T_obstacle is reached at the rod center (T ≈ T_obstacle).
 
-Siehe `tests/dedekind/thermal_lbm_test.ddk` (5 Sub-Tests).
+See `tests/dedekind/thermal_lbm_test.ddk` (5 sub-tests).
 
-## Beispiele
+## Examples
 
-### Rayleigh-Bénard-Konvektion
+### Rayleigh-Bénard Convection
 
-`examples/dedekind/engineering/lbm_rayleigh_benard.ddk` zeigt:
+`examples/dedekind/engineering/lbm_rayleigh_benard.ddk` shows:
 
-- Reine Konduktion (Baseline): Nu = 1.000
-- Konvektion bei Ra ≈ 19440: Nu ≈ 1.81 (80 % zusätzlicher Wärmetransport)
+- Pure conduction (baseline): Nu = 1.000
+- Convection at Ra ≈ 19440: Nu ≈ 1.81 (80 % additional heat transport)
 
-### Wärmetauscher-Geometrie-Studie
+### Heat Exchanger Geometry Study
 
-`examples/dedekind/engineering/lbm_heat_exchanger.ddk` zeigt:
+`examples/dedekind/engineering/lbm_heat_exchanger.ddk` shows:
 
-- Bénard-Konvektionszelle mit zusätzlichem Kühl-Stab (Dirichlet T_cold)
-- Position des Stabs (nahe heißer Wand, Mitte, nahe kalter Wand) beeinflusst
-  die globale Nu deutlich.
-- Industrierelevant: Reaktor-Brennstab-Anordnung, Server-Raum-Klimatisierung,
-  Solar-Pond-Schichtung, Verdampfer-/Kondensator-Design.
+- Bénard convection cell with additional cooling rod (Dirichlet T_cold)
+- Position of the rod (near hot wall, center, near cold wall) significantly
+  influences the global Nu.
+- Industrially relevant: reactor fuel rod arrangement, server room cooling,
+  solar pond stratification, evaporator/condenser design.
 
-## Differenzierbarkeit
+## Differentiability
 
-Sämtliche Eingabeparameter (cy_position, r, T_obstacle, gravity_beta, τ_u, τ_T)
-sind PyTorch-Tensoren und tragen Gradienten. Optimierungsalgorithmen wie
-Adam können direkt durch hunderte Zeitschritte hindurch zur optimalen
-Geometrie navigieren — ohne separaten Adjoint-Solver.
+All input parameters (cy_position, r, T_obstacle, gravity_beta, τ_u, τ_T)
+are PyTorch tensors and carry gradients. Optimization algorithms such as
+Adam can navigate directly through hundreds of time steps to the optimal
+geometry — without a separate adjoint solver.
 
-Beispiel-Pattern (Adam optimiert Stab-Position):
+Example pattern (Adam optimizes rod position):
 
 ```dedekind
 fn nu_objective(params) {
@@ -142,17 +142,17 @@ fn nu_objective(params) {
     sim = lbm_thermal_with_obstacle(nx, ny, 0.6, 0.6,
                                      1.0, 0.0, 1e-4, M, 0.0)
     thermal_run(sim, 2000)
-    return [-thermal_nusselt(sim)]   // negativ → Maximierung
+    return [-thermal_nusselt(sim)]   // negative → maximization
 }
 
 result = minimize(nu_objective, [25.0], "adam", 0.5, 30)
 ```
 
-## Limitierungen & Erweiterungen
+## Limitations & Extensions
 
-- **2D only:** Aktuell nur D2Q9/D2Q5; 3D (D3Q19/D3Q7) als zukünftige
-  Erweiterung möglich.
-- **Boussinesq nur:** Stark-kompressible thermische Strömungen (z.B. Stoßwellen)
-  brauchen ein vollständiges Energie-Modell.
-- **Adiabatic boundaries:** Aktuell nur Dirichlet-T an Hindernissen. Neumann/
-  adiabatische Wände sind als Erweiterung implementierbar.
+- **2D only:** Currently only D2Q9/D2Q5; 3D (D3Q19/D3Q7) as a future
+  extension possible.
+- **Boussinesq only:** Strongly compressible thermal flows (e.g. shock waves)
+  require a full energy model.
+- **Adiabatic boundaries:** Currently only Dirichlet-T at obstacles. Neumann/
+  adiabatic walls can be added as an extension.

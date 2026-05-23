@@ -1,5 +1,5 @@
 fn main() {
-    print("--- Dedekind: Arrhenius (Quick-Win) ---")
+    print("--- Dedekind: Arrhenius (quick win) ---")
 
     // k = A * exp(-Ea / (R*T)); T in K, Ea in J/mol
     T = 300.0
@@ -7,14 +7,14 @@ fn main() {
     Ea = 50000.0
 
     k = arrhenius(T, A, Ea)
-    print("Temperatur T (K):")
+    print("Temperature T (K):")
     print(T)
-    print("Präexponent A (1/s), Ea (J/mol):")
+    print("Pre-exponential A (1/s), Ea (J/mol):")
     print(A)
     print(Ea)
-    print("Geschwindigkeitskonstante k (1/s):")
+    print("Rate constant k (1/s):")
     print(k)
 
-    print("Arrhenius aktiv.")
+    print("Arrhenius active.")
 }
 main()

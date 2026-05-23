@@ -8,7 +8,7 @@ class Parser:
         self.pos = 0
 
     def _line(self) -> int:
-        """Aktuelle Zeile (für Fehlermeldungen)."""
+        """Current line (for error messages)."""
         if self.pos < len(self.tokens):
             return self.tokens[self.pos].line
         return 1
@@ -192,7 +192,7 @@ class Parser:
         return node
 
     def _parse_unit_bracket(self):
-        """Liest `[m/s]` und gibt 'm/s' zurück. Vorbedingung: aktuelles Token = LBRACKET."""
+        """Reads `[m/s]` and returns 'm/s'. Precondition: current token = LBRACKET."""
         self.consume('LBRACKET')
         parts = []
         while self.peek() and self.peek().type != 'RBRACKET':
@@ -216,8 +216,8 @@ class Parser:
         return ''.join(parts)
 
     def parse_use_stmt(self):
-        """Akzeptiert `use foo`, `use foo.bar`, `use foo.bar.baz` — gepunktete
-        Pfade resolven zu modules/foo/bar/baz.ddk."""
+        """Accepts `use foo`, `use foo.bar`, `use foo.bar.baz` -- dotted
+        paths resolve to modules/foo/bar/baz.ddk."""
         start_line = self.peek().line
         self.consume('USE')
         parts = [self.consume('ID').value]
@@ -230,7 +230,7 @@ class Parser:
         return node
 
     def parse_pyimport_stmt(self):
-        """`pyimport scipy.special as ss` oder `pyimport numpy` (alias = letztes Segment)."""
+        """`pyimport scipy.special as ss` or `pyimport numpy` (alias = last segment)."""
         start_line = self.peek().line
         self.consume('ID')  # 'pyimport' (soft keyword)
         parts = [self.consume('ID').value]
@@ -249,12 +249,12 @@ class Parser:
         return node
 
     def parse_unit_def(self):
-        """`unit NAME = NUMBER[base_unit]` — registriert eine neue Einheit (Längen-, Massen-, Drucksymbol …)."""
+        """`unit NAME = NUMBER[base_unit]` -- registers a new unit (length, mass, pressure symbol, etc.)."""
         start_line = self.peek().line
         self.consume('ID')  # 'unit' (soft keyword)
         name_tok = self.consume('ID')
         self.consume('ASSIGN')
-        # Vorzeichen optional
+        # Optional sign
         sign = 1.0
         if self.peek() and self.peek().type == 'MINUS':
             self.consume('MINUS')
@@ -266,18 +266,18 @@ class Parser:
             factor = sign * float(num_tok.value)
         except ValueError:
             raise CompileError(
-                f"Ungültige Zahl für `unit {name_tok.value}`: {num_tok.value!r}.",
+                f"Invalid number for `unit {name_tok.value}`: {num_tok.value!r}.",
                 line=start_line,
             )
         if not self.peek() or self.peek().type != 'LBRACKET':
             raise CompileError(
-                f"`unit {name_tok.value}` braucht eine Basiseinheit in Klammern, z. B. `unit Foot = 0.3048[m]`.",
+                f"`unit {name_tok.value}` requires a base unit in brackets, e.g. `unit Foot = 0.3048[m]`.",
                 line=start_line,
             )
         base_unit = self._parse_unit_bracket()
         if not base_unit:
             raise CompileError(
-                f"`unit {name_tok.value}`: Basiseinheit darf nicht leer sein.",
+                f"`unit {name_tok.value}`: base unit must not be empty.",
                 line=start_line,
             )
         node = UnitDef(name=name_tok.value, factor=factor, base_unit=base_unit)
@@ -288,7 +288,7 @@ class Parser:
                     'qubit', 'circuit', 'statevec'}
 
     def _parse_unit_bracket_inline(self):
-        """Liest die Innenseite eines bereits konsumierten LBRACKET (für Einheits-Annotation)."""
+        """Reads the inside of an already-consumed LBRACKET (for unit annotation)."""
         parts = []
         while self.peek() and self.peek().type != 'RBRACKET':
             t = self.consume()
@@ -473,7 +473,7 @@ class Parser:
             target_name = target_node.name
         else:
             raise CompileError(
-                f"Ungültiges Zuweisungsziel: {type(target_node).__name__}. Erwartet: Bezeichner oder Index.",
+                f"Invalid assignment target: {type(target_node).__name__}. Expected: identifier or index.",
                 line=start_line,
             )
         node = Assignment(target_name, value)
@@ -481,7 +481,7 @@ class Parser:
         return node
 
     def parse_expression(self):
-        # Lowest precedence: logische Operatoren (or, xor, and, nand, nor, xnor, not)
+        # Lowest precedence: logical operators (or, xor, and, nand, nor, xnor, not)
         return self.parse_logical_or()
 
     def parse_logical_or(self):

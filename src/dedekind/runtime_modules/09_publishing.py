@@ -1,6 +1,6 @@
 def _notebook_in_progress_set():
-    """Process-weite Re-Entry-Tracking-Menge. Liegt auf sys, damit sie über exec-Kontexte
-    persistent ist (jeder exec(compile_source(...)) bekommt sonst eine frische ml_runtime-Kopie)."""
+    """Process-wide re-entry tracking set. Stored on sys so it persists across exec contexts
+    (each exec(compile_source(...)) would otherwise get a fresh ml_runtime copy)."""
     import sys as _sys
     key = "_dedekind_notebook_export_in_progress"
     s = getattr(_sys, key, None)
@@ -12,18 +12,18 @@ def _notebook_in_progress_set():
 
 def export_notebook(source_path, output_path=None, format="html", title=None,
                     include_hash=True, capture_plots=True):
-    """Führt eine .ddk-Datei aus und schreibt eine Standalone-Datei (HTML oder Markdown),
-    die Quellcode, Stdout-Ausgabe, Plots (Base64-PNG) und einen SHA-256-Hash des Quelltexts bündelt.
+    """Runs a .ddk file and writes a standalone file (HTML or Markdown) bundling
+    source code, stdout output, plots (base64 PNG), and a SHA-256 hash of the source.
 
-    Parameter:
-      source_path: Pfad zur .ddk-Datei.
-      output_path: Zieldatei (default: `<source>.html` bzw. `.md`).
-      format: "html" oder "md".
-      title: Optionaler Titel; default = Dateiname ohne Endung.
-      include_hash: Fügt SHA-256-Hash des Quelltexts in den Output ein (Reproduzierbarkeit).
-      capture_plots: Sammelt `_dedekind_plots` und bettet sie als Base64-PNG ein.
+    Parameters:
+      source_path: path to the .ddk file.
+      output_path: target file (default: `<source>.html` or `.md`).
+      format: "html" or "md".
+      title: optional title; default = filename without extension.
+      include_hash: includes a SHA-256 hash of the source in the output (reproducibility).
+      capture_plots: collects `_dedekind_plots` and embeds them as base64 PNG.
 
-    Rückgabe: Pfad zur erzeugten Datei.
+    Returns: path to the generated file.
     """
     import os
     import sys
@@ -31,9 +31,9 @@ def export_notebook(source_path, output_path=None, format="html", title=None,
     import hashlib
     src_path = os.path.abspath(str(source_path))
     if not os.path.isfile(src_path):
-        raise FileNotFoundError(f"export_notebook: Datei nicht gefunden: {src_path}")
-    # Re-Entry-Schutz: wenn die Quelldatei sich selbst exportiert, würde sie sich beim Ausführen
-    # endlos wiederaufrufen. Wir markieren den Pfad und liefern beim re-entry einen Stub zurück.
+        raise FileNotFoundError(f"export_notebook: file not found: {src_path}")
+    # Re-entry guard: if the source file exports itself, it would call itself infinitely while
+    # executing. We mark the path and return a stub on re-entry.
     in_progress = _notebook_in_progress_set()
     if src_path in in_progress:
         return output_path or (os.path.splitext(src_path)[0] +
@@ -43,15 +43,15 @@ def export_notebook(source_path, output_path=None, format="html", title=None,
         source = f.read()
     fmt = str(format).lower()
     if fmt not in ("html", "md", "markdown"):
-        raise ValueError("export_notebook: format muss 'html' oder 'md' sein.")
+        raise ValueError("export_notebook: format must be 'html' or 'md'.")
     if output_path is None:
         ext = "html" if fmt == "html" else "md"
         output_path = os.path.splitext(src_path)[0] + f".{ext}"
     title_str = str(title) if title else os.path.basename(os.path.splitext(src_path)[0])
     src_hash = hashlib.sha256(source.encode("utf-8")).hexdigest()
 
-    # Quelltext kompilieren und in isoliertem Globals-Dict ausführen; Stdout abfangen.
-    # Wir importieren lokal, um Zirkular-Imports beim Inlinen zu vermeiden.
+    # Compile the source and execute it in an isolated globals dict; capture stdout.
+    # We import locally to avoid circular imports when inlining.
     try:
         from dedekind import compile_source  # type: ignore[import-not-found]
         py_code = compile_source(source, filepath=src_path)
@@ -158,11 +158,11 @@ def _render_notebook_markdown(title, source, stdout_text, plots_b64, src_hash, s
 
 
 # ============================================================================
-# Paper-Mode-Output: print_table mit LaTeX-Booktabs / Markdown / CSV + ± für UncertainQuantity
+# Paper-mode output: print_table with LaTeX booktabs / Markdown / CSV + +/- for UncertainQuantity
 # ============================================================================
 
 def _format_cell_value(v, precision=4):
-    """Formatiert eine Zelle: UncertainQuantity → 'val ± std [unit]', Quantity → 'val [unit]'."""
+    """Formats a cell: UncertainQuantity -> 'val +/- std [unit]', Quantity -> 'val [unit]'."""
     if isinstance(v, UncertainQuantity):
         unit = f" [{v.unit}]" if getattr(v, "unit", "") else ""
         return f"{v.value:.{precision}g} ± {v.std:.{precision}g}{unit}"
@@ -181,7 +181,7 @@ def _format_cell_value(v, precision=4):
 
 
 def _format_cell_latex(v, precision=4):
-    """Wie _format_cell_value, aber LaTeX-tauglich (`\\pm`, `\\,[\\mathrm{...}]`)."""
+    """Like _format_cell_value, but LaTeX-ready (`\\pm`, `\\,[\\mathrm{...}]`)."""
     if isinstance(v, UncertainQuantity):
         unit = f"\\,[\\mathrm{{{v.unit}}}]" if getattr(v, "unit", "") else ""
         return f"${v.value:.{precision}g} \\pm {v.std:.{precision}g}{unit}$"

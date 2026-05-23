@@ -1,42 +1,42 @@
-// Chemische Einheiten (bar, atm, g) und Radioaktivität (Bq, Sv, Gy)
-// Dedekind: bar, atm, Bq, Sv als First-Class-Literale; Gy/Sv gleiche Dimension J/kg.
+// Chemical units (bar, atm, g) and radioactivity (Bq, Sv, Gy)
+// Dedekind: bar, atm, Bq, Sv as first-class literals; Gy/Sv share the dimension J/kg.
 
 fn main() {
-    print("--- Chemische Einheiten und Radioaktivitaet ---")
+    print("--- Chemical units and radioactivity ---")
 
-    // Druck: bar (1 bar = 10^5 Pa), atm (1 atm ~ 101325 Pa)
+    // Pressure: bar (1 bar = 10^5 Pa), atm (1 atm ~ 101325 Pa)
     p_bar = 1.0[bar]
     p_atm = 1.0[atm]
     p_pa  = 101325[Pa]
-    print("Druck 1[bar], 1[atm], 101325[Pa]:")
+    print("Pressure 1[bar], 1[atm], 101325[Pa]:")
     print(p_bar)
     print(p_atm)
     print(p_pa)
 
-    // Masse: g (Gramm), z.B. fuer molare Massen
+    // Mass: g (gram), e.g. for molar masses
     m_g = 12.0[g]
-    print("Masse 12[g] (z.B. Kohlenstoff):")
+    print("Mass 12[g] (e.g. carbon):")
     print(m_g)
 
-    // Radioaktivität: Bq (Becquerel) = 1/s, Aktivität
+    // Radioactivity: Bq (becquerel) = 1/s, activity
     activity = 1000[Bq]
-    print("Aktivitaet 1000[Bq]:")
+    print("Activity 1000[Bq]:")
     print(activity)
 
-    // Strahlendosis: Gy (Gray) = J/kg absorbierte Dosis; Sv (Sievert) = J/kg Aequivalentdosis
+    // Radiation dose: Gy (gray) = J/kg absorbed dose; Sv (sievert) = J/kg equivalent dose
     absorbed = 0.01[Gy]
     equivalent = 0.01[Sv]
-    print("Dosis 0.01[Gy], 0.01[Sv]:")
+    print("Dose 0.01[Gy], 0.01[Sv]:")
     print(absorbed)
     print(equivalent)
 
-    // Arithmetik: gleiche Einheit für +/-
+    // Arithmetic: same unit for +/-
     total_p_bar = 2.0[bar] + 3.0[bar]
     total_activity = 100[Bq] + 200[Bq]
     print("2[bar] + 3[bar], 100[Bq] + 200[Bq]:")
     print(total_p_bar)
     print(total_activity)
 
-    print("--- Ende ---")
+    print("--- End ---")
 }
 main()

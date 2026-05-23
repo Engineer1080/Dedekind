@@ -1,7 +1,7 @@
 fn main() {
     print("--- Dedekind: Native Performance Benchmark ---")
 
-    // Definiere ein großes Modell für den Benchmark
+    // Define a large model for the benchmark
     model = Sequential([
         Dense(1024, activation="relu"),
         Dense(1024, activation="relu"),
@@ -9,24 +9,24 @@ fn main() {
         Dense(10, activation="softmax")
     ])
 
-    // Erstelle ein optimiertes Modell mit dem neuen .fast() Modifier
-    // Dies triggert intern torch.compile (MLIR/Inductor)
-    print("Kompiliere Modell für native Performance...")
+    // Build an optimized model with the new .fast() modifier
+    // This triggers torch.compile (MLIR/Inductor) internally
+    print("Compiling model for native performance...")
     fast_model = model.fast()
-    
-    // Beispiel-Eingabe (Großer Batch)
+
+    // Sample input (large batch)
     input = random_matrix(128, 1024)
-    
-    print("Starte Inferenz (Compiled oder Interpreted Mode)...")
-    // Erster Aufruf: Modell wird gebaut, dann ggf. torch.compile; bei Inductor-Fehler: Interpreted Mode
+
+    print("Starting inference (compiled or interpreted mode)...")
+    // First call: the model is built, then torch.compile if available; on Inductor error: interpreted mode
     prediction = fast_model.forward(input)
-    
-    print("Inferenz beendet.")
-    print("Eingabe-Shape:")
+
+    print("Inference finished.")
+    print("Input shape:")
     print(input.shape)
-    print("Ausgabe-Shape:")
+    print("Output shape:")
     print(prediction.shape)
-    print("--- Benchmark beendet ---")
+    print("--- Benchmark finished ---")
 }
 
 main()

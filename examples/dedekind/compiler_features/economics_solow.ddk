@@ -1,14 +1,14 @@
-// Quick Wins: Ökonomie — discount_factor, cobb_douglas, solow_rhs
+// Quick wins: economics - discount_factor, cobb_douglas, solow_rhs
 fn main() {
-    print("--- Dedekind: Ökonomie Quick Wins ---")
+    print("--- Dedekind: economics quick wins ---")
 
-    // Barwertfaktor: continuous exp(-r*t)
+    // Present-value factor: continuous exp(-r*t)
     r = 0.05
     t = 10.0
     print("Discount factor (r=5%, t=10, continuous):")
     print(discount_factor(r, t, false))
 
-    // Diskret: 1/(1+r)^t
+    // Discrete: 1/(1+r)^t
     print("Discount factor (r=5%, t=10, discrete):")
     print(discount_factor(r, t, true))
 
@@ -27,9 +27,9 @@ fn main() {
     g = 0.02
     K0 = 10.0
     rhs = solow_rhs(K0, s, delta, n, g, alpha)
-    print("Solow dK/dt bei K0=10:")
+    print("Solow dK/dt at K0=10:")
     print(rhs)
 
-    print("Ökonomie Quick Wins aktiv.")
+    print("Economics quick wins active.")
 }
 main()

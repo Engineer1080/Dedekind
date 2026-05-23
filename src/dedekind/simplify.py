@@ -1,7 +1,7 @@
 """
-Symbolische Vereinfachung für Dedekind: AST-zu-AST-Pass.
-Phase 1 MVP: Konstantenfaltung, x+0, x*1, 0*x, x-0, x^0, x^1.
-Keine externen Abhängigkeiten.
+Symbolic simplification for Dedekind: AST-to-AST pass.
+Phase 1 MVP: constant folding, x+0, x*1, 0*x, x-0, x^0, x^1.
+No external dependencies.
 """
 from .ast_nodes import (
     Node, Program, BinaryOp, Call, Identifier, Literal, Quantity,
@@ -11,7 +11,7 @@ from .ast_nodes import (
 
 
 def _is_numeric(node):
-    """True wenn node ein Literal mit numerischem Wert ist."""
+    """True if node is a Literal with a numeric value."""
     if not isinstance(node, Literal):
         return False
     v = node.value
@@ -19,19 +19,19 @@ def _is_numeric(node):
 
 
 def _literal_value(node):
-    """Wert eines Literal-Knotens; None wenn nicht Literal."""
+    """Value of a Literal node; None if not a Literal."""
     if isinstance(node, Literal):
         return node.value
     return None
 
 
 def _make_literal(value, line=None):
-    """Erzeugt Literal-Knoten mit optionaler Zeile."""
+    """Creates a Literal node with an optional line."""
     return Literal(value, line=line)
 
 
 def _constant_fold(op, a, b):
-    """Konstantenfaltung für zwei numerische Werte. None bei Division durch 0."""
+    """Constant folding for two numeric values. None on division by 0."""
     if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
         return None
     if isinstance(a, bool) or isinstance(b, bool):
@@ -55,7 +55,7 @@ def _constant_fold(op, a, b):
 
 
 class SimplifyVisitor:
-    """Visitor: vereinfacht Ausdrücke im Dedekind-AST."""
+    """Visitor: simplifies expressions in the Dedekind AST."""
 
     def visit(self, node):
         if node is None:

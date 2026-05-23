@@ -1,6 +1,6 @@
-// Dedekind: SIR-Epidemiologiemodell und R0
+// Dedekind: SIR epidemiology model and R0
 
-print("=== SIR-Epidemiologiemodell ===")
+print("=== SIR epidemiology model ===")
 
 // Parameter: S0=990, I0=10, R0=0; beta=0.3, gamma=0.1
 S0 = 990.0
@@ -12,16 +12,16 @@ gamma = 0.1
 t = linspace(0, 100, 501)
 traj = sir_model(S0, I0, R0_init, beta, gamma, t)
 
-print("Anfangsbestände: S=", S0, ", I=", I0, ", R=", R0_init)
-print("S, I, R bei t=0:")
+print("Initial values: S=", S0, ", I=", I0, ", R=", R0_init)
+print("S, I, R at t=0:")
 print(traj[0][0], traj[0][1], traj[0][2])
-print("S, I, R bei t=50:")
+print("S, I, R at t=50:")
 print(traj[250][0], traj[250][1], traj[250][2])
-print("S, I, R bei t=100:")
+print("S, I, R at t=100:")
 print(traj[500][0], traj[500][1], traj[500][2])
 
 R0_val = basic_reproduction_number(beta, gamma)
-print("Basisreproduktionszahl R0 = beta/gamma:")
+print("Basic reproduction number R0 = beta/gamma:")
 print(R0_val)
 
-print("SIR-Modell aktiv.")
+print("SIR model active.")

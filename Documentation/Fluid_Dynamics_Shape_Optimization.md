@@ -1,64 +1,64 @@
-# Differenzierbare CFD & Shape-Optimierung in Dedekind
+# Differentiable CFD & Shape Optimization in Dedekind
 
-Dieses Dokument beschreibt das CFD-Modul von Dedekind, mit besonderem Fokus
-auf die differenzierbare Form-Parametrisierung für aerodynamische und
-hydrodynamische Optimierung.
+This document describes the CFD module of Dedekind, with particular focus
+on the differentiable shape parametrization for aerodynamic and
+hydrodynamic optimization.
 
-## Überblick
+## Overview
 
-Dedekind kombiniert einen vollständigen Lattice-Boltzmann-Solver (D2Q9) mit
-PyTorch-Autograd. Form-Parameter wie Radius, Halbachsen oder Fourier-Koeffizienten
-sind native Tensoren — der Gradient des Drag- oder Lift-Werts nach diesen
-Parametern fällt automatisch aus dem Forward-Pass. Damit entfällt der separate
-Adjoint-Solver, wie er in OpenFOAM, SU2 oder dolfin-adjoint benötigt wird.
+Dedekind combines a complete Lattice-Boltzmann solver (D2Q9) with
+PyTorch autograd. Shape parameters such as radius, semi-axes, or Fourier
+coefficients are native tensors — the gradient of drag or lift values with respect to these
+parameters falls out automatically from the forward pass. This eliminates the separate
+adjoint solver required in OpenFOAM, SU2, or dolfin-adjoint.
 
-Aktivierung: `use fluid_dynamics`
+Activation: `use fluid_dynamics`
 
-## Form-Parametrisierungen
+## Shape Parametrizations
 
-### 1. Soft-Zylinder — `soft_cylinder_mask(nx, ny, cx, cy, r, alpha)`
+### 1. Soft Cylinder — `soft_cylinder_mask(nx, ny, cx, cy, r, alpha)`
 
-Sigmoid-Mask um einen Kreis mit Radius `r`. Differenzierbar in `cx, cy, r`.
-Geeignet für klassische Karman-Strömung und einfache Drag-Studien.
+Sigmoid mask around a circle with radius `r`. Differentiable in `cx, cy, r`.
+Suitable for classical Karman flow and simple drag studies.
 
-### 2. Soft-Ellipse — `soft_ellipse_mask(nx, ny, cx, cy, a, b, alpha)`
+### 2. Soft Ellipse — `soft_ellipse_mask(nx, ny, cx, cy, a, b, alpha)`
 
-Sigmoid-Mask um eine Ellipse mit Halbachsen `a` (x) und `b` (y). Differenzierbar
-in `cx, cy, a, b`. Mit Volumen-Constraint `a·b = const` reduziert sich die
-Optimierung auf einen einzigen Aspect-Ratio-Parameter — minimaler Suchraum,
-schneller Adam-Lauf.
+Sigmoid mask around an ellipse with semi-axes `a` (x) and `b` (y). Differentiable
+in `cx, cy, a, b`. With volume constraint `a·b = const` the
+optimization reduces to a single aspect-ratio parameter — minimal search space,
+fast Adam run.
 
-Demo: `examples/dedekind/engineering/lbm_shape_optimization.ddk`. Reduziert
-den Drag um ~17 % gegenüber dem Kreis durch Streckung in Strömungsrichtung.
+Demo: `examples/dedekind/engineering/lbm_shape_optimization.ddk`. Reduces
+drag by ~17 % compared to the circle through stretching in the flow direction.
 
-### 3. Soft-Airfoil — `soft_airfoil_mask(nx, ny, t, c, beta, x_start, x_end, y_center, alpha)`
+### 3. Soft Airfoil — `soft_airfoil_mask(nx, ny, t, c, beta, x_start, x_end, y_center, alpha)`
 
-NACA-artige Profilbeschreibung mit Dicken-(`t`), Wölbungs-(`c`) und
-Hinterkanten-Profilierungs-(`beta`)-Parametern. Geeignet als Startpunkt für
-klassische Tragflächen.
+NACA-like profile description with thickness (`t`), camber (`c`) and
+trailing-edge profiling (`beta`) parameters. Suitable as a starting point for
+classical wings.
 
-### 4. Fourier-Form — `fourier_shape_mask(nx, ny, cx, cy, r0, a_coeffs, b_coeffs, alpha)`
+### 4. Fourier Shape — `fourier_shape_mask(nx, ny, cx, cy, r0, a_coeffs, b_coeffs, alpha)`
 
-Universelle 2D-Topologie-Beschreibung über Fourier-Reihe der Randkontur:
+Universal 2D topology description via Fourier series of the boundary contour:
 
 ```
 r(θ) = r0 · (1 + Σ_{k=1..K} a_k·cos(k·θ) + b_k·sin(k·θ))
 ```
 
-- `a_coeffs`, `b_coeffs`: 1D-Tensoren oder Listen mit K Einträgen — für
-  jeden Cos- und Sin-Modus ein Freiheitsgrad.
-- Differenzierbar in `cx, cy, r0` und jedem Koeffizienten.
-- Methodisch entspricht das der "Class-Shape-Transformation" (CST), wie sie
-  in der Aerospace-Industrie für aerodynamische Form-Optimierung etabliert ist.
+- `a_coeffs`, `b_coeffs`: 1D tensors or lists with K entries — one
+  degree of freedom for each cos and sin mode.
+- Differentiable in `cx, cy, r0` and every coefficient.
+- Methodologically, this corresponds to "Class-Shape-Transformation" (CST), as it
+  is established in the aerospace industry for aerodynamic shape optimization.
 
-Glatte, beliebig komplexe Topologien werden bereits mit K=4 Harmonischen
-(8 Parameter) abgedeckt: Tropfen-, Tragflächen-, Tear-Drop-, Bohnen-Formen.
+Smooth, arbitrarily complex topologies are already covered with K=4 harmonics
+(8 parameters): teardrop, wing, tear-drop, bean shapes.
 
 Demo: `examples/dedekind/engineering/lbm_fourier_airfoil_optimization.ddk`.
-Adam differenziert durch 150 LBM-Schritte und reduziert den Drag um
-~15–25 % durch Optimierung aller acht Koeffizienten gleichzeitig.
+Adam differentiates through 150 LBM steps and reduces the drag by
+~15–25 % by optimizing all eight coefficients simultaneously.
 
-## Workflow für Shape-Optimierung
+## Workflow for Shape Optimization
 
 ```dedekind
 use fluid_dynamics
@@ -73,40 +73,40 @@ fn drag_of_shape(params) {
     return [F[0]]
 }
 
-// Adam-Optimierer differenziert via Autograd durch die gesamte Pipeline
+// Adam optimizer differentiates via autograd through the entire pipeline
 x0     = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 result = minimize(drag_of_shape, x0, "adam", 0.05, 20)
 ```
 
-## Validierung
+## Validation
 
-- **Autograd vs. zentrale finite Differenzen**: relativer Fehler < 10⁻⁴
-  (siehe `tests/dedekind/fluid_dynamics_test.ddk::test_autograd_validates_against_fd`).
-- **Karman-Benchmark**: Strouhal-Zahl St ≈ 0.167 bei Re=100 (Literatur 0.16–0.17).
-- **MRT-Stabilität bei Re=2000**: BGK divergiert, MRT bleibt finite.
+- **Autograd vs. central finite differences**: relative error < 10⁻⁴
+  (see `tests/dedekind/fluid_dynamics_test.ddk::test_autograd_validates_against_fd`).
+- **Karman benchmark**: Strouhal number St ≈ 0.167 at Re=100 (literature 0.16–0.17).
+- **MRT stability at Re=2000**: BGK diverges, MRT stays finite.
 
 ## Tests
 
-- `tests/dedekind/fluid_dynamics_test.ddk` — 15 Sub-Tests für LBM-Grundfunktionen,
-  einheiten-bewusste API, MRT, hard/soft Bounce-Back, Autograd-Validierung.
-- `tests/dedekind/lbm_shape_opt_test.ddk` — Ellipsen-Maske + 1-Parameter-Optimierung.
-- `tests/dedekind/lbm_fourier_shape_test.ddk` — Fourier-Maske + Multi-Parameter-Optimierung,
-  Tropfen-Asymmetrie-Verifikation, Multi-Parameter-Autograd vs. FD.
-- `tests/dedekind/ns_ibm_test.ddk` — Chorin-NS-Solver + IBM-Brinkman-Penalisierung.
+- `tests/dedekind/fluid_dynamics_test.ddk` — 15 sub-tests for LBM core functions,
+  unit-aware API, MRT, hard/soft bounce-back, autograd validation.
+- `tests/dedekind/lbm_shape_opt_test.ddk` — ellipse mask + 1-parameter optimization.
+- `tests/dedekind/lbm_fourier_shape_test.ddk` — Fourier mask + multi-parameter optimization,
+  teardrop asymmetry verification, multi-parameter autograd vs. FD.
+- `tests/dedekind/ns_ibm_test.ddk` — Chorin NS solver + IBM Brinkman penalization.
 
-## Industrielle Relevanz
+## Industrial Relevance
 
-Die Fourier-Form-Parametrisierung ist die etablierte Methode für:
+The Fourier shape parametrization is the established method for:
 
-- **Luftfahrt:** Class-Shape-Transformation in der Aerospace-Industrie für
-  Tragflächen- und Karosserieoptimierung.
-- **Automobilbau:** Karosserie-Drag-Minimierung; Strömungsabriss-Vermeidung
-  an Außenspiegeln und Heckklappen.
-- **Schiffbau:** Rumpfprofile, Stevenkontur, Ruderblattgestaltung.
-- **Windkraft:** Rotorblattprofile mit variablen Spannweitenstationen.
-- **Bauphysik:** Aerodynamik von Hochhäusern, Brückenpfeilern bei
-  Kármán-Wirbel-Resonanz.
+- **Aviation:** Class-Shape-Transformation in the aerospace industry for
+  wing and body optimization.
+- **Automotive:** Body drag minimization; flow-separation avoidance
+  at side mirrors and tailgates.
+- **Shipbuilding:** Hull profiles, stem contour, rudder blade design.
+- **Wind energy:** Rotor blade profiles with variable spanwise stations.
+- **Building physics:** Aerodynamics of high-rises, bridge piers under
+  Kármán vortex resonance.
 
-Dedekind bietet diese Methodik nativ in einer einzigen DSL: keine Kopplung
-zwischen Mesher, Solver und Adjoint-Modul, keine Skript-Pipeline aus
-Python/MATLAB/OpenFOAM/SU2 — eine Datei, ein `minimize(...)`-Aufruf.
+Dedekind offers this methodology natively in a single DSL: no coupling
+between mesher, solver, and adjoint module, no script pipeline of
+Python/MATLAB/OpenFOAM/SU2 — one file, one `minimize(...)` call.

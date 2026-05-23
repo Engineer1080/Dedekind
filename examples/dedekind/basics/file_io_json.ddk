@@ -1,43 +1,43 @@
 fn main() {
-    print("--- Dedekind: Datei-I/O und JSON ---")
+    print("--- Dedekind: file I/O and JSON ---")
 
-    // Datei schreiben und lesen
+    // Write and read file
     path = "dedekind_test_output.txt"
-    content = "Hallo Dedekind\nZeile 2"
+    content = "Hello Dedekind\nLine 2"
     write_file(path, content)
     back = read_file(path)
-    print("Geschrieben und gelesen:")
+    print("Written and read:")
     print(back)
 
-    // Prüfen ob Datei existiert
+    // Check whether file exists
     exists = file_exists(path)
-    print("Datei existiert:")
+    print("File exists:")
     print(exists)
 
-    // JSON: Liste als String ausgeben und wieder parsen
+    // JSON: emit list as string and parse it back
     list_data = [1.0, 2.0, 3.0]
     json_str = json_stringify(list_data)
-    print("JSON-String (Liste):")
+    print("JSON string (list):")
     print(json_str)
 
     parsed = json_parse(json_str)
-    print("Zurück geparst (erster Eintrag):")
+    print("Parsed back (first entry):")
     print(parsed[0])
 
-    // JSON-Datei schreiben und lesen
+    // Write and read a JSON file
     json_path = "dedekind_test_data.json"
     write_file(json_path, json_str)
     from_disk = read_file(json_path)
     from_disk_parsed = json_parse(from_disk)
-    print("Aus Datei gelesen und geparst:")
+    print("Read from file and parsed:")
     print(from_disk_parsed[1])
 
-    // JSON-Objekt aus Datei lesen und Schlüsselzugriff (obj["key"])
+    // Read JSON object from file and access by key (obj["key"])
     obj_content = read_file("examples/dedekind/basics/test_data.json")
     obj = json_parse(obj_content)
-    print("JSON-Objekt name:")
+    print("JSON object name:")
     print(obj["name"])
 
-    print("Datei-I/O und JSON aktiv.")
+    print("File I/O and JSON active.")
 }
 main()

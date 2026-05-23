@@ -1,8 +1,8 @@
 def read_file(path):
     """
-    Liest eine Datei als Text (UTF-8).
-    path: String (Dateipfad).
-    Rückgabe: String (Inhalt).
+    Reads a file as text (UTF-8).
+    path: string (file path).
+    Returns: string (content).
     """
     p = str(path)
     with open(p, 'r', encoding='utf-8') as f:
@@ -11,8 +11,8 @@ def read_file(path):
 
 def write_file(path, content):
     """
-    Schreibt Text in eine Datei (UTF-8); überschreibt bei Existenz.
-    path: String (Dateipfad). content: String (Inhalt).
+    Writes text to a file (UTF-8); overwrites if it exists.
+    path: string (file path). content: string (content).
     """
     p = str(path)
     with open(p, 'w', encoding='utf-8') as f:
@@ -21,8 +21,8 @@ def write_file(path, content):
 
 def file_exists(path):
     """
-    Prüft, ob eine Datei existiert.
-    path: String (Dateipfad). Rückgabe: bool.
+    Checks whether a file exists.
+    path: string (file path). Returns: bool.
     """
     import os
     return os.path.isfile(str(path))
@@ -30,8 +30,8 @@ def file_exists(path):
 
 def http_get(url):
     """
-    HTTP GET-Anfrage; gibt Antworttext (UTF-8) zurück.
-    url: String (z. B. \"https://example.com\").
+    HTTP GET request; returns response text (UTF-8).
+    url: string (e.g. \"https://example.com\").
     """
     import urllib.request
     req = urllib.request.Request(str(url), method='GET')
@@ -41,8 +41,8 @@ def http_get(url):
 
 def http_post(url, data):
     """
-    HTTP POST-Anfrage. data: String (Body) oder Dict/List (wird als JSON gesendet).
-    url: String. Rückgabe: Antworttext (UTF-8).
+    HTTP POST request. data: string (body) or dict/list (sent as JSON).
+    url: string. Returns: response text (UTF-8).
     """
     import urllib.request
     import json
@@ -59,8 +59,8 @@ def http_post(url, data):
 
 def json_parse(s):
     """
-    Parst einen JSON-String zu einem Objekt (Dict/List); für Zugriff z. B. obj[\"key\"].
-    s: String (gültiger JSON).
+    Parses a JSON string into an object (dict/list); access e.g. obj[\"key\"].
+    s: string (valid JSON).
     """
     import json
     return json.loads(str(s))
@@ -68,7 +68,7 @@ def json_parse(s):
 
 def json_stringify(obj):
     """
-    Wandelt ein Objekt (Dict, List, Zahl, String) in einen JSON-String um.
+    Converts an object (dict, list, number, string) into a JSON string.
     """
     import json
     if hasattr(obj, 'tolist'):
@@ -81,8 +81,8 @@ def json_stringify(obj):
 
 def _dedekind_assert(condition, message=None):
     """
-    Prüft eine Bedingung; löst AssertionError aus, wenn condition falsch ist.
-    assert(condition) oder assert(condition, "Fehlermeldung").
+    Checks a condition; raises AssertionError when condition is false.
+    assert(condition) or assert(condition, "error message").
     """
     val = condition
     if hasattr(val, "item") and (hasattr(val, "numel") or hasattr(val, "size")):
@@ -93,8 +93,8 @@ def _dedekind_assert(condition, message=None):
     if not bool(val):
         raise AssertionError(message if message is not None else "Assertion failed")
 
-# --- Standard Library: Symbolische Ableitung (eingebettet, kein Import) ---
-# Einfacher AST für Ausdrücke
+# --- Standard library: symbolic differentiation (embedded, no import) ---
+# Simple AST for expressions
 class _SymExpr:
     pass
 
@@ -160,7 +160,7 @@ class _SymSqrt(_SymExpr):
         self.arg = arg
 
 def _sym_tokenize(s):
-    """Tokenizer ohne re: Zeichen für Zeichen."""
+    """Tokenizer without re: character by character."""
     tokens = []
     i = 0
     n = len(s)
@@ -216,7 +216,7 @@ def _sym_tokenize(s):
             try:
                 value = float(s[start:i])
             except ValueError:
-                raise ValueError("Ungültige Zahl: " + s[start:i])
+                raise ValueError("Invalid number: " + s[start:i])
             tokens.append(("NUMBER", value))
             continue
         if c.isalpha() or c == "_":
@@ -225,7 +225,7 @@ def _sym_tokenize(s):
                 i += 1
             tokens.append(("ID", s[start:i]))
             continue
-        raise ValueError("Unerwartetes Zeichen: " + repr(c))
+        raise ValueError("Unexpected character: " + repr(c))
     return tokens
 
 class _SymParser:
@@ -332,21 +332,21 @@ class _SymParser:
             e = self._parse_expr()
             rp = self._advance()
             if rp is None or rp[0] != "RPAREN":
-                raise ValueError("Fehlende ')'")
+                raise ValueError("Missing ')'")
             return e
-        raise ValueError(f"Unerwartetes Token: {p}")
+        raise ValueError(f"Unexpected token: {p}")
 
 def _sym_parse(expr_str):
     s = expr_str.strip().replace(" ", "")
     if not s:
-        raise ValueError("Leerer Ausdruck")
+        raise ValueError("Empty expression")
     tokens = _sym_tokenize(s)
     if not tokens:
-        raise ValueError("Keine gültigen Tokens")
+        raise ValueError("No valid tokens")
     p = _SymParser(tokens)
     e = p._parse_expr()
     if p.pos < len(tokens):
-        raise ValueError("Rest nach Ausdruck")
+        raise ValueError("Trailing content after expression")
     return e
 
 def _sym_diff(e, var):
@@ -509,15 +509,15 @@ def _sym_simplify(e):
 
 def diff_sym(expr, var):
     """
-    Symbolische Ableitung: leitet den Ausdruck expr nach der Variable var ab.
-    expr: String, z.B. 'x^2 + sin(x)', 'exp(x)*log(x)'.
-    var: Name der Variable, z.B. 'x'.
-    Rückgabe: Ableitung als String.
+    Symbolic differentiation: differentiates the expression expr with respect to var.
+    expr: string, e.g. 'x^2 + sin(x)', 'exp(x)*log(x)'.
+    var: name of the variable, e.g. 'x'.
+    Returns: derivative as string.
     """
     expr = str(expr).strip()
     var = str(var).strip()
     if not var:
-        raise ValueError("Variable darf nicht leer sein")
+        raise ValueError("Variable must not be empty")
     ast = _sym_parse(expr)
     d = _sym_diff(ast, var)
     d = _sym_simplify(d)
@@ -526,38 +526,38 @@ def diff_sym(expr, var):
 
 def integrate_sym(expr, var):
     """
-    Unbestimmtes (symbolisches) Integral: ∫ expr d(var).
-    expr: String, z.B. 'x^2', 'sin(x)', 'exp(x)*x'.
-    var: Name der Integrationsvariable, z.B. 'x'.
-    Rückgabe: Stammfunktion als String (ohne Integrationskonstante C).
-    Nutzt SymPy für robuste symbolische Integration.
+    Indefinite (symbolic) integral: integral of expr d(var).
+    expr: string, e.g. 'x^2', 'sin(x)', 'exp(x)*x'.
+    var: name of the integration variable, e.g. 'x'.
+    Returns: antiderivative as string (without constant of integration C).
+    Uses SymPy for robust symbolic integration.
     """
     try:
         import sympy  # type: ignore[reportMissingImports]
     except ImportError:
-        raise ImportError("integrate_sym erfordert sympy. Bitte installieren: pip install sympy")
+        raise ImportError("integrate_sym requires sympy. Please install: pip install sympy")
     expr_str = str(expr).strip().replace(" ", "")
     var_str = str(var).strip()
     if not var_str:
-        raise ValueError("Integrationsvariable darf nicht leer sein")
-    # Dedekind-Syntax (^) für SymPy (**) konvertieren
+        raise ValueError("Integration variable must not be empty")
+    # Convert Dedekind syntax (^) to SymPy (**)
     expr_sympy = expr_str.replace("^", "**")
     try:
         x = sympy.Symbol(var_str)
         sym_expr = sympy.sympify(expr_sympy)
         result = sympy.integrate(sym_expr, x)
         out = str(result)
-        # Optional: ** zurück zu ^ für Dedekind-Konsistenz
+        # Optional: convert ** back to ^ for Dedekind consistency
         return out.replace("**", "^")
     except Exception as e:
-        raise ValueError(f"integrate_sym: Konnte '{expr}' nicht nach {var_str} integrieren: {e}") from e
+        raise ValueError(f"integrate_sym: could not integrate '{expr}' with respect to {var_str}: {e}") from e
 
 # --- Standard Library: Jacobian / Hessian (Autograd) ---
 
 def jacobian(f, x):
     """
-    Jacobi-Matrix von f an der Stelle x. f: R^n -> R^m (Callable, Tensor -> Tensor).
-    x: 1D-Tensor der Länge n. Rückgabe: Tensor (m, n); Zeile i = Gradient von f_i.
+    Jacobian matrix of f at point x. f: R^n -> R^m (callable, tensor -> tensor).
+    x: 1D tensor of length n. Returns: tensor (m, n); row i = gradient of f_i.
     """
     x_t = _to_tensor(x).float().clone().detach().requires_grad_(True)
     out = f(x_t)
@@ -576,8 +576,8 @@ def jacobian(f, x):
 
 def hessian(f, x):
     """
-    Hesse-Matrix von f an der Stelle x. f: R^n -> R (skalar).
-    x: 1D-Tensor der Länge n. Rückgabe: Tensor (n, n).
+    Hessian matrix of f at point x. f: R^n -> R (scalar).
+    x: 1D tensor of length n. Returns: tensor (n, n).
     """
     x_t = _to_tensor(x).float().clone().detach().requires_grad_(True)
     out = f(x_t)
@@ -603,12 +603,12 @@ def quicksort(data):
     return sort(data)
 
 # --- Standard Library: Visualization ---
-# Plots werden in _dedekind_plots gesammelt und vom Server an die IDE zurückgegeben.
+# Plots are collected in _dedekind_plots and returned by the server to the IDE.
 
 _dedekind_plots = []
 
 def _plot_ndarray(x, y=None, title=None, xlabel=None, ylabel=None, kind="line", xscale="linear", yscale="linear"):
-    """Intern: Erzeugt einen Plot und hängt ihn als Base64-PNG an _dedekind_plots. kind: line, scatter."""
+    """Internal: creates a plot and appends it as base64 PNG to _dedekind_plots. kind: line, scatter."""
     try:
         import base64
         import io
@@ -616,7 +616,7 @@ def _plot_ndarray(x, y=None, title=None, xlabel=None, ylabel=None, kind="line", 
         matplotlib.use('Agg')
         import matplotlib.pyplot as plt  # type: ignore[import-untyped]
     except ImportError:
-        print("plot(): matplotlib nicht installiert. pip install matplotlib")
+        print("plot(): matplotlib not installed. pip install matplotlib")
         return
     if y is None:
         y = x
@@ -735,9 +735,9 @@ def print_latex(s):
 
 def plot(x=None, y=None, title=None, xlabel=None, ylabel=None, xscale="linear", yscale="linear"):
     """
-    Zeichnet Daten (Linie) und zeigt sie in Dedekind Studio an.
-    plot(y) – y über Index; plot(x, y) – y über x.
-    xscale, yscale: "linear" (default) oder "log".
+    Plots data (line) and displays it in Dedekind Studio.
+    plot(y) -- y over index; plot(x, y) -- y over x.
+    xscale, yscale: "linear" (default) or "log".
     """
     if x is None and y is None:
         return
@@ -752,8 +752,8 @@ def plot(x=None, y=None, title=None, xlabel=None, ylabel=None, xscale="linear", 
 
 def scatter(x=None, y=None, title=None, xlabel=None, ylabel=None):
     """
-    Streudiagramm: Punkte (x, y). scatter(y) – y über Index; scatter(x, y) – Punkte.
-    Zeigt in Dedekind Studio an.
+    Scatter plot: points (x, y). scatter(y) -- y over index; scatter(x, y) -- points.
+    Displayed in Dedekind Studio.
     """
     if x is None and y is None:
         return
@@ -768,27 +768,27 @@ def scatter(x=None, y=None, title=None, xlabel=None, ylabel=None):
 
 def contour(X, Y, Z, title=None, xlabel=None, ylabel=None, levels=10):
     """
-    Höhenlinien-Plot. X, Y: 1D- oder 2D-Koordinaten (z. B. linspace); Z: 2D-Matrix (Werte).
-    levels: Anzahl Konturlinien (default 10). Zeigt in Dedekind Studio an.
+    Contour plot. X, Y: 1D or 2D coordinates (e.g. linspace); Z: 2D matrix (values).
+    levels: number of contour lines (default 10). Displayed in Dedekind Studio.
     """
     import numpy as np  # type: ignore[reportMissingImports]
     X_t = _to_tensor(X).float().detach().cpu().numpy()
     Y_t = _to_tensor(Y).float().detach().cpu().numpy()
     Z_t = _to_tensor(Z).float().detach().cpu().numpy()
     if Z_t.ndim != 2:
-        raise ValueError("contour: Z muss 2D-Matrix sein.")
+        raise ValueError("contour: Z must be a 2D matrix.")
     if X_t.ndim == 1 and Y_t.ndim == 1:
         X_t, Y_t = np.meshgrid(X_t, Y_t)
     _plot_contour_inner(X_t, Y_t, Z_t, title=title, xlabel=xlabel, ylabel=ylabel, levels=levels)
 
 
 # ============================================================================
-# Reproduzierbarkeit: Seed-Manager + Daten-Hash
+# Reproducibility: seed manager + data hash
 # ============================================================================
 
 def seed(n):
-    """Setzt deterministischen Seed in Python (`random`), NumPy und PyTorch.
-    Verwendung: `seed(42)` ganz am Anfang eines Skripts; Zufallsoperationen werden reproduzierbar."""
+    """Sets a deterministic seed in Python (`random`), NumPy, and PyTorch.
+    Usage: `seed(42)` at the very start of a script; random operations become reproducible."""
     try:
         import random as _random
         _random.seed(int(n))
@@ -809,8 +809,8 @@ def seed(n):
 
 
 def data_hash(x):
-    """Liefert SHA256-Hex-Digest einer Eingabe (Tensor, Liste, Dict, Zahl, String, DataFrame).
-    Nützlich für Reproduzierbarkeits-Protokolle: `print("Input hash:", data_hash(data))`."""
+    """Returns the SHA256 hex digest of an input (tensor, list, dict, number, string, DataFrame).
+    Useful for reproducibility logs: `print("Input hash:", data_hash(data))`."""
     import hashlib
     import json
     if isinstance(x, DataFrame):

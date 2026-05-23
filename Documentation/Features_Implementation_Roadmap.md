@@ -1,195 +1,195 @@
-# Features für Naturwissenschaftler — Implementierungs-Roadmap
+# Features for Scientists — Implementation Roadmap
 
 **Dedekind Language**  
-Draft: January 2026 · letzter Roadmap-Stand-Update: v1.17.0 (März 2027)
+Draft: January 2026 · last roadmap status update: v1.17.0 (March 2027)
 
 ---
 
-## Status-Update (v1.17.0)
+## Status Update (v1.17.0)
 
-Seit der ursprünglichen Roadmap (Januar 2026) wurde der Großteil der geplanten Phasen ausgeliefert:
+Since the original roadmap (January 2026), most of the planned phases have been delivered:
 
-| Phase | Thema | Status | Geliefert in |
+| Phase | Topic | Status | Delivered in |
 |---|---|---|---|
-| 1 | PDE-Solver (heat) | ✅ erledigt | v0.8; v1.x erweitert auf Maxwell, Navier-Stokes, Burgers, Reaktions-Diffusion, Advektions-Diffusion |
-| 1 | Erweiterte Verteilungen (Exponential, Gamma, Beta, Poisson) | ✅ erledigt | v0.9 |
-| 1 | Numerische Integration (`integrate`) | ✅ erledigt | v0.9 |
-| 2 | Bessere Fehlermeldungen mit Zeilennummern | ✅ erledigt | v0.9.5 |
-| 2 | **Source-mapped Tracebacks** (über Roadmap hinausgehend) | ✅ erledigt | v1.8 |
-| 3 | Uncertainty-Propagation (`uncertain()`) | ✅ erledigt | v0.9.3 |
-| 3 | Einheiten-Check zur Compile-Zeit | ✅ erledigt | v0.9.5 |
-| 4 | Fitting/Regression (`fit()`) mit GD/MCMC/HMC | ✅ erledigt | v0.9.3, v0.9.4 |
-| 4 | LaTeX-Export (`export_to_latex`) | ✅ erledigt | v0.9.4 |
-| 5 | Symbolische Ableitungen (`diff_sym`) | ✅ erledigt | v1.3 |
-| 5 | **Über Phase 5 hinaus**: `integrate_sym`, `solve_sym`, `simplify_sym`, `series` (SymPy-Brücke) | ✅ erledigt | v1.3 – v1.6 |
+| 1 | PDE solver (heat) | Done | v0.8; v1.x extended to Maxwell, Navier-Stokes, Burgers, reaction-diffusion, advection-diffusion |
+| 1 | Extended distributions (Exponential, Gamma, Beta, Poisson) | Done | v0.9 |
+| 1 | Numerical integration (`integrate`) | Done | v0.9 |
+| 2 | Better error messages with line numbers | Done | v0.9.5 |
+| 2 | **Source-mapped tracebacks** (beyond the roadmap) | Done | v1.8 |
+| 3 | Uncertainty propagation (`uncertain()`) | Done | v0.9.3 |
+| 3 | Compile-time unit check | Done | v0.9.5 |
+| 4 | Fitting/regression (`fit()`) with GD/MCMC/HMC | Done | v0.9.3, v0.9.4 |
+| 4 | LaTeX export (`export_to_latex`) | Done | v0.9.4 |
+| 5 | Symbolic derivatives (`diff_sym`) | Done | v1.3 |
+| 5 | **Beyond Phase 5**: `integrate_sym`, `solve_sym`, `simplify_sym`, `series` (SymPy bridge) | Done | v1.3 – v1.6 |
 
-**Noch offen aus der ursprünglichen Roadmap:**
-- **NUTS** (No-U-Turn Sampler) zusätzlich zu HMC — nicht implementiert.
-- **Variational Inference** (VI) — nicht implementiert.
+**Still open from the original roadmap:**
+- **NUTS** (No-U-Turn Sampler) in addition to HMC — not implemented.
+- **Variational Inference** (VI) — not implemented.
 
-**Seit v1.7 dazugekommen** (über die ursprüngliche Roadmap hinaus): Standardbibliothek-Module, `pyimport`, Purity-Check, Shape-Annotationen, PINN, Graph-Methoden, MILP-DSL, MD-Brücke, Labeled Tensors, Bioinformatik, try/catch, Slicing. Siehe `Documentation/README.md` und `Dedekind_Language_Specification.md` §15.12–§15.23.
-
----
-
-## 1. Ziel und Nutzen
-
-Diese Roadmap priorisiert und plant **sinnvolle Erweiterungen** der Dedekind-Sprache speziell für Nutzer aus Physik, Chemie, Messtechnik und verwandten Fächern. Ziele:
-
-- **Priorisierung**: Klare Reihenfolge nach Aufwand, Nutzen und Abhängigkeiten.
-- **Planbarkeit**: Konkrete Phasen mit Schritten und Erfolgskriterien.
-- **Konsistenz**: Anschluss an bestehende Features (ODE, PDE, Quantity, Probabilistic) und an die [Symbolic Simplification Roadmap](Symbolic_Simplification_Roadmap.md).
+**Added since v1.7** (beyond the original roadmap): standard library modules, `pyimport`, purity check, shape annotations, PINN, graph methods, MILP DSL, MD bridge, labeled tensors, bioinformatics, try/catch, slicing. See `Documentation/README.md` and `Dedekind_Language_Specification.md` §15.12–§15.23.
 
 ---
 
-## 2. Feature-Übersicht und Status
+## 1. Goal and Benefit
 
-| Feature | Nutzen | Aufwand | Status / Phase |
+This roadmap prioritizes and plans **useful extensions** of the Dedekind language specifically for users in physics, chemistry, metrology, and related fields. Goals:
+
+- **Prioritization**: clear order by effort, benefit, and dependencies.
+- **Planability**: concrete phases with steps and success criteria.
+- **Consistency**: connection to existing features (ODE, PDE, Quantity, probabilistic) and to the [Symbolic Simplification Roadmap](Symbolic_Simplification_Roadmap.md).
+
+---
+
+## 2. Feature Overview and Status
+
+| Feature | Benefit | Effort | Status / Phase |
 |--------|--------|---------|----------------|
-| **PDE-Solver (differenzierbar)** | Wärme-, Diffusionsgleichung; PINNs brauchen oft ∇²u, ∂u/∂t. | Hoch | ✅ **Implementiert** (v0.9: `pde_heat_1d`, `pde_heat_2d`) |
-| **Mehr Verteilungen** | Exponential, Gamma, Beta, Poisson für Statistik, Strahlung, Zählexperimente. | Gering | ✅ **Implementiert** (v0.9: `Exponential`, `Gamma`, `Beta`, `Poisson`) |
-| **Numerische Integration** | `integrate(f, a, b)` für Flächen, Erwartungswerte, Normalisierung. | Gering | ✅ **Implementiert** (v0.9: `integrate(f, a, b, n)`; `sin`, `cos`) |
-| **Bessere Fehlermeldungen** | Einheitenfehler, Dimensionskonflikte, „expected tensor, got Quantity“ mit Zeile/Kontext. | Mittel | ✅ **Implementiert** (v0.9.5: `CompileError` mit Zeile, Parser/Zeile im AST, Runtime-Quantity-Meldungen) |
-| **Uncertainty-Propagation** | Fehlerfortpflanzung: f(x ± Δx) → Ergebnis mit Unsicherheit; Standard in Messtechnik. | Mittel | ✅ **Implementiert** (v0.9.2: `uncertain(value, std)`, `UncertainQuantity`) |
-| **Einheiten zur Compile-Zeit** | `1[m] + 1[s]` → Fehler beim Kompilieren statt zur Laufzeit; weniger Unit-Bugs. | Mittel | ✅ **Implementiert** (v0.9.5: `units_checker.py`, `compile_source(..., check_units=True)`, CLI `--no-units-check`) |
-| **Fitting / Regression** | `fit(model, data)` mit Gradient Descent oder MCMC; typisch für Kurvenanpassung. | Mittel | ✅ **Implementiert** (v0.9.2: `fit(loss_fn, params_init, data, method="gd"|"mcmc")`) |
-| **NUTS / VI** | Robusteres Bayesian Inference (NUTS) oder schnelle Approximation (VI); Metropolis oft langsam. | Mittel | Phase 4 (HMC ✅) |
-| **LaTeX-Export von Formeln** | Aus Dedekind-Ausdrücken LaTeX erzeugen (für Papers/Notizen). | Mittel | ✅ **Implementiert** (v0.9.4: `export_to_latex(source)`, CLI `--latex`) |
-| **Symbolische Ableitungen** | `diff(expr, x)` liefert Formel statt numerisches `grad()`; für Paper, Stabilitätsanalyse. | Mittel–hoch | Phase 5 |
+| **PDE solver (differentiable)** | Heat, diffusion equation; PINNs often need ∇²u, ∂u/∂t. | High | **Implemented** (v0.9: `pde_heat_1d`, `pde_heat_2d`) |
+| **More distributions** | Exponential, Gamma, Beta, Poisson for statistics, radiation, counting experiments. | Low | **Implemented** (v0.9: `Exponential`, `Gamma`, `Beta`, `Poisson`) |
+| **Numerical integration** | `integrate(f, a, b)` for areas, expectations, normalization. | Low | **Implemented** (v0.9: `integrate(f, a, b, n)`; `sin`, `cos`) |
+| **Better error messages** | Unit errors, dimension conflicts, "expected tensor, got Quantity" with line/context. | Medium | **Implemented** (v0.9.5: `CompileError` with line, parser/line in AST, runtime Quantity messages) |
+| **Uncertainty propagation** | Error propagation: f(x ± Δx) → result with uncertainty; standard in metrology. | Medium | **Implemented** (v0.9.2: `uncertain(value, std)`, `UncertainQuantity`) |
+| **Compile-time units** | `1[m] + 1[s]` → compile error instead of runtime error; fewer unit bugs. | Medium | **Implemented** (v0.9.5: `units_checker.py`, `compile_source(..., check_units=True)`, CLI `--no-units-check`) |
+| **Fitting / regression** | `fit(model, data)` with gradient descent or MCMC; typical for curve fitting. | Medium | **Implemented** (v0.9.2: `fit(loss_fn, params_init, data, method="gd"|"mcmc")`) |
+| **NUTS / VI** | More robust Bayesian inference (NUTS) or fast approximation (VI); Metropolis often slow. | Medium | Phase 4 (HMC done) |
+| **LaTeX export of formulas** | Generate LaTeX from Dedekind expressions (for papers/notes). | Medium | **Implemented** (v0.9.4: `export_to_latex(source)`, CLI `--latex`) |
+| **Symbolic derivatives** | `diff(expr, x)` returns a formula instead of numeric `grad()`; for papers, stability analysis. | Medium-high | Phase 5 |
 
 ---
 
-## 3. Abhängigkeiten und Reihenfolge
+## 3. Dependencies and Order
 
-- **Phase 1** baut nur auf der bestehenden Runtime auf (keine Compiler-Änderungen nötig).
-- **Phase 2** verbessert Compiler/Runtime-Fehlerausgabe; hilft allen nachfolgenden Features.
-- **Phase 3**: Uncertainty-Propagation nutzt `Quantity`-ähnliche Typen; Compile-Time-Units sind ein eigenes Typ-/Dimensionssystem im Compiler.
-- **Phase 4**: Fitting nutzt `grad()` und ggf. `metropolis`; NUTS/VI erweitern die bestehende Probabilistic-API; LaTeX-Export nutzt AST (evtl. SymPy oder eigener Visitor).
-- **Phase 5**: Symbolische Ableitungen können mit Symbolic Simplification und ggf. SymPy zusammenspielen.
-
----
-
-## 4. Implementierungs-Phasen
-
-### Phase 1: Geringer Aufwand — Mehr Verteilungen & Numerische Integration ✅ (v0.9)
-
-**Ziel**: Schneller Nutzen für Statistik und Integration ohne Compiler-Änderungen.
-
-**Umgesetzt**:
-
-1. **Mehr Verteilungen** in `ml_runtime.py`: `Exponential(rate)`, `Gamma(concentration, rate)`, `Beta(alpha, beta)`, `Poisson(rate)`; API wie `Normal`/`Uniform`: `sample(dist)`, `sample(dist, n)`, `log_prob(dist, value)`.
-2. **Numerische Integration** in `ml_runtime.py`: `integrate(f, a, b, n=100)` mit Trapezregel; differenzierbar, wenn `f` Tensor akzeptiert. Zusätzlich `sin(x)`, `cos(x)` für Ausdrücke.
-3. **Beispiele**: `examples/dedekind/distributions_extended.ddk`, `examples/dedekind/integration.ddk`.
-4. **Dokumentation**: Language Spec §15.8 (erweiterte Verteilungen), §15.10 (Integration & Math); README „What’s New in v0.9“.
-
-**Erfolgskriterium**: Erfüllt — beide Beispiele laufen fehlerfrei.
+- **Phase 1** builds only on the existing runtime (no compiler changes needed).
+- **Phase 2** improves compiler/runtime error output; helps all subsequent features.
+- **Phase 3**: Uncertainty propagation uses `Quantity`-like types; compile-time units are a separate type/dimension system in the compiler.
+- **Phase 4**: Fitting uses `grad()` and possibly `metropolis`; NUTS/VI extend the existing probabilistic API; LaTeX export uses the AST (possibly SymPy or a custom visitor).
+- **Phase 5**: Symbolic derivatives can interact with symbolic simplification and possibly SymPy.
 
 ---
 
-### Phase 2: Bessere Fehlermeldungen ✅ (v0.9.5)
+## 4. Implementation Phases
 
-**Ziel**: Einheitenfehler, Dimensionskonflikte und Typfehler mit Zeile und Kontext melden.
+### Phase 1: Low Effort — More Distributions & Numerical Integration (v0.9)
 
-**Umgesetzt**:
+**Goal**: Quick benefit for statistics and integration without compiler changes.
 
-1. **Quelltext-Positionen**: AST-Knoten tragen optional `line` (Zeile); Parser setzt sie bei allen Konstrukten; Lexer liefert Zeile pro Token.
-2. **Compiler-Fehler**: `CompileError(message, line=..., filepath=...)` mit formatierter Ausgabe „Datei: Zeile N: Meldung“; Parser wirft bei erwartetem Token, ungültigem Zuweisungsziel, unerwartetem Token.
-3. **Runtime-Fehler**: `Quantity`/`UncertainQuantity` bei Einheiten-Mismatch (+/-) mit klarer Meldung: „Einheitenfehler bei Addition: [m] vs [s]. Für + und - müssen beide Größen die gleiche Einheit haben.“
-4. **Pipeline**: `compile_source(source, filepath=..., check_units=...)`; `run_examples` übergibt `filepath`; CLI fängt `CompileError` und gibt sie formatiert aus.
+**Delivered**:
 
-**Erfolgskriterium**: Erfüllt — typische Fehler liefern verständliche Meldung mit Zeilenangabe; alle Beispiele laufen.
+1. **More distributions** in `ml_runtime.py`: `Exponential(rate)`, `Gamma(concentration, rate)`, `Beta(alpha, beta)`, `Poisson(rate)`; API like `Normal`/`Uniform`: `sample(dist)`, `sample(dist, n)`, `log_prob(dist, value)`.
+2. **Numerical integration** in `ml_runtime.py`: `integrate(f, a, b, n=100)` with trapezoidal rule; differentiable when `f` accepts a tensor. Additionally `sin(x)`, `cos(x)` for expressions.
+3. **Examples**: `examples/dedekind/distributions_extended.ddk`, `examples/dedekind/integration.ddk`.
+4. **Documentation**: Language Spec §15.8 (extended distributions), §15.10 (integration & math); README "What's New in v0.9".
 
----
-
-### Phase 3: Uncertainty-Propagation & Einheiten Compile-Zeit (geschätzt: 3–5 Wochen)
-
-**Ziel**: Fehlerfortpflanzung zur Laufzeit; Unit-Checks vor der Ausführung.
-
-**3a) Uncertainty-Propagation**
-
-1. **Typ**: Erweiterung von `Quantity` oder neuer Typ `UncertainQuantity(value, std)` bzw. `value ± std` mit Propagationsregeln (Gauß’sche Fortpflanzung für +, -, *, /, ^).
-2. **API**: z. B. `x_with_err = uncertain(10.0, 0.5)` oder Literal-Syntax; Ausgabe „value ± std“.
-3. **Integration**: Mit bestehenden Einheiten kombinierbar (value und std gleiche Einheit); in `ml_runtime.py` und Codegen (neue Funktion/Built-in).
-
-**3b) Einheiten zur Compile-Zeit** ✅ (v0.9.5)
-
-1. **Check vor Codegen**: `units_checker.py` — Visitor über AST; für `+`/`-` wird Einheit aus Literal, Quantity und bekannten Konstanten inferiert; bei Mismatch (z. B. `1[m] + 1[s]`) wird `CompileError` mit Zeile geworfen. Unäres Minus (`0 - x`) erlaubt.
-2. **API**: `compile_source(..., check_units=True)` (Default); CLI `--no-units-check` zum Abschalten.
-3. **Bekannte Konstanten**: `c`, `G`, `h`, `pi`, `e`, … mit Einheiten in `KNOWN_UNITS`; Identifier werden bei Bedarf aufgelöst.
-
-**Erfolgskriterium**: Erfüllt — `1[m] + 1[s]` führt zu Compiler-Fehler mit Zeile; alle Beispiele (inkl. `universal_constants.ddk`) laufen.
+**Success criterion**: Met — both examples run without errors.
 
 ---
 
-### Phase 4: Fitting, NUTS/VI, LaTeX-Export (geschätzt: 4–6 Wochen)
+### Phase 2: Better Error Messages (v0.9.5)
 
-**Ziel**: Kurvenanpassung, bessere Bayesian-Tools und Formel-Export für Papers.
+**Goal**: Report unit errors, dimension conflicts, and type errors with line and context.
 
-**4a) Fitting / Regression** ✅ (v0.9.2, erweitert v0.9.4)
+**Delivered**:
 
-1. **API**: `fit(loss_fn, params_init, data, method="gd"|"mcmc"|"hmc", lr=0.01, steps=500)` — minimiert `loss_fn(params, data)` via Gradient Descent, Metropolis-Hastings oder **HMC** (Hamiltonian Monte Carlo).
-2. **Implementierung**: In `ml_runtime.py`; GD mit PyTorch backward; MCMC via `metropolis`; HMC mit Leapfrog-Integration und Gradienten. Beispiele: `curve_fitting.ddk`, `hmc_fitting.ddk`.
+1. **Source positions**: AST nodes optionally carry `line`; the parser sets them on all constructs; the lexer reports the line per token.
+2. **Compiler errors**: `CompileError(message, line=..., filepath=...)` with formatted output "file: line N: message"; the parser raises on expected tokens, invalid assignment targets, unexpected tokens.
+3. **Runtime errors**: `Quantity`/`UncertainQuantity` on unit mismatch (+/-) with a clear message: "Unit error in addition: [m] vs [s]. For + and - both quantities must have the same unit."
+4. **Pipeline**: `compile_source(source, filepath=..., check_units=...)`; `run_examples` passes `filepath`; the CLI catches `CompileError` and prints it formatted.
 
-**4b) HMC** ✅ (v0.9.4), NUTS / VI optional
-
-1. **HMC**: `hmc(log_prior_fn, log_likelihood_fn, data, init_theta, num_steps, step_size=0.1, num_leapfrog=10)` — gleiche API wie `metropolis`; nutzt Gradienten für bessere Proposals. Auch als `fit(..., method="hmc")` nutzbar.
-2. **NUTS/VI**: Optional später (Pyro/NumPyro oder Eigenbau).
-
-**4c) LaTeX-Export** ✅ (v0.9.4)
-
-1. **AST → LaTeX**: Visitor in `src/compiler/latex_export.py` — Literal, Identifier, BinaryOp (+, -, *, /, ^), Call (sin, cos, exp, log, sqrt, …), Quantity, Subscript, Lambda in LaTeX-Strings.
-2. **API**: `export_to_latex(source_code)` im Modul `compiler`; CLI: `python -m src.compiler.compiler <file.ddk> --latex`. Ausgabe: Gleichungen (Zuweisungen/Returns) als LaTeX.
-3. **Beispiel**: `examples/dedekind/latex_demo.ddk`; Ausgabe z. B. `E = m \cdot {c}^{2}`.
-
-**Erfolgskriterium**: Erfüllt — `fit(..., method="hmc")` liefert Posterior-Samples; `export_to_latex(source)` erzeugt lesbaren LaTeX für typische Formeln.
+**Success criterion**: Met — typical errors produce a clear message with line number; all examples run.
 
 ---
 
-### Phase 5: Symbolische Ableitungen (geschätzt: 4–8 Wochen)
+### Phase 3: Uncertainty Propagation & Compile-time Units (estimated: 3–5 weeks)
 
-**Ziel**: `diff(expr, x)` liefert einen Ausdruck (Formel), nicht nur numerisches `grad()`; für Stabilitätsanalyse, Paper, vereinfachte Terme.
+**Goal**: Error propagation at runtime; unit checks before execution.
 
-**Schritte**:
+**3a) Uncertainty propagation**
 
-1. **Option A — SymPy**: Dedekind-AST → SymPy-Expr → `sympy.diff(expr, x)` → zurück in Dedekind-AST oder direkt LaTeX/Code. Erfordert AST ↔ SymPy-Übersetzer (ähnlich Symbolic Simplification Phase 4).
-2. **Option B — Eigenbau**: Eigenes Modul `symbolic_diff.py`: Visitor über AST, Ableitungsregeln für +, -, *, /, ^, `exp`, `log`, `sin`, `cos` etc.; Ausgabe neuer AST. Keine externe Abhängigkeit, aber begrenzt auf implementierte Regeln.
-3. **API**: `diff(expr, var)` — `expr` kann Dedekind-Ausdruck (als String oder AST); Rückgabe vereinfachter Ausdruck (oder String/LaTeX).
-4. **Integration**: Mit Symbolic Simplification abstimmen (vereinfachte Ableitungen); optional mit LaTeX-Export kombinieren.
+1. **Type**: Extension of `Quantity` or a new type `UncertainQuantity(value, std)` or `value ± std` with propagation rules (Gaussian propagation for +, -, *, /, ^).
+2. **API**: e.g. `x_with_err = uncertain(10.0, 0.5)` or a literal syntax; output "value ± std".
+3. **Integration**: Combinable with existing units (value and std same unit); in `ml_runtime.py` and codegen (new function/built-in).
 
-**Erfolgskriterium**: Für polynomielle und einfache transzendente Ausdrücke liefert `diff(expr, x)` die korrekte Ableitung als Ausdruck; Dokumentation und Beispiel.
+**3b) Compile-time units** (v0.9.5)
+
+1. **Check before codegen**: `units_checker.py` — visitor over AST; for `+`/`-` the unit is inferred from literals, Quantity, and known constants; on mismatch (e.g. `1[m] + 1[s]`) a `CompileError` with line is raised. Unary minus (`0 - x`) allowed.
+2. **API**: `compile_source(..., check_units=True)` (default); CLI `--no-units-check` to disable.
+3. **Known constants**: `c`, `G`, `h`, `pi`, `e`, … with units in `KNOWN_UNITS`; identifiers are resolved as needed.
+
+**Success criterion**: Met — `1[m] + 1[s]` produces a compiler error with line; all examples (including `universal_constants.ddk`) run.
 
 ---
 
-## 5. Übersicht: Phasen und Meilensteine
+### Phase 4: Fitting, NUTS/VI, LaTeX Export (estimated: 4–6 weeks)
 
-| Phase | Inhalt | Geschätzter Aufwand | Meilenstein |
+**Goal**: Curve fitting, better Bayesian tools, and formula export for papers.
+
+**4a) Fitting / regression** (v0.9.2, extended in v0.9.4)
+
+1. **API**: `fit(loss_fn, params_init, data, method="gd"|"mcmc"|"hmc", lr=0.01, steps=500)` — minimizes `loss_fn(params, data)` via gradient descent, Metropolis-Hastings, or **HMC** (Hamiltonian Monte Carlo).
+2. **Implementation**: in `ml_runtime.py`; GD with PyTorch backward; MCMC via `metropolis`; HMC with leapfrog integration and gradients. Examples: `curve_fitting.ddk`, `hmc_fitting.ddk`.
+
+**4b) HMC** (v0.9.4), NUTS / VI optional
+
+1. **HMC**: `hmc(log_prior_fn, log_likelihood_fn, data, init_theta, num_steps, step_size=0.1, num_leapfrog=10)` — same API as `metropolis`; uses gradients for better proposals. Also usable as `fit(..., method="hmc")`.
+2. **NUTS/VI**: optional later (Pyro/NumPyro or own implementation).
+
+**4c) LaTeX export** (v0.9.4)
+
+1. **AST → LaTeX**: visitor in `src/compiler/latex_export.py` — Literal, Identifier, BinaryOp (+, -, *, /, ^), Call (sin, cos, exp, log, sqrt, …), Quantity, Subscript, Lambda into LaTeX strings.
+2. **API**: `export_to_latex(source_code)` in the `compiler` module; CLI: `python -m src.compiler.compiler <file.ddk> --latex`. Output: equations (assignments/returns) as LaTeX.
+3. **Example**: `examples/dedekind/latex_demo.ddk`; output e.g. `E = m \cdot {c}^{2}`.
+
+**Success criterion**: Met — `fit(..., method="hmc")` returns posterior samples; `export_to_latex(source)` produces readable LaTeX for typical formulas.
+
+---
+
+### Phase 5: Symbolic Derivatives (estimated: 4–8 weeks)
+
+**Goal**: `diff(expr, x)` returns an expression (formula), not just a numeric `grad()`; for stability analysis, papers, simplified terms.
+
+**Steps**:
+
+1. **Option A — SymPy**: Dedekind AST → SymPy Expr → `sympy.diff(expr, x)` → back into Dedekind AST or directly LaTeX/code. Requires AST ↔ SymPy translator (similar to Symbolic Simplification Phase 4).
+2. **Option B — Own implementation**: dedicated `symbolic_diff.py` module: visitor over AST, derivative rules for +, -, *, /, ^, `exp`, `log`, `sin`, `cos`, etc.; produces a new AST. No external dependency, but limited to implemented rules.
+3. **API**: `diff(expr, var)` — `expr` can be a Dedekind expression (as a string or AST); returns simplified expression (or string/LaTeX).
+4. **Integration**: Coordinate with Symbolic Simplification (simplified derivatives); optionally combine with LaTeX export.
+
+**Success criterion**: For polynomial and simple transcendental expressions, `diff(expr, x)` returns the correct derivative as an expression; documentation and example.
+
+---
+
+## 5. Overview: Phases and Milestones
+
+| Phase | Content | Estimated effort | Milestone |
 |-------|--------|---------------------|-------------|
-| 1 | Mehr Verteilungen, Numerische Integration | ✅ v0.9 | Neue Stdlib-Funktionen lauffähig |
-| 2 | Bessere Fehlermeldungen | ✅ v0.9.5 | Fehler mit Zeile/Kontext |
-| 3 | Uncertainty-Propagation, Einheiten Compile-Zeit | ✅ v0.9.2 / v0.9.5 | Messtechnik & Unit-Safety |
-| 4 | Fitting, NUTS/VI, LaTeX-Export | ✅ v0.9.2–v0.9.4 | Regression, Bayesian, Papers |
-| 5 | Symbolische Ableitungen | 4–8 Wochen | diff(expr, x) als Formel |
+| 1 | More distributions, numerical integration | v0.9 | New stdlib functions running |
+| 2 | Better error messages | v0.9.5 | Errors with line/context |
+| 3 | Uncertainty propagation, compile-time units | v0.9.2 / v0.9.5 | Metrology & unit safety |
+| 4 | Fitting, NUTS/VI, LaTeX export | v0.9.2–v0.9.4 | Regression, Bayesian, papers |
+| 5 | Symbolic derivatives | 4–8 weeks | diff(expr, x) as a formula |
 
 ---
 
-## 6. Risiken und Optionen
+## 6. Risks and Options
 
-| Risiko | Mitigation |
+| Risk | Mitigation |
 |--------|------------|
-| NUTS/VI erhöht Abhängigkeiten (Pyro/NumPyro) | Optional als Extra; oder schlanker Eigenbau nur für NUTS. |
-| Compile-Time-Units erfordern größeres Typ-System | Schrittweise: zuerst nur Literale und einfache Binärops; keine vollständige Inferenz im MVP. |
-| Symbolische Ableitungen und SymPy-Pfad doppelt | Phase 5 zuerst mit Eigenbau (Option B); SymPy optional später. |
-| Fitting-API zu starr | Erste Version mit `fit(loss_fn, params_init, data)`; Erweiterung mit `model_fn(x, params)` in Phase 4. |
+| NUTS/VI increases dependencies (Pyro/NumPyro) | Optional as an extra; or lean custom implementation only for NUTS. |
+| Compile-time units require a larger type system | Step by step: first only literals and simple binary ops; no full inference in the MVP. |
+| Symbolic derivatives and SymPy path duplicated | Phase 5 first with custom implementation (Option B); SymPy optional later. |
+| Fitting API too rigid | First version with `fit(loss_fn, params_init, data)`; extension with `model_fn(x, params)` in Phase 4. |
 
 ---
 
-## 7. Referenzen und nächste Schritte
+## 7. References and Next Steps
 
-- **Bestehende Roadmap**: [Symbolic_Simplification_Roadmap.md](Symbolic_Simplification_Roadmap.md) — Einheiten in Vereinfachung (Phase 5 dort) mit Phase 3 hier abstimmen.
-- **Chemie & Biologie**: [Chemistry_Biology_Roadmap.md](Chemistry_Biology_Roadmap.md) — Einheiten mol/L/M, Beispiele (Kinetik, Dosis-Wirkung, Wachstum), Convenience-Funktionen, Doku „Dedekind für Chemie & Biologie“.
-- **Language Specification**: §15 Standard Library; §12 Implementation Roadmap; „Beyond v1.0“.
-- **Codebasis**: `src/compiler/ml_runtime.py` (Stdlib), `src/compiler/codegen.py` (Built-ins), `src/compiler/compiler.py` (Pipeline), `src/compiler/parser.py` (AST, Zeileninfo).
-- **Nächster konkreter Schritt**: Phase 5 — Symbolische Ableitungen (`diff(expr, x)` als Formel); optional Phase 2/3 verfeinern (z. B. Spalte, IDE-Anzeige).
+- **Existing roadmap**: [Symbolic_Simplification_Roadmap.md](Symbolic_Simplification_Roadmap.md) — units in simplification (Phase 5 there) coordinate with Phase 3 here.
+- **Chemistry & biology**: [Chemistry_Biology_Roadmap.md](Chemistry_Biology_Roadmap.md) — units mol/L/M, examples (kinetics, dose-response, growth), convenience functions, docs "Dedekind for Chemistry & Biology".
+- **Language Specification**: §15 Standard Library; §12 Implementation Roadmap; "Beyond v1.0".
+- **Code base**: `src/compiler/ml_runtime.py` (stdlib), `src/compiler/codegen.py` (built-ins), `src/compiler/compiler.py` (pipeline), `src/compiler/parser.py` (AST, line info).
+- **Next concrete step**: Phase 5 — symbolic derivatives (`diff(expr, x)` as a formula); optionally refine Phase 2/3 (e.g. column, IDE display).
 
 ---
 
-*Dieses Dokument ist die Implementierungs-Roadmap für naturwissenschaftliche Features. Bei Änderungen an der Language Spec oder neuen Abhängigkeiten sollte die Roadmap angepasst werden.*
+*This document is the implementation roadmap for science-oriented features. The roadmap should be updated when the language spec or dependencies change.*

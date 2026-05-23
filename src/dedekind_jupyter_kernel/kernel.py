@@ -24,9 +24,9 @@ try:
 except ImportError:
     CompileError = Exception  # fallback if run outside repo
 
-# LaTeX → Unicode für native Darstellung in der Konsole (UTF-8; Font mit mathematischen Zeichen)
+# LaTeX -> Unicode for native rendering in the console (UTF-8; font with mathematical symbols)
 _LATEX_TO_UNICODE = [
-    # Griechisch (lange zuerst)
+    # Greek (longest first)
     (r"\Alpha", "Α"), (r"\Beta", "Β"), (r"\Gamma", "Γ"), (r"\Delta", "Δ"), (r"\Epsilon", "Ε"),
     (r"\Zeta", "Ζ"), (r"\Eta", "Η"), (r"\Theta", "Θ"), (r"\Iota", "Ι"), (r"\Kappa", "Κ"),
     (r"\Lambda", "Λ"), (r"\Mu", "Μ"), (r"\Nu", "Ν"), (r"\Xi", "Ξ"), (r"\Omicron", "Ο"),
@@ -37,7 +37,7 @@ _LATEX_TO_UNICODE = [
     (r"\lambda", "λ"), (r"\mu", "μ"), (r"\nu", "ν"), (r"\xi", "ξ"), (r"\omicron", "ο"),
     (r"\pi", "π"), (r"\rho", "ρ"), (r"\sigma", "σ"), (r"\tau", "τ"), (r"\upsilon", "υ"),
     (r"\phi", "φ"), (r"\chi", "χ"), (r"\psi", "ψ"), (r"\omega", "ω"), (r"\hbar", "ℏ"),
-    # Operatoren und Symbole
+    # Operators and symbols
     (r"\int", "∫"), (r"\sum", "∑"), (r"\prod", "∏"), (r"\sqrt", "√"), (r"\infty", "∞"),
     (r"\partial", "∂"), (r"\nabla", "∇"), (r"\cdot", "·"), (r"\times", "×"), (r"\div", "÷"),
     (r"\pm", "±"), (r"\mp", "∓"), (r"\leq", "≤"), (r"\geq", "≥"), (r"\neq", "≠"),
@@ -45,22 +45,22 @@ _LATEX_TO_UNICODE = [
     (r"\rightarrow", "→"), (r"\leftarrow", "←"), (r"\Rightarrow", "⇒"), (r"\Leftarrow", "⇐"),
     (r"\left(", "("), (r"\right)", ")"), (r"\quad", " "), (r"\,", " "), (r"\;", " "),
 ]
-# Hoch-/Tiefstellen (Ziffern)
+# Superscripts/subscripts (digits)
 _SUP = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
 _SUB = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
 
 
 def _latex_to_unicode(s):
-    """Konvertiert einfaches LaTeX in Unicode-Text für die Konsole (UTF-8)."""
+    """Converts simple LaTeX to Unicode text for the console (UTF-8)."""
     t = s.strip()
     if t.startswith("$") and t.endswith("$"):
         t = t[1:-1].strip()
     for latex, unicode_char in _LATEX_TO_UNICODE:
         t = t.replace(latex, unicode_char)
-    # \mathrm{...} und \texttt{...} -> Inhalt als Text (z. B. .sparse(), grad, Code)
+    # \mathrm{...} and \texttt{...} -> content as text (e.g. .sparse(), grad, code)
     t = re.sub(r"\\mathrm\s*\{([^{}]*)\}", r"\1", t)
     t = re.sub(r"\\texttt\s*\{([^{}]*)\}", r"\1", t)
-    # \frac{1}{2} -> ½ bzw. a/b; häufige Brüche als Unicode
+    # \frac{1}{2} -> 1/2 or fraction Unicode; common fractions as Unicode
     frac_map = {(1, 2): "½", (1, 3): "⅓", (2, 3): "⅔", (1, 4): "¼", (3, 4): "¾", (1, 5): "⅕"}
     def frac_repl(m):
         a, b = m.group(1).strip(), m.group(2).strip()
@@ -70,10 +70,10 @@ def _latex_to_unicode(s):
         except ValueError:
             return f"{a}/{b}"
     t = re.sub(r"\\frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}", frac_repl, t)
-    # Einfache Hochstellen: ^1 -> ¹ (nur einzelne Ziffer)
+    # Simple superscripts: ^1 -> superscript-1 (single digit only)
     t = re.sub(r"\^(\d)", lambda m: m.group(1).translate(_SUP), t)
     t = re.sub(r"_(\d)", lambda m: m.group(1).translate(_SUB), t)
-    # Leerzeichen nach ∂ entfernen: ∂ T -> ∂T (saubere Bruchdarstellung)
+    # Remove whitespace after partial-derivative: clean fraction display
     t = re.sub(r"∂\s+", "∂", t)
     return t.strip()
 
@@ -94,11 +94,11 @@ class DedekindKernel(Kernel):
         super().__init__(**kwargs)
         self._globals = {}
         self._execution_count = 0
-        # comm_open auf Shell-Channel abfangen (ipykernel hat es nicht in msg_types)
+        # Intercept comm_open on shell channel (ipykernel does not list it in msg_types)
         self.shell_handlers['comm_open'] = self._comm_open_noop
 
     def _comm_open_noop(self, stream, ident, msg):
-        """No-op damit comm_open vom Frontend keine 'Unknown message type'-Warnung auslöst."""
+        """No-op so that comm_open from the frontend does not trigger an 'Unknown message type' warning."""
         pass
 
     def do_execute(self, code, silent, store_history=True, user_expressions=None, allow_stdin=False):

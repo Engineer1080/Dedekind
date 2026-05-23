@@ -1,27 +1,27 @@
-// Quick Wins: Musik — cents, equal temperament, Frequenzverhältnisse
+// Quick wins: music - cents, equal temperament, frequency ratios
 fn main() {
-    print("--- Dedekind: Musik Quick Wins ---")
+    print("--- Dedekind: music quick wins ---")
 
-    // Cent zu Verhältnis: 100 cent = Halbton = 2^(1/12)
-    print("100 cent (Halbton) als Frequenzverhältnis:")
+    // Cents to ratio: 100 cents = semitone = 2^(1/12)
+    print("100 cents (semitone) as frequency ratio:")
     print(cents_to_ratio(100))
 
-    // Quinte = 700 cent = 3/2
-    print("700 cent (Quinte) als Verhältnis:")
+    // Fifth = 700 cents = 3/2
+    print("700 cents (fifth) as ratio:")
     print(cents_to_ratio(700))
 
-    // Verhältnis zu Cent
-    print("Quinte 3/2 in Cent:")
+    // Ratio to cents
+    print("Fifth 3/2 in cents:")
     print(ratio_to_cents(1.5))
 
-    // Gleichstufige Stimmung: A4 = 440 Hz
+    // Equal temperament: A4 = 440 Hz
     print("A4 (n=0):")
     print(equal_temperament(0))
     print("A5 (n=12):")
     print(equal_temperament(12))
-    print("C4 (n=-9, 9 Halbtöne unter A4):")
+    print("C4 (n=-9, 9 semitones below A4):")
     print(equal_temperament(-9))
 
-    print("Musik Quick Wins aktiv.")
+    print("Music quick wins active.")
 }
 main()

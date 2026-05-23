@@ -1,55 +1,55 @@
 fn main() {
     print("--- Dedekind: Advanced Signal & Image Processing ---")
 
-    // 1. Convolution (Faltung) Demonstration
-    // Erstelle ein einfaches "Bild" (4x4 Matrix)
+    // 1. Convolution demonstration
+    // Build a simple "image" (4x4 matrix)
     image = [
         [1.0, 1.0, 1.0, 1.0],
         [1.0, 2.0, 2.0, 1.0],
         [1.0, 2.0, 2.0, 1.0],
         [1.0, 1.0, 1.0, 1.0]
     ]
-    
-    // Erstelle einen 2x2 Edge-Detection Kernel
+
+    // Build a 2x2 edge-detection kernel
     kernel = [
         [-1.0, 1.0],
         [-1.0, 1.0]
     ]
-    
-    print("Starte Faltung...")
+
+    print("Starting convolution...")
     conv_result = convolution(image, kernel)
-    print("Ergebnis der Faltung:")
+    print("Convolution result:")
     print(conv_result)
 
-    // 2. FFT & Filterung
-    // Erstelle ein verrauschtes Signal
+    // 2. FFT & filtering
+    // Build a noisy signal
     signal = [1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0]
-    print("Original Signal:")
+    print("Original signal:")
     print(signal)
-    
-    // Transformiere in den Frequenzbereich
+
+    // Transform into the frequency domain
     frequencies = fft(signal)
-    print("Frequenzen (FFT):")
+    print("Frequencies (FFT):")
     print(frequencies)
-    
-    // Rücktransformation
+
+    // Inverse transform
     reconstructed = ifft(frequencies)
-    print("Rekonstruiertes Signal (IFFT):")
+    print("Reconstructed signal (IFFT):")
     print(reconstructed)
 
-    // 3. Matrix Inversion & Transposition
+    // 3. Matrix inversion & transposition
     M = [[4.0, 7.0], [2.0, 6.0]]
     print("Matrix M:")
     print(M)
-    
+
     M_inv = inverse(M)
-    print("Inverse von M:")
+    print("Inverse of M:")
     print(M_inv)
-    
-    print("Transponierte von M:")
+
+    print("Transpose of M:")
     print(transpose(M))
 
-    print("--- Programm beendet ---")
+    print("--- Program finished ---")
 }
 
 main()

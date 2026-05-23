@@ -1,7 +1,7 @@
-// stdlib_modules_demo.ddk — Demonstration der Dedekind-Standardbibliothek.
+// stdlib_modules_demo.ddk - demonstration of the Dedekind standard library.
 //
-// Alle Built-ins (sin, ode_solve, fit, michaelis_menten, ...) sind weiterhin
-// global verfügbar — `use` ist optional und ergänzt sie um Convenience-Module.
+// All built-ins (sin, ode_solve, fit, michaelis_menten, ...) remain globally
+// available - `use` is optional and adds convenience modules on top.
 
 use physics
 use stats
@@ -11,10 +11,10 @@ use math
 use ml
 
 fn main() {
-    print("=== Dedekind Standardbibliothek (v1.7) ===")
+    print("=== Dedekind standard library (v1.7) ===")
     print("")
 
-    // --- Physik ---
+    // --- Physics ---
     print("[physics]")
     m = 2.0
     v = 3.0
@@ -34,7 +34,7 @@ fn main() {
     print("P(1 mol, 300 K, 24.5 L) = " + str(P) + " Pa")
     print("")
 
-    // --- Statistik ---
+    // --- Statistics ---
     print("[stats]")
     z = z_score(115.0, 100.0, 15.0)
     print("z-score(115, mu=100, sigma=15) = " + str(z))
@@ -49,7 +49,7 @@ fn main() {
     print("RMSE = " + str(rmse(y_true, y_pred)))
     print("")
 
-    // --- Chemie ---
+    // --- Chemistry ---
     print("[chemistry]")
     pH = pH_from_concentration(1e-3)
     print("pH(1e-3 M) = " + str(pH))
@@ -58,7 +58,7 @@ fn main() {
     print("HH-pH(pKa=4.76, [A-]=0.2, [HA]=0.1) = " + str(pBuffer))
 
     v2 = dilution_volume(1.0, 0.025, 0.1)
-    print("Verduennung 1M*25mL -> 0.1M: V2 = " + str(v2) + " L")
+    print("Dilution 1M*25mL -> 0.1M: V2 = " + str(v2) + " L")
 
     P_gas = boyle_volume(101325.0, 0.01, 50000.0)
     print("Boyle V2 = " + str(P_gas) + " m^3")
@@ -67,17 +67,17 @@ fn main() {
     print("Nernst E(Cu/Zn, Q=0.5) = " + str(E_cell) + " V")
     print("")
 
-    // --- Biologie ---
+    // --- Biology ---
     print("[biology]")
     N5 = exponential_growth(100.0, 0.2, 5.0)
-    print("Exp.Wachstum(100, r=0.2, t=5) = " + str(N5))
+    print("Exp.Growth(100, r=0.2, t=5) = " + str(N5))
 
     td = doubling_time(0.05)
-    print("Verdopplungszeit(r=0.05) = " + str(td))
+    print("Doubling time(r=0.05) = " + str(td))
 
     R0 = r_naught_sir(0.6, 0.1)
     p_c = herd_immunity_threshold(R0)
-    print("R_0 = " + str(R0) + ", Herdimmunitaet = " + str(p_c))
+    print("R_0 = " + str(R0) + ", herd immunity = " + str(p_c))
 
     hw = hardy_weinberg_freq(0.7)
     print("Hardy-Weinberg(p=0.7): " + str(hw))
@@ -86,14 +86,14 @@ fn main() {
     print("BMI(72 kg, 1.78 m) = " + str(bmi_val))
     print("")
 
-    // --- Mathematik ---
+    // --- Mathematics ---
     print("[math]")
     print("PHI = " + str(PHI))
     print("TAU = " + str(TAU))
     print("fib(20) = " + str(fibonacci(20)))
     print("H_10 = " + str(harmonic_sum(10)))
     print("geom_sum(1, 0.5, 10) = " + str(geometric_sum(1.0, 0.5, 10)))
-    print("Kugel V(r=2) = " + str(sphere_volume(2.0)))
+    print("Sphere V(r=2) = " + str(sphere_volume(2.0)))
     print("Hypotenuse(3, 4) = " + str(hypotenuse(3.0, 4.0)))
     print("sigmoid(1.5) = " + str(sigmoid(1.5)))
     print("digital_root(987654321) = " + str(digital_root(987654321)))

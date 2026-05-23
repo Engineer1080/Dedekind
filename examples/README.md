@@ -1,35 +1,35 @@
-# Beispiele (Examples)
+# Examples
 
-Die Beispiele sind nach Dateityp in Unterordner gegliedert:
+The examples are organized into subfolders by file type:
 
-| Ordner     | Inhalt                          |
+| Folder     | Contents                          |
 |------------|----------------------------------|
-| **dedekind/** | Dedekind-Quellcode (`.ddk`)    |
-| **python/**   | Generierter/Referenz-Python-Code (`.py`) |
-| **cpp/**      | C++-Quellcode (`.cpp`)           |
-| **mlir/**     | MLIR-Intermediate-Representation (`.mlir`) |
-| **bin/**      | Kompilierte Binaries (z. B. `.exe`) |
+| **dedekind/** | Dedekind source code (`.ddk`)    |
+| **python/**   | Generated / reference Python code (`.py`) |
+| **cpp/**      | C++ source code (`.cpp`)           |
+| **mlir/**     | MLIR intermediate representation (`.mlir`) |
+| **bin/**      | Compiled binaries (e.g. `.exe`) |
 
-## Dedekind-Beispiele ausführen
+## Running Dedekind examples
 
 ```bash
-# Vom Projektroot – einzelne Dedekind-Datei kompilieren und ausführen
+# From the project root — compile and run a single Dedekind file
 python -m src.compiler.compiler examples/dedekind/hello.ddk
 ```
 
-Dedekind Studio lädt beim Start (wenn keine vorherige Sitzung) die **wissenschaftlichen Plot-Beispiele** (`scientific_*.ddk`) aus den gebündelten Assets als Tabs. Weitere Beispiele aus `examples/dedekind/` können manuell geöffnet werden.
+Dedekind Studio loads the **scientific plot examples** (`scientific_*.ddk`) from the bundled assets as tabs at startup (when there is no previous session). Additional examples from `examples/dedekind/` can be opened manually.
 
-## Wissenschaftliche Plot-Beispiele (Dedekind-Features)
+## Scientific plot examples (Dedekind features)
 
-Diese Beispiele nutzen **Features, die Python nicht nativ hat**, und erzeugen Plots für Wissenschaftler:
+These examples use **features that Python does not have natively** and produce plots for scientists:
 
-| Datei | Inhalt | Dedekind-Features |
+| File | Contents | Dedekind features |
 |-------|--------|-------------------|
-| `scientific_wave_superposition.ddk` | Superposition zweier Sinuswellen | `pi`, `sin()`, `linspace()`, `plot()` |
-| `scientific_damped_oscillator.ddk` | Gedämpfter Oszillator x(t) = exp(-ζωt)·cos(ωt) | `exp()`, `cos()` auf Tensoren, `plot()` |
-| `scientific_arrhenius_plot.ddk` | Arrhenius-Plot ln(k) vs. 1/T | `arrhenius()`, `R_gas` [J/(K·mol)], `log()`, `plot()` |
-| `scientific_gravitational_potential.ddk` | Gravitationspotential V(r) = -G·M/r | `G`, Einheiten-Literale `[m]`, `[kg]`, `plot()` |
-| `scientific_ricci_plot.ddk` | Matrix-Vektor in Ricci-Notation A^ij·v^j, Komponenten-Plot | Einstein-Indizes `^ij`, `_j`, `plot()` |
-| `scientific_fft_spectrum.ddk` | FFT-Betrag eines Überlagerungssignals | `fft()`, `abs()`, reelles Signal → Spektrum, `plot()` |
+| `scientific_wave_superposition.ddk` | Superposition of two sine waves | `pi`, `sin()`, `linspace()`, `plot()` |
+| `scientific_damped_oscillator.ddk` | Damped oscillator x(t) = exp(-ζωt)·cos(ωt) | `exp()`, `cos()` on tensors, `plot()` |
+| `scientific_arrhenius_plot.ddk` | Arrhenius plot ln(k) vs. 1/T | `arrhenius()`, `R_gas` [J/(K·mol)], `log()`, `plot()` |
+| `scientific_gravitational_potential.ddk` | Gravitational potential V(r) = -G·M/r | `G`, unit literals `[m]`, `[kg]`, `plot()` |
+| `scientific_ricci_plot.ddk` | Matrix-vector in Ricci notation A^ij·v^j, component plot | Einstein indices `^ij`, `_j`, `plot()` |
+| `scientific_fft_spectrum.ddk` | FFT magnitude of a superposition signal | `fft()`, `abs()`, real signal → spectrum, `plot()` |
 
-Alle Beispiele laufen mit: `python run_examples.py --filter scientific`
+All examples run with: `python run_examples.py --filter scientific`

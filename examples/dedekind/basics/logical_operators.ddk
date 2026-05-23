@@ -1,6 +1,6 @@
-// Logische Operatoren: and, or, not, xor, nand, nor, xnor
+// Logical operators: and, or, not, xor, nand, nor, xnor
 
-print("=== Logische Operatoren in Dedekind ===")
+print("=== Logical operators in Dedekind ===")
 
 a = true
 b = false
@@ -8,13 +8,13 @@ b = false
 print("a = true, b = false")
 print("")
 
-// Basis-Operatoren
+// Basic operators
 print("and:  a and b  =", a and b)
 print("or:   a or b   =", a or b)
 print("not:  not a    =", not a)
 print("not:  not b    =", not b)
 
-// XOR: genau einer wahr
+// XOR: exactly one true
 print("xor:  a xor b  =", a xor b)
 print("xor:  a xor a  =", a xor a)
 print("xor:  b xor b  =", b xor b)
@@ -27,11 +27,11 @@ print("nand: a nand a =", a nand a)
 print("nor:  a nor b  =", a nor b)
 print("nor:  b nor b  =", b nor b)
 
-// XNOR: not (a xor b) = Äquivalenz
+// XNOR: not (a xor b) = equivalence
 print("xnor: a xnor b =", a xnor b)
 print("xnor: a xnor a =", a xnor a)
 
-// Kombinationen
+// Combinations
 print("")
 print("not (a and b) =", not (a and b))
 print("(a or b) and not (a and b) =", (a or b) and not (a and b))

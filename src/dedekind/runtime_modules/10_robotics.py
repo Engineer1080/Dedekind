@@ -4,8 +4,8 @@ import torch
 
 class KinematicChain:
     """
-    Modelliert einen Roboterarm (kinematische Kette) über Denavit-Hartenberg Parameter.
-    Vollständig differenzierbar für Inverse Kinematik via Gradientenabstieg.
+    Models a robotic arm (kinematic chain) via Denavit-Hartenberg parameters.
+    Fully differentiable for inverse kinematics via gradient descent.
     """
     def __init__(self):
         self.joints = []
@@ -16,7 +16,7 @@ class KinematicChain:
         return float(v)
 
     def add_revolute_joint(self, d, a, alpha):
-        """Fügt ein Drehgelenk hinzu. (d=offset, a=link length, alpha=twist)"""
+        """Adds a revolute joint. (d=offset, a=link length, alpha=twist)"""
         d_val = self._get_val(d, "length")
         a_val = self._get_val(a, "length")
         alpha_val = self._get_val(alpha, "angle")
@@ -24,7 +24,7 @@ class KinematicChain:
         return self
 
     def add_prismatic_joint(self, theta, a, alpha):
-        """Fügt ein Schubgelenk hinzu. (theta=angle, a=link length, alpha=twist)"""
+        """Adds a prismatic joint. (theta=angle, a=link length, alpha=twist)"""
         t_val = self._get_val(theta, "angle")
         a_val = self._get_val(a, "length")
         alpha_val = self._get_val(alpha, "angle")
@@ -33,15 +33,15 @@ class KinematicChain:
 
     def forward_kinematics(self, joint_vars):
         """
-        Berechnet die homogene 4x4 Transformationsmatrix des Endeffektors.
-        `joint_vars` ist ein 1D Tensor/Liste für eine Konfiguration, oder 2D (Batched).
+        Computes the 4x4 homogeneous transformation matrix of the end effector.
+        `joint_vars` is a 1D tensor/list for a single configuration, or 2D (batched).
         """
         jv = _to_tensor(joint_vars).double()
         if jv.ndim == 1:
             jv = jv.unsqueeze(0)  # (1, num_joints)
             
         if jv.shape[1] != len(self.joints):
-            raise ValueError(f"Erwartete {len(self.joints)} Gelenkvariablen, aber bekam {jv.shape[1]}")
+            raise ValueError(f"Expected {len(self.joints)} joint variables, but got {jv.shape[1]}")
 
         N = jv.shape[0]
         T = torch.eye(4, dtype=torch.float64).unsqueeze(0).repeat(N, 1, 1)  # (N, 4, 4)
@@ -69,7 +69,7 @@ class KinematicChain:
             d_t = d * one
             a_t = a * one
             
-            # Baue Matrix A_i über torch.stack auf, um die Autograd-Graphen für theta/d zu erhalten!
+            # Build matrix A_i via torch.stack to preserve autograd graphs for theta/d!
             row0 = torch.stack([ct, -st*ca, st*sa, a_t*ct], dim=1)
             row1 = torch.stack([st, ct*ca, -ct*sa, a_t*st], dim=1)
             row2 = torch.stack([zero, sa, ca, d_t], dim=1)

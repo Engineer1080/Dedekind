@@ -1,60 +1,60 @@
-// multi_file_modules_demo.ddk — Multi-File-Module mit Sichtbarkeit (v1.19)
+// multi_file_modules_demo.ddk - multi-file modules with visibility (v1.19)
 //
-// Zwei Sprach-Features in einem:
-//   1. `use foo.bar` resolved gepunktet auf modules/foo/bar.ddk
-//   2. `pub fn name()` markiert Funktionen als oeffentlich; alle anderen
-//      Funktionen im Modul sind nach aussen unsichtbar (Mangling).
+// Two language features in one:
+//   1. `use foo.bar` resolves the dotted path to modules/foo/bar.ddk
+//   2. `pub fn name()` marks functions as public; every other function in
+//      the module is invisible from the outside (mangling).
 //
-// Backward-kompatibel: Module ohne `pub`-Deklaration (z. B. die bestehenden
-// physics/stats/chemistry/biology/math/ml) verhalten sich wie bisher — alles
-// public.
+// Backward-compatible: modules without a `pub` declaration (e.g. the existing
+// physics/stats/chemistry/biology/math/ml) behave as before - everything
+// is public.
 
 use compiler_features.demo_geometry.area
 use compiler_features.demo_geometry.volume
 use math
 
 fn main() {
-    print("=== Multi-File-Module mit Sichtbarkeit (v1.19) ===")
+    print("=== Multi-file modules with visibility (v1.19) ===")
     print("")
 
-    // --- 1. Aufruf von Flächenberechnungen aus demo_geometry/area.ddk ---
-    print("[1] Flächen (demo_geometry/area.ddk)")
+    // --- 1. Call area computations from demo_geometry/area.ddk ---
+    print("[1] Areas (demo_geometry/area.ddk)")
     print("  circle_area(2.0)        =", circle_area(2.0))
     print("  triangle_area(4.0, 3.0) =", triangle_area(4.0, 3.0))
     print("")
 
-    // --- 2. Aufruf von Volumenberechnungen aus demo_geometry/volume.ddk ---
-    print("[2] Volumen (demo_geometry/volume.ddk)")
+    // --- 2. Call volume computations from demo_geometry/volume.ddk ---
+    print("[2] Volumes (demo_geometry/volume.ddk)")
     print("  cube_volume(3.0)        =", cube_volume(3.0))
     print("  sphere_volume(1.0)      =", sphere_volume(1.0))
     print("  cone_volume(2.0, 6.0)   =", cone_volume(2.0, 6.0))
     print("")
 
-    // --- 3. Sichtbarkeit: private Funktionen sind unsichtbar ---
-    print("[3] Visibility-Check")
+    // --- 3. Visibility: private functions are invisible ---
+    print("[3] Visibility check")
     try {
         bad = priv_pi()
-        print("  UNERWARTET: priv_pi war erreichbar")
+        print("  UNEXPECTED: priv_pi was reachable")
     } catch e {
-        print("  OK: priv_pi() nicht erreichbar — Mangling wirkt")
+        print("  OK: priv_pi() not reachable - mangling works")
     }
     try {
         bad2 = priv_four_thirds()
-        print("  UNERWARTET: priv_four_thirds war erreichbar")
+        print("  UNEXPECTED: priv_four_thirds was reachable")
     } catch e {
-        print("  OK: priv_four_thirds() nicht erreichbar")
+        print("  OK: priv_four_thirds() not reachable")
     }
     print("")
 
-    // --- 4. Bestehende Module (ohne pub) bleiben rueckwaerts-kompatibel ---
-    print("[4] Backward-Kompatibilitaet")
-    print("  use math (ohne pub) -> alle Funktionen sichtbar")
+    // --- 4. Existing modules (without pub) stay backward-compatible ---
+    print("[4] Backward compatibility")
+    print("  use math (without pub) -> all functions visible")
     print("  fibonacci(10)           =", fibonacci(10))
     print("  hypotenuse(3, 4)        =", hypotenuse(3.0, 4.0))
     print("")
 
-    print("USP: in Python kommt jedes import seine eigene Disziplin —")
-    print("     __all__, leading underscore convention, etc. In Dedekind")
-    print("     erzwingt die Sprache, was sonst Stilrichtlinie ist.")
+    print("USP: in Python every import comes with its own discipline -")
+    print("     __all__, leading-underscore convention, etc. In Dedekind")
+    print("     the language enforces what would otherwise be a style guide.")
 }
 main()
