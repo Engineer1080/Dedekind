@@ -1,33 +1,33 @@
 # Features for Scientists — Implementation Roadmap
 
 **Dedekind Language**  
-Draft: January 2026 · last roadmap status update: v1.17.0 (March 2027)
+Draft: January 2026 · last roadmap status update: v2.9.0 (May 2026)
 
 ---
 
-## Status Update (v1.17.0)
+## Status Update (v2.9.0)
 
 Since the original roadmap (January 2026), most of the planned phases have been delivered:
 
 | Phase | Topic | Status | Delivered in |
 |---|---|---|---|
-| 1 | PDE solver (heat) | Done | v0.8; v1.x extended to Maxwell, Navier-Stokes, Burgers, reaction-diffusion, advection-diffusion |
-| 1 | Extended distributions (Exponential, Gamma, Beta, Poisson) | Done | v0.9 |
-| 1 | Numerical integration (`integrate`) | Done | v0.9 |
-| 2 | Better error messages with line numbers | Done | v0.9.5 |
-| 2 | **Source-mapped tracebacks** (beyond the roadmap) | Done | v1.8 |
-| 3 | Uncertainty propagation (`uncertain()`) | Done | v0.9.3 |
-| 3 | Compile-time unit check | Done | v0.9.5 |
-| 4 | Fitting/regression (`fit()`) with GD/MCMC/HMC | Done | v0.9.3, v0.9.4 |
-| 4 | LaTeX export (`export_to_latex`) | Done | v0.9.4 |
-| 5 | Symbolic derivatives (`diff_sym`) | Done | v1.3 |
-| 5 | **Beyond Phase 5**: `integrate_sym`, `solve_sym`, `simplify_sym`, `series` (SymPy bridge) | Done | v1.3 – v1.6 |
+| 1 | PDE solver (heat) | ✅ Done | v0.8; v1.x extended to Maxwell, Navier-Stokes, Burgers, reaction-diffusion, advection-diffusion |
+| 1 | Extended distributions (Exponential, Gamma, Beta, Poisson) | ✅ Done | v0.9 |
+| 1 | Numerical integration (`integrate`) | ✅ Done | v0.9 |
+| 2 | Better error messages with line numbers | ✅ Done | v0.9.5 |
+| 2 | **Source-mapped tracebacks** (beyond the roadmap) | ✅ Done | v1.8 |
+| 3 | Uncertainty propagation (`uncertain()`) | ✅ Done | v0.9.3 |
+| 3 | Compile-time unit check | ✅ Done | v0.9.5 |
+| 4 | Fitting/regression (`fit()`) with GD/MCMC/HMC | ✅ Done | v0.9.3, v0.9.4 |
+| 4 | LaTeX export (`export_to_latex`) | ✅ Done | v0.9.4 |
+| 5 | Symbolic derivatives (`diff_sym`) | ✅ Done | v1.3 |
+| 5 | **Beyond Phase 5**: `integrate_sym`, `solve_sym`, `simplify_sym`, `series` (SymPy bridge) | ✅ Done | v1.3 – v1.6 |
 
 **Still open from the original roadmap:**
 - **NUTS** (No-U-Turn Sampler) in addition to HMC — not implemented.
 - **Variational Inference** (VI) — not implemented.
 
-**Added since v1.7** (beyond the original roadmap): standard library modules, `pyimport`, purity check, shape annotations, PINN, graph methods, MILP DSL, MD bridge, labeled tensors, bioinformatics, try/catch, slicing. See `docs/README.md` and `Dedekind_Language_Specification.md` §15.12–§15.23.
+**Added since v1.7** (beyond the original roadmap): standard library modules, `pyimport`, purity check, shape annotations, PINN, graph methods, MILP DSL, MD bridge, labeled tensors, bioinformatics, try/catch, slicing, differentiable engineering, and orbital mechanics. See `docs/roadmap.md` and `Dedekind_Language_Specification.md` §15.12–§15.23.
 
 ---
 
@@ -45,16 +45,16 @@ This roadmap prioritizes and plans **useful extensions** of the Dedekind languag
 
 | Feature | Benefit | Effort | Status / Phase |
 |--------|--------|---------|----------------|
-| **PDE solver (differentiable)** | Heat, diffusion equation; PINNs often need ∇²u, ∂u/∂t. | High | **Implemented** (v0.9: `pde_heat_1d`, `pde_heat_2d`) |
-| **More distributions** | Exponential, Gamma, Beta, Poisson for statistics, radiation, counting experiments. | Low | **Implemented** (v0.9: `Exponential`, `Gamma`, `Beta`, `Poisson`) |
-| **Numerical integration** | `integrate(f, a, b)` for areas, expectations, normalization. | Low | **Implemented** (v0.9: `integrate(f, a, b, n)`; `sin`, `cos`) |
-| **Better error messages** | Unit errors, dimension conflicts, "expected tensor, got Quantity" with line/context. | Medium | **Implemented** (v0.9.5: `CompileError` with line, parser/line in AST, runtime Quantity messages) |
-| **Uncertainty propagation** | Error propagation: f(x ± Δx) → result with uncertainty; standard in metrology. | Medium | **Implemented** (v0.9.2: `uncertain(value, std)`, `UncertainQuantity`) |
-| **Compile-time units** | `1[m] + 1[s]` → compile error instead of runtime error; fewer unit bugs. | Medium | **Implemented** (v0.9.5: `units_checker.py`, `compile_source(..., check_units=True)`, CLI `--no-units-check`) |
-| **Fitting / regression** | `fit(model, data)` with gradient descent or MCMC; typical for curve fitting. | Medium | **Implemented** (v0.9.2: `fit(loss_fn, params_init, data, method="gd"|"mcmc")`) |
-| **NUTS / VI** | More robust Bayesian inference (NUTS) or fast approximation (VI); Metropolis often slow. | Medium | Phase 4 (HMC done) |
-| **LaTeX export of formulas** | Generate LaTeX from Dedekind expressions (for papers/notes). | Medium | **Implemented** (v0.9.4: `export_to_latex(source)`, CLI `--latex`) |
-| **Symbolic derivatives** | `diff(expr, x)` returns a formula instead of numeric `grad()`; for papers, stability analysis. | Medium-high | Phase 5 |
+| **PDE solver (differentiable)** | Heat, diffusion equation; PINNs often need ∇²u, ∂u/∂t. | High | **Completed** (v0.9: `pde_heat_1d`, `pde_heat_2d`) |
+| **More distributions** | Exponential, Gamma, Beta, Poisson for statistics, radiation, counting experiments. | Low | **Completed** (v0.9: `Exponential`, `Gamma`, `Beta`, `Poisson`) |
+| **Numerical integration** | `integrate(f, a, b)` for areas, expectations, normalization. | Low | **Completed** (v0.9: `integrate(f, a, b, n)`; `sin`, `cos`) |
+| **Better error messages** | Unit errors, dimension conflicts, "expected tensor, got Quantity" with line/context. | Medium | **Completed** (v0.9.5: `CompileError` with line, parser/line in AST, runtime Quantity messages) |
+| **Uncertainty propagation** | Error propagation: f(x ± Δx) → result with uncertainty; standard in metrology. | Medium | **Completed** (v0.9.2: `uncertain(value, std)`, `UncertainQuantity`) |
+| **Compile-time units** | `1[m] + 1[s]` → compile error instead of runtime error; fewer unit bugs. | Medium | **Completed** (v0.9.5: `units_checker.py`, `compile_source(..., check_units=True)`, CLI `--no-units-check`) |
+| **Fitting / regression** | `fit(model, data)` with gradient descent or MCMC; typical for curve fitting. | Medium | **Completed** (v0.9.2: `fit(loss_fn, params_init, data, method="gd"|"mcmc"|"hmc")`) |
+| **NUTS / VI** | More robust Bayesian inference (NUTS) or fast approximation (VI); Metropolis often slow. | Medium | **Open** (HMC completed in v0.9.4) |
+| **LaTeX export of formulas** | Generate LaTeX from Dedekind expressions (for papers/notes). | Medium | **Completed** (v0.9.4: `export_to_latex(source)`, CLI `--latex`) |
+| **Symbolic derivatives** | `diff(expr, x)` returns a formula instead of numeric `grad()`; for papers, stability analysis. | Medium-high | **Completed** (v1.3: `symbolic_diff.py`) |
 
 ---
 

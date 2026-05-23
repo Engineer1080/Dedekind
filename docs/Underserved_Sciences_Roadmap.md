@@ -1,11 +1,11 @@
 # Dedekind for Underserved Sciences — Roadmap
 
 **Dedekind Language**  
-Draft: January 2026 · Last status update: v1.17.0 (March 2027)
+Draft: January 2026 · Last status update: v2.9.0 (May 2026)
 
 ---
 
-## Status Update (v1.17.0)
+## Status Update (v2.9.0)
 
 This roadmap is **largely delivered**:
 
@@ -19,14 +19,15 @@ This roadmap is **largely delivered**:
 | 2 | Materials science (`johnson_mehl_avrami`, `avrami_rate`) | ✅ completed | v1.x |
 | 3 | Geology/Materials/Structural examples | ✅ completed | `geology_darcy.ddk`, `materials_jmak.ddk` etc. |
 | 4 | Economics and Music examples | ✅ completed | `economics_solow.ddk`, `music_intervals.ddk` |
-| 5 (optional) | `nernst`, `van_t_hoff`, `rate_order`; `fick_diffusion_1d`, `beam_eigenmodes`, `truss_solve` | 📋 not prioritized — available on concrete researcher request |
+| 5 (optional) | `truss_solve`, `concrete_beam_capacity` | ✅ completed | v2.2.0 (`use structural`) |
 | 5 (optional) | User-defined units `unit Darcy = 9.87e-13[m^2]` | ✅ completed | v1.7 (`unit X = N[base]`) |
 | 6 (optional) | Formal linguistics, Archaeology | 📋 not started — marked as long-term; makes little sense without concrete users |
 | Bonus | **Molecular Dynamics via OpenMM** (`md_simulate_lj`) — exceeding the roadmap | ✅ completed | v1.14 |
 | Bonus | **Bioinformatics/Cheminformatics** (`Sequence[DNA]`, `smiles_descriptors`) | ✅ completed | v1.16 |
 | Bonus | **Earth-Science Labeled Tensors** (`LabeledTensor[lat, lon, time]`) | ✅ completed | v1.15 |
+| Bonus | **Differentiable FEM Structural / Thermal / Fluids Suite** | ✅ completed | v2.2.0 |
 
-**Status:** This roadmap is effectively closed for phases 1–4. Phase 5 (additional specialized functions) and Phase 6 (very niche disciplines) remain **on-demand** — not interesting on their own, but implementable if a concrete researcher asks for them.
+**Status:** This roadmap is effectively closed for phases 1–5. Phase 6 (very niche disciplines) remains **on-demand** — not interesting on their own, but implementable if a concrete researcher asks for them.
 
 ---
 

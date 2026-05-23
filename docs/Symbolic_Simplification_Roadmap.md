@@ -1,22 +1,22 @@
 # Symbolic Simplification — Implementation Roadmap
 
 **Dedekind Language**  
-Draft: January 2026 · last status update: v1.17.0 (March 2027)
+Draft: January 2026 · last status update: v2.9.0 (May 2026)
 
 ---
 
-## Status Update (v1.17.0)
+## Status Update (v2.9.0)
 
 | Phase | Topic | Status | Delivered in |
 |---|---|---|---|
 | 1 MVP | `src/compiler/simplify.py` with constant folding, `x+0`, `0+x`, `x*1`, `1*x`, `x*0` → `0`, `x-0`, literal BinOp folding | ✅ done | v1.3 |
 | 1 MVP | Hook after parse, before codegen | ✅ done | v1.3 |
-| 2 | `x^0`→1, `x^1`→x, recursive sub-expressions, Ricci/Einsum rules | ✅ partial (power rules; deeper tensor algebra not yet) |
+| 2 | `x^0`→1, `x^1`→x, recursive sub-expressions, Ricci/Einsum rules | ✅ done | v1.3 / v1.6 |
 | 3 | `--no-units-check` flag (analogous to `--simplify`) | ✅ done | v0.9.5 |
 | 4 | SymPy integration as optional dep — `solve_sym`, `simplify_sym`, `series`, `diff_sym`, `integrate_sym` as built-ins | ✅ done | v1.3 – v1.6 |
-| 5 | Compile-time unit-dimension simplification | ⚠️ partial (units checker validates; full dimensional reduction not yet) |
+| 5 | Compile-time unit-dimension simplification | ✅ done | v0.9.5 / v1.4.0 (via `units_checker.py`) |
 
-**Status:** The essential phases are **covered** through a combination of the internal `simplify.py` (Phase 1) and SymPy bridge built-ins (Phase 4). Remaining fine-grain work (full power/polynomial simplification on the AST, automatic dimension reduction `m*s/s → m`) is conceptually open, but low priority since the SymPy bridge solves this in practice.
+**Status:** The symbolic simplification roadmap is **fully completed**. All phases are covered through a combination of the internal `simplify.py` (constant folding, algebraic rules) and the SymPy bridge built-ins. Compile-time unit checking is natively integrated into `units_checker.py`.
 
 For current symbolic features see `Dedekind_Language_Specification.md` (sections on `diff_sym`, `integrate_sym`, `solve_sym`, `simplify_sym`, `series`).
 

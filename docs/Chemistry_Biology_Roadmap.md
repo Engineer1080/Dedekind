@@ -1,11 +1,11 @@
 # Dedekind for Chemistry and Biology — Roadmap
 
 **Dedekind Language**  
-Draft: January 2026 · last status update: v1.17.0 (March 2027)
+Draft: January 2026 · last status update: v2.9.0 (May 2026)
 
 ---
 
-## Status Update (v1.17.0)
+## Status Update (v2.9.0)
 
 This roadmap is **largely completed**:
 

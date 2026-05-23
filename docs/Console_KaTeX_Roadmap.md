@@ -4,7 +4,7 @@
 
 ---
 
-## Current (v1.0)
+## Current (v2.9.0)
 
 - **Console (stdout):** `print_latex(s)` sends a **Unicode version** of the formula to the console. Greek letters (α, Δ, π), operators (∫, ∑, √, ∞), fractions (½, ⅓) and superscripts/subscripts (⁰¹², ₀₁₂) are converted from LaTeX and shown as **UTF-8 text**. The console must use a font with mathematical characters (e.g. DejaVu Sans, Segoe UI). **No images** — `print_latex` does not open plots and does not emit PNG output.
 

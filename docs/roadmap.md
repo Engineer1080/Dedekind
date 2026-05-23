@@ -60,7 +60,36 @@
 *   [x] **pde_heat_1d**: Differentiable 1D heat solver \(u_t = k\,u_{xx}\); finite differences + `ode_solve`; Dirichlet boundary conditions.
 *   [x] **pde_heat_2d**: Differentiable 2D heat solver \(u_t = k\,(u_{xx}+u_{yy})\); gradients through `u0` and `k`.
 
-### Phase 16: Native MLIR Backend & AOT Compilation (planned)
+### Phase 16: Module System, DataFrames, and Slices (v1.1 - v1.7) ✅
+*   [x] **Module System**: `use` statement with dotted paths and `pub fn` export control.
+*   [x] **Custom Units**: User-defined units `unit NAME = FACTOR[base]` with compile-time registration.
+*   [x] **Data Science**: `DataFrame` with CSV/Parquet/HDF5/NetCDF loaders, print_table, and unit-aware plots.
+*   [x] **Error Handling**: `try { ... } catch e { ... }` block structure and Python-style slicing.
+
+### Phase 17: Generics and Advanced Physics/Math (v1.8 - v1.21) ✅
+*   [x] **Generics**: Type parameters `fn name<T, U>(...)` with polymorphic unit variable enforcement.
+*   [x] **3D Geometric Algebra**: Clifford/Geometric Algebra G(3,0) via `MultiVector`, rotor rotations, and sandwich products.
+*   [x] **Quantum Computing**: Native `QuantumCircuit` class, pure Statevector simulator, and VQE optimizer.
+*   [x] **Debugging**: Source-mapped tracebacks for runtime errors and transitive compiler purity checks.
+
+### Phase 18: Differentiable Engineering (v2.2.0) ✅
+*   [x] **Control Theory**: Block-diagram simulations (PID, transfer functions, saturation) with loop resolution and optimization.
+*   [x] **Fluid Dynamics**: Vectorized Lattice Boltzmann Method (D2Q9) with continuous obstacle masks for drag/lift optimization.
+*   [x] **Structural Mechanics**: 2D Finite Element simulation (Q4 bilinear elements) and topology optimization (SIMP/OC).
+*   [x] **Heat Transfer**: Implicit backward Euler thermal diffusion and conductance topology optimization.
+*   [x] **DSP & Electronics**: Biquad IIR/FIR filters and AC circuit MNA nodal network solver.
+
+### Phase 19: Space Physics & Trajectory Optimization (v2.3.0) ✅
+*   [x] **N-Body Simulation**: Native differentiable N-body integration (RK4) with softening parameters.
+*   [x] **Orbital Mechanics**: Kepler equation solver (Newton-Raphson) and state-vector element coordinate transformations.
+*   [x] **Trajectory Optimization**: Direct L-BFGS/GD-based trajectory optimization (e.g. Hohmann transfers).
+
+### Phase 20: Standard Library Consolidation (v2.9.0) ✅
+*   [x] **Atomic Consolidation**: Merged `molecular` (MD) and `crystallography` into unified `atomic.ddk`.
+*   [x] **Geometry Cleanup**: Merged all area and volume geometry functions directly into `math.ddk`.
+*   [x] **Legacy Removal**: Deleted deprecated example modules and folded helper utilities into standard modules.
+
+### Phase 21: Native MLIR Backend & AOT Compilation (planned)
 The current `src/dedekind/mlir_codegen.py` only emits MLIR-style text and `src/dedekind/aot_compiler.py` falls back to C++ stubs — there is no real MLIR/LLVM toolchain integration yet. This phase delivers a production-grade native backend.
 *   [ ] **MLIR Dialect**: Promote the prototype text emitter to a real `dedekind` MLIR dialect (TableGen / Python bindings).
 *   [ ] **MLIR Pipeline**: Wire up `mlir-opt` and `mlir-translate` so Dedekind -> MLIR -> LLVM IR -> object code runs end-to-end.
@@ -73,6 +102,6 @@ Dedekind aims to become the "Standard Language for Nature's Laws." To achieve th
 
 1. **Differentiable ODE Solvers**: Implemented in v0.7: `ode_solve(fun, y0, t, method="rk4")` solves dy/dt = fun(t,y) with differentiable RK4 (or Euler); gradients flow through y0 and parameters in `fun`. Use with `grad()` for physics-informed ML. See `examples/dedekind/differentiable_ode.ddk`.
 2. **Differentiable PDE Solvers**: Implemented in v0.8: `pde_heat_1d(u0, x, t, k)` and `pde_heat_2d(u0, x, y, t, k)` solve the heat equation with finite differences and `ode_solve`; gradients through initial condition and diffusivity for inverse problems. See `examples/dedekind/pde_heat.ddk`.
-3. **Physical Units**: Implemented at runtime: `10[m] / 2[s]` → `5[m/s]`, add/sub require same unit; future: compile-time unit checking.
-4. **Probabilistic Programming**: Implemented in v0.8: `Normal`, `Uniform`, `Bernoulli`; `sample(dist)`, `log_prob(dist, value)`; `metropolis(log_prior, log_likelihood, data, init, steps)` for Bayesian inference. See `examples/dedekind/probabilistic.ddk`. Future: more distributions, NUTS/VI, conditioning syntax.
-5. **Symbolic Simplification**: A compile-time algebraic engine that simplifies complex mathematical expressions before code generation to maximize efficiency.
+3. **Physical Units**: Implemented at compile time in v0.9.5/v1.4.0: unit check at compile time with generic/type parameter bounds.
+4. **Probabilistic Programming**: Implemented in v0.8: `Normal`, `Uniform`, `Bernoulli`; `sample(dist)`, `log_prob(dist, value)`; `metropolis`/`hmc` for Bayesian inference. See `examples/dedekind/probabilistic.ddk`. Future: more distributions, NUTS/VI, conditioning syntax.
+5. **Symbolic Simplification**: Implemented in v1.6.0: `simplify_sym` SymPy bridge, as well as the compiler AST-to-AST pass in `simplify.py`.
