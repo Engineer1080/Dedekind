@@ -941,24 +941,23 @@ print(I * I)                // -1
 
 Example: `examples/dedekind/geometric_algebra_demo.ddk`. Test: `tests/dedekind/geometric_algebra_test.ddk`.
 
-### 15.25 Multi-File Modules with Visibility (v1.19)
+### 15.25 Modules and Visibility (v1.19)
 
-Two language features that turn `use` from a single-file include into a real module system.
+Two language features that turn `use` from a simple file include into a proper module system.
 
 **Dotted module paths:**
 
 ```dedekind
-use geometry.area       // -> modules/geometry/area.ddk
-use geometry.volume     // -> modules/geometry/volume.ddk
-use math                // -> modules/math.ddk  (still works, flat)
+use myproject.math.algebra  // -> modules/myproject/math/algebra.ddk
+use geometry                // -> modules/geometry.ddk  (flat)
 ```
 
-`_resolve_module` splits the name on `.` and treats each segment as a directory level (`os.path.join(*parts) + ".ddk"`). Lets you organize larger codebases thematically instead of as a flat directory.
+`_resolve_module` splits the name on `.` and treats each segment as a directory level (`os.path.join(*parts) + ".ddk"`). This lets you organize larger codebases thematically instead of in a flat folder.
 
 **Public/private functions:**
 
 ```dedekind
-// modules/geometry/area.ddk
+// modules/geometry.ddk
 
 fn priv_pi() { return 3.14159265358979 }      // private
 fn priv_half(x) { return x / 2.0 }            // private
@@ -972,13 +971,13 @@ pub fn triangle_area(base, height) {
 }
 ```
 
-After import, `circle_area` and `triangle_area` are visible; `priv_pi` and `priv_half` are not. The compile-time pass `_apply_module_visibility` renames every private function to `__ddk_<flat_modpath>_<name>` and rewrites all call sites inside the module accordingly. Attempting to call a private function from outside raises `NameError`.
+After import, `circle_area` and `triangle_area` are visible; `priv_pi` and `priv_half` are not. The compile-time pass `_apply_module_visibility` renames every private function to `__ddk_<flat_modpath>_<name>` and rewrites all call sites inside the module accordingly. Attempting to call a private function from outside raises a runtime error (mangled name not defined).
 
-**Backward compatibility:** modules that have **no** `pub` declarations run in *legacy mode* — every function stays public, matching pre-v1.19 behavior. The seven stdlib modules (`physics`, `stats`, `chemistry`, `biology`, `math`, `ml`, `mathlib`) continue to work unchanged. Adding a single `pub fn` to any of them flips the file into opt-in mode, where everything else becomes private.
+**Backward compatibility:** modules that have **no** `pub` declarations run in *legacy mode* — every function stays public, matching pre-v1.19 behavior. The standard library modules (`physics`, `stats`, `chemistry`, `biology`, `math`, `ml`, `mathlib`, etc.) continue to work unchanged. Adding a single `pub fn` to any of them flips the file into opt-in mode, where everything else becomes private.
 
 **Constraint:** `use` statements must remain at the top level — they are expanded in the `_expand_uses` pre-pass before parsing function bodies. Inline `use` inside a function body is not supported.
 
-Example: `examples/dedekind/multi_file_modules_demo.ddk` (uses two submodules `geometry.area` and `geometry.volume`, plus the legacy `math` module to show backward compatibility). Test: `tests/dedekind/multi_file_modules_test.ddk`.
+Example: `examples/dedekind/compiler_features/multi_file_modules_demo.ddk` (uses the `geometry` module to show visibility, plus the legacy `math` module). Test: `tests/dedekind/multi_file_modules_test.ddk`.
 
 ### 15.26 Generics / Type Parameters (v1.20)
 

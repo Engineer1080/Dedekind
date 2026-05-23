@@ -9,22 +9,21 @@
 // physics/stats/chemistry/biology/math/ml) verhalten sich wie bisher — alles
 // public.
 
-use geometry.area
-use geometry.volume
+use geometry
 use math
 
 fn main() {
-    print("=== Multi-File-Module mit Sichtbarkeit (v1.19) ===")
+    print("=== Module mit Sichtbarkeit (v1.19) ===")
     print("")
 
-    // --- 1. Aufruf aus modules/geometry/area.ddk ---
-    print("[1] geometry.area (modules/geometry/area.ddk)")
+    // --- 1. Aufruf von Flächenberechnungen aus geometry.ddk ---
+    print("[1] Flächen (modules/geometry.ddk)")
     print("  circle_area(2.0)        =", circle_area(2.0))
     print("  triangle_area(4.0, 3.0) =", triangle_area(4.0, 3.0))
     print("")
 
-    // --- 2. Aufruf aus modules/geometry/volume.ddk ---
-    print("[2] geometry.volume (modules/geometry/volume.ddk)")
+    // --- 2. Aufruf von Volumenberechnungen aus geometry.ddk ---
+    print("[2] Volumen (modules/geometry.ddk)")
     print("  cube_volume(3.0)        =", cube_volume(3.0))
     print("  sphere_volume(1.0)      =", sphere_volume(1.0))
     print("  cone_volume(2.0, 6.0)   =", cone_volume(2.0, 6.0))
