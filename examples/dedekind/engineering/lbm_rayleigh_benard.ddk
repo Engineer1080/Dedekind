@@ -15,9 +15,9 @@
 //- Pure conduction (g β = 0): linear T-curve, Nu = 1
 //- Convection (Ra > Ra_c): Nu > 1 (heat transport accelerated)
 //
-// Industrielle Anwendungen:
+// Industrial applications:
 //- Climate research (atmosphere, oceans, mantle convection)
-//   - Solar-Pond-Design, Thermische Speicher
+//   - Solar pond design, thermal energy storage
 //- Reactor cooling, crystal growth in semiconductor production
 
 use fluid_dynamics
@@ -34,7 +34,7 @@ fn main() {
     tau_T = 0.6     //α = (τ_T - 0.5)/3 ≈ 0.033 (thermal diffusivity, Pr ≈ 1)
     T_hot = 1.0
     T_cold = 0.0
-    g_beta = 1.0e-4 // Produkt g·β; steuert Ra
+    g_beta = 1.0e-4 // product g·β; controls Ra
 
     delta_T = T_hot - T_cold
     H = ny - 1.0
@@ -47,8 +47,8 @@ fn main() {
     print("  ΔT:                ", delta_T)
     print("  g·β:               ", g_beta)
     print("Rayleigh number Ra:", Ra)
-    print("  Kritisch Ra_c ≈ 1708 →",
-          "Konvektion erwartet")
+    print("  Critical Ra_c ≈ 1708 →",
+          "Convection expected")
     print("")
 
     //--- Test 1: Pure conduction (g β = 0) ---

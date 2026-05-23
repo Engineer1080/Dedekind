@@ -16,15 +16,15 @@ fn compute_fidelity(sv1: StateVec[2], sv2: StateVec[2]) {
 //Prepare bell state and test shape checks
 qc = quantum_circuit(2)
 qc_h = apply_hadamard_all(qc)
-print("Circuit according to Hadamard application:", qc_h.n_gates(), "Gatter")
+print("Circuit after Hadamard application:", qc_h.n_gates(), "gates")
 
-// Statevektoren
+// State vectors
 sv_bell = statevec_sim(bell_state(0))
 sv_psi  = statevec_sim(bell_state(2))
 
 //Fidelity with shape check
 f = compute_fidelity(sv_bell, sv_psi)
-print("Fidelitaet |Φ+⟩ vs |Ψ+⟩:", f)
+print("Fidelity |Φ+⟩ vs |Ψ+⟩:", f)
 
 //Symbolic dimension: Function for any number of qubits
 fn entangle_chain(qc: Qubit[N]) {

@@ -43,19 +43,19 @@ fn main() {
     edge_index = torch.tensor([0, 1, 0, 2,  1, 0, 2, 0]).reshape(2, 4)
 
     h2o = pyg_data.Data(x=x, edge_index=edge_index)
-    print("Graph aufgebaut: " + str(h2o.num_nodes) + "atoms," + str(h2o.num_edges) + "directed bonds")
+    print("Graph created: " + str(h2o.num_nodes) + " atoms, " + str(h2o.num_edges) + " directed bonds")
 
     //1) Shape and unit annotation: molecular_mass(Graph[N=3, E=4]) -> [g/mol]
     M = molecular_mass(h2o)
     print("M(H2O) =" + str(M))
-    print("   Erwartet: 15.999 + 1.008 + 1.008 = 18.015 g/mol")
+    print("   Expected: 15.999 + 1.008 + 1.008 = 18.015 g/mol")
 
     //2) Unit annotation: add_mass only accepts [g/mol] (auto-conversion compatible)
     mass_pair = add_mass(15.999[g/mol], 1.008[g/mol])
     print("add_mass(O, H) = " + str(mass_pair))
 
-    // 3) GCN-Vorwaerts-Pass — pyimport torch_geometric uebernimmt den Mathematik-Teil,
-    //    Dedekind validiert Graph-Struktur via Graph[N, E]-Annotation
+    // 3) GCN forward pass — pyimport torch_geometric handles the math part,
+    //    Dedekind validates graph structure via Graph[N, E] annotation
     h = gcn_forward(h2o)
     print("GCN output (3 atoms x 4 features):")
     print(h)

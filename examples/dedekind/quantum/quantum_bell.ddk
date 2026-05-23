@@ -11,12 +11,12 @@ print("Statevector |Φ+⟩:")
 print(sv)
 
 probs = statevec_probs(qc)
-print("Wahrscheinlichkeiten [|00⟩, |01⟩, |10⟩, |11⟩]:")
+print("Probabilities [|00⟩, |01⟩, |10⟩, |11⟩]:")
 print(probs)
 
 // 2. Sampling: 1000 Messungen
 counts = statevec_sim(qc, 1000)
-print("Messergebnisse (1000 Shots):")
+print("Measurement results (1000 shots):")
 print(counts)
 
 //3. All four barking states via helper
@@ -30,12 +30,12 @@ sv1 = statevec_sim(phi_minus)
 
 //Fidelity: |Φ+⟩ and |Φ-⟩ should be orthogonal (fidelity = 0)
 f = fidelity(sv0, sv1)
-print("Fidelitaet |Φ+⟩ vs |Φ-⟩ (erwartet: ~0):")
+print("Fidelity |Φ+⟩ vs |Φ-⟩ (expected: ~0):")
 print(f)
 
 // 4. Schaltkreis-Info
-print("Gatter im Schaltkreis:", qc.n_gates())
-print("Tiefe:", qc.depth())
+print("Gates in circuit:", qc.n_gates())
+print("Depth:", qc.depth())
 
 //5. GHZ state for 3 qubits
 ghz = ghz_state(3)

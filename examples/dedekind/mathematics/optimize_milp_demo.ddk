@@ -13,39 +13,39 @@ fn demo_vehicle_routing() {
     x = Variable("strecke", lower=0[km])
     trucks = Variable("trucks", lower=1, integer=true)
 
-    // Kosten: 2.50 EUR/km Treibstoff + 1000 EUR/Truck Tagespauschale
+    // Costs: 2.50 EUR/km fuel + 1000 EUR/truck daily flat rate
     cost = 2.5 * x + 1000 * trucks
 
     res = optimize_milp(cost, [
-        x >= 500[km],                  // mindestens 500 km Strecke
-        trucks * 200[km] >= x          // jeder Truck schafft 200 km
+        x >= 500[km],                  // at least 500 km route
+        trucks * 200[km] >= x          // each truck can cover 200 km
     ])
 
-    print("   strecke = " + str(res["strecke"]) + " km")
+    print("   route   = " + str(res["strecke"]) + " km")
     print("   trucks  = " + str(res["trucks"]))
-    print("   kosten  = " + str(res["objective"]) + " EUR")
-    print("   (erwartet: 500 km, 3 trucks (ceil(500/200)), 2.5*500 + 1000*3 = 4250 EUR)")
+    print("   costs   = " + str(res["objective"]) + " EUR")
+    print("   (expected: 500 km, 3 trucks (ceil(500/200)), 2.5*500 + 1000*3 = 4250 EUR)")
     print("")
 }
 
-// --- Demo 2: Produktions-Mix (max Profit) ----------------------------------
+// --- Demo 2: Production Mix (max profit) ----------------------------------
 fn demo_production_mix() {
-    print("[2] Produktions-Mix: max Profit zweier Produkte unter Ressourcen-Constraints")
+    print("[2] Production mix: max profit of two products under resource constraints")
 
     a = Variable("produkt_A", lower=0)
     b = Variable("produkt_B", lower=0)
 
-    // Profit: 40 EUR pro A, 30 EUR pro B
+    // Profit: 40 EUR per A, 30 EUR per B
     profit = 40 * a + 30 * b
 
     res = optimize_milp(profit, [
-        2 * a + 1 * b <= 100,       // Maschinenstunden
-        1 * a + 3 * b <= 90         // Materialeinheiten
+        2 * a + 1 * b <= 100,       // machine hours
+        1 * a + 3 * b <= 90         // material units
     ], sense="maximize")
 
     print("   A = " + str(res["produkt_A"]))
     print("   B = " + str(res["produkt_B"]))
-    print("   Profit = " + str(res["objective"]) + " EUR")
+    print("   profit = " + str(res["objective"]) + " EUR")
     print("")
 }
 
@@ -53,19 +53,19 @@ fn demo_production_mix() {
 fn demo_energy_mix() {
     print("[3] Energy mix: minimize costs under demand constraint")
 
-    // 3 Quellen: Solar (billig, begrenzt), Wind (mittel), Gas (teuer, unbegrenzt)
+    // 3 sources: solar (cheap, limited), wind (medium), gas (expensive, unlimited)
     p_solar = Variable("solar", lower=0[kW], upper=300[kW])
     p_wind  = Variable("wind",  lower=0[kW], upper=500[kW])
     p_gas   = Variable("gas",   lower=0[kW])
 
     cost = 20 * p_solar + 40 * p_wind + 80 * p_gas
     res = optimize_milp(cost, [
-        p_solar + p_wind + p_gas >= 1000[kW]       // Bedarf 1 MW
+        p_solar + p_wind + p_gas >= 1000[kW]       // demand 1 MW
     ])
     print("   solar = " + str(res["solar"]) + " kW (max 300)")
     print("   wind  = " + str(res["wind"])  + " kW (max 500)")
     print("   gas   = " + str(res["gas"])   + " kW")
-    print("   total kosten = " + str(res["objective"]) + " EUR/h")
+    print("   total costs = " + str(res["objective"]) + " EUR/h")
     print("")
 }
 

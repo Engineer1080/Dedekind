@@ -15,10 +15,10 @@ fn main() {
     oscillation = cos(omega * t)
     x = envelope * oscillation
 
-    plot(t, x, title="Gedämpfter Oszillator: x(t) = exp(-ζωt)·cos(ωt)", xlabel="t [s]", ylabel="x(t)")
+    plot(t, x, title="Damped Oscillator: x(t) = exp(-ζωt)·cos(ωt)", xlabel="t [s]", ylabel="x(t)")
 
     //Envelope ±exp(-ζωt) as reference (second plot)
-    plot(t, envelope, title="Hüllkurve exp(-ζωt)", xlabel="t [s]", ylabel="Amplitude")
+    plot(t, envelope, title="Envelope exp(-ζωt)", xlabel="t [s]", ylabel="Amplitude")
 
     print("Oscillator and envelope plot. Dedekind: exp/cos native to tensors.")
 }
