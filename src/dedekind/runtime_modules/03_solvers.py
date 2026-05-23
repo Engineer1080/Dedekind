@@ -8,7 +8,7 @@ def ode_solve(fun, y0, t, method="rk4"):
     y0 = _to_tensor(y0).float()
     t = _to_tensor(t).float().flatten()
     if t.dim() != 1 or t.numel() < 2:
-        raise ValueError("ode_solve: t muss ein 1D-Vektor mit mindestens 2 Zeitpunkten sein.")
+        raise ValueError("ode_solve: t must be a 1D vector with at least 2 time points.")
     t = t.to(y0.device)
     out = [y0]
     y = y0.clone()
@@ -39,7 +39,7 @@ def lagrange_ode_rhs(L_func):
     def rhs(t, y):
         y_t = _to_tensor(y).float().flatten()
         if y_t.numel() < 2:
-            raise ValueError("lagrange_ode_rhs: y muss mindestens [q, v] (Länge 2) haben.")
+            raise ValueError("lagrange_ode_rhs: y must contain at least [q, v] (length 2).")
         n = y_t.numel() // 2
         q = y_t[:n].clone().detach().requires_grad_(True)
         v = y_t[n:].clone().detach().requires_grad_(True)
@@ -57,7 +57,7 @@ def lagrange_ode_rhs(L_func):
         d2L_dqdv = d2L_dqdv if d2L_dqdv is not None else torch.zeros_like(q)
         denom = d2L_dv2
         if (denom.abs() < 1e-12).any():
-            raise ValueError("lagrange_ode_rhs: ∂²L/∂v² zu klein (singulär). Typisch bei L = T - V mit T = ½mv².")
+            raise ValueError("lagrange_ode_rhs: ∂²L/∂v² too small (singular). Typical for L = T - V with T = ½mv².")
         a = (dL_dq - d2L_dqdv * v) / denom
         return torch.cat([v.detach(), a.detach()])
     return rhs
@@ -73,7 +73,7 @@ def hamilton_ode_rhs(H_func):
     def rhs(t, y):
         y_t = _to_tensor(y).float().flatten()
         if y_t.numel() < 2:
-            raise ValueError("hamilton_ode_rhs: y muss mindestens [q, p] (Länge 2) haben.")
+            raise ValueError("hamilton_ode_rhs: y must contain at least [q, p] (length 2).")
         n = y_t.numel() // 2
         q = y_t[:n].clone().detach().requires_grad_(True)
         p = y_t[n:].clone().detach().requires_grad_(True)
@@ -164,7 +164,7 @@ def pde_heat_1d(u0, x, t, k, bc="dirichlet"):
     k = _to_tensor(k).float()
     n = u0.numel()
     if x.numel() != n:
-        raise ValueError("pde_heat_1d: len(u0) muss len(x) entsprechen.")
+        raise ValueError("pde_heat_1d: len(u0) must equal len(x).")
     if n < 3:
         raise ValueError("pde_heat_1d: mindestens 3 Gitterpunkte.")
     dx = (x[-1] - x[0]) / (n - 1.0)
@@ -187,14 +187,14 @@ def pde_heat_2d(u0, x, y, t, k, bc="dirichlet"):
     """
     u0 = _to_tensor(u0).float()
     if u0.dim() == 1:
-        raise ValueError("pde_heat_2d: u0 muss 2D-Gitter (nx, ny) sein.")
+        raise ValueError("pde_heat_2d: u0 must be a 2D grid (nx, ny).")
     nx, ny = u0.shape[0], u0.shape[1]
     x = _to_tensor(x).float().flatten().to(u0.device)
     y = _to_tensor(y).float().flatten().to(u0.device)
     t = _to_tensor(t).float().flatten().to(u0.device)
     k = _to_tensor(k).float()
     if x.numel() != nx or y.numel() != ny:
-        raise ValueError("pde_heat_2d: x/y Länge muss zu u0 passen.")
+        raise ValueError("pde_heat_2d: x/y length must match u0.")
     dx = float((x[-1] - x[0]).item()) / _builtin_max(nx - 1, 1)
     dy = float((y[-1] - y[0]).item()) / _builtin_max(ny - 1, 1)
     dx2, dy2 = dx * dx, dy * dy

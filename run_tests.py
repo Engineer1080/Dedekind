@@ -54,6 +54,7 @@ def main():
     # on packages that aren't always installable on every runner.
     OPTIONAL_DEPS = ("scipy", "xarray", "openmm", "rdkit", "torch_geometric")
     SKIP_HINTS = ("requires", "required", "needs", "needed",
+                  "benötigt", "braucht",
                   "No module named", "pip install")
 
     def _is_skip(err_msg: str) -> bool:

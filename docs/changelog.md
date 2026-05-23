@@ -3,11 +3,35 @@
 Historical record of Dedekind releases. Most recent first.
 
 
-### What's New in v2.9.0 (Standard Library Consolidation & Redundancy Cleanups)
+### What's New in v2.9.0 (Public Release, Library Consolidation, New Inference Algorithms)
 
-- **Atomic Module Consolidation (`use atomic`):** Merged the `molecular` (Molecular Dynamics) and `crystallography` (Structure Analysis) modules into a single, unified `atomic.ddk` library. Function signatures like `molecular_lj_simulate` and `cryst_symmetry_apply` are preserved.
-- **Geometry Consolidation:** Abolished the standalone `geometry` module, integrating all area and volume geometry functions directly into `math.ddk`.
-- **Legacy Mathlib Removal:** Deleted the deprecated `mathlib` example module and integrated its helpers (`square`, `cube`) into the official `math.ddk` standard library.
+**Inference & Sampling**
+- **No-U-Turn Sampler (`nuts`):** Adaptive trajectory-length HMC variant for Bayesian inference. Available standalone and via `fit(..., method="nuts")`. Eliminates the manual leapfrog-step tuning that classical HMC requires.
+- **Variational Inference (`vi`):** Mean-field Gaussian VI with ELBO optimization via Adam. Returns a posterior approximation `(mu, sigma)` and is also exposed through `fit(..., method="vi")`.
+
+**Standard Library Consolidation**
+- **Atomic (`use atomic`):** Merged the former `molecular` (Molecular Dynamics, OpenMM bridge) and `crystallography` (structure analysis, scattering factors) modules into a single `atomic.ddk` library. Function signatures (`molecular_lj_simulate`, `cryst_symmetry_apply`, …) preserved.
+- **Signals (`use signals`):** Folded the former `control`, `dsp`, and `electronics` modules into `signals.ddk`. Block-diagram control (`pid_block`, `state_space_block`, …), biquad/FIR/IIR filters, circuit primitives, and Z-transform helpers now share one namespace. `use control`, `use dsp`, and `use electronics` remain available as thin compatibility wrappers.
+- **Geometry into Math:** Dropped the standalone `geometry` module; `area_circle`, `volume_sphere`, solids-of-revolution helpers and friends live in `math.ddk`.
+- **Legacy Mathlib Removed:** Deleted the deprecated `mathlib` example module; its helpers (`square`, `cube`, `PHI`) are part of `math.ddk`.
+
+**Packaging & Distribution**
+- **First PyPI release.** Distributed as `dedekind` on PyPI, installable with `pip install dedekind`. Extras: `[jupyter]`, `[plot]`, `[sci]`, `[geo]`, `[bio]`, `[md]`, `[ml]`, `[all]`.
+- **Standard library ships with the wheel.** `use math`, `use physics`, `use atomic`, etc. now resolve against `dedekind/stdlib/*.ddk` inside the installed package — no git clone required.
+- **CLI hardening.** `dedekind --help`, `dedekind --version`, and proper non-zero exit codes on missing or invalid arguments.
+- **Trusted Publishing workflow.** Tag-triggered GitHub Actions release builds sdist + wheel, publishes to PyPI via OIDC (no API tokens), and creates a GitHub Release with auto-generated notes.
+- **Apache 2.0 license** with filled-in copyright header.
+- **CI matrix:** Python 3.10, 3.11, 3.12 on Ubuntu, with full test suite and end-to-end compilation of all 217 examples per run.
+
+**Documentation & Project Hygiene**
+- **English-only documentation.** Translated remaining German user-facing strings, comments, and example output to English; internal-only documents removed from the public repo.
+- **Documentation reorganized.** `Documentation/` folded into `docs/`, README split into focused entry-point + per-domain references.
+- **Roadmap refreshed.** Phases 1–20 marked complete; MLIR/AOT backend explicitly classified as planned/experimental (not production).
+
+**Bug Fixes & Robustness**
+- Bayes test suite now seeds the RNG (`seed(42)`) to eliminate stochastic CI flakiness from NUTS/VI assertions.
+- Optional-dependency import errors (scipy in `confidence_interval`/`butterworth_filter`) now surface as actionable `ImportError` messages pointing at the `[sci]` extra.
+- Tensor-conversion exception handling narrowed from bare `except:` to `(TypeError, ValueError, RuntimeError)` for better debuggability.
 
 ### What's New in v2.3.0 (Space Physics & Orbital Mechanics)
 

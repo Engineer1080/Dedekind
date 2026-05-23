@@ -73,24 +73,19 @@ class AOTCompiler:
 
     def _compile_to_binary(self, cpp_path: str, output_path: str) -> bool:
         """Attempts to compile the generated C++/LLVM code using system tools."""
-        try:
-            # Try MSVC (cl) or Clang (clang++) or G++ (g++)
-            compilers = [
-                ['cl', '/EHsc', cpp_path, f'/Fe:{output_path}'],
-                ['clang++', cpp_path, '-o', output_path],
-                ['g++', cpp_path, '-o', output_path]
-            ]
-            
-            for cmd in compilers:
-                try:
-                    subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    print(f"Dedekind AOT: Static binary created via {cmd[0]}")
-                    return True
-                except:
-                    continue
-            return False
-        except:
-            return False
+        compilers = [
+            ['cl', '/EHsc', cpp_path, f'/Fe:{output_path}'],
+            ['clang++', cpp_path, '-o', output_path],
+            ['g++', cpp_path, '-o', output_path],
+        ]
+        for cmd in compilers:
+            try:
+                subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                print(f"Dedekind AOT: Static binary created via {cmd[0]}")
+                return True
+            except (FileNotFoundError, subprocess.CalledProcessError):
+                continue
+        return False
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:

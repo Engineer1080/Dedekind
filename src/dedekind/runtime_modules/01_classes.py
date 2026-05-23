@@ -524,21 +524,23 @@ class DedekindSequential(nn.Module):
                 converted = [self._recursive_to_tensor(x) for x in data]
                 if any(isinstance(x, torch.Tensor) for x in converted):
                     return torch.stack(converted)
-            except: pass
-        # Use dynamic dtype inference
-        try: return torch.as_tensor(data)
-        except: return data
+            except (TypeError, ValueError, RuntimeError):
+                pass
+        try:
+            return torch.as_tensor(data)
+        except (TypeError, ValueError, RuntimeError):
+            return data
 
     def forward(self, x):
         # Robust tensor conversion
         if not isinstance(x, torch.Tensor):
             x = self._recursive_to_tensor(x)
-            
+
         # Fallback for nested lists that _to_tensor might have missed
         if not isinstance(x, torch.Tensor):
             try:
                 x = torch.as_tensor(x, dtype=torch.float32)
-            except:
+            except (TypeError, ValueError, RuntimeError):
                 pass
         
         # Automatic batch dimension

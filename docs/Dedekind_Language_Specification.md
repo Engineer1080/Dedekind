@@ -305,7 +305,7 @@ Examples: \(\int_0^1 x^2\,dx = 1/3\), \(\int_0^\pi \sin(x)\,dx = 2\); see `examp
 - **`use math`** — constants `PHI`, `TAU`; sequences `fibonacci`, `harmonic_sum`, `geometric_sum`; number theory `lcm`, `is_perfect_square`, `digital_root`; geometry `circle_area`, `circle_circumference`, `sphere_volume`, `sphere_surface`, `cylinder_volume`, `cone_volume`, `hypotenuse`, `law_of_cosines_c`; helpers `lerp`, `clamp_scalar`, `sigmoid`, `softplus`.
 - **`use ml`** — activations `leaky_relu`, `elu`, `swish`, `gelu_approx`; losses `mse_loss`, `mae_loss`, `binary_crossentropy`; metrics `accuracy`, `precision_binary`, `recall_binary`, `f1_score`.
 - **`use space`** — N-body simulation (`n_body_simulate`, `n_body_simulate_advanced`), Kepler equation solvers (`kepler_solve`), Keplerian-Cartesian conversions (`kepler_to_cartesian`, `kepler_to_cartesian_from_E`, `cartesian_to_kepler`).
-- **`use control`** — State-Space LTI models (`state_space`), PI controllers (`pi_controller`), Bode plots (`bode_plot`), block diagram simulation (`block_diagram`, `constant_block`, `gain_block`, `sum_block`, `product_block`, `saturation_block`, `integrator_block`, `pid_block`, `pid_block_saturated`, `state_space_block`, `state_space_block_with_d`, `transfer_function_block`).
+- **`use control`** — Differentiable block-diagram simulation: `block_diagram`, `constant_block`, `gain_block`, `sum_block`, `product_block`, `saturation_block`, `integrator_block`; controllers `pid_block`, `pid_block_saturated`; LTI plants `transfer_function_block`, `state_space_block`.
 - **`use electronics`** — circuit builder (`circuit`), complex AC analysis (`phasor`), resistance calculations (`parallel_resistors`), RC time constants (`rc_time_constant`), and resonance frequencies (`rlc_resonance_freq`).
 - **`use dsp`** — Finite Impulse Response filtering (`fir_filter`), Infinite Impulse Response filtering (`iir_filter`), Biquad filter coefficient generators (`biquad_lowpass`, `biquad_highpass`, `biquad_bandpass`), frequency response calculation (`freqz`), and filter design (`butter`, `cheby1`).
 - **`use structural`** — 2D meshes (`structural_mesh_2d`), static finite element solver (`structural_solve_2d`, `structural_solve_2d_params`), compliance calculations (`structural_compliance_2d`), Optimality Criteria topology optimization (`topo_opt_oc_2d`, `topo_opt_oc_2d_advanced`), and character-based visualization (`print_structural_topology_2d`).
@@ -1156,17 +1156,23 @@ res = c.solve_dc()
 v2 = res["v_2"]  // = 5.0[V]
 ```
 
-**2. State-Space LTI Models (`use control`)**
+**2. Block-Diagram Control (`use control`)**
 
-Dedekind provides native Linear Time-Invariant Control representations. The `StateSpace(A, B, C, D)` model allows system simulation such as step responses using Dedekind's differentiable `ode_solve` engine.
+Dedekind provides differentiable block-diagram primitives for closed-loop
+control. Plants are expressed as `transfer_function_block` or
+`state_space_block`; controllers (`pid_block`, `pid_block_saturated`) and
+arithmetic blocks (`sum_block`, `gain_block`, `saturation_block`) compose
+into a `block_diagram` that can be simulated and optimized end-to-end via
+autograd.
 
 ```dedekind
 use control
 
-// dx/dt = -x + u
-sys = state_space([[-1.0]], [[1.0]], [[1.0]], [[0.0]])
-t_vals = linspace(0.0, 5.0, 100)
-result = sys.step_response(t_vals)
+// First-order plant: dx/dt = -x + u
+plant = state_space_block(u, [[-1.0]], [[1.0]], [[1.0]], [[0.0]])
+ref   = constant_block(1.0)
+err   = sum_block([ref, plant], [1.0, -1.0])
+ctrl  = pid_block(err, Kp, Ki, Kd)
 ```
 
 Both models enforce Dedekind's strict unit rules for voltage, current, resistance, time, and states.

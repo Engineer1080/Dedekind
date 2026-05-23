@@ -5961,7 +5961,12 @@ def confidence_interval(x, alpha=0.05):
     x: 1D-Tensor oder Liste. alpha: Signifikanzniveau (z.B. 0.05 für 95% CI).
     Rückgabe: (untere_Grenze, obere_Grenze).
     """
-    import scipy.stats as scistats  # type: ignore[import-untyped]
+    try:
+        import scipy.stats as scistats  # type: ignore[import-untyped]
+    except ImportError:
+        raise ImportError(
+            "confidence_interval() requires scipy. Install with: pip install 'dedekind[sci]'"
+        )
     t = _to_tensor(x).float().flatten()
     n = t.numel()
     if n < 2:
@@ -10429,7 +10434,12 @@ def butter_impl(order, Wn, btype='low', fs=None):
     Wrapper for classic Butterworth filter design (SciPy).
     Returns the b and a coefficients as PyTorch float64 tensors.
     """
-    import scipy.signal as sig  # type: ignore[import-untyped]
+    try:
+        import scipy.signal as sig  # type: ignore[import-untyped]
+    except ImportError:
+        raise ImportError(
+            "butterworth_filter() requires scipy. Install with: pip install 'dedekind[sci]'"
+        )
     
     if isinstance(Wn, Quantity):
         Wn_val = _convert_to_base(Wn.value, Wn.unit, "frequency")
