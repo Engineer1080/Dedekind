@@ -1,6 +1,6 @@
 """
-LaTeX-Export von Dedekind-Ausdrücken (AST → LaTeX).
-Für Papers und Notizen: Formeln aus Dedekind-Code als LaTeX erzeugen.
+LaTeX export of Dedekind expressions (AST → LaTeX).
+For papers and notes: generate formulas from Dedekind code as LaTeX.
 """
 from typing import List
 from .ast_nodes import (
@@ -11,7 +11,7 @@ from .ast_nodes import (
 )
 
 
-# Bekannte Funktionen → LaTeX-Befehl (ohne Backslash)
+# Known functions → LaTeX command (without backslash)
 _LATEX_FUNCS = {
     "sin": "sin", "cos": "cos", "tan": "tan",
     "exp": "exp", "log": "log", "log10": "log_{10}", "sqrt": "sqrt", "abs": "abs",
@@ -25,7 +25,7 @@ _LATEX_FUNCS = {
 
 
 def _escape_latex(s: str) -> str:
-    """Sonderzeichen für LaTeX escapen."""
+    """Escape special characters for LaTeX."""
     return (
         str(s)
         .replace("\\", "\\backslash ")
@@ -40,7 +40,7 @@ def _escape_latex(s: str) -> str:
 
 
 class LatexExporter:
-    """Visitor: wandelt AST-Knoten in LaTeX-Strings um (für Formeln)."""
+    """Visitor: converts AST nodes to LaTeX strings (for formulas)."""
 
     def visit(self, node: Node) -> str:
         name = type(node).__name__
@@ -256,10 +256,10 @@ class LatexExporter:
 
 
 def expression_to_latex(node: Node) -> str:
-    """Einen einzelnen AST-Knoten (typisch Expression) als LaTeX zurückgeben."""
+    """Return a single AST node (typically an expression) as LaTeX."""
     return LatexExporter().visit(node)
 
 
 def program_to_latex(node: Program) -> str:
-    """Gesamtes Program als LaTeX (Gleichungen/Statements)."""
+    """Complete program as LaTeX (equations/statements)."""
     return LatexExporter().visit(node)

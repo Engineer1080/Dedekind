@@ -1,18 +1,18 @@
-// modules/math.ddk — Dedekind-Standardbibliothek: Mathematik-Convenience.
-// Aktivierung: `use math`
+// modules/math.ddk — Dedekind Standard Library: Mathematics Convenience.
+// Activation: `use math`
 //
-// Ergänzt die eingebauten Funktionen (sin, cos, exp, integrate, ...) um
-// häufig wiederkehrende Zahlentheorie- und Folgen-Helfer.
+// Complements the built-in functions (sin, cos, exp, integrate, ...) with
+// frequently recurring number theory and sequence helpers.
 
-// --- Konstanten ohne Einheit -------------------------------------------------
+// --- Constants without units -------------------------------------------------
 
-PHI = (1.0 + sqrt(5.0)) / 2.0    // Goldener Schnitt
-TAU = 2.0 * pi                   // 1 Umlauf
+PHI = (1.0 + sqrt(5.0)) / 2.0    // Golden ratio
+TAU = 2.0 * pi                   // 1 revolution
 
-// --- Folgen ------------------------------------------------------------------
+// --- Sequences ---------------------------------------------------------------
 
 fn fibonacci(n) {
-    // n-te Fibonacci-Zahl (n >= 0)
+    // n-th Fibonacci number (n >= 0)
     if n < 2 { return n }
     a = 0
     b = 1
@@ -43,7 +43,7 @@ fn geometric_sum(a, r, n) {
     return a * (1.0 - pow(r, n)) / (1.0 - r)
 }
 
-// --- Zahlentheorie-Quickwins -------------------------------------------------
+// --- Number Theory Quickwins -------------------------------------------------
 
 fn lcm(a, b) {
     return a * b / gcd(a, b)
@@ -55,7 +55,7 @@ fn is_perfect_square(n) {
 }
 
 fn digital_root(n) {
-    // 1+2+...+Stellen, wiederholt bis einstellig (für n >= 0)
+    // 1+2+...+digits, repeated until single-digit (for n >= 0)
     x = n
     while x >= 10 {
         s = 0
@@ -69,7 +69,7 @@ fn digital_root(n) {
     return x
 }
 
-// --- Geometrie & Trigonometrie ----------------------------------------------
+// --- Geometry & Trigonometry -------------------------------------------------
 
 fn circle_area(r) { return pi * r * r }
 fn circle_circumference(r) { return 2.0 * pi * r }
@@ -89,10 +89,10 @@ fn law_of_cosines_c(a, b, gamma_rad) {
     return sqrt(a * a + b * b - 2.0 * a * b * cos(gamma_rad))
 }
 
-// --- Numerische Hilfen -------------------------------------------------------
+// --- Numerical Helpers -------------------------------------------------------
 
 fn lerp(a, b, t) {
-    // lineare Interpolation
+    // linear interpolation
     return a + (b - a) * t
 }
 

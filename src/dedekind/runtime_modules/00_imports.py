@@ -6,7 +6,7 @@ _builtin_min = builtins.min
 _builtin_max = builtins.max
 
 def _normalize_unit_for_compare(unit):
-    """Normalisiert Einheiten für Vergleich: M, mol/L, mol*L^-1 gelten als gleich (chemische Konzentration)."""
+    """Normalizes units for comparison: M, mol/L, mol*L^-1 are considered equal (chemical concentration)."""
     if not unit:
         return unit
     u = str(unit).strip()
@@ -15,10 +15,10 @@ def _normalize_unit_for_compare(unit):
     return u
 
 
-# Einheiten mit automatischer Umrechnung bei +/-: (Basiseinheit, {Einheit: Faktor zur Basis})
-# Wert in Einheit * Faktor = Wert in Basiseinheit
+# Units with automatic conversion on +/-: (Base unit, {Unit: Factor to base})
+# Value in unit * factor = Value in base unit
 DIMENSION_TO_BASE = {
-    # SI-Basis
+    # SI base
     "length": ("m", {"m": 1.0, "cm": 0.01, "km": 1000.0, "mm": 0.001, "um": 1e-6, "nm": 1e-9, "angstrom": 1e-10, "Angstrom": 1e-10, "pm": 1e-12, "fm": 1e-15, "dm": 0.1, "AU": 149597870700.0, "ly": 9460730472580800.0, "pc": 3.085677581e16}),
     "mass": ("kg", {"kg": 1.0, "g": 0.001, "t": 1000.0, "mg": 1e-6, "ug": 1e-9, "Da": 1.66053906660e-27, "amu": 1.66053906660e-27, "M_sun": 1.98847e30}),
     "time": ("s", {"s": 1.0, "min": 60.0, "h": 3600.0, "d": 86400.0, "yr": 31557600.0, "a": 31557600.0, "ms": 0.001, "us": 1e-6, "ns": 1e-9, "ps": 1e-12, "fs": 1e-15}),
@@ -26,7 +26,7 @@ DIMENSION_TO_BASE = {
     "temperature": ("K", {"K": 1.0, "mK": 0.001}),
     "amount_of_substance": ("mol", {"mol": 1.0, "mmol": 0.001, "umol": 1e-6, "nmol": 1e-9, "kmol": 1000.0}),
     "luminous_intensity": ("cd", {"cd": 1.0, "mcd": 0.001}),
-    # Abgeleitet / häufig
+    # Derived / common
     "pressure": ("Pa", {"Pa": 1.0, "hPa": 100.0, "kPa": 1000.0, "MPa": 1e6, "GPa": 1e9, "bar": 1e5, "atm": 101325.0}),
     "force": ("N", {"N": 1.0, "kN": 1000.0, "MN": 1e6}),
     "permeability": ("m^2", {"m^2": 1.0, "D": 9.869233e-13, "mD": 9.869233e-16}),  # Darcy: 1 D ≈ 9.87e-13 m²
@@ -44,19 +44,19 @@ DIMENSION_TO_BASE = {
     "amount_concentration": ("M", {"M": 1.0, "mM": 0.001, "uM": 1e-6, "nM": 1e-9}),
     "absorbed_dose": ("Gy", {"Gy": 1.0, "mGy": 0.001}),
     "equivalent_dose": ("Sv", {"Sv": 1.0, "mSv": 0.001}),
-    # Chemie/Biologie: Massenkonzentration (% w/v = g/100mL)
+    # Chemistry/Biology: mass concentration (% w/v = g/100mL)
     "mass_concentration": ("g/L", {"g/L": 1.0, "mg/mL": 1.0, "percent_wv": 10.0}),  # 1% w/v = 10 g/L
-    # Winkel (SI-Ergänzung: rad; deg = pi/180 rad)
+    # Angle (SI supplement: rad; deg = pi/180 rad)
     "angle": ("rad", {"rad": 1.0, "deg": 0.017453292519943295}),  # 1 deg = pi/180 rad
-    # Molare Energie (MD/Chemie): Basis kJ/mol (1 kcal/mol = 4.184 kJ/mol)
+    # Molar energy (MD/Chemistry): Base kJ/mol (1 kcal/mol = 4.184 kJ/mol)
     "molar_energy": ("kJ/mol", {"kJ/mol": 1.0, "kcal/mol": 4.184, "J/mol": 0.001, "eV/atom": 96.485, "Hartree/mol": 2625.5}),
 }
-# Für Units-Checker: Liste der Einheitenmengen pro Dimension
+# For Units checker: List of unit sets per dimension
 ADDITIVE_DIMENSION_UNIT_SETS = [frozenset(tab.keys()) for _b, tab in DIMENSION_TO_BASE.values()]
 
 
 def _get_dimension(unit):
-    """Liefert Dimensionsname (length, mass, time, pressure) oder None."""
+    """Returns dimension name (length, mass, time, pressure) or None."""
     u = str(unit).strip() if unit else ""
     for dim, (_base, tab) in DIMENSION_TO_BASE.items():
         if u in tab:
@@ -65,14 +65,14 @@ def _get_dimension(unit):
 
 
 def _convert_to_base(value, unit, dimension):
-    """Wert in gegebener Einheit in Basiseinheit umrechnen."""
+    """Convert value in given unit to base unit."""
     _, tab = DIMENSION_TO_BASE[dimension]
     u = str(unit).strip()
     return float(value) * tab.get(u, 1.0)
 
 
 def _convert_from_base(value_base, unit, dimension):
-    """Wert in Basiseinheit in gegebene Einheit umrechnen."""
+    """Convert value in base unit to given unit."""
     _, tab = DIMENSION_TO_BASE[dimension]
     u = str(unit).strip()
     if u not in tab:
@@ -81,7 +81,7 @@ def _convert_from_base(value_base, unit, dimension):
 
 
 def _convert_between_units(value, std, from_unit, to_unit, dimension):
-    """Wert und Std von from_unit in to_unit umrechnen (für gleiche Dimension). Rückgabe (value, std)."""
+    """Convert value and std from from_unit to to_unit (for same dimension). Return (value, std)."""
     _, tab = DIMENSION_TO_BASE[dimension]
     u_from = str(from_unit).strip()
     u_to = str(to_unit).strip()

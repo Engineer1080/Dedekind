@@ -1,11 +1,68 @@
-// Dedekind Standard Library: Control Theory
-// Provides primitives for Linear Time-Invariant (LTI) systems
+// modules/signals.ddk — Dedekind Standard Library: Signals & Systems
+// Activation: `use signals`
+
+// --- Circuit Simulation & AC Analysis ----------------------------------------
+
+pub fn circuit() {
+    return Circuit()
+}
+
+pub fn phasor(mag, phase) {
+    return Phasor(mag, phase)
+}
+
+pub fn parallel_resistors(R1, R2) {
+    return (R1 * R2) / (R1 + R2)
+}
+
+pub fn rc_time_constant(R, C) {
+    return R * C
+}
+
+pub fn rlc_resonance_freq(L, C) {
+    return 1.0 / (2.0 * pi * (L * C)^0.5)
+}
+
+// --- Digital Signal Processing (DSP) & Z-Transform --------------------------
+
+pub fn fir_filter(x, b) {
+    return fir_filter_impl(x, b)
+}
+
+pub fn iir_filter(x, b, a) {
+    return iir_filter_impl(x, b, a)
+}
+
+pub fn biquad_lowpass(fc, Q, fs) {
+    return biquad_lowpass_impl(fc, Q, fs)
+}
+
+pub fn biquad_highpass(fc, Q, fs) {
+    return biquad_highpass_impl(fc, Q, fs)
+}
+
+pub fn biquad_bandpass(fc, Q, fs) {
+    return biquad_bandpass_impl(fc, Q, fs)
+}
+
+pub fn freqz(b, a, worN) {
+    return freqz_impl(b, a, worN)
+}
+
+pub fn butter(order, Wn, btype, fs) {
+    return butter_impl(order, Wn, btype, fs)
+}
+
+pub fn cheby1(order, rp, Wn, btype, fs) {
+    return cheby1_impl(order, rp, Wn, btype, fs)
+}
+
+// --- Control Theory & Block Diagram Simulation ------------------------------
 
 pub fn state_space(A, B, C, D) {
     return StateSpace(A, B, C, D)
 }
 
-// Simple PI Controller (Proportional-Integral) in State-Space form
 pub fn pi_controller(Kp, Ki) {
     return StateSpace([[0.0]], [[1.0]], [[Ki]], [[Kp]])
 }
@@ -14,7 +71,7 @@ pub fn bode_plot(sys, omega) {
     res = sys.frequency_response(omega)
     w_out = res[0]
     
-    // Extrahieren der Magnitude [N, 1, 1] -> flatten -> [N]
+    // Extract magnitude [N, 1, 1] -> flatten -> [N]
     mag_db = res[1]
     mag_1d = mag_db.flatten()
     
@@ -73,5 +130,3 @@ pub fn state_space_block_with_d(inp, A, B, C, D) {
 pub fn transfer_function_block(inp, num, den) {
     return transfer_function_block_impl(inp, num, den)
 }
-
-

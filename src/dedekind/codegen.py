@@ -315,7 +315,7 @@ class CodeGenerator:
         return_shape = getattr(node, "return_shape", None)
         type_params = getattr(node, "type_params", []) or []
         type_param_set = set(type_params)
-        # Typ-Parameter: lokales _unit_env fuer polymorphe Einheiten-Variablen
+        # Type parameters: local _unit_env for polymorphic unit variables
         if type_params:
             self.add_line("_unit_env = {}")
         if arg_units:
@@ -324,8 +324,8 @@ class CodeGenerator:
                     continue
                 safe_unit = unit.replace('"', '\\"')
                 if unit in type_param_set:
-                    # Polymorphe Einheit (Typ-Parameter): bindet im _unit_env beim
-                    # ersten Auftreten, danach Konsistenz-Check
+                    # Polymorphic unit (type parameter): binds in _unit_env upon
+                    # first occurrence, thereafter consistency check
                     self.add_line(
                         f'{arg_name} = _check_param_unit({arg_name}, "{safe_unit}", "{node.name}", "{arg_name}", _unit_env)'
                     )
@@ -333,7 +333,7 @@ class CodeGenerator:
                     self.add_line(
                         f'{arg_name} = _check_signature_unit({arg_name}, "{safe_unit}", "{node.name}", "{arg_name}")'
                     )
-        # Shape-Checks: lokales shape_env fuer symbolische Dimensionen
+        # Shape checks: local shape_env for symbolic dimensions
         if arg_shapes is not None or return_shape is not None:
             self.add_line("_shape_env = {}")
         if arg_shapes:
@@ -384,13 +384,13 @@ class CodeGenerator:
         return f'_register_user_unit("{safe_name}", {node.factor!r}, "{safe_base}")'
 
     def visit_PyImport(self, node):
-        # Emittiert ein echtes Python-Import-Statement, damit Forscher PyPI direkt nutzen können.
-        # Beispiel: `pyimport scipy.special as ss` -> `import scipy.special as ss`.
+        # Emits a real Python import statement so that researchers can use PyPI directly.
+        # Example: `pyimport scipy.special as ss` -> `import scipy.special as ss`.
         return f"import {node.module} as {node.alias}"
 
     def _emit_ddk_marker(self, node):
-        """Schreibt `# ddk:<line>` vor jedes Statement, sofern Zeilenangabe vorhanden.
-        Wird vom Runtime-Fehler-Translator gelesen, um Tracebacks auf die .ddk-Quelle zurückzumappen."""
+        """Writes `# ddk:<line>` before each statement if a line number is present.
+        Read by the runtime error translator to map tracebacks back to the .ddk source."""
         ln = getattr(node, "line", None)
         if isinstance(ln, int):
             self.add_line(f"# ddk:{ln}")
@@ -402,7 +402,7 @@ class CodeGenerator:
         type_params = self._type_param_stack[-1] if self._type_param_stack else set()
         fn_name = self._fn_name_stack[-1] if self._fn_name_stack else ""
         safe_fn = fn_name.replace('"', '\\"')
-        # Reihenfolge: erst Unit-Konvertierung, dann Shape-Check (Shape wirkt auf umgerechneten Wert).
+        # Order: unit conversion first, then shape check (shape acts on converted value).
         if ret_unit is not None:
             safe_unit = ret_unit.replace('"', '\\"')
             if ret_unit in type_params:
@@ -431,7 +431,7 @@ class CodeGenerator:
         self.add_line(f"{node.target} = {val}")
 
     def visit_BinaryOp(self, node: BinaryOp):
-        # Unäres Minus: 0 - expr -> -expr (für Quantity und andere Typen)
+        # Unary minus: 0 - expr -> -expr (for Quantity and other types)
         if node.op == '-' and isinstance(node.left, Literal) and node.left.value == 0:
             right = self.visit_expression(node.right)
             return f"(-{right})"
@@ -470,7 +470,7 @@ class CodeGenerator:
         if op == '@':
             return f"torch.matmul({left}, {right})"
         if op == '^': op = '**'
-        # Logische Operatoren: and, or, xor, nand, nor, xnor
+        # Logical operators: and, or, xor, nand, nor, xnor
         if op == 'nand':
             return f"(not (({left}) and ({right})))"
         if op == 'nor':
@@ -588,7 +588,7 @@ class CodeGenerator:
         return f"{val}[{idx}]"
 
     def visit_Slice(self, node):
-        """Python-Slice: start:stop:step (jede Komponente optional)."""
+        """Python slice: start:stop:step (each component optional)."""
         start = self.visit_expression(node.start) if node.start is not None else ""
         stop = self.visit_expression(node.stop) if node.stop is not None else ""
         if node.step is not None:

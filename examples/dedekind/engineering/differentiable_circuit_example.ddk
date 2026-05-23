@@ -9,7 +9,7 @@
 // so anpassen (optimieren), dass eine bestimmte Zielspannung 
 // erreicht wird.
 
-use electronics
+use signals
 
 fn main() {
     print("Starte Differentiable Circuit Simulation...")

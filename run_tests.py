@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-Mini-Test-Runner für Dedekind: führt alle .ddk-Dateien in tests/dedekind aus.
-Eine Datei besteht, wenn sie ohne Exception (inkl. AssertionError) durchläuft.
+Mini test runner for Dedekind: executes all .ddk files in tests/dedekind.
+A file passes if it runs without any exception (including AssertionError).
 
-Verwendung (aus Projektroot):
-  python run_tests.py           # Kurzausgabe (OK/FAIL pro Datei)
-  python run_tests.py -v        # Ausgabe jeder Datei
-  python run_tests.py -q        # Nur Zusammenfassung
+Usage (from project root):
+  python run_tests.py           # Short output (OK/FAIL per file)
+  python run_tests.py -v        # Verbose output per file
+  python run_tests.py -q        # Summary only
 """
 
 import sys
@@ -21,15 +21,15 @@ SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Dedekind Mini-Tests ausführen (assert-basiert).")
-    parser.add_argument("-v", "--verbose", action="store_true", help="Vollständige Ausgabe pro Test")
-    parser.add_argument("-q", "--quiet", action="store_true", help="Nur Zusammenfassung")
-    parser.add_argument("--filter", type=str, default="", help="Nur Dateien mit diesem String (z.B. assert)")
+    parser = argparse.ArgumentParser(description="Run Dedekind mini-tests (assert-based).")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Full output per test")
+    parser.add_argument("-q", "--quiet", action="store_true", help="Summary only")
+    parser.add_argument("--filter", type=str, default="", help="Only files containing this string (e.g. assert)")
     args = parser.parse_args()
 
     if not os.path.isdir(TESTS_DIR):
-        print(f"Tests-Ordner nicht gefunden: {TESTS_DIR}")
-        print("Erstelle tests/dedekind/ und lege dort .ddk-Dateien mit assert() ab.")
+        print(f"Tests directory not found: {TESTS_DIR}")
+        print("Create tests/dedekind/ and place .ddk files with assert() in it.")
         sys.exit(1)
 
     ddk_files = sorted(
@@ -37,7 +37,7 @@ def main():
         if f.endswith(".ddk") and (not args.filter or args.filter in f)
     )
     if not ddk_files:
-        print("Keine .ddk-Testdateien gefunden.")
+        print("No .ddk test files found.")
         sys.exit(0)
 
     if SRC_DIR not in sys.path:
@@ -45,7 +45,7 @@ def main():
     try:
         from dedekind import compile_source, dedekind_exec
     except ImportError as e:
-        print(f"Compiler nicht gefunden: {e}")
+        print(f"Compiler not found: {e}")
         sys.exit(1)
 
     results = []
@@ -53,8 +53,8 @@ def main():
     # one of these, the test is marked SKIP (not FAIL) so CI doesn't gate
     # on packages that aren't always installable on every runner.
     OPTIONAL_DEPS = ("scipy", "xarray", "openmm", "rdkit", "torch_geometric")
-    SKIP_HINTS = ("benoetigt", "benötigt", "benötigen", "benoetigen",
-                  "erfordert", "erfordern", "No module named", "requires", "pip install")
+    SKIP_HINTS = ("requires", "required", "needs", "needed",
+                  "No module named", "pip install")
 
     def _is_skip(err_msg: str) -> bool:
         if not any(dep in err_msg for dep in OPTIONAL_DEPS):
@@ -66,13 +66,13 @@ def main():
             with open(filepath, "r", encoding="utf-8") as f:
                 source = f.read()
         except Exception as e:
-            results.append((filename, False, f"Lesefehler: {e}"))
+            results.append((filename, False, f"Read error: {e}"))
             continue
 
         try:
             python_code = compile_source(source, filepath=filepath)
         except Exception as e:
-            results.append((filename, False, f"Kompilierung: {e}"))
+            results.append((filename, False, f"Compilation: {e}"))
             if args.verbose:
                 import traceback
                 traceback.print_exc()
@@ -88,7 +88,7 @@ def main():
             results.append((filename, True, None))
             if args.verbose:
                 print(f"--- {filename} ---")
-                print(output or "(keine Ausgabe)")
+                print(output or "(no output)")
                 print()
         except AssertionError as e:
             sys.stdout = old_stdout
@@ -98,7 +98,7 @@ def main():
                 traceback.print_exc()
         except Exception as e:
             sys.stdout = old_stdout
-            msg = f"Laufzeit: {e}"
+            msg = f"Runtime: {e}"
             if _is_skip(msg):
                 results.append((filename, "skip", msg))
             else:
@@ -132,7 +132,7 @@ def main():
                 print(f"       {err}")
     if not args.quiet:
         print("=" * 50)
-        print(f"Ergebnis: {passed}/{len(results)} bestanden, {failed} fehlgeschlagen, {skipped} uebersprungen (optionale Deps fehlen).")
+        print(f"Result: {passed}/{len(results)} passed, {failed} failed, {skipped} skipped (optional deps missing).")
     if failed:
         sys.exit(1)
     sys.exit(0)

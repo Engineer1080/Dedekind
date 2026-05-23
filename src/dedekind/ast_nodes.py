@@ -3,7 +3,7 @@ from typing import List, Optional, Union, Any
 
 
 class CompileError(Exception):
-    """Compiler-Fehler mit Zeile und optionalem Kontext."""
+    """Compiler error with line and optional context."""
     def __init__(self, message: str, line: Optional[int] = None, filepath: Optional[str] = None):
         self.message = message
         self.line = line
@@ -15,14 +15,14 @@ class CompileError(Exception):
         if self.filepath:
             parts.append(self.filepath)
         if self.line is not None:
-            parts.append(f"Zeile {self.line}")
+            parts.append(f"Line {self.line}")
         parts.append(self.message)
         return ": ".join(str(p) for p in parts)
 
 
 @dataclass
 class Node:
-    """Basis für alle AST-Knoten; line für Fehlermeldungen."""
+    """Base for all AST nodes; line for error messages."""
     line: Optional[int] = field(default=None, kw_only=True)
 
 @dataclass
@@ -38,20 +38,20 @@ class FunctionDef(Node):
     return_unit: Optional[str] = None  # Return unit annotation
     arg_shapes: Optional[List[Optional[List]]] = None  # Per-arg shape annotations (Vector[2], Tensor[batch,N]); None per slot = not annotated
     return_shape: Optional[List] = None  # Return shape annotation
-    is_pub: bool = False  # `pub fn` -> True; nur fuer Modul-Sichtbarkeit relevant
-    type_params: List[str] = field(default_factory=list)  # `fn name<T, U>(...)`: polymorphe Typ-Parameter
+    is_pub: bool = False  # `pub fn` -> True; only relevant for module visibility
+    type_params: List[str] = field(default_factory=list)  # `fn name<T, U>(...)`: polymorphic type parameters
 
 
 @dataclass
 class UseStmt(Node):
-    """Modul-/Import-Anweisung: `use math` lädt math.ddk in den aktuellen Kompilier-Pass."""
+    """Module/Import statement: `use math` loads math.ddk into the current compilation pass."""
     module: str
 
 
 @dataclass
 class UnitDef(Node):
-    """Benutzerdefinierte Einheit: `unit Foot = 0.3048[m]` registriert Foot als Längeneinheit
-    mit Umrechnungsfaktor 0.3048 zur Basis. base_unit muss bereits einer bekannten Dimension angehören."""
+    """User-defined unit: `unit Foot = 0.3048[m]` registers Foot as a length unit
+    with conversion factor 0.3048 to the base unit. base_unit must already belong to a known dimension."""
     name: str
     factor: float
     base_unit: str
@@ -59,8 +59,8 @@ class UnitDef(Node):
 
 @dataclass
 class PyImport(Node):
-    """Importiert ein Python-Modul aus dem PyPI-Ökosystem: `pyimport scipy.special as ss`.
-    Erzeugt im generierten Code ein `import MODULE as ALIAS`."""
+    """Imports a Python module from the PyPI ecosystem: `pyimport scipy.special as ss`.
+    Generates an `import MODULE as ALIAS` in the generated code."""
     module: str
     alias: str
 
@@ -81,7 +81,7 @@ class BinaryOp(Node):
 
 @dataclass
 class UnaryOp(Node):
-    """Unärer Operator, z.B. not x."""
+    """Unary operator, e.g., not x."""
     op: str
     operand: Node
 
@@ -99,11 +99,11 @@ class Identifier(Node):
 @dataclass
 class Literal(Node):
     value: Any
-    raw: bool = False  # True = Raw-String (r"...") in Dedekind
+    raw: bool = False  # True = Raw string (r"...") in Dedekind
 
 @dataclass
 class Quantity(Node):
-    """Physikalische Größe: Zahl mit Einheit, z. B. 10[m], 5[m/s]."""
+    """Physical quantity: number with unit, e.g., 10[m], 5[m/s]."""
     value: Union[int, float]
     unit: str
 
@@ -118,7 +118,7 @@ class VectorLiteral(Node):
 
 @dataclass
 class DictLiteral(Node):
-    """Dict-Literal: {"key": value, "k2": v2} — wird zur Python-dict transpiliert."""
+    """Dict literal: {"key": value, "k2": v2} — gets transpiled to a Python dict."""
     keys: List[Node]
     values: List[Node]
 
@@ -162,8 +162,8 @@ class Subscript(Node):
 
 @dataclass
 class Slice(Node):
-    """Python-Style Slice fuer Subscript-Indizes: x[start:stop:step].
-    Jede Komponente kann None sein (offene Schranke)."""
+    """Python-style slice for subscript indices: x[start:stop:step].
+    Each component can be None (open bound)."""
     start: Optional[Node] = None
     stop: Optional[Node] = None
     step: Optional[Node] = None
@@ -171,7 +171,7 @@ class Slice(Node):
 
 @dataclass
 class TryCatch(Node):
-    """try { body } catch var { handler } — faengt jede Exception und bindet sie an var."""
+    """try { body } catch var { handler } — catches every exception and binds it to var."""
     body: List[Node]
     catch_var: str
     handler: List[Node]
@@ -183,5 +183,5 @@ class ItemAssignment(Node):
 
 @dataclass
 class PostfixFactorial(Node):
-    """Postfix-Fakultät: n!"""
+    """Postfix factorial: n!"""
     operand: Node

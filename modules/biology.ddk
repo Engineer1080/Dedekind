@@ -1,11 +1,11 @@
-// modules/biology.ddk — Dedekind-Standardbibliothek: Biologie-Convenience.
-// Aktivierung: `use biology`
+// modules/biology.ddk — Dedekind Standard Library: Biology Convenience.
+// Activation: `use biology`
 //
-// Ergänzt die eingebauten Modelle (logistic, michaelis_menten, sir_model,
-// lotka_volterra, hill_equation, one_compartment_pk) um Wachstumsraten,
-// Allometrie und Genetik-Quickwins.
+// Complements the built-in models (logistic, michaelis_menten, sir_model,
+// lotka_volterra, hill_equation, one_compartment_pk) with growth rates,
+// allometry, and genetics quickwins.
 
-// --- Wachstum ----------------------------------------------------------------
+// --- Growth ------------------------------------------------------------------
 
 fn exponential_growth(N0, r, t) {
     // N(t) = N0 * exp(r*t)
@@ -31,7 +31,7 @@ fn von_bertalanffy(L_inf, L0, k, t) {
     return L_inf - (L_inf - L0) * exp(-k * t)
 }
 
-// --- Populationsdynamik ------------------------------------------------------
+// --- Population Dynamics ------------------------------------------------------
 
 fn population_change_logistic(N, r, K) {
     // dN/dt = r*N*(1 - N/K)
@@ -39,25 +39,25 @@ fn population_change_logistic(N, r, K) {
 }
 
 fn carrying_capacity(N1, N2, r, dt) {
-    // grobe Schätzung aus zwei aufeinanderfolgenden Messungen
+    // rough estimation from two consecutive measurements
     growth = (N2 - N1) / dt
     return N1 / (1.0 - growth / (r * N1))
 }
 
-// --- Allometrie & Physiologie ------------------------------------------------
+// --- Allometry & Physiology --------------------------------------------------
 
 fn kleibers_law(mass_kg) {
-    // metabolische Rate (Watt) ≈ 3.4 * m^0.75
+    // metabolic rate (Watts) ≈ 3.4 * m^0.75
     return 3.4 * mass_kg ^ 0.75
 }
 
 fn allometric_scaling(a, b, mass) {
-    // generelles Potenzgesetz y = a * m^b
+    // general power law y = a * m^b
     return a * pow(mass, b)
 }
 
 fn bmr_harris_benedict(weight_kg, height_cm, age_years, is_male) {
-    // Grundumsatz (kcal/Tag) - vereinfachte Harris-Benedict
+    // basal metabolic rate (kcal/day) - simplified Harris-Benedict
     if is_male {
         return 66.5 + 13.75 * weight_kg + 5.0 * height_cm - 6.75 * age_years
     } else {
@@ -69,10 +69,10 @@ fn bmi(weight_kg, height_m) {
     return weight_kg / (height_m * height_m)
 }
 
-// --- Genetik & Evolution -----------------------------------------------------
+// --- Genetics & Evolution -----------------------------------------------------
 
 fn hardy_weinberg_freq(p) {
-    // gibt [p^2, 2*p*q, q^2] zurück (AA, Aa, aa)
+    // returns [p^2, 2*p*q, q^2] (AA, Aa, aa)
     q = 1.0 - p
     return [p * p, 2.0 * p * q, q * q]
 }
@@ -83,12 +83,12 @@ fn fitness_selection_coefficient(w_a, w_b) {
 }
 
 fn mutation_drift_balance(mu, N) {
-    // erwartete Heterozygotie unter Mutation-Drift: H = 4*N*mu / (1 + 4*N*mu)
+    // expected heterozygosity under mutation-drift: H = 4*N*mu / (1 + 4*N*mu)
     x = 4.0 * N * mu
     return x / (1.0 + x)
 }
 
-// --- Epidemiologie -----------------------------------------------------------
+// --- Epidemiology -----------------------------------------------------------
 
 fn r_naught_sir(beta, gamma) {
     // R_0 = beta / gamma

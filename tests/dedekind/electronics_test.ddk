@@ -1,4 +1,4 @@
-use electronics
+use signals
 
 fn test_dc_circuit() {
     c = circuit()

@@ -6,7 +6,7 @@ _builtin_min = builtins.min
 _builtin_max = builtins.max
 
 def _normalize_unit_for_compare(unit):
-    """Normalisiert Einheiten für Vergleich: M, mol/L, mol*L^-1 gelten als gleich (chemische Konzentration)."""
+    """Normalizes units for comparison: M, mol/L, mol*L^-1 are considered equal (chemical concentration)."""
     if not unit:
         return unit
     u = str(unit).strip()
@@ -15,10 +15,10 @@ def _normalize_unit_for_compare(unit):
     return u
 
 
-# Einheiten mit automatischer Umrechnung bei +/-: (Basiseinheit, {Einheit: Faktor zur Basis})
-# Wert in Einheit * Faktor = Wert in Basiseinheit
+# Units with automatic conversion on +/-: (Base unit, {Unit: Factor to base})
+# Value in unit * factor = Value in base unit
 DIMENSION_TO_BASE = {
-    # SI-Basis
+    # SI base
     "length": ("m", {"m": 1.0, "cm": 0.01, "km": 1000.0, "mm": 0.001, "um": 1e-6, "nm": 1e-9, "angstrom": 1e-10, "Angstrom": 1e-10, "pm": 1e-12, "fm": 1e-15, "dm": 0.1, "AU": 149597870700.0, "ly": 9460730472580800.0, "pc": 3.085677581e16}),
     "mass": ("kg", {"kg": 1.0, "g": 0.001, "t": 1000.0, "mg": 1e-6, "ug": 1e-9, "Da": 1.66053906660e-27, "amu": 1.66053906660e-27, "M_sun": 1.98847e30}),
     "time": ("s", {"s": 1.0, "min": 60.0, "h": 3600.0, "d": 86400.0, "yr": 31557600.0, "a": 31557600.0, "ms": 0.001, "us": 1e-6, "ns": 1e-9, "ps": 1e-12, "fs": 1e-15}),
@@ -26,7 +26,7 @@ DIMENSION_TO_BASE = {
     "temperature": ("K", {"K": 1.0, "mK": 0.001}),
     "amount_of_substance": ("mol", {"mol": 1.0, "mmol": 0.001, "umol": 1e-6, "nmol": 1e-9, "kmol": 1000.0}),
     "luminous_intensity": ("cd", {"cd": 1.0, "mcd": 0.001}),
-    # Abgeleitet / häufig
+    # Derived / common
     "pressure": ("Pa", {"Pa": 1.0, "hPa": 100.0, "kPa": 1000.0, "MPa": 1e6, "GPa": 1e9, "bar": 1e5, "atm": 101325.0}),
     "force": ("N", {"N": 1.0, "kN": 1000.0, "MN": 1e6}),
     "permeability": ("m^2", {"m^2": 1.0, "D": 9.869233e-13, "mD": 9.869233e-16}),  # Darcy: 1 D ≈ 9.87e-13 m²
@@ -44,19 +44,19 @@ DIMENSION_TO_BASE = {
     "amount_concentration": ("M", {"M": 1.0, "mM": 0.001, "uM": 1e-6, "nM": 1e-9}),
     "absorbed_dose": ("Gy", {"Gy": 1.0, "mGy": 0.001}),
     "equivalent_dose": ("Sv", {"Sv": 1.0, "mSv": 0.001}),
-    # Chemie/Biologie: Massenkonzentration (% w/v = g/100mL)
+    # Chemistry/Biology: mass concentration (% w/v = g/100mL)
     "mass_concentration": ("g/L", {"g/L": 1.0, "mg/mL": 1.0, "percent_wv": 10.0}),  # 1% w/v = 10 g/L
-    # Winkel (SI-Ergänzung: rad; deg = pi/180 rad)
+    # Angle (SI supplement: rad; deg = pi/180 rad)
     "angle": ("rad", {"rad": 1.0, "deg": 0.017453292519943295}),  # 1 deg = pi/180 rad
-    # Molare Energie (MD/Chemie): Basis kJ/mol (1 kcal/mol = 4.184 kJ/mol)
+    # Molar energy (MD/Chemistry): Base kJ/mol (1 kcal/mol = 4.184 kJ/mol)
     "molar_energy": ("kJ/mol", {"kJ/mol": 1.0, "kcal/mol": 4.184, "J/mol": 0.001, "eV/atom": 96.485, "Hartree/mol": 2625.5}),
 }
-# Für Units-Checker: Liste der Einheitenmengen pro Dimension
+# For Units checker: List of unit sets per dimension
 ADDITIVE_DIMENSION_UNIT_SETS = [frozenset(tab.keys()) for _b, tab in DIMENSION_TO_BASE.values()]
 
 
 def _get_dimension(unit):
-    """Liefert Dimensionsname (length, mass, time, pressure) oder None."""
+    """Returns dimension name (length, mass, time, pressure) or None."""
     u = str(unit).strip() if unit else ""
     for dim, (_base, tab) in DIMENSION_TO_BASE.items():
         if u in tab:
@@ -65,14 +65,14 @@ def _get_dimension(unit):
 
 
 def _convert_to_base(value, unit, dimension):
-    """Wert in gegebener Einheit in Basiseinheit umrechnen."""
+    """Convert value in given unit to base unit."""
     _, tab = DIMENSION_TO_BASE[dimension]
     u = str(unit).strip()
     return float(value) * tab.get(u, 1.0)
 
 
 def _convert_from_base(value_base, unit, dimension):
-    """Wert in Basiseinheit in gegebene Einheit umrechnen."""
+    """Convert value in base unit to given unit."""
     _, tab = DIMENSION_TO_BASE[dimension]
     u = str(unit).strip()
     if u not in tab:
@@ -81,7 +81,7 @@ def _convert_from_base(value_base, unit, dimension):
 
 
 def _convert_between_units(value, std, from_unit, to_unit, dimension):
-    """Wert und Std von from_unit in to_unit umrechnen (für gleiche Dimension). Rückgabe (value, std)."""
+    """Convert value and std from from_unit to to_unit (for same dimension). Return (value, std)."""
     _, tab = DIMENSION_TO_BASE[dimension]
     u_from = str(from_unit).strip()
     u_to = str(to_unit).strip()
@@ -91,7 +91,7 @@ def _convert_between_units(value, std, from_unit, to_unit, dimension):
     return float(value) * factor, float(std) * abs(factor)
 
 class Quantity:
-    """Physikalische Größe mit Einheit (z. B. 10[m], 5[m/s], 0.1[M], 50[ppm]). Rechenregeln: gleiche Einheit für +/-, Einheiten multiplizieren/dividieren. Chemie: mol, L, M (= mol/L), ppm, bar, atm, g. Radioaktivität: Bq (1/s), Gy (J/kg), Sv (J/kg, Äquivalentdosis)."""
+    """Physical quantity with unit (e.g. 10[m], 5[m/s], 0.1[M], 50[ppm]). Calculation rules: same unit for +/-, multiply/divide units. Chemistry: mol, L, M (= mol/L), ppm, bar, atm, g. Radioactivity: Bq (1/s), Gy (J/kg), Sv (J/kg, equivalent dose)."""
     def __init__(self, value, unit=""):
         if type(value).__name__ == "Tensor" or hasattr(value, "requires_grad"):
             self.value = value
@@ -109,7 +109,7 @@ class Quantity:
         return _normalize_unit_for_compare(self.unit) == _normalize_unit_for_compare(other.unit)
 
     def _add_sub_quantity(self, other, is_add):
-        """Addition/Subtraktion mit automatischer Umrechnung bei gleicher Dimension (Länge, Masse, Zeit, Druck)."""
+        """Addition/subtraction with automatic conversion for the same dimension (length, mass, time, pressure)."""
         dim_self = _get_dimension(self.unit)
         dim_other = _get_dimension(other.unit)
         if dim_self is not None and dim_self == dim_other:
@@ -122,16 +122,16 @@ class Quantity:
             v = (self.value + other.value) if is_add else (self.value - other.value)
             return Quantity(v, self.unit)
         raise ValueError(
-            f"Einheitenfehler bei {'Addition' if is_add else 'Subtraktion'}: [{self.unit}] vs [{other.unit}]. "
-            "Gleiche Einheit oder kompatible Einheiten derselben Dimension (z. B. Länge, Masse, Zeit, Druck, Strom, Temperatur, mol, cd, Volumen, Energie, Spannung, Frequenz, Ladung, Widerstand, Leistung, Winkel rad/deg) erforderlich."
+            f"Unit error during {'addition' if is_add else 'subtraction'}: [{self.unit}] vs [{other.unit}]. "
+            "Same unit or compatible units of the same dimension (e.g., length, mass, time, pressure, current, temperature, mol, cd, volume, energy, voltage, frequency, charge, resistance, power, angle rad/deg) required."
         )
 
     def __add__(self, other):
         if isinstance(other, (int, float)):
             if self.unit:
                 raise ValueError(
-                    f"Einheitenfehler: Kann reine Zahl nicht zu Größe mit Einheit [{self.unit}] addieren. "
-                    "Für Addition brauchen beide Seiten die gleiche Einheit (oder dimensionslos)."
+                    f"Unit error: Cannot add a pure number to a quantity with unit [{self.unit}]. "
+                    "For addition, both sides must have the same unit (or be dimensionless)."
                 )
             return Quantity(self.value + other, "")
         if isinstance(other, Quantity):
@@ -145,8 +145,8 @@ class Quantity:
         if isinstance(other, (int, float)):
             if self.unit:
                 raise ValueError(
-                    f"Einheitenfehler: Kann reine Zahl nicht von Größe mit Einheit [{self.unit}] subtrahieren. "
-                    "Für Subtraktion brauchen beide Seiten die gleiche Einheit (oder dimensionslos)."
+                    f"Unit error: Cannot subtract a pure number from a quantity with unit [{self.unit}]. "
+                    "For subtraction, both sides must have the same unit (or be dimensionless)."
                 )
             return Quantity(self.value - other, "")
         if isinstance(other, Quantity):
@@ -209,7 +209,7 @@ class Quantity:
         return f"{self.value}[{display_unit}]"
 
     def _cmp_value(self, other):
-        """Liefert (self_val, other_val) für Vergleich. Konvertiert Einheiten, wenn möglich."""
+        """Returns (self_val, other_val) for comparison. Converts units if possible."""
         if isinstance(other, Quantity):
             dim_s = _get_dimension(self.unit)
             dim_o = _get_dimension(other.unit)
@@ -219,7 +219,7 @@ class Quantity:
             if _normalize_unit_for_compare(self.unit) == _normalize_unit_for_compare(other.unit):
                 return self.value, other.value
             raise ValueError(
-                f"Vergleich nicht möglich: [{self.unit}] vs [{other.unit}] (unterschiedliche Dimension)."
+                f"Comparison not possible: [{self.unit}] vs [{other.unit}] (different dimension)."
             )
         if isinstance(other, (int, float)):
             return self.value, float(other)
@@ -262,14 +262,14 @@ class Quantity:
         return hash((self.value, _normalize_unit_for_compare(self.unit)))
 
     def __getitem__(self, key):
-        """Index/Slice einer Tensor- oder Listenwertigen Quantity; Einheit bleibt erhalten.
-        Wirft TypeError, wenn der Wert ein Skalar ist (keine sinnvolle Indizierung)."""
+        """Index/slice of a tensor- or list-valued Quantity; unit is preserved.
+        Raises TypeError if the value is a scalar (no meaningful indexing)."""
         v = self.value
         try:
             sub = v[key]
         except TypeError:
             raise TypeError(
-                f"Quantity-Wert vom Typ {type(v).__name__} kann nicht indiziert werden (Skalar?)."
+                f"Quantity value of type {type(v).__name__} cannot be indexed (scalar?)."
             )
         if isinstance(sub, Quantity):
             return sub
@@ -291,7 +291,7 @@ def _unit_inv(u):
     return f"1/{u}" if "*" not in u and "/" not in u else f"1/({u})"
 
 def _unit_pow(u, exp):
-    """Einheit hoch exp (z. B. m^2, (m/s)^2)."""
+    """Unit to the power of exp (e.g. m^2, (m/s)^2)."""
     if not u: return ""
     e = float(exp)
     if abs(e - 1.0) < 1e-12: return u
@@ -303,7 +303,7 @@ def _unit_pow(u, exp):
 
 
 def _split_product_top_level(u):
-    """Splittet Einheiten-String an '*' nur auf oberster Ebene (Klammern respektierend)."""
+    """Splits unit string at '*' only on the top level (respecting parentheses)."""
     parts = []
     current = []
     depth = 0
@@ -325,10 +325,10 @@ def _split_product_top_level(u):
 
 
 def _parse_base_exp(part):
-    """Liefert (base, exp) für einen Faktor wie 'm', 'm^2', '(m/s)^2'. exp als Zahl."""
+    """Returns (base, exp) for a factor like 'm', 'm^2', '(m/s)^2'. exp as a number."""
     part = part.strip()
     if "^" in part:
-        # Rechts vom letzten ^ (nicht in Klammern) steht der Exponent
+        # Right of the last ^ (not in parentheses) is the exponent
         idx = part.rfind("^")
         base = part[:idx].strip()
         exp_str = part[idx + 1:].strip()
@@ -336,7 +336,7 @@ def _parse_base_exp(part):
             exp = int(exp_str) if "." not in exp_str else float(exp_str)
         except ValueError:
             return part, 1
-        # Klammern um einfache Basis entfernen für einheitliche Darstellung
+        # Remove parentheses around simple base for uniform representation
         if base.startswith("(") and base.endswith(")") and base.count("(") == 1 and "/" not in base[1:-1]:
             base = base[1:-1].strip()
         return base, exp
@@ -344,28 +344,28 @@ def _parse_base_exp(part):
 
 
 def _collapse_product(u):
-    """Fasst gleiche Faktoren zusammen: m*m -> m^2, m*m*m -> m^3, m^2*m -> m^3, m*m*kg -> m^2*kg."""
+    """Collapses identical factors: m*m -> m^2, m*m*m -> m^3, m^2*m -> m^3, m*m*kg -> m^2*kg."""
     if not u or "/" in u:
         return u
     parts = _split_product_top_level(u)
     if len(parts) <= 1:
         return u
-    # Teile, die selbst Produkte sind (z. B. (m*m)), zuerst rekursiv zusammenfassen
+    # Parts that are themselves products (e.g. (m*m)), first collapse recursively
     normalized = []
     for p in parts:
         p = p.strip()
-        # Äußere Klammern abziehen, dann ggf. Produkt zusammenfassen
+        # Strip outer parentheses, then collapse product if applicable
         if p.startswith("(") and p.endswith(")") and p.count("(") == 1:
             p = p[1:-1].strip()
         if "*" in p and "/" not in p:
             p = _collapse_product(p)
         normalized.append(p)
-    # Jeden Faktor als (base, exp) und zusammenfassen
+    # Parse each factor as (base, exp) and merge
     merged = {}
     for p in normalized:
         base, exp = _parse_base_exp(p)
         merged[base] = merged.get(base, 0) + exp
-    # Sortiert ausgeben: einheitliche Reihenfolge
+    # Output sorted: uniform order
     out = []
     for base in sorted(merged.keys()):
         e = merged[base]
@@ -377,25 +377,25 @@ def _collapse_product(u):
 
 
 def _unit_simplify(u):
-    """Vereinfacht Einheiten-String für Anzeige. SI-Basis: m, kg, s, A, K, mol, cd. Abgeleitet: J, N, Pa, W, Hz, V, F, ohm, S, Wb, T, H, lm, lx, Gy, kat, M. Chemie/Druck: bar, atm. Masse: g. Radioaktivität: Bq (1/s), Sv (J/kg); Anzeige 1/s→Hz, J/kg→Gy."""
+    """Simplifies unit string for display. SI base: m, kg, s, A, K, mol, cd. Derived: J, N, Pa, W, Hz, V, F, ohm, S, Wb, T, H, lm, lx, Gy, kat, M. Chemistry/Pressure: bar, atm. Mass: g. Radioactivity: Bq (1/s), Sv (J/kg); Display 1/s→Hz, J/kg→Gy."""
     if not u:
         return u
     u = u.strip()
-    # Chemie: Konzentration mol/L -> M; ppm bleibt ppm
+    # Chemistry: concentration mol/L -> M; ppm stays ppm
     if u in ("mol/L", "mol*L^-1", "mol*L^(-1)", "mol/L"):
         return "M"
     if u.replace(" ", "") in ("mol/L", "mol*L^-1"):
         return "M"
-    # 1/s -> Hz (Frequenz); Bq gleiche Dimension, Anzeige Hz
+    # 1/s -> Hz (frequency); Bq same dimension, display Hz
     if u in ("1/s", "s^-1", "s^(-1)") or u.replace(" ", "") == "s^-1":
         return "Hz"
-    # mol/s -> kat (katal, katalytische Aktivität)
+    # mol/s -> kat (katal, catalytic activity)
     if u in ("mol/s", "mol*s^-1", "mol*s^(-1)"):
         return "kat"
-    # J/kg, m^2/s^2 -> Gy (Gray, absorbierte Dosis); Sv gleiche Dimension
+    # J/kg, m^2/s^2 -> Gy (Gray, absorbed dose); Sv same dimension
     if u in ("J/kg", "m^2/s^2", "(m^2)/(s^2)") or "(m/s)^2" in u:
         return "Gy"
-    # Joule: kg*m^2/s^2 bzw. (kg)*((m/s)^2); nicht J/C (V) oder J/s (W)
+    # Joule: kg*m^2/s^2 or (kg)*((m/s)^2); not J/C (V) or J/s (W)
     if "(kg)*((m/s)^2)" in u or u == "kg*m^2/s^2":
         return "J"
     if "kg" in u and "m^2" in u and "s^2" in u and "A" not in u and "mol" not in u and "s^3" not in u and "s^(-3)" not in u and "/" in u:
@@ -409,7 +409,7 @@ def _unit_simplify(u):
         return "N"
     if "kg*m/s^2" in u or u == "N":
         return "N"
-    # Pa (Pascal): N/m^2, kg/(m*s^2) — nicht N*m^2/C^2
+    # Pa (Pascal): N/m^2, kg/(m*s^2) — not N*m^2/C^2
     if u in ("N/m^2", "N*m^-2", "N*m^(-2)"):
         return "Pa"
     if "kg/(m*s^2)" in u or u in ("kg*m^-1*s^-2", "kg*m^(-1)*s^(-2)"):
@@ -420,7 +420,7 @@ def _unit_simplify(u):
     # V (Volt): J/C, W/A, kg*m^2/(s^3*A)
     if u in ("J/C", "W/A") or "kg*m^2/(s^3*A)" in u:
         return "V"
-    # S (Siemens): 1/ohm, s^3*A^2/(kg*m^2) — vor ohm prüfen
+    # S (Siemens): 1/ohm, s^3*A^2/(kg*m^2) — check before ohm
     if "s^3*A^2/(kg*m^2)" in u:
         return "S"
     # ohm (Ω): V/A, kg*m^2/(s^3*A^2)
@@ -429,22 +429,22 @@ def _unit_simplify(u):
     # F (Farad): C/V, s^4*A^2/(kg*m^2)
     if u in ("C/V", "C*V^-1", "C*V^(-1)") or ("s^4*A^2" in u and "kg*m^2" in u):
         return "F"
-    # H (Henry): Wb/A, kg*m^2/(s^2*A^2) — vor Wb prüfen
+    # H (Henry): Wb/A, kg*m^2/(s^2*A^2) — check before Wb
     if u in ("Wb/A", "Wb*A^-1") or "kg*m^2/(s^2*A^2)" in u:
         return "H"
-    # Wb (Weber): V*s, kg*m^2/(s^2*A) (nicht A^2)
+    # Wb (Weber): V*s, kg*m^2/(s^2*A) (not A^2)
     if u == "V*s" or ("kg*m^2" in u and "/(s^2*A)" in u and "A^2" not in u):
         return "Wb"
     # T (Tesla): Wb/m^2, kg/(s^2*A)
     if u in ("Wb/m^2", "Wb*m^-2", "kg*s^-2*A^-1") or "kg/(s^2*A)" in u:
         return "T"
-    # lm (Lumen): cd*sr (Candela * Steradiant)
+    # lm (Lumen): cd*sr (Candela * Steradian)
     if "cd*sr" in u or (u.replace(" ", "") == "cd*sr"):
         return "lm"
     # lx (Lux): lm/m^2
     if u in ("lm/m^2", "lm*m^-2"):
         return "lx"
-    # Gleiche Faktoren zusammenfassen: m*m -> m^2, m*m*m -> m^3, m^2*m -> m^3, m*m*kg -> m^2*kg
+    # Collapse identical factors: m*m -> m^2, m*m*m -> m^3, m^2*m -> m^3, m*m*kg -> m^2*kg
     if "*" in u:
         u = _collapse_product(u)
     return u
@@ -786,22 +786,22 @@ def compile_model(model):
 
 
 def _register_user_unit(name, factor, base_unit):
-    """Registriert eine benutzerdefinierte Einheit: 1 NAME = factor * base_unit.
+    """Registers a user-defined unit: 1 NAME = factor * base_unit.
 
-    Beispiele:
+    Examples:
         _register_user_unit("Foot", 0.3048, "m")     # 1 Foot = 0.3048 m  (length)
         _register_user_unit("Mile", 1609.34, "m")    # 1 Mile = 1609.34 m  (length)
         _register_user_unit("Darcy", 9.869233e-13, "m^2")  # permeability
-        _register_user_unit("MilliFoot", 0.001, "Foot")    # chaining wird aufgel├Âst
+        _register_user_unit("MilliFoot", 0.001, "Foot")    # chaining is resolved
 
-    base_unit muss bereits in irgendeiner Dimensionstabelle vorkommen (Basis oder Alias).
+    base_unit must already exist in some dimension table (base or alias).
     """
     name = str(name).strip()
     base_unit = str(base_unit).strip()
     factor = float(factor)
     if not name:
-        raise ValueError("unit-Name darf nicht leer sein.")
-    # Dimension der base_unit suchen und Kettenaufl├Âsung durchf├╝hren
+        raise ValueError("unit name must not be empty.")
+    # Find the dimension of base_unit and perform chain resolution
     target_dim = None
     base_factor = 1.0
     for dim, (_b, tab) in DIMENSION_TO_BASE.items():
@@ -811,15 +811,15 @@ def _register_user_unit(name, factor, base_unit):
             break
     if target_dim is None:
         raise ValueError(
-            f"`unit {name} = ...[{base_unit}]`: Basiseinheit '{base_unit}' ist keiner bekannten Dimension "
-            f"zugeordnet (L├ñnge, Masse, Zeit, Druck, Energie, ...). Bitte alias zu einer bestehenden Einheit."
+            f"`unit {name} = ...[{base_unit}]`: Base unit '{base_unit}' is not assigned to any known dimension "
+            f"(length, mass, time, pressure, energy, ...). Please alias to an existing unit."
         )
     DIMENSION_TO_BASE[target_dim][1][name] = factor * base_factor
     _rebuild_additive_unit_sets()
     return name
 
 def _unit_of_value(value):
-    """Liefert die Einheit eines Wertes als String. '' fuer unitless / Zahlen / Tensoren."""
+    """Returns the unit of a value as a string. '' for unitless / numbers / tensors."""
     if isinstance(value, Quantity):
         return value.unit or ""
     if isinstance(value, UncertainQuantity):
@@ -827,17 +827,17 @@ def _unit_of_value(value):
     return ""
 
 def _check_param_unit(value, param_name, fn_name, arg_name, unit_env):
-    """Bindet eine polymorphe Einheits-Variable konsistent ueber alle Argumente eines Calls.
+    """Binds a polymorphic unit variable consistently across all arguments of a call.
 
-    Erstes Auftreten: bindet param_name -> Einheit von value.
-    Folgende Auftritte: muss die gleiche Dimension haben; bei Bedarf wird value
-    in die gebundene Einheit umgerechnet.
+    First occurrence: binds param_name -> unit of value.
+    Subsequent occurrences: must have the same dimension; if needed, value
+    is converted to the bound unit.
 
-    Beispiel:
+    Example:
         fn add<U>(a: [U], b: [U]) -> [U] { return a + b }
-        add(2[m], 3[m])       # U bindet auf 'm'
-        add(2[m], 100[cm])    # U bindet auf 'm', 100[cm] wird zu 1[m]
-        add(2[m], 3[kg])      # ValueError (Dimensions-Mismatch)
+        add(2[m], 3[m])       # U binds to 'm'
+        add(2[m], 100[cm])    # U binds to 'm', 100[cm] is converted to 1[m]
+        add(2[m], 3[kg])      # ValueError (dimension mismatch)
     """
     actual = _unit_of_value(value)
     if param_name not in unit_env:
@@ -846,28 +846,28 @@ def _check_param_unit(value, param_name, fn_name, arg_name, unit_env):
     bound = unit_env[param_name]
     if bound == actual:
         return value
-    # Beide non-empty + gleiche Einheit (durch String-Vergleich)?
+    # Both non-empty + same unit (by string comparison)?
     if _normalize_unit_for_compare(bound) == _normalize_unit_for_compare(actual):
         return value
-    # Beide non-empty + gleiche Dimension? -> in gebundene Einheit umrechnen.
+    # Both non-empty + same dimension? -> convert to bound unit.
     if isinstance(value, Quantity) and bound:
         try:
             return _coerce_to_expected_unit(value, bound, f"{fn_name}({arg_name}) [Typ-Param {param_name}]")
         except ValueError:
             pass
-    # Caller gab plain number, Bindung erwartet Einheit
+    # Caller gave plain number, binding expects unit
     if bound and not actual and isinstance(value, (int, float)):
         return Quantity(float(value), bound)
     raise ValueError(
-        f"Typ-Param-Einheit '{param_name}' in {fn_name}({arg_name}): "
-        f"bereits an [{bound or 'unitless'}] gebunden, hier [{actual or 'unitless'}]."
+        f"Type param unit '{param_name}' in {fn_name}({arg_name}): "
+        f"already bound to [{bound or 'unitless'}], got [{actual or 'unitless'}]."
     )
 
 def _check_return_param_unit(value, param_name, fn_name, unit_env):
-    """Pruefe / binde polymorphe Einheits-Variable am Return-Punkt."""
+    """Check / bind polymorphic unit variable at return point."""
     actual = _unit_of_value(value)
     if param_name not in unit_env:
-        # Return ist die erste Stelle, die param_name sieht ÔÇö binden, ohne Pruefung
+        # Return is the first place that sees param_name — bind without check
         unit_env[param_name] = actual
         return value
     bound = unit_env[param_name]
@@ -877,18 +877,18 @@ def _check_return_param_unit(value, param_name, fn_name, unit_env):
         return value
     if isinstance(value, Quantity) and bound:
         try:
-            return _coerce_to_expected_unit(value, bound, f"return von {fn_name} [Typ-Param {param_name}]")
+            return _coerce_to_expected_unit(value, bound, f"return of {fn_name} [type param {param_name}]")
         except ValueError:
             pass
     if bound and not actual and isinstance(value, (int, float)):
         return Quantity(float(value), bound)
     raise ValueError(
-        f"Typ-Param-Einheit '{param_name}' im Return von {fn_name}: "
-        f"erwartet [{bound or 'unitless'}], erhalten [{actual or 'unitless'}]."
+        f"Type param unit '{param_name}' in return of {fn_name}: "
+        f"expected [{bound or 'unitless'}], got [{actual or 'unitless'}]."
     )
 
 def _shape_of(value):
-    """Liefert die Shape eines Wertes als Tupel von ints. Skalar -> (), unbekannt -> None."""
+    """Returns the shape of a value as a tuple of ints. Scalar -> (), unknown -> None."""
     if isinstance(value, (int, float, bool)):
         return ()
     if isinstance(value, Quantity):
@@ -905,7 +905,7 @@ def _shape_of(value):
         first_sub = _shape_of(value[0])
         if first_sub is None:
             return (len(value),)
-        # Konsistenz aller Elemente (sonst unregelm├ñ├ƒig -> nur erste Dimension)
+        # Consistency of all elements (otherwise irregular -> only first dimension)
         for item in value[1:]:
             if _shape_of(item) != first_sub:
                 return (len(value),)
@@ -913,41 +913,41 @@ def _shape_of(value):
     return None
 
 def _format_shape(dims):
-    """Liefert eine kompakte String-Darstellung einer Shape-Liste/Tupel."""
+    """Returns a compact string representation of a shape list/tuple."""
     parts = [str(d) for d in dims]
     return "[" + ", ".join(parts) + "]"
 
 def _check_shape(value, expected_dims, fn_name, arg_name, shape_env):
-    """Prueft, dass `value` die deklarierte Shape `expected_dims` hat.
-    Symbolische Dimensionen (Strings) werden in `shape_env` gebunden bzw. verglichen.
-    Wirft ValueError bei Mismatch. Liefert `value` unveraendert zurueck (passthrough)."""
+    """Checks that `value` has the declared shape `expected_dims`.
+    Symbolic dimensions (strings) are bound or compared in `shape_env`.
+    Raises ValueError on mismatch. Returns `value` unchanged (passthrough)."""
     actual = _shape_of(value)
     if actual is None:
-        # Shape nicht ermittelbar (z. B. generischer Iterator) - skip
+        # Shape not determinable (e.g. generic iterator) - skip
         return value
     if len(actual) != len(expected_dims):
         raise ValueError(
-            f"Shape-Mismatch in {fn_name}({arg_name}): erwartet {_format_shape(expected_dims)} "
-            f"({len(expected_dims)}-D), erhalten {_format_shape(actual)} ({len(actual)}-D)."
+            f"Shape mismatch in {fn_name}({arg_name}): expected {_format_shape(expected_dims)} "
+            f"({len(expected_dims)}-D), got {_format_shape(actual)} ({len(actual)}-D)."
         )
     for i, (want, got) in enumerate(zip(expected_dims, actual)):
         if isinstance(want, int):
             if want != got:
                 raise ValueError(
-                    f"Shape-Mismatch in {fn_name}({arg_name}): Dimension {i} erwartet {want}, "
-                    f"erhalten {got}. Volle Shape: erwartet {_format_shape(expected_dims)}, "
-                    f"erhalten {_format_shape(actual)}."
+                    f"Shape mismatch in {fn_name}({arg_name}): dimension {i} expected {want}, "
+                    f"got {got}. Full shape: expected {_format_shape(expected_dims)}, "
+                    f"got {_format_shape(actual)}."
                 )
         else:
-            # Symbolische Dimension: erste Begegnung bindet, danach Konsistenz pruefen
+            # Symbolic dimension: first encounter binds, then check consistency
             bound = shape_env.get(want)
             if bound is None:
                 shape_env[want] = got
             elif bound != got:
                 raise ValueError(
-                    f"Symbolische Shape-Dimension '{want}' in {fn_name}({arg_name}): bereits "
-                    f"als {bound} gebunden, hier {got}. Volle Shape: erwartet "
-                    f"{_format_shape(expected_dims)}, erhalten {_format_shape(actual)}."
+                    f"Symbolic shape dimension '{want}' in {fn_name}({arg_name}): already "
+                    f"bound as {bound}, got {got}. Full shape: expected "
+                    f"{_format_shape(expected_dims)}, got {_format_shape(actual)}."
                 )
     return value
 
@@ -957,14 +957,14 @@ def _check_return_shape(value, expected_dims, fn_name, shape_env):
         return value
     if len(actual) != len(expected_dims):
         raise ValueError(
-            f"Return-Shape-Mismatch in {fn_name}: erwartet {_format_shape(expected_dims)}, "
-            f"erhalten {_format_shape(actual)}."
+            f"Return shape mismatch in {fn_name}: expected {_format_shape(expected_dims)}, "
+            f"got {_format_shape(actual)}."
         )
     for i, (want, got) in enumerate(zip(expected_dims, actual)):
         if isinstance(want, int):
             if want != got:
                 raise ValueError(
-                    f"Return-Shape-Mismatch in {fn_name}: Dim {i} erwartet {want}, erhalten {got}."
+                    f"Return shape mismatch in {fn_name}: dim {i} expected {want}, got {got}."
                 )
         else:
             bound = shape_env.get(want)
@@ -972,14 +972,14 @@ def _check_return_shape(value, expected_dims, fn_name, shape_env):
                 shape_env[want] = got
             elif bound != got:
                 raise ValueError(
-                    f"Symbolische Return-Dimension '{want}' in {fn_name}: bereits {bound}, "
-                    f"hier {got}."
+                    f"Symbolic return dimension '{want}' in {fn_name}: already {bound}, "
+                    f"got {got}."
                 )
     return value
 
 def _graph_dims(value):
-    """Liefert (num_nodes, num_edges) fuer torch_geometric.data.Data oder
-    aehnliche Objekte. None wenn nicht ermittelbar."""
+    """Returns (num_nodes, num_edges) for torch_geometric.data.Data or
+    similar objects. None if not determinable."""
     if hasattr(value, "num_nodes") and hasattr(value, "num_edges"):
         try:
             return int(value.num_nodes), int(value.num_edges)
@@ -1003,14 +1003,14 @@ def _graph_dims(value):
     return None
 
 def _check_graph_dims_against_env(actual, expected_dims, fn_name, arg_name, shape_env, where):
-    """Pruefe (N_nodes, N_edges)-Tupel gegen erwartete Dimensionen mit Symbol-Bindung."""
-    labels = ("Knoten", "Kanten")
+    """Check (N_nodes, N_edges) tuple against expected dimensions with symbol binding."""
+    labels = ("nodes", "edges")
     for i, (want, got, label) in enumerate(zip(expected_dims, actual, labels)):
         if isinstance(want, int):
             if want != got:
                 raise ValueError(
-                    f"Graph-Shape-Mismatch in {where} {fn_name}({arg_name}): "
-                    f"{label}-Anzahl erwartet {want}, erhalten {got}."
+                    f"Graph shape mismatch in {where} {fn_name}({arg_name}): "
+                    f"{label} count expected {want}, got {got}."
                 )
         else:
             bound = shape_env.get(want)
@@ -1018,20 +1018,20 @@ def _check_graph_dims_against_env(actual, expected_dims, fn_name, arg_name, shap
                 shape_env[want] = got
             elif bound != got:
                 raise ValueError(
-                    f"Symbolische Graph-Dimension '{want}' in {where} {fn_name}({arg_name}): "
-                    f"bereits als {bound} gebunden, hier {got} ({label})."
+                    f"Symbolic graph dimension '{want}' in {where} {fn_name}({arg_name}): "
+                    f"already bound as {bound}, got {got} ({label})."
                 )
 
 def _check_graph_shape(value, expected_dims, fn_name, arg_name, shape_env):
-    """Validiert, dass `value` ein torch_geometric.data.Data-aehnliches Objekt mit den
-    deklarierten (N_nodes, N_edges)-Dimensionen ist. Symbolische Dimensionen werden
-    in `shape_env` gebunden bzw. konsistent gehalten."""
+    """Validates that `value` is a torch_geometric.data.Data-like object with the
+    declared (N_nodes, N_edges) dimensions. Symbolic dimensions are
+    bound or kept consistent in `shape_env`."""
     actual = _graph_dims(value)
     if actual is None:
         raise ValueError(
-            f"Graph-Shape-Check in {fn_name}({arg_name}): erwarte ein Graph-Objekt "
-            f"mit num_nodes/num_edges-Attributen (z. B. torch_geometric.data.Data), "
-            f"erhalten {type(value).__name__}."
+            f"Graph shape check in {fn_name}({arg_name}): expected a graph object "
+            f"with num_nodes/num_edges attributes (e.g. torch_geometric.data.Data), "
+            f"got {type(value).__name__}."
         )
     _check_graph_dims_against_env(actual, expected_dims, fn_name, arg_name, shape_env, "Argument")
     return value
@@ -1040,15 +1040,15 @@ def _check_return_graph_shape(value, expected_dims, fn_name, shape_env):
     actual = _graph_dims(value)
     if actual is None:
         raise ValueError(
-            f"Graph-Return-Shape-Check in {fn_name}: erwarte ein Graph-Objekt, "
-            f"erhalten {type(value).__name__}."
+            f"Graph return shape check in {fn_name}: expected a graph object, "
+            f"got {type(value).__name__}."
         )
     _check_graph_dims_against_env(actual, expected_dims, fn_name, "return", shape_env, "Return")
     return value
 
 def _labeled_dims(value):
-    """Liefert tuple der dim-Namen fuer xarray.DataArray oder DataArray-aehnliche
-    Objekte. None wenn nicht ermittelbar."""
+    """Returns tuple of dim names for xarray.DataArray or DataArray-like
+    objects. None if not determinable."""
     if hasattr(value, "dims"):
         try:
             return tuple(str(d) for d in value.dims)
@@ -1057,15 +1057,15 @@ def _labeled_dims(value):
     return None
 
 def _check_labeled_shape(value, expected_dims, fn_name, arg_name, shape_env):
-    """Validiert, dass `value` ein xarray.DataArray-aehnliches Objekt mit GENAU der
-    deklarierten Menge von dim-Namen ist (Reihenfolge irrelevant ÔÇö xarray operiert
-    namens-basiert)."""
+    """Validates that `value` is an xarray.DataArray-like object with EXACTLY the
+    declared set of dim names (order is irrelevant — xarray operates
+    name-based)."""
     actual = _labeled_dims(value)
     if actual is None:
         raise ValueError(
-            f"LabeledTensor-Shape-Check in {fn_name}({arg_name}): erwarte ein "
-            f"DataArray-aehnliches Objekt mit .dims (z. B. xarray.DataArray), "
-            f"erhalten {type(value).__name__}."
+            f"LabeledTensor shape check in {fn_name}({arg_name}): expected a "
+            f"DataArray-like object with .dims (e.g. xarray.DataArray), "
+            f"got {type(value).__name__}."
         )
     expected_set = set(str(d) for d in expected_dims)
     actual_set = set(actual)
@@ -1074,13 +1074,13 @@ def _check_labeled_shape(value, expected_dims, fn_name, arg_name, shape_env):
         extra = actual_set - expected_set
         msgs = []
         if missing:
-            msgs.append(f"fehlende Dimensionen: {sorted(missing)}")
+            msgs.append(f"missing dimensions: {sorted(missing)}")
         if extra:
-            msgs.append(f"zusaetzliche Dimensionen: {sorted(extra)}")
+            msgs.append(f"extra dimensions: {sorted(extra)}")
         raise ValueError(
-            f"LabeledTensor-Shape-Mismatch in {fn_name}({arg_name}): "
-            f"erwartet {{ {', '.join(sorted(expected_set))} }}, "
-            f"erhalten {{ {', '.join(sorted(actual_set))} }} ({'; '.join(msgs)})."
+            f"LabeledTensor shape mismatch in {fn_name}({arg_name}): "
+            f"expected {{ {', '.join(sorted(expected_set))} }}, "
+            f"got {{ {', '.join(sorted(actual_set))} }} ({'; '.join(msgs)})."
         )
     return value
 
@@ -1088,36 +1088,36 @@ def _check_return_labeled_shape(value, expected_dims, fn_name, shape_env):
     actual = _labeled_dims(value)
     if actual is None:
         raise ValueError(
-            f"LabeledTensor-Return-Check in {fn_name}: erwarte DataArray-aehnliches "
-            f"Objekt, erhalten {type(value).__name__}."
+            f"LabeledTensor return check in {fn_name}: expected DataArray-like "
+            f"object, got {type(value).__name__}."
         )
     expected_set = set(str(d) for d in expected_dims)
     actual_set = set(actual)
     if expected_set != actual_set:
         raise ValueError(
-            f"LabeledTensor-Return-Mismatch in {fn_name}: erwartet "
+            f"LabeledTensor return mismatch in {fn_name}: expected "
             f"{{ {', '.join(sorted(expected_set))} }}, "
-            f"erhalten {{ {', '.join(sorted(actual_set))} }}."
+            f"got {{ {', '.join(sorted(actual_set))} }}."
         )
     return value
 
 def _validate_sequence_string(value, kind, where):
-    """Validiert: value ist ein String und enthaelt nur Zeichen aus dem Alphabet."""
+    """Validates: value is a string and contains only characters from the alphabet."""
     if not isinstance(value, str):
         raise TypeError(
-            f"Sequence[{kind}]-Check in {where}: erwarte String, erhalten {type(value).__name__}."
+            f"Sequence[{kind}] check in {where}: expected string, got {type(value).__name__}."
         )
     alphabet = _SEQ_ALPHABETS.get(kind.upper())
     if alphabet is None:
-        raise ValueError(f"Sequence-Kind {kind!r} unbekannt (erlaubt: DNA, RNA, Protein).")
+        raise ValueError(f"Sequence kind {kind!r} unknown (allowed: DNA, RNA, Protein).")
     upper_val = value.upper()
     bad = [c for c in upper_val if c not in alphabet]
     if bad:
-        # Erstes Vorkommen mit Position
+        # First occurrence with position
         idx = next(i for i, c in enumerate(upper_val) if c not in alphabet)
         raise ValueError(
-            f"Sequence[{kind}]-Check in {where}: ungueltiges Zeichen "
-            f"{value[idx]!r} an Position {idx} (erlaubt: {''.join(sorted(alphabet))})."
+            f"Sequence[{kind}] check in {where}: invalid character "
+            f"{value[idx]!r} at position {idx} (allowed: {''.join(sorted(alphabet))})."
         )
 
 def _check_sequence_shape(value, expected_dims, fn_name, arg_name, shape_env):
@@ -1127,11 +1127,11 @@ def _check_sequence_shape(value, expected_dims, fn_name, arg_name, shape_env):
 
 def _check_return_sequence_shape(value, expected_dims, fn_name, shape_env):
     kind = str(expected_dims[0])
-    _validate_sequence_string(value, kind, f"return von {fn_name}")
+    _validate_sequence_string(value, kind, f"return of {fn_name}")
     return value
 
 def _check_qubit_shape(val, dims, fn_name, arg_name, shape_env):
-    """Prueft Qubit[N] ÔÇö erwartet QuantumCircuit oder int."""
+    """Checks Qubit[N] — expects QuantumCircuit or int."""
     if isinstance(val, QuantumCircuit):
         expected = dims[0] if dims else None
         if expected is not None:
@@ -1140,19 +1140,19 @@ def _check_qubit_shape(val, dims, fn_name, arg_name, shape_env):
                     if shape_env[expected] != val.n_qubits:
                         raise TypeError(
                             f"{fn_name}(): Argument '{arg_name}' Qubit[{expected}]={shape_env[expected]} "
-                            f"aber QuantumCircuit hat {val.n_qubits} Qubits."
+                            f"but QuantumCircuit has {val.n_qubits} qubits."
                         )
                 else:
                     shape_env[expected] = val.n_qubits
             elif val.n_qubits != int(expected):
                 raise TypeError(
-                    f"{fn_name}(): Argument '{arg_name}' erwartet Qubit[{expected}], "
-                    f"QuantumCircuit hat {val.n_qubits} Qubits."
+                    f"{fn_name}(): Argument '{arg_name}' expected Qubit[{expected}], "
+                    f"QuantumCircuit has {val.n_qubits} qubits."
                 )
     return val
 
 def _check_statevec_shape(val, dims, fn_name, arg_name, shape_env):
-    """Prueft StateVec[N] ÔÇö erwartet Liste der Laenge 2^N."""
+    """Checks StateVec[N] — expects list of length 2^N."""
     expected_n = dims[0] if dims else None
     if isinstance(val, list):
         actual_len = len(val)
@@ -1163,97 +1163,97 @@ def _check_statevec_shape(val, dims, fn_name, arg_name, shape_env):
                     if actual_len != exp_len:
                         raise TypeError(
                             f"{fn_name}(): '{arg_name}' StateVec[{expected_n}]: "
-                            f"erwartet Laenge 2^{shape_env[expected_n]}={exp_len}, bekam {actual_len}."
+                            f"expected length 2^{shape_env[expected_n]}={exp_len}, got {actual_len}."
                         )
                 else:
                     import math
                     if actual_len == 0 or (actual_len & (actual_len - 1)) != 0:
                         raise TypeError(
                             f"{fn_name}(): '{arg_name}' StateVec[{expected_n}]: "
-                            f"Laenge muss Potenz von 2 sein, bekam {actual_len}."
+                            f"length must be a power of 2, got {actual_len}."
                         )
                     shape_env[expected_n] = int(math.log2(actual_len))
             else:
                 exp_len = 1 << int(expected_n)
                 if actual_len != exp_len:
                     raise TypeError(
-                        f"{fn_name}(): '{arg_name}' erwartet StateVec[{expected_n}] "
-                        f"(Laenge {exp_len}), bekam {actual_len}."
+                        f"{fn_name}(): '{arg_name}' expected StateVec[{expected_n}] "
+                        f"(length {exp_len}), got {actual_len}."
                     )
     return val
 
 def _check_return_qubit_shape(val, dims, fn_name, shape_env):
-    """Prueft Rueckgabe Qubit[N]/Circuit[N,G]."""
+    """Checks return Qubit[N]/Circuit[N,G]."""
     _check_qubit_shape(val, dims, fn_name, "return", shape_env)
     return val
 
 def _check_return_statevec_shape(val, dims, fn_name, shape_env):
-    """Prueft Rueckgabe StateVec[N]."""
+    """Checks return StateVec[N]."""
     _check_statevec_shape(val, dims, fn_name, "return", shape_env)
     return val
 
 def _pauli(name):
     m = {"I": PAULI_I, "X": PAULI_X, "Y": PAULI_Y, "Z": PAULI_Z, "H": PAULI_H}
     if name not in m:
-        raise ValueError(f"Unbekannte Pauli-Matrix '{name}'. Erlaubt: I, X, Y, Z, H.")
+        raise ValueError(f"Unknown Pauli matrix '{name}'. Allowed: I, X, Y, Z, H.")
     return m[name]
 
 class QuantumCircuit:
-    """Leichtgewichtiger Dedekind-Schaltkreis (kein Qiskit n├Âtig).
+    """Lightweight Dedekind quantum circuit (no Qiskit required).
 
-    Speichert Gatter als Liste von (name, qubits, params). Kann via
-    `statevec_sim()` simuliert werden oder per `to_qiskit()` exportiert werden.
+    Stores gates as a list of (name, qubits, params). Can be simulated via
+    `statevec_sim()` or exported via `to_qiskit()`.
     """
 
     def __init__(self, n_qubits: int):
         if not isinstance(n_qubits, int) or n_qubits < 1:
-            raise ValueError(f"QuantumCircuit: n_qubits muss >= 1 sein, bekam {n_qubits!r}.")
+            raise ValueError(f"QuantumCircuit: n_qubits must be >= 1, got {n_qubits!r}.")
         self.n_qubits = n_qubits
         self._gates = []   # [(name, qubit_list, params)]
         self._measurements = []  # [(qubit, clbit)]
 
     def h(self, qubit: int):
-        """Hadamard-Gatter."""
+        """Hadamard gate."""
         self._validate_qubit(qubit)
         self._gates.append(("H", [qubit], []))
         return self
 
     def x(self, qubit: int):
-        """Pauli-X (NOT) Gatter."""
+        """Pauli-X (NOT) gate."""
         self._validate_qubit(qubit)
         self._gates.append(("X", [qubit], []))
         return self
 
     def y(self, qubit: int):
-        """Pauli-Y Gatter."""
+        """Pauli-Y gate."""
         self._validate_qubit(qubit)
         self._gates.append(("Y", [qubit], []))
         return self
 
     def z(self, qubit: int):
-        """Pauli-Z Gatter."""
+        """Pauli-Z gate."""
         self._validate_qubit(qubit)
         self._gates.append(("Z", [qubit], []))
         return self
 
     def cx(self, control: int, target: int):
-        """CNOT-Gatter."""
+        """CNOT gate."""
         self._validate_qubit(control)
         self._validate_qubit(target)
         if control == target:
-            raise ValueError("CNOT: control und target d├╝rfen nicht gleich sein.")
+            raise ValueError("CNOT: control and target must not be the same.")
         self._gates.append(("CX", [control, target], []))
         return self
 
     def cz(self, control: int, target: int):
-        """CZ-Gatter."""
+        """CZ gate."""
         self._validate_qubit(control)
         self._validate_qubit(target)
         self._gates.append(("CZ", [control, target], []))
         return self
 
     def rx(self, theta, qubit: int):
-        """Rx-Rotation um Winkel theta (Bogenmass)."""
+        """Rx rotation by angle theta (radians)."""
         self._validate_qubit(qubit)
         th = float(_unwrap_q(theta))
         self._gates.append(("RX", [qubit], [th]))
@@ -1274,32 +1274,32 @@ class QuantumCircuit:
         return self
 
     def swap(self, q0: int, q1: int):
-        """SWAP-Gatter."""
+        """SWAP gate."""
         self._validate_qubit(q0)
         self._validate_qubit(q1)
         self._gates.append(("SWAP", [q0, q1], []))
         return self
 
     def t(self, qubit: int):
-        """T-Gatter (pi/4-Phase)."""
+        """T gate (pi/4 phase)."""
         self._validate_qubit(qubit)
         self._gates.append(("T", [qubit], []))
         return self
 
     def s(self, qubit: int):
-        """S-Gatter (pi/2-Phase)."""
+        """S gate (pi/2 phase)."""
         self._validate_qubit(qubit)
         self._gates.append(("S", [qubit], []))
         return self
 
     def measure(self, qubit: int, clbit: int = None):
-        """F├╝gt Messung hinzu."""
+        """Adds a measurement."""
         self._validate_qubit(qubit)
         self._measurements.append((qubit, clbit if clbit is not None else qubit))
         return self
 
     def measure_all(self):
-        """Misst alle Qubits."""
+        """Measures all qubits."""
         for i in range(self.n_qubits):
             self.measure(i, i)
         return self
@@ -1307,11 +1307,11 @@ class QuantumCircuit:
     def _validate_qubit(self, q):
         if not isinstance(q, int) or q < 0 or q >= self.n_qubits:
             raise ValueError(
-                f"Qubit-Index {q} ausserhalb des Bereichs [0, {self.n_qubits - 1}]."
+                f"Qubit index {q} out of range [0, {self.n_qubits - 1}]."
             )
 
     def depth(self) -> int:
-        """Schaltkreistiefe (naiv: Anzahl Gatter-Schichten ohne Parallelisierung)."""
+        """Circuit depth (naive: number of gate layers without parallelization)."""
         layers = [0] * self.n_qubits
         for name, qubits, _ in self._gates:
             d = _builtin_max(layers[q] for q in qubits) + 1
@@ -1320,11 +1320,11 @@ class QuantumCircuit:
         return _builtin_max(layers) if layers else 0
 
     def n_gates(self) -> int:
-        """Gesamtanzahl der Gatter."""
+        """Total number of gates."""
         return len(self._gates)
 
     def __repr__(self):
-        lines = [f"QuantumCircuit({self.n_qubits} Qubits, {self.n_gates()} Gatter, Tiefe={self.depth()})"]
+        lines = [f"QuantumCircuit({self.n_qubits} qubits, {self.n_gates()} gates, depth={self.depth()})"]
         for name, qubits, params in self._gates:
             pstr = f"({', '.join(f'{p:.4f}' for p in params)})" if params else ""
             qstr = ", ".join(str(q) for q in qubits)
@@ -1334,13 +1334,13 @@ class QuantumCircuit:
         return "\n".join(lines)
 
     def to_qiskit(self):
-        """Konvertiert zu echtem Qiskit QuantumCircuit (erfordert `pyimport qiskit`)."""
+        """Converts to a real Qiskit QuantumCircuit (requires `pyimport qiskit`)."""
         try:
             import qiskit
         except ImportError:
             raise ImportError(
-                "Qiskit nicht gefunden. Installiere es: pip install qiskit\n"
-                "Alternativ: statevec_sim(circuit) fuer reine Simulation."
+                "Qiskit not found. Install it: pip install qiskit\n"
+                "Alternatively: statevec_sim(circuit) for pure simulation."
             )
         from qiskit import QuantumCircuit as _QC
         qc = _QC(self.n_qubits, self.n_qubits if self._measurements else 0)
@@ -1366,8 +1366,8 @@ def random_matrix(rows, cols):
 
 def shuffle(x, dim=0):
     """
-    Zufälliges Mischen entlang Achse dim. x: Tensor. dim: Achse (default 0).
-    Rückgabe: Tensor gleicher Form (Permutation entlang dim). Nutzt aktuellen Zufallsstand.
+    Random shuffle along axis dim. x: Tensor. dim: axis (default 0).
+    Returns: Tensor of same shape (permutation along dim). Uses current random state.
     """
     t = _to_tensor(x).clone()
     idx = torch.randperm(t.shape[dim], device=t.device)
@@ -1375,32 +1375,32 @@ def shuffle(x, dim=0):
 
 def permutation(n):
     """
-    Zufällige Permutation der Indizes 0 .. n-1. n: ganze Zahl. Rückgabe: 1D Long-Tensor.
+    Random permutation of indices 0 .. n-1. n: integer. Returns: 1D Long tensor.
     """
     n_int = int(n)
     if n_int < 0:
-        raise ValueError("permutation: n muss nichtnegativ sein.")
+        raise ValueError("permutation: n must be non-negative.")
     return torch.randperm(n_int)
 
 def choice(a, size=1, replace=True):
     """
-    Zufällige Stichprobe aus a. a: 1D-Tensor oder Liste. size: Anzahl Ziehungen (default 1).
-    replace: True = mit Zurücklegen, False = ohne. Rückgabe: Tensor der Länge size.
+    Random sample from a. a: 1D tensor or list. size: number of draws (default 1).
+    replace: True = with replacement, False = without. Returns: Tensor of length size.
     """
     a_t = _to_tensor(a).float().flatten()
     n = a_t.numel()
     if n == 0:
-        raise ValueError("choice: a darf nicht leer sein.")
+        raise ValueError("choice: a must not be empty.")
     size_int = int(size)
     if not replace and size_int > n:
-        raise ValueError("choice: size darf bei replace=False nicht größer als len(a) sein.")
+        raise ValueError("choice: size must not exceed len(a) when replace=False.")
     idx = torch.randint(0, n, (size_int,), device=a_t.device) if replace else torch.randperm(n, device=a_t.device)[:size_int]
     return a_t[idx]
 
 def autocorr(x, max_lag=None):
     """
-    Autokorrelation (normiert, Lag 0 = 1). x: 1D-Tensor. max_lag: optional (default len(x)-1).
-    Rückgabe: 1D-Tensor der Länge max_lag+1.
+    Autocorrelation (normalized, lag 0 = 1). x: 1D tensor. max_lag: optional (default len(x)-1).
+    Returns: 1D tensor of length max_lag+1.
     """
     x_t = _to_tensor(x).float().flatten()
     n = x_t.numel()
@@ -1419,8 +1419,8 @@ def autocorr(x, max_lag=None):
 
 def moving_mean(x, window):
     """
-    Gleitender Mittelwert. x: 1D-Tensor. window: Fensterbrechte (ungerade empfohlen).
-    Rückgabe: 1D-Tensor (Länge len(x)-window+1); keine Randbehandlung (reduzierte Länge).
+    Moving average. x: 1D tensor. window: window width (odd recommended).
+    Returns: 1D tensor (length len(x)-window+1); no boundary handling (reduced length).
     """
     x_t = _to_tensor(x).float().flatten()
     w = _builtin_max(1, int(window))
@@ -1446,12 +1446,12 @@ def dot_product(a, b):
 
 def cross(a, b):
     """
-    Kreuzprodukt (3D). a, b: 1D-Tensoren der Länge 3. Rückgabe: 1D-Tensor der Länge 3.
+    Cross product (3D). a, b: 1D tensors of length 3. Returns: 1D tensor of length 3.
     """
     a_t = _to_tensor(a).float().flatten()
     b_t = _to_tensor(b).float().flatten()
     if a_t.numel() != 3 or b_t.numel() != 3:
-        raise ValueError("cross: a und b müssen Länge 3 haben.")
+        raise ValueError("cross: a and b must have length 3.")
     return torch.linalg.cross(a_t, b_t)
 
 # --- Standard Library: Machine Learning ---
@@ -1502,8 +1502,8 @@ def ifft(data):
 
 def fftfreq(n, d=1.0):
     """
-    Frequenzachsen für FFT. n: Anzahl Punkte (int). d: Abtastabstand (Skalar, default 1).
-    Rückgabe: 1D-Tensor der Länge n mit Frequenzen (Einheit 1/d); für Interpretation von fft(x).
+    Frequency bins for FFT. n: number of points (int). d: sample spacing (scalar, default 1).
+    Returns: 1D tensor of length n with frequencies (unit 1/d); for interpretation of fft(x).
     """
     n_int = int(n)
     d_val = float(_to_tensor(d).float().squeeze().item()) if d != 1.0 else 1.0
@@ -1511,8 +1511,8 @@ def fftfreq(n, d=1.0):
 
 def diff(x, n=1, dim=-1):
     """
-    Diskrete Ableitung (Differenzen): diff(x) = x[1:] - x[:-1].
-    x: Tensor. n: Ordnung (default 1). dim: Achse (default -1). Rückgabe: Tensor (Länge um n kürzer entlang dim).
+    Discrete derivative (differences): diff(x) = x[1:] - x[:-1].
+    x: Tensor. n: order (default 1). dim: axis (default -1). Returns: Tensor (length reduced by n along dim).
     """
     t = _to_tensor(x).float()
     for _ in range(n):
@@ -1521,8 +1521,8 @@ def diff(x, n=1, dim=-1):
 
 def cumsum(x, dim=None):
     """
-    Kumulative Summe entlang Achse. x: Tensor. dim: Achse (None = über alle, dann flach).
-    Rückgabe: Tensor gleicher Form wie x (bzw. 1D wenn dim None).
+    Cumulative sum along axis. x: Tensor. dim: axis (None = over all, then flat).
+    Returns: Tensor of same shape as x (or 1D if dim is None).
     """
     t = _to_tensor(x).float()
     if dim is None:
@@ -1532,7 +1532,7 @@ def cumsum(x, dim=None):
 # --- Standard Library: Differentiable ODE Solvers ---
 
 def linspace(start, stop, steps):
-    """Erzeugt einen 1D-Tensor mit `steps` äquidistanten Werten von start bis stop."""
+    """Creates a 1D tensor with `steps` equally spaced values from start to stop."""
     s = _to_tensor(start).float().squeeze()
     e = _to_tensor(stop).float().squeeze()
     n = int(steps)
@@ -1541,7 +1541,7 @@ def linspace(start, stop, steps):
                           n)
 
 def logspace(start, stop, steps, base=10.0):
-    """Erzeugt einen 1D-Tensor mit `steps` logarithmisch verteilten Werten von base^start bis base^stop."""
+    """Creates a 1D tensor with `steps` logarithmically spaced values from base^start to base^stop."""
     s = _to_tensor(start).float().squeeze()
     e = _to_tensor(stop).float().squeeze()
     b = float(_to_tensor(base).float().squeeze().item())
@@ -1551,18 +1551,18 @@ def logspace(start, stop, steps, base=10.0):
                           n, base=b)
 
 
-# --- Mathematische Folgen (arithmetisch, geometrisch, allgemein) ---
+# --- Mathematical Sequences (arithmetic, geometric, general) ---
 
 def arange(start_or_stop, stop=None, step=None):
     """
-    Integer-Folge wie numpy.arange.
-    arange(n) → [0, 1, 2, ..., n-1]
-    arange(start, stop) → [start, start+1, ..., stop-1]
-    arange(start, stop, step) → [start, start+step, ...] (stop exklusive)
+    Integer sequence like numpy.arange.
+    arange(n) -> [0, 1, 2, ..., n-1]
+    arange(start, stop) -> [start, start+1, ..., stop-1]
+    arange(start, stop, step) -> [start, start+step, ...] (stop exclusive)
 
-    Rückgabe-Dtype: int64 für reine Integer-Aufrufe (geeignet für Indexierung),
-    float32 sobald ein expliziter `step` (auch ganzzahliger) angegeben ist (Konsistenz
-    mit `linspace`). Tensor-Arithmetik promotet bei Mischung mit Floats automatisch.
+    Return dtype: int64 for pure integer calls (suitable for indexing),
+    float32 as soon as an explicit `step` (even integer) is given (consistency
+    with `linspace`). Tensor arithmetic promotes automatically when mixed with floats.
     """
     if stop is None and step is None:
         return torch.arange(int(start_or_stop), dtype=torch.int64)
@@ -1573,9 +1573,9 @@ def arange(start_or_stop, stop=None, step=None):
 
 def arithmetic(a0, d, n):
     """
-    Arithmetische Folge: a_n = a0 + n*d für n = 0, 1, ..., n-1.
-    a0: Startwert, d: Differenz, n: Anzahl Glieder.
-    Rückgabe: 1D-Tensor [a0, a0+d, a0+2d, ..., a0+(n-1)d]; differenzierbar in a0, d.
+    Arithmetic sequence: a_n = a0 + n*d for n = 0, 1, ..., n-1.
+    a0: start value, d: common difference, n: number of terms.
+    Returns: 1D tensor [a0, a0+d, a0+2d, ..., a0+(n-1)d]; differentiable in a0, d.
     """
     a0_t = _to_tensor(a0).float().squeeze()
     d_t = _to_tensor(d).float().squeeze()
@@ -1586,9 +1586,9 @@ def arithmetic(a0, d, n):
 
 def geometric(a0, r, n):
     """
-    Geometrische Folge: a_n = a0 * r^n für n = 0, 1, ..., n-1.
-    a0: Startwert, r: Quotient, n: Anzahl Glieder.
-    Rückgabe: 1D-Tensor [a0, a0*r, a0*r^2, ..., a0*r^(n-1)]; differenzierbar in a0, r.
+    Geometric sequence: a_n = a0 * r^n for n = 0, 1, ..., n-1.
+    a0: start value, r: common ratio, n: number of terms.
+    Returns: 1D tensor [a0, a0*r, a0*r^2, ..., a0*r^(n-1)]; differentiable in a0, r.
     """
     a0_t = _to_tensor(a0).float().squeeze()
     r_t = _to_tensor(r).float().squeeze()
@@ -1599,10 +1599,10 @@ def geometric(a0, r, n):
 
 def sequence(f, n):
     """
-    Allgemeine Folge: [f(0), f(1), ..., f(n-1)].
-    f: Funktion mit einem Argument (Index n); n: Anzahl Glieder.
-    Nutzung: fn term(k) { return k * k }; seq = sequence(term, 10)
-    Rückgabe: 1D-Tensor; f muss Skalar oder 0D-Tensor zurückgeben.
+    General sequence: [f(0), f(1), ..., f(n-1)].
+    f: function with one argument (index n); n: number of terms.
+    Usage: fn term(k) { return k * k }; seq = sequence(term, 10)
+    Returns: 1D tensor; f must return a scalar or 0D tensor.
     """
     n_val = int(n)
     out = []
@@ -1615,26 +1615,26 @@ def sequence(f, n):
 
 
 def labeled_tensor(data, dims, coords=None, name=None, attrs=None):
-    """Erzeugt ein xarray.DataArray fuer Klima-/Geo-/Earth-Science-Workflows.
+    """Creates an xarray.DataArray for climate/geo/earth science workflows.
 
-    Im Gegensatz zu nackten Tensoren tragen Labeled Tensors die *Namen* ihrer
-    Achsen mit ('lat', 'lon', 'time', ...), und xarray-Operationen koennen
-    namens-basiert (statt indexbasiert) arbeiten. Das verhindert die klassische
-    Verwechslung 'mean ueber lat vs. mean ueber time'.
+    Unlike bare tensors, labeled tensors carry the *names* of their
+    axes ('lat', 'lon', 'time', ...), and xarray operations can
+    work name-based (instead of index-based). This prevents the classic
+    confusion 'mean over lat vs. mean over time'.
 
-    Parameter:
-      data:   Tensor/numpy-Array/Liste ÔÇö die Werte.
-      dims:   Liste/Tuple von Strings ÔÇö Namen der Achsen, gleiche Reihenfolge wie data.shape.
-      coords: Optional Dict {dim_name: 1D-Werte} ÔÇö Koordinaten-Achsen.
-      name:   Optional Name fuer das DataArray.
-      attrs:  Optional Dict ÔÇö Metadaten (z. B. {"units": "K", "crs": "EPSG:4326"}).
+    Parameters:
+      data:   Tensor/numpy array/list — the values.
+      dims:   List/tuple of strings — axis names, same order as data.shape.
+      coords: Optional dict {dim_name: 1D values} — coordinate axes.
+      name:   Optional name for the DataArray.
+      attrs:  Optional dict — metadata (e.g. {"units": "K", "crs": "EPSG:4326"}).
 
-    Rueckgabe: xarray.DataArray.
+    Returns: xarray.DataArray.
     """
     try:
         import xarray as _xr  # type: ignore[import-untyped]
     except ImportError:
-        raise RuntimeError("labeled_tensor benoetigt xarray. Installation: pip install xarray")
+        raise RuntimeError("labeled_tensor requires xarray. Installation: pip install xarray")
     import numpy as _np  # type: ignore[reportMissingImports]
     if hasattr(data, "detach"):
         arr = data.detach().cpu().numpy()
@@ -1643,8 +1643,8 @@ def labeled_tensor(data, dims, coords=None, name=None, attrs=None):
     dims_t = tuple(str(d) for d in dims)
     if len(dims_t) != arr.ndim:
         raise ValueError(
-            f"labeled_tensor: data hat {arr.ndim} Achsen, dims hat {len(dims_t)} "
-            f"({dims_t!r}). Anzahl muss uebereinstimmen."
+            f"labeled_tensor: data has {arr.ndim} axes, dims has {len(dims_t)} "
+            f"({dims_t!r}). Counts must match."
         )
     coords_dict = dict(coords) if coords else {}
     return _xr.DataArray(arr, dims=dims_t, coords=coords_dict if coords_dict else None,
@@ -9457,404 +9457,6 @@ def lipinski_rule_of_five(smiles):
         "passes": violations <= 1,
     }
 
-# --- Elektrotechnik und Regelungstechnik (Differentiable Engineering) ---
-
-import torch
-
-class Circuit:
-    """
-    Differentiable SPICE: Löst elektrische Schaltungen (DC) über Modified Nodal Analysis (MNA).
-    Vollständig differenzierbar für Autograd (Optimierung von Bauteilwerten).
-    """
-    def __init__(self):
-        self.nodes = set([0])
-        self.resistors = []
-        self.capacitors = []
-        self.inductors = []
-        self.v_sources = []
-        self.i_sources = []
-
-    def _get_val(self, v, dim):
-        if isinstance(v, Quantity):
-            return _convert_to_base(v.value, v.unit, dim)
-        return v
-        
-    def add_resistor(self, name, node1, node2, R):
-        self.nodes.add(node1)
-        self.nodes.add(node2)
-        r_val = self._get_val(R, "resistance")
-        self.resistors.append((node1, node2, r_val))
-        return self
-
-    def add_capacitor(self, name, node1, node2, C):
-        self.nodes.add(node1)
-        self.nodes.add(node2)
-        c_val = self._get_val(C, "capacitance")
-        self.capacitors.append((node1, node2, c_val))
-        return self
-
-    def add_inductor(self, name, node1, node2, L):
-        self.nodes.add(node1)
-        self.nodes.add(node2)
-        l_val = self._get_val(L, "inductance")
-        self.inductors.append((node1, node2, l_val))
-        return self
-
-    def add_voltage_source(self, name, node1, node2, V):
-        self.nodes.add(node1)
-        self.nodes.add(node2)
-        v_val = self._get_val(V, "electric_potential")
-        self.v_sources.append((name, node1, node2, v_val))
-        return self
-
-    def add_current_source(self, name, node1, node2, I):
-        self.nodes.add(node1)
-        self.nodes.add(node2)
-        i_val = self._get_val(I, "current")
-        self.i_sources.append((node1, node2, i_val))
-        return self
-
-    def solve_dc(self):
-        node_list = sorted(list(self.nodes))
-        if 0 in node_list:
-            node_list.remove(0)
-            
-        n_nodes = len(node_list)
-        n_vs = len(self.v_sources)
-        size = n_nodes + n_vs
-        
-        node_map = {node: i for i, node in enumerate(node_list)}
-        node_map[0] = -1  # Ground
-        
-        # Build A and z as python lists of tensors to ensure autograd tracks gradient paths safely
-        A = [[0.0 for _ in range(size)] for _ in range(size)]
-        z = [0.0 for _ in range(size)]
-        
-        def add_to_A(i, j, val):
-            if i >= 0 and j >= 0:
-                A[i][j] = A[i][j] + val
-                
-        def add_to_z(i, val):
-            if i >= 0:
-                z[i] = z[i] + val
-
-        # 1. Resistors (Conductance matrix G)
-        for n1, n2, r_val in self.resistors:
-            g = 1.0 / _to_tensor(r_val)
-            idx1 = node_map[n1]
-            idx2 = node_map[n2]
-            add_to_A(idx1, idx1, g)
-            add_to_A(idx2, idx2, g)
-            add_to_A(idx1, idx2, -g)
-            add_to_A(idx2, idx1, -g)
-                
-        # 2. Current sources
-        for n1, n2, i_val in self.i_sources:
-            # Leaves n1 (-), enters n2 (+)
-            i_t = _to_tensor(i_val)
-            idx1 = node_map[n1]
-            idx2 = node_map[n2]
-            add_to_z(idx1, -i_t)
-            add_to_z(idx2, i_t)
-                
-        # 3. Voltage sources
-        v_names = []
-        for i, (name, n1, n2, v_val) in enumerate(self.v_sources):
-            v_names.append(name)
-            v_t = _to_tensor(v_val)
-            idx1 = node_map[n1] # positive
-            idx2 = node_map[n2] # negative
-            v_idx = n_nodes + i
-            
-            add_to_z(v_idx, v_t)
-            
-            if idx1 >= 0:
-                A[idx1][v_idx] = 1.0
-                A[v_idx][idx1] = 1.0
-            if idx2 >= 0:
-                A[idx2][v_idx] = -1.0
-                A[v_idx][idx2] = -1.0
-                
-        A_t = torch.stack([torch.stack([_to_tensor(e).float() for e in row]) for row in A])
-        z_t = torch.stack([_to_tensor(e).float() for e in z])
-        
-        # Solve the system
-        x = torch.linalg.solve(A_t, z_t)
-        
-        results = {}
-        results["v_0"] = Quantity(0.0, "V")
-        for node in node_list:
-            idx = node_map[node]
-            results[f"v_{node}"] = Quantity(x[idx], "V")
-        
-        for i, name in enumerate(v_names):
-            results[f"i_{name}"] = Quantity(x[n_nodes + i], "A")
-                
-        return results
-
-    def solve_ac(self, omega):
-        # We want double precision complex number computations
-        omega_val = self._get_val(omega, "frequency")
-        omega_t = _to_tensor(omega_val).double()
-        
-        node_list = sorted(list(self.nodes))
-        if 0 in node_list:
-            node_list.remove(0)
-            
-        n_nodes = len(node_list)
-        n_vs = len(self.v_sources)
-        size = n_nodes + n_vs
-        
-        node_map = {node: i for i, node in enumerate(node_list)}
-        node_map[0] = -1  # Ground
-        
-        # Build complex A and z
-        A = [[torch.tensor(0.0, dtype=torch.complex128, device=omega_t.device) for _ in range(size)] for _ in range(size)]
-        z = [torch.tensor(0.0, dtype=torch.complex128, device=omega_t.device) for _ in range(size)]
-        
-        def add_to_A(i, j, val):
-            if i >= 0 and j >= 0:
-                A[i][j] = A[i][j] + val
-                
-        def add_to_z(i, val):
-            if i >= 0:
-                z[i] = z[i] + val
-
-        # 1. Resistors (Conductance Y_R = 1/R)
-        for n1, n2, r_val in self.resistors:
-            r_t = _to_tensor(r_val).double()
-            g = 1.0 / r_t
-            g_c = torch.complex(g, torch.zeros_like(g))
-            idx1 = node_map[n1]
-            idx2 = node_map[n2]
-            add_to_A(idx1, idx1, g_c)
-            add_to_A(idx2, idx2, g_c)
-            add_to_A(idx1, idx2, -g_c)
-            add_to_A(idx2, idx1, -g_c)
-            
-        # 2. Capacitors (Admittance Y_C = j * omega * C)
-        for n1, n2, c_val in self.capacitors:
-            c_t = _to_tensor(c_val).double()
-            y_c = torch.complex(torch.zeros_like(c_t), omega_t * c_t)
-            idx1 = node_map[n1]
-            idx2 = node_map[n2]
-            add_to_A(idx1, idx1, y_c)
-            add_to_A(idx2, idx2, y_c)
-            add_to_A(idx1, idx2, -y_c)
-            add_to_A(idx2, idx1, -y_c)
-            
-        # 3. Inductors (Admittance Y_L = -j / (omega * L))
-        for n1, n2, l_val in self.inductors:
-            l_t = _to_tensor(l_val).double()
-            omega_safe = torch.where(omega_t == 0.0, torch.ones_like(omega_t), omega_t)
-            l_safe = torch.where(l_t == 0.0, torch.ones_like(l_t), l_t)
-            y_val = -1.0 / (omega_safe * l_safe)
-            y_l = torch.complex(torch.zeros_like(l_t), y_val)
-            idx1 = node_map[n1]
-            idx2 = node_map[n2]
-            add_to_A(idx1, idx1, y_l)
-            add_to_A(idx2, idx2, y_l)
-            add_to_A(idx1, idx2, -y_l)
-            add_to_A(idx2, idx1, -y_l)
-            
-        # 4. Current sources (Complex Phasor)
-        for n1, n2, i_val in self.i_sources:
-            i_c = _to_complex_phasor(i_val)
-            idx1 = node_map[n1]
-            idx2 = node_map[n2]
-            add_to_z(idx1, -i_c)
-            add_to_z(idx2, i_c)
-            
-        # 5. Voltage sources (Complex Phasor)
-        v_names = []
-        for i, (name, n1, n2, v_val) in enumerate(self.v_sources):
-            v_names.append(name)
-            v_c = _to_complex_phasor(v_val)
-            idx1 = node_map[n1]
-            idx2 = node_map[n2]
-            v_idx = n_nodes + i
-            
-            add_to_z(v_idx, v_c)
-            
-            one_c = torch.tensor(1.0, dtype=torch.complex128, device=omega_t.device)
-            if idx1 >= 0:
-                A[idx1][v_idx] = A[idx1][v_idx] + one_c
-                A[v_idx][idx1] = A[v_idx][idx1] + one_c
-            if idx2 >= 0:
-                A[idx2][v_idx] = A[idx2][v_idx] - one_c
-                A[v_idx][idx2] = A[v_idx][idx2] - one_c
-                
-        # Stack into complex tensors
-        A_t = torch.stack([torch.stack(row) for row in A])
-        z_t = torch.stack(z)
-        
-        # Solve the complex system
-        x = torch.linalg.solve(A_t, z_t)
-        
-        results = {}
-        # Node voltages
-        results["v_0"] = Phasor(0.0, 0.0, "V")
-        for node in node_list:
-            idx = node_map[node]
-            v_c = x[idx]
-            results[f"v_{node}"] = Phasor(v_c, unit="V")
-            
-        # Voltage source currents
-        for i, name in enumerate(v_names):
-            i_c = x[n_nodes + i]
-            results[f"i_{name}"] = Phasor(i_c, unit="A")
-            
-        return results
-
-
-def _to_complex_phasor(v):
-    if isinstance(v, Phasor):
-        return v.complex_value()
-    if isinstance(v, Quantity):
-        val = _to_tensor(v.value).double()
-        return torch.complex(val, torch.zeros_like(val))
-    val = _to_tensor(v).double()
-    if torch.is_complex(val):
-        return val
-    return torch.complex(val, torch.zeros_like(val))
-
-
-class Phasor:
-    """Repräsentation einer komplexen Wechselstromgröße mit Einheit."""
-    def __init__(self, mag, phase=0.0, unit=""):
-        if isinstance(mag, complex) or (isinstance(mag, torch.Tensor) and torch.is_complex(mag)):
-            c_val = mag
-            if isinstance(c_val, complex):
-                import cmath
-                mag_val, phase_val = cmath.polar(c_val)
-                self.mag = torch.tensor(mag_val, dtype=torch.float64)
-                self.phase = torch.tensor(phase_val, dtype=torch.float64)
-            else:
-                self.mag = torch.abs(c_val)
-                self.phase = torch.angle(c_val)
-            self.unit = unit
-        else:
-            if isinstance(mag, Quantity):
-                self.mag = _to_tensor(mag.value).double()
-                self.unit = mag.unit
-            else:
-                self.mag = _to_tensor(mag).double()
-                self.unit = unit
-                
-            if isinstance(phase, Quantity):
-                self.phase = _to_tensor(_convert_to_base(phase.value, phase.unit, "angle")).double()
-            else:
-                self.phase = _to_tensor(phase).double()
-            
-    def complex_value(self):
-        mag = _to_tensor(self.mag).double()
-        phase = _to_tensor(self.phase).double()
-        return torch.complex(mag * torch.cos(phase), mag * torch.sin(phase))
-        
-    @property
-    def value(self):
-        return self.mag
-        
-    @property
-    def magnitude(self):
-        return self.mag
-        
-    @property
-    def angle(self):
-        return self.phase
-
-    def __repr__(self):
-        import math
-        mag_f = float(self.mag.item()) if hasattr(self.mag, 'item') else float(self.mag)
-        phase_f = float(self.phase.item()) if hasattr(self.phase, 'item') else float(self.phase)
-        deg = math.degrees(phase_f)
-        return f"{mag_f:.4f}[{self.unit}] \u2220 {deg:.2f}\xb0"
-
-
-class StateSpace:
-    """
-    Linear Time-Invariant (LTI) System im Zustandsraum:
-    x_dot = A*x + B*u
-    y = C*x + D*u
-    Voll differenzierbar für KI-Regler-Optimierung.
-    """
-    def __init__(self, A, B, C, D):
-        def _ensure_2d(t):
-            t = _to_tensor(t).float()
-            if t.ndim == 0:
-                return t.unsqueeze(0).unsqueeze(0)
-            elif t.ndim == 1:
-                return t.unsqueeze(1)
-            return t
-            
-        self.A = _ensure_2d(A)
-        self.B = _ensure_2d(B)
-        self.C = _ensure_2d(C)
-        self.D = _ensure_2d(D)
-        
-    def step_response(self, t):
-        """Simuliert die Sprungantwort (u=1) über die Zeit t (Tensor) via ode_solve."""
-        if 'ode_solve' not in globals():
-            raise RuntimeError("ode_solve function not found. Ensure 03_solvers.py is loaded.")
-        
-        t_t = _to_tensor(t).float()
-        
-        def system_dynamics(t_scalar, x):
-            # Step input u = [1, 1, ...]
-            u = torch.ones((self.B.shape[1],), dtype=torch.float32)
-            # x_dot = Ax + Bu
-            return torch.matmul(self.A, x) + torch.matmul(self.B, u)
-            
-        x0 = torch.zeros((self.A.shape[0],), dtype=torch.float32)
-        
-        # ode_solve liefert x(t) als Tensor der Shape (len(t), states)
-        x_out = globals()['ode_solve'](system_dynamics, x0, t_t, method="rk4")
-        
-        u_out = torch.ones((len(t_t), self.B.shape[1]), dtype=torch.float32)
-        y_out = torch.matmul(x_out, self.C.t()) + torch.matmul(u_out, self.D.t())
-        
-        return t_t, y_out, x_out
-
-    def frequency_response(self, omega):
-        """Berechnet die komplexe Frequenzantwort H(jw) voll vektorisiert."""
-        omega_t = _to_tensor(omega).float()
-        
-        # A, B, C, D in complex64
-        A_c = self.A.to(torch.complex64)
-        B_c = self.B.to(torch.complex64)
-        C_c = self.C.to(torch.complex64)
-        D_c = self.D.to(torch.complex64)
-        
-        n = self.A.shape[0]
-        I = torch.eye(n, dtype=torch.complex64)
-        
-        # s = j*omega (shape: [N])
-        s = 1j * omega_t
-        
-        # sI_A = s*I - A
-        # Broadcasting: s is [N], I is [n, n] -> s[:, None, None] * I[None, :, :] -> [N, n, n]
-        sI = s.unsqueeze(-1).unsqueeze(-1) * I.unsqueeze(0)
-        sI_A = sI - A_c.unsqueeze(0)
-        
-        # Batched complex inversion: [N, n, n]
-        inv = torch.linalg.inv(sI_A)
-        
-        # H = C * inv * B + D
-        # C_c.unsqueeze(0) ist [1, p, n], B_c.unsqueeze(0) ist [1, n, q]
-        H = torch.matmul(C_c.unsqueeze(0), torch.matmul(inv, B_c.unsqueeze(0))) + D_c.unsqueeze(0)
-        
-        # Berechne Magnitude in dB und Phase in Grad
-        mag = torch.abs(H)
-        mag_db = 20.0 * torch.log10(mag + 1e-12)
-        
-        phase = torch.angle(H)
-        # Phase in Grad umrechnen
-        import math
-        phase_deg = phase * (180.0 / math.pi)
-        
-        return omega_t, mag_db, phase_deg
-
-
 def _notebook_in_progress_set():
     """Process-weite Re-Entry-Tracking-Menge. Liegt auf sys, damit sie über exec-Kontexte
     persistent ist (jeder exec(compile_source(...)) bekommt sonst eine frische ml_runtime-Kopie)."""
@@ -10154,6 +9756,928 @@ def _table_plain(rows, headers, precision, units_map):
     for b in body:
         lines.append(sep.join(b[j].ljust(widths[j]) for j in range(len(headers))))
     return "\n".join(lines)
+# --- Signals & Systems (Electronics, DSP, Control) ---
+import torch
+import torch.nn.functional as F
+import math
+import builtins
+
+def _get_val(v):
+    if hasattr(v, "value"):
+        return v.value
+    return v
+
+def _to_double_tensor(v):
+    t = _to_tensor(v)
+    return t.double()
+
+# --- 1. Electronics (Differentiable SPICE & Phasors) ---
+
+class Circuit:
+    """
+    Differentiable SPICE: Solves electrical circuits (DC) via Modified Nodal Analysis (MNA).
+    Fully differentiable for autograd (optimization of component values).
+    """
+    def __init__(self):
+        self.nodes = set([0])
+        self.resistors = []
+        self.capacitors = []
+        self.inductors = []
+        self.v_sources = []
+        self.i_sources = []
+
+    def _get_val_dim(self, v, dim):
+        if isinstance(v, Quantity):
+            return _convert_to_base(v.value, v.unit, dim)
+        return v
+        
+    def add_resistor(self, name, node1, node2, R):
+        self.nodes.add(node1)
+        self.nodes.add(node2)
+        r_val = self._get_val_dim(R, "resistance")
+        self.resistors.append((node1, node2, r_val))
+        return self
+
+    def add_capacitor(self, name, node1, node2, C):
+        self.nodes.add(node1)
+        self.nodes.add(node2)
+        c_val = self._get_val_dim(C, "capacitance")
+        self.capacitors.append((node1, node2, c_val))
+        return self
+
+    def add_inductor(self, name, node1, node2, L):
+        self.nodes.add(node1)
+        self.nodes.add(node2)
+        l_val = self._get_val_dim(L, "inductance")
+        self.inductors.append((node1, node2, l_val))
+        return self
+
+    def add_voltage_source(self, name, node1, node2, V):
+        self.nodes.add(node1)
+        self.nodes.add(node2)
+        v_val = self._get_val_dim(V, "electric_potential")
+        self.v_sources.append((name, node1, node2, v_val))
+        return self
+
+    def add_current_source(self, name, node1, node2, I):
+        self.nodes.add(node1)
+        self.nodes.add(node2)
+        i_val = self._get_val_dim(I, "current")
+        self.i_sources.append((node1, node2, i_val))
+        return self
+
+    def solve_dc(self):
+        node_list = sorted(list(self.nodes))
+        if 0 in node_list:
+            node_list.remove(0)
+            
+        n_nodes = len(node_list)
+        n_vs = len(self.v_sources)
+        size = n_nodes + n_vs
+        
+        node_map = {node: i for i, node in enumerate(node_list)}
+        node_map[0] = -1  # Ground
+        
+        # Build A and z as python lists of tensors to ensure autograd tracks gradient paths safely
+        A = [[0.0 for _ in range(size)] for _ in range(size)]
+        z = [0.0 for _ in range(size)]
+        
+        def add_to_A(i, j, val):
+            if i >= 0 and j >= 0:
+                A[i][j] = A[i][j] + val
+                
+        def add_to_z(i, val):
+            if i >= 0:
+                z[i] = z[i] + val
+
+        # 1. Resistors (Conductance matrix G)
+        for n1, n2, r_val in self.resistors:
+            g = 1.0 / _to_tensor(r_val)
+            idx1 = node_map[n1]
+            idx2 = node_map[n2]
+            add_to_A(idx1, idx1, g)
+            add_to_A(idx2, idx2, g)
+            add_to_A(idx1, idx2, -g)
+            add_to_A(idx2, idx1, -g)
+                
+        # 2. Current sources
+        for n1, n2, i_val in self.i_sources:
+            # Leaves n1 (-), enters n2 (+)
+            i_t = _to_tensor(i_val)
+            idx1 = node_map[n1]
+            idx2 = node_map[n2]
+            add_to_z(idx1, -i_t)
+            add_to_z(idx2, i_t)
+                
+        # 3. Voltage sources
+        v_names = []
+        for i, (name, n1, n2, v_val) in enumerate(self.v_sources):
+            v_names.append(name)
+            v_t = _to_tensor(v_val)
+            idx1 = node_map[n1] # positive
+            idx2 = node_map[n2] # negative
+            v_idx = n_nodes + i
+            
+            add_to_z(v_idx, v_t)
+            
+            if idx1 >= 0:
+                A[idx1][v_idx] = 1.0
+                A[v_idx][idx1] = 1.0
+            if idx2 >= 0:
+                A[idx2][v_idx] = -1.0
+                A[v_idx][idx2] = -1.0
+                
+        A_t = torch.stack([torch.stack([_to_tensor(e).float() for e in row]) for row in A])
+        z_t = torch.stack([_to_tensor(e).float() for e in z])
+        
+        # Solve the system
+        x = torch.linalg.solve(A_t, z_t)
+        
+        results = {}
+        results["v_0"] = Quantity(0.0, "V")
+        for node in node_list:
+            idx = node_map[node]
+            results[f"v_{node}"] = Quantity(x[idx], "V")
+        
+        for i, name in enumerate(v_names):
+            results[f"i_{name}"] = Quantity(x[n_nodes + i], "A")
+                
+        return results
+
+    def solve_ac(self, omega):
+        # We want double precision complex number computations
+        omega_val = self._get_val_dim(omega, "frequency")
+        omega_t = _to_tensor(omega_val).double()
+        
+        node_list = sorted(list(self.nodes))
+        if 0 in node_list:
+            node_list.remove(0)
+            
+        n_nodes = len(node_list)
+        n_vs = len(self.v_sources)
+        size = n_nodes + n_vs
+        
+        node_map = {node: i for i, node in enumerate(node_list)}
+        node_map[0] = -1  # Ground
+        
+        # Build complex A and z
+        A = [[torch.tensor(0.0, dtype=torch.complex128, device=omega_t.device) for _ in range(size)] for _ in range(size)]
+        z = [torch.tensor(0.0, dtype=torch.complex128, device=omega_t.device) for _ in range(size)]
+        
+        def add_to_A(i, j, val):
+            if i >= 0 and j >= 0:
+                A[i][j] = A[i][j] + val
+                
+        def add_to_z(i, val):
+            if i >= 0:
+                z[i] = z[i] + val
+
+        # 1. Resistors (Conductance Y_R = 1/R)
+        for n1, n2, r_val in self.resistors:
+            r_t = _to_tensor(r_val).double()
+            g = 1.0 / r_t
+            g_c = torch.complex(g, torch.zeros_like(g))
+            idx1 = node_map[n1]
+            idx2 = node_map[n2]
+            add_to_A(idx1, idx1, g_c)
+            add_to_A(idx2, idx2, g_c)
+            add_to_A(idx1, idx2, -g_c)
+            add_to_A(idx2, idx1, -g_c)
+            
+        # 2. Capacitors (Admittance Y_C = j * omega * C)
+        for n1, n2, c_val in self.capacitors:
+            c_t = _to_tensor(c_val).double()
+            y_c = torch.complex(torch.zeros_like(c_t), omega_t * c_t)
+            idx1 = node_map[n1]
+            idx2 = node_map[n2]
+            add_to_A(idx1, idx1, y_c)
+            add_to_A(idx2, idx2, y_c)
+            add_to_A(idx1, idx2, -y_c)
+            add_to_A(idx2, idx1, -y_c)
+            
+        # 3. Inductors (Admittance Y_L = -j / (omega * L))
+        for n1, n2, l_val in self.inductors:
+            l_t = _to_tensor(l_val).double()
+            omega_safe = torch.where(omega_t == 0.0, torch.ones_like(omega_t), omega_t)
+            l_safe = torch.where(l_t == 0.0, torch.ones_like(l_t), l_t)
+            y_val = -1.0 / (omega_safe * l_safe)
+            y_l = torch.complex(torch.zeros_like(l_t), y_val)
+            idx1 = node_map[n1]
+            idx2 = node_map[n2]
+            add_to_A(idx1, idx1, y_l)
+            add_to_A(idx2, idx2, y_l)
+            add_to_A(idx1, idx2, -y_l)
+            add_to_A(idx2, idx1, -y_l)
+            
+        # 4. Current sources (Complex Phasor)
+        for n1, n2, i_val in self.i_sources:
+            i_c = _to_complex_phasor(i_val)
+            idx1 = node_map[n1]
+            idx2 = node_map[n2]
+            add_to_z(idx1, -i_c)
+            add_to_z(idx2, i_c)
+            
+        # 5. Voltage sources (Complex Phasor)
+        v_names = []
+        for i, (name, n1, n2, v_val) in enumerate(self.v_sources):
+            v_names.append(name)
+            v_c = _to_complex_phasor(v_val)
+            idx1 = node_map[n1]
+            idx2 = node_map[n2]
+            v_idx = n_nodes + i
+            
+            add_to_z(v_idx, v_c)
+            
+            one_c = torch.tensor(1.0, dtype=torch.complex128, device=omega_t.device)
+            if idx1 >= 0:
+                A[idx1][v_idx] = A[idx1][v_idx] + one_c
+                A[v_idx][idx1] = A[v_idx][idx1] + one_c
+            if idx2 >= 0:
+                A[idx2][v_idx] = A[idx2][v_idx] - one_c
+                A[v_idx][idx2] = A[v_idx][idx2] - one_c
+                
+        # Stack into complex tensors
+        A_t = torch.stack([torch.stack(row) for row in A])
+        z_t = torch.stack(z)
+        
+        # Solve the complex system
+        x = torch.linalg.solve(A_t, z_t)
+        
+        results = {}
+        # Node voltages
+        results["v_0"] = Phasor(0.0, 0.0, "V")
+        for node in node_list:
+            idx = node_map[node]
+            v_c = x[idx]
+            results[f"v_{node}"] = Phasor(v_c, unit="V")
+            
+        # Voltage source currents
+        for i, name in enumerate(v_names):
+            i_c = x[n_nodes + i]
+            results[f"i_{name}"] = Phasor(i_c, unit="A")
+            
+        return results
+
+def _to_complex_phasor(v):
+    if isinstance(v, Phasor):
+        return v.complex_value()
+    if isinstance(v, Quantity):
+        val = _to_tensor(v.value).double()
+        return torch.complex(val, torch.zeros_like(val))
+    val = _to_tensor(v).double()
+    if torch.is_complex(val):
+        return val
+    return torch.complex(val, torch.zeros_like(val))
+
+class Phasor:
+    """Representation of a complex AC quantity with unit."""
+    def __init__(self, mag, phase=0.0, unit=""):
+        if isinstance(mag, complex) or (isinstance(mag, torch.Tensor) and torch.is_complex(mag)):
+            c_val = mag
+            if isinstance(c_val, complex):
+                import cmath
+                mag_val, phase_val = cmath.polar(c_val)
+                self.mag = torch.tensor(mag_val, dtype=torch.float64)
+                self.phase = torch.tensor(phase_val, dtype=torch.float64)
+            else:
+                self.mag = torch.abs(c_val)
+                self.phase = torch.angle(c_val)
+            self.unit = unit
+        else:
+            if isinstance(mag, Quantity):
+                self.mag = _to_tensor(mag.value).double()
+                self.unit = mag.unit
+            else:
+                self.mag = _to_tensor(mag).double()
+                self.unit = unit
+                
+            if isinstance(phase, Quantity):
+                self.phase = _to_tensor(_convert_to_base(phase.value, phase.unit, "angle")).double()
+            else:
+                self.phase = _to_tensor(phase).double()
+            
+    def complex_value(self):
+        mag = _to_tensor(self.mag).double()
+        phase = _to_tensor(self.phase).double()
+        return torch.complex(mag * torch.cos(phase), mag * torch.sin(phase))
+        
+    @property
+    def value(self):
+        return self.mag
+        
+    @property
+    def magnitude(self):
+        return self.mag
+        
+    @property
+    def angle(self):
+        return self.phase
+
+    def __repr__(self):
+        import math
+        mag_f = float(self.mag.item()) if hasattr(self.mag, 'item') else float(self.mag)
+        phase_f = float(self.phase.item()) if hasattr(self.phase, 'item') else float(self.phase)
+        deg = math.degrees(phase_f)
+        return f"{mag_f:.4f}[{self.unit}] \u2220 {deg:.2f}\xb0"
+
+# --- 2. Digital Signal Processing (DSP) & Z-Transform ---
+
+def fir_filter_impl(x, b):
+    """
+    Filters the input signal `x` with the FIR coefficients `b` (feedforward).
+    Fully differentiable with respect to `b` and `x`.
+    """
+    x_t = _to_double_tensor(x)
+    b_t = _to_double_tensor(b)
+    
+    is_1d = (x_t.ndim == 1)
+    if is_1d:
+        x_t = x_t.unsqueeze(0).unsqueeze(0)  # (1, 1, L)
+    elif x_t.ndim == 2:
+        x_t = x_t.unsqueeze(1)  # (N, 1, L)
+        
+    M = b_t.shape[0]
+    x_padded = F.pad(x_t, (M - 1, 0), mode='constant', value=0.0)
+    
+    # We flip b_t for correlation filtering (since PyTorch conv1d is correlation)
+    b_flipped = torch.flip(b_t, dims=[0]).view(1, 1, M)
+    
+    y = F.conv1d(x_padded, b_flipped)
+    if is_1d:
+        return y.squeeze(0).squeeze(0)
+    return y.squeeze(1)
+
+def iir_filter_impl(x, b, a):
+    """
+    Implements a general IIR filter with feedforward coefficients `b`
+    and feedback coefficients `a` (with standardized a[0] = 1.0).
+    Fully differentiable with respect to `b`, `a`, and `x`.
+    """
+    x_t = _to_double_tensor(x)
+    b_t = _to_double_tensor(b)
+    a_t = _to_double_tensor(a)
+    
+    # Normalize by a[0] if it's not 1.0
+    if a_t[0] != 1.0:
+        norm = a_t[0]
+        b_t = b_t / norm
+        a_t = a_t / norm
+        
+    M = b_t.shape[0]
+    N = a_t.shape[0]
+    L = x_t.shape[0]
+    
+    y_list = []
+    for n in range(L):
+        val = b_t[0] * x_t[n]
+        for k in range(1, M):
+            if n - k >= 0:
+                val = val + b_t[k] * x_t[n - k]
+        for j in range(1, N):
+            if n - j >= 0:
+                val = val - a_t[j] * y_list[n - j]
+        y_list.append(val)
+        
+    return torch.stack(y_list)
+
+def _get_val_hz(v):
+    if isinstance(v, Quantity):
+        return _convert_to_base(v.value, v.unit, "frequency")
+    return float(v)
+
+def biquad_lowpass_impl(fc, Q, fs=1.0):
+    """
+    Computes biquad 2nd-order lowpass filter coefficients b, a.
+    Cutoff frequency fc and quality factor Q can be tensors or numbers.
+    Sampling rate fs can be a Quantity or float.
+    Filter design is fully differentiable!
+    """
+    fs_val = _get_val_hz(fs)
+    
+    if isinstance(fc, Quantity):
+        fc_t = _to_double_tensor(_convert_to_base(fc.value, fc.unit, "frequency"))
+    else:
+        fc_t = _to_double_tensor(fc)
+        
+    Q_t = _to_double_tensor(Q)
+    
+    w0 = 2.0 * 3.141592653589793 * fc_t / fs_val
+    alpha = torch.sin(w0) / (2.0 * Q_t)
+    cos_w0 = torch.cos(w0)
+    
+    b0 = (1.0 - cos_w0) / 2.0
+    b1 = 1.0 - cos_w0
+    b2 = (1.0 - cos_w0) / 2.0
+    
+    a0 = 1.0 + alpha
+    a1 = -2.0 * cos_w0
+    a2 = 1.0 - alpha
+    
+    b = torch.stack([b0, b1, b2]) / a0
+    a = torch.stack([torch.ones_like(a0), a1 / a0, a2 / a0])
+    return b, a
+
+def biquad_highpass_impl(fc, Q, fs=1.0):
+    """
+    Computes biquad 2nd-order highpass filter coefficients b, a.
+    Cutoff frequency fc and quality factor Q can be tensors or numbers.
+    Filter design is fully differentiable!
+    """
+    fs_val = _get_val_hz(fs)
+    
+    if isinstance(fc, Quantity):
+        fc_t = _to_double_tensor(_convert_to_base(fc.value, fc.unit, "frequency"))
+    else:
+        fc_t = _to_double_tensor(fc)
+    Q_t = _to_double_tensor(Q)
+    
+    w0 = 2.0 * 3.141592653589793 * fc_t / fs_val
+    alpha = torch.sin(w0) / (2.0 * Q_t)
+    cos_w0 = torch.cos(w0)
+    
+    b0 = (1.0 + cos_w0) / 2.0
+    b1 = -(1.0 + cos_w0)
+    b2 = (1.0 + cos_w0) / 2.0
+    
+    a0 = 1.0 + alpha
+    a1 = -2.0 * cos_w0
+    a2 = 1.0 - alpha
+    
+    b = torch.stack([b0, b1, b2]) / a0
+    a = torch.stack([torch.ones_like(a0), a1 / a0, a2 / a0])
+    return b, a
+
+def biquad_bandpass_impl(fc, Q, fs=1.0):
+    """
+    Computes biquad 2nd-order bandpass filter coefficients b, a.
+    Cutoff frequency fc and quality factor Q can be tensors or numbers.
+    Filter design is fully differentiable!
+    """
+    fs_val = _get_val_hz(fs)
+    
+    if isinstance(fc, Quantity):
+        fc_t = _to_double_tensor(_convert_to_base(fc.value, fc.unit, "frequency"))
+    else:
+        fc_t = _to_double_tensor(fc)
+    Q_t = _to_double_tensor(Q)
+    
+    w0 = 2.0 * 3.141592653589793 * fc_t / fs_val
+    alpha = torch.sin(w0) / (2.0 * Q_t)
+    cos_w0 = torch.cos(w0)
+    
+    b0 = alpha
+    b1 = torch.zeros_like(w0)
+    b2 = -alpha
+    
+    a0 = 1.0 + alpha
+    a1 = -2.0 * cos_w0
+    a2 = 1.0 - alpha
+    
+    b = torch.stack([b0, b1, b2]) / a0
+    a = torch.stack([torch.ones_like(a0), a1 / a0, a2 / a0])
+    return b, a
+
+def freqz_impl(b, a, worN=512):
+    """
+    Computes the complex frequency response H(jw) fully vectorized at worN points.
+    Fully differentiable with respect to b and a.
+    """
+    b_t = _to_double_tensor(b)
+    a_t = _to_double_tensor(a)
+    
+    omega = torch.linspace(0.0, 3.141592653589793, int(worN), dtype=b_t.dtype, device=b_t.device)
+    j_unit = torch.complex(torch.tensor(0.0, dtype=b_t.dtype), torch.tensor(1.0, dtype=b_t.dtype))
+    
+    num = torch.zeros(int(worN), dtype=torch.complex128, device=b_t.device)
+    for k, bk in enumerate(b_t):
+        num = num + bk * torch.exp(-j_unit * k * omega)
+        
+    den = torch.zeros(int(worN), dtype=torch.complex128, device=a_t.device)
+    for k, ak in enumerate(a_t):
+        den = den + ak * torch.exp(-j_unit * k * omega)
+        
+    h = num / den
+    return omega, h
+
+def butter_impl(order, Wn, btype='low', fs=None):
+    """
+    Wrapper for classic Butterworth filter design (SciPy).
+    Returns the b and a coefficients as PyTorch float64 tensors.
+    """
+    import scipy.signal as sig  # type: ignore[import-untyped]
+    
+    if isinstance(Wn, Quantity):
+        Wn_val = _convert_to_base(Wn.value, Wn.unit, "frequency")
+    elif hasattr(Wn, "tolist"):
+        Wn_val = Wn.tolist()
+    else:
+        Wn_val = Wn
+        
+    fs_val = _get_val_hz(fs) if fs is not None else None
+    
+    b, a = sig.butter(int(order), Wn_val, btype=btype, fs=fs_val)
+    return torch.tensor(b, dtype=torch.float64), torch.tensor(a, dtype=torch.float64)
+
+def cheby1_impl(order, rp, Wn, btype='low', fs=None):
+    """
+    Wrapper for classic Chebyshev Type I filter design (SciPy).
+    Returns the b and a coefficients as PyTorch float64 tensors.
+    """
+    import scipy.signal as sig  # type: ignore[import-untyped]
+    
+    if isinstance(Wn, Quantity):
+        Wn_val = _convert_to_base(Wn.value, Wn.unit, "frequency")
+    elif hasattr(Wn, "tolist"):
+        Wn_val = Wn.tolist()
+    else:
+        Wn_val = Wn
+        
+    fs_val = _get_val_hz(fs) if fs is not None else None
+    
+    b, a = sig.cheby1(int(order), float(rp), Wn_val, btype=btype, fs=fs_val)
+    return torch.tensor(b, dtype=torch.float64), torch.tensor(a, dtype=torch.float64)
+
+# --- 3. Control Theory & Block Diagram Simulation ---
+
+class Block:
+    """Base class for differentiable simulation blocks."""
+    def __init__(self):
+        self.inputs = []
+        self._output = torch.tensor(0.0, dtype=torch.float64)
+        self.is_stateful = False
+
+    def set_input(self, inp):
+        self.inputs = [inp]
+        return self
+
+    def set_inputs(self, inps):
+        self.inputs = list(inps)
+        return self
+
+    def _eval_input(self, inp, memo, dt):
+        if isinstance(inp, Block):
+            return inp.eval(memo, dt)
+        return _to_tensor(inp).double()
+
+    def eval(self, memo, dt):
+        if self in memo:
+            return memo[self]
+        if self.is_stateful:
+            memo[self] = self._output
+            return self._output
+
+        out = self._compute_output(memo, dt)
+        memo[self] = out
+        return out
+
+    def _compute_output(self, memo, dt):
+        raise NotImplementedError("Subclasses must implement _compute_output")
+
+    def reset(self):
+        pass
+
+class ConstantBlock(Block):
+    def __init__(self, value):
+        super().__init__()
+        self.value = value
+
+    def _compute_output(self, memo, dt):
+        return _to_tensor(self.value).double()
+
+class GainBlock(Block):
+    def __init__(self, inp=None, K=1.0):
+        super().__init__()
+        self.K = K
+        if inp is not None:
+            self.set_input(inp)
+
+    def _compute_output(self, memo, dt):
+        u = self._eval_input(self.inputs[0], memo, dt)
+        return _to_tensor(self.K).double() * u
+
+class SumBlock(Block):
+    def __init__(self, inputs=None, signs=None):
+        super().__init__()
+        self.signs = signs
+        if inputs is not None:
+            self.set_inputs(inputs)
+
+    def _compute_output(self, memo, dt):
+        out = torch.tensor(0.0, dtype=torch.float64, device=self.inputs[0]._output.device if (self.inputs and isinstance(self.inputs[0], Block)) else None)
+        for i, inp in enumerate(self.inputs):
+            val = self._eval_input(inp, memo, dt)
+            sign = 1.0
+            if self.signs is not None and i < len(self.signs):
+                sign = float(self.signs[i])
+            out = out + sign * val
+        return out
+
+class ProductBlock(Block):
+    def __init__(self, inputs=None):
+        super().__init__()
+        if inputs is not None:
+            self.set_inputs(inputs)
+
+    def _compute_output(self, memo, dt):
+        out = torch.tensor(1.0, dtype=torch.float64)
+        for inp in self.inputs:
+            val = self._eval_input(inp, memo, dt)
+            out = out * val
+        return out
+
+class SaturationBlock(Block):
+    def __init__(self, inp=None, min_val=-1.0, max_val=1.0):
+        super().__init__()
+        self.min_val = min_val
+        self.max_val = max_val
+        if inp is not None:
+            self.set_input(inp)
+
+    def _compute_output(self, memo, dt):
+        u = self._eval_input(self.inputs[0], memo, dt)
+        return torch.clamp(u, self.min_val, self.max_val)
+
+class IntegratorBlock(Block):
+    def __init__(self, inp=None, x0=0.0):
+        super().__init__()
+        self.is_stateful = True
+        self.x0 = x0
+        if inp is not None:
+            self.set_input(inp)
+        self.reset()
+
+    def reset(self):
+        self.state = _to_tensor(self.x0).double().clone()
+        self._output = self.state
+
+    def update_state(self, dt, memo):
+        u = self._eval_input(self.inputs[0], memo, dt)
+        self.state = self.state + u * dt
+        self._output = self.state
+
+class PIDBlock(Block):
+    def __init__(self, inp=None, Kp=1.0, Ki=0.0, Kd=0.0, min_val=None, max_val=None):
+        super().__init__()
+        self.Kp = Kp
+        self.Ki = Ki
+        self.Kd = Kd
+        self.min_val = min_val
+        self.max_val = max_val
+        if inp is not None:
+            self.set_input(inp)
+        self.reset()
+
+    def reset(self):
+        self.integral = torch.tensor(0.0, dtype=torch.float64)
+        self.prev_err = torch.tensor(0.0, dtype=torch.float64)
+        self.has_prev = False
+
+    def _compute_output(self, memo, dt):
+        err = self._eval_input(self.inputs[0], memo, dt)
+        p_term = _to_tensor(self.Kp).double() * err
+        i_term = _to_tensor(self.Ki).double() * self.integral
+        if self.has_prev:
+            d_term = _to_tensor(self.Kd).double() * (err - self.prev_err) / dt
+        else:
+            d_term = torch.tensor(0.0, dtype=torch.float64, device=err.device)
+        u = p_term + i_term + d_term
+        if self.min_val is not None and self.max_val is not None:
+            u = torch.clamp(u, self.min_val, self.max_val)
+        return u
+
+    def update_state(self, dt, memo):
+        err = self._eval_input(self.inputs[0], memo, dt)
+        self.integral = self.integral + err * dt
+        self.prev_err = err
+        self.has_prev = True
+
+class StateSpace:
+    """
+    Linear Time-Invariant (LTI) System in state space:
+    x_dot = A*x + B*u
+    y = C*x + D*u
+    Fully differentiable for AI controller optimization.
+    """
+    def __init__(self, A, B, C, D):
+        def _ensure_2d(t):
+            t = _to_tensor(t).float()
+            if t.ndim == 0:
+                return t.unsqueeze(0).unsqueeze(0)
+            elif t.ndim == 1:
+                return t.unsqueeze(1)
+            return t
+            
+        self.A = _ensure_2d(A)
+        self.B = _ensure_2d(B)
+        self.C = _ensure_2d(C)
+        self.D = _ensure_2d(D)
+        
+    def step_response(self, t):
+        """Simulates the step response (u=1) over time t (tensor) via ode_solve."""
+        if 'ode_solve' not in globals():
+            raise RuntimeError("ode_solve function not found. Ensure 03_solvers.py is loaded.")
+        
+        t_t = _to_tensor(t).float()
+        
+        def system_dynamics(t_scalar, x):
+            u = torch.ones((self.B.shape[1],), dtype=torch.float32)
+            return torch.matmul(self.A, x) + torch.matmul(self.B, u)
+            
+        x0 = torch.zeros((self.A.shape[0],), dtype=torch.float32)
+        x_out = globals()['ode_solve'](system_dynamics, x0, t_t, method="rk4")
+        
+        u_out = torch.ones((len(t_t), self.B.shape[1]), dtype=torch.float32)
+        y_out = torch.matmul(x_out, self.C.t()) + torch.matmul(u_out, self.D.t())
+        
+        return t_t, y_out, x_out
+
+    def frequency_response(self, omega):
+        """Computes the complex frequency response H(jw) fully vectorized."""
+        omega_t = _to_tensor(omega).float()
+        A_c = self.A.to(torch.complex64)
+        B_c = self.B.to(torch.complex64)
+        C_c = self.C.to(torch.complex64)
+        D_c = self.D.to(torch.complex64)
+        
+        n = self.A.shape[0]
+        I = torch.eye(n, dtype=torch.complex64)
+        s = 1j * omega_t
+        sI = s.unsqueeze(-1).unsqueeze(-1) * I.unsqueeze(0)
+        sI_A = sI - A_c.unsqueeze(0)
+        
+        inv = torch.linalg.inv(sI_A)
+        H = torch.matmul(C_c.unsqueeze(0), torch.matmul(inv, B_c.unsqueeze(0))) + D_c.unsqueeze(0)
+        
+        mag = torch.abs(H)
+        mag_db = 20.0 * torch.log10(mag + 1e-12)
+        phase = torch.angle(H)
+        phase_deg = phase * (180.0 / math.pi)
+        
+        return omega_t, mag_db, phase_deg
+
+def tf2ss(num, den):
+    den_coeffs = [_to_tensor(a).double() for a in den]
+    num_coeffs = [_to_tensor(b).double() for b in num]
+    
+    a_lead = den_coeffs[0]
+    den_coeffs = [a / a_lead for a in den_coeffs]
+    num_coeffs = [b / a_lead for b in num_coeffs]
+    
+    n = len(den_coeffs) - 1
+    if len(num_coeffs) < len(den_coeffs):
+        num_coeffs = [torch.tensor(0.0, dtype=torch.float64, device=a_lead.device)] * (len(den_coeffs) - len(num_coeffs)) + num_coeffs
+        
+    if n == 0:
+        A = torch.zeros((0, 0), dtype=torch.float64, device=a_lead.device)
+        B = torch.zeros((0,), dtype=torch.float64, device=a_lead.device)
+        C = torch.zeros((0,), dtype=torch.float64, device=a_lead.device)
+        D = num_coeffs[0]
+        return A, B, C, D
+
+    A = [[torch.tensor(0.0, dtype=torch.float64, device=a_lead.device) for _ in range(n)] for _ in range(n)]
+    for i in range(n - 1):
+        A[i][i+1] = torch.tensor(1.0, dtype=torch.float64, device=a_lead.device)
+    for j in range(n):
+        A[n-1][j] = -den_coeffs[len(den_coeffs) - 1 - j]
+        
+    B = [torch.tensor(0.0, dtype=torch.float64, device=a_lead.device) for _ in range(n)]
+    B[n-1] = torch.tensor(1.0, dtype=torch.float64, device=a_lead.device)
+    
+    b_n = num_coeffs[0]
+    C = []
+    for j in range(n):
+        b_j = num_coeffs[len(num_coeffs) - 1 - j]
+        a_j = den_coeffs[len(den_coeffs) - 1 - j]
+        C.append(b_j - b_n * a_j)
+        
+    D = b_n
+    
+    A_t = torch.stack([torch.stack(row) for row in A])
+    B_t = torch.stack(B)
+    C_t = torch.stack(C)
+    D_t = _to_tensor(D).double()
+    return A_t, B_t, C_t, D_t
+
+class StateSpaceBlock(Block):
+    def __init__(self, inp=None, A=None, B=None, C=None, D=None):
+        super().__init__()
+        self.is_stateful = True
+        self.A = _to_tensor(A).double()
+        self.B = _to_tensor(B).double()
+        self.C = _to_tensor(C).double()
+        self.D = _to_tensor(D).double() if D is not None else torch.zeros((C.shape[0], B.shape[1] if B.ndim > 1 else 1), dtype=torch.float64)
+        if inp is not None:
+            self.set_input(inp)
+        self.reset()
+
+    def reset(self):
+        n = self.A.shape[0]
+        self.state = torch.zeros((n,), dtype=torch.float64, device=self.A.device)
+        self._output = self.C @ self.state
+
+    def update_state(self, dt, memo):
+        u = self._eval_input(self.inputs[0], memo, dt)
+        dx = self.A @ self.state + self.B * u
+        self.state = self.state + dx * dt
+        self._output = self.C @ self.state
+
+class TransferFunctionBlock(Block):
+    def __init__(self, inp=None, num=[1.0], den=[1.0, 1.0]):
+        super().__init__()
+        self.is_stateful = True
+        self.num = num
+        self.den = den
+        if inp is not None:
+            self.set_input(inp)
+        self.reset()
+
+    def reset(self):
+        self.A, self.B, self.C, self.D = tf2ss(self.num, self.den)
+        n = self.A.shape[0]
+        self.state = torch.zeros((n,), dtype=torch.float64, device=self.A.device)
+        self._output = self.C @ self.state
+
+    def update_state(self, dt, memo):
+        u = self._eval_input(self.inputs[0], memo, dt)
+        dx = self.A @ self.state + self.B * u
+        self.state = self.state + dx * dt
+        self._output = self.C @ self.state
+
+class BlockDiagram:
+    def __init__(self):
+        self.blocks = []
+
+    def add_block(self, block):
+        if block not in self.blocks:
+            self.blocks.append(block)
+        return block
+
+    def simulate(self, t_max, dt):
+        t_t = _to_tensor(t_max).double()
+        dt_t = _to_tensor(dt).double()
+        steps = int(torch.round(t_t / dt_t).item())
+
+        for block in self.blocks:
+            block.reset()
+
+        history = {block: [] for block in self.blocks}
+        time_history = []
+
+        t = 0.0
+        for _ in range(steps):
+            memo = {}
+            for block in self.blocks:
+                block.eval(memo, dt_t)
+
+            for block in self.blocks:
+                history[block].append(memo[block])
+            time_history.append(t)
+
+            for block in self.blocks:
+                if hasattr(block, 'update_state'):
+                    block.update_state(dt_t, memo)
+
+            t += dt_t.item()
+
+        res = {}
+        for block in self.blocks:
+            res[block] = torch.stack(history[block])
+        res["t"] = torch.tensor(time_history, dtype=torch.float64)
+        return res
+
+# Helper factories for DDK binding
+def block_diagram_impl():
+    return BlockDiagram()
+
+def constant_block_impl(value):
+    return ConstantBlock(value)
+
+def gain_block_impl(inp, K):
+    return GainBlock(inp, K)
+
+def sum_block_impl(inputs, signs=None):
+    return SumBlock(inputs, signs)
+
+def product_block_impl(inputs):
+    return ProductBlock(inputs)
+
+def saturation_block_impl(inp, min_val, max_val):
+    return SaturationBlock(inp, min_val, max_val)
+
+def integrator_block_impl(inp, x0=0.0):
+    return IntegratorBlock(inp, x0)
+
+def pid_block_impl(inp, Kp, Ki, Kd):
+    return PIDBlock(inp, Kp, Ki, Kd)
+
+def pid_block_saturated_impl(inp, Kp, Ki, Kd, min_val, max_val):
+    return PIDBlock(inp, Kp, Ki, Kd, min_val, max_val)
+
+def state_space_block_impl(inp, A, B, C, D=None):
+    return StateSpaceBlock(inp, A, B, C, D)
+
+def transfer_function_block_impl(inp, num, den):
+    return TransferFunctionBlock(inp, num, den)
 # --- Differentiable Robotics & Kinematics ---
 
 import torch
@@ -10247,229 +10771,6 @@ def end_effector_rot_backend(T):
     if T.ndim == 2:
         return T[0:3, 0:3]
     return T[:, 0:3, 0:3]
-# --- Digital Signal Processing (DSP) & Z-Transformation ---
-
-import torch
-
-def _to_double_tensor(v):
-    t = _to_tensor(v)
-    return t.double()
-
-def fir_filter_impl(x, b):
-    """
-    Filtert das Eingangssignal `x` mit den FIR-Koeffizienten `b` (Feedforward).
-    Vollständig differenzierbar bezüglich `b` und `x`.
-    """
-    x_t = _to_double_tensor(x)
-    b_t = _to_double_tensor(b)
-    
-    is_1d = (x_t.ndim == 1)
-    if is_1d:
-        x_t = x_t.unsqueeze(0).unsqueeze(0)  # (1, 1, L)
-    elif x_t.ndim == 2:
-        x_t = x_t.unsqueeze(1)  # (N, 1, L)
-        
-    M = b_t.shape[0]
-    import torch.nn.functional as F
-    x_padded = F.pad(x_t, (M - 1, 0), mode='constant', value=0.0)
-    
-    # We flip b_t for correlation filtering (since PyTorch conv1d is correlation)
-    b_flipped = torch.flip(b_t, dims=[0]).view(1, 1, M)
-    
-    y = F.conv1d(x_padded, b_flipped)
-    if is_1d:
-        return y.squeeze(0).squeeze(0)
-    return y.squeeze(1)
-
-def iir_filter_impl(x, b, a):
-    """
-    Realisiert ein allgemeines IIR-Filter mit Feedforward-Koeffizienten `b`
-    und Feedback-Koeffizienten `a` (mit standardisiertem a[0] = 1.0).
-    Vollständig differenzierbar bezüglich `b`, `a` und `x`.
-    """
-    x_t = _to_double_tensor(x)
-    b_t = _to_double_tensor(b)
-    a_t = _to_double_tensor(a)
-    
-    # Normalize by a[0] if it's not 1.0
-    if a_t[0] != 1.0:
-        norm = a_t[0]
-        b_t = b_t / norm
-        a_t = a_t / norm
-        
-    M = b_t.shape[0]
-    N = a_t.shape[0]
-    L = x_t.shape[0]
-    
-    y_list = []
-    for n in range(L):
-        val = b_t[0] * x_t[n]
-        for k in range(1, M):
-            if n - k >= 0:
-                val = val + b_t[k] * x_t[n - k]
-        for j in range(1, N):
-            if n - j >= 0:
-                val = val - a_t[j] * y_list[n - j]
-        y_list.append(val)
-        
-    return torch.stack(y_list)
-
-def _get_val_hz(v):
-    if isinstance(v, Quantity):
-        return _convert_to_base(v.value, v.unit, "frequency")
-    return float(v)
-
-def biquad_lowpass_impl(fc, Q, fs=1.0):
-    """
-    Berechnet biquadratische 2nd-Order Lowpass Filterkoeffizienten b, a.
-    Grenzfrequenz fc und Güte Q können Tensors oder Zahlen sein.
-    Abtastrate fs kann ein Quantity oder float sein.
-    Filterdesign ist vollständig differenzierbar!
-    """
-    fs_val = _get_val_hz(fs)
-    
-    if isinstance(fc, Quantity):
-        fc_t = _to_double_tensor(_convert_to_base(fc.value, fc.unit, "frequency"))
-    else:
-        fc_t = _to_double_tensor(fc)
-        
-    Q_t = _to_double_tensor(Q)
-    
-    w0 = 2.0 * 3.141592653589793 * fc_t / fs_val
-    alpha = torch.sin(w0) / (2.0 * Q_t)
-    cos_w0 = torch.cos(w0)
-    
-    b0 = (1.0 - cos_w0) / 2.0
-    b1 = 1.0 - cos_w0
-    b2 = (1.0 - cos_w0) / 2.0
-    
-    a0 = 1.0 + alpha
-    a1 = -2.0 * cos_w0
-    a2 = 1.0 - alpha
-    
-    b = torch.stack([b0, b1, b2]) / a0
-    a = torch.stack([torch.ones_like(a0), a1 / a0, a2 / a0])
-    return b, a
-
-def biquad_highpass_impl(fc, Q, fs=1.0):
-    """
-    Berechnet biquadratische 2nd-Order Highpass Filterkoeffizienten b, a.
-    Grenzfrequenz fc und Güte Q können Tensors oder Zahlen sein.
-    Filterdesign ist vollständig differenzierbar!
-    """
-    fs_val = _get_val_hz(fs)
-    
-    if isinstance(fc, Quantity):
-        fc_t = _to_double_tensor(_convert_to_base(fc.value, fc.unit, "frequency"))
-    else:
-        fc_t = _to_double_tensor(fc)
-    Q_t = _to_double_tensor(Q)
-    
-    w0 = 2.0 * 3.141592653589793 * fc_t / fs_val
-    alpha = torch.sin(w0) / (2.0 * Q_t)
-    cos_w0 = torch.cos(w0)
-    
-    b0 = (1.0 + cos_w0) / 2.0
-    b1 = -(1.0 + cos_w0)
-    b2 = (1.0 + cos_w0) / 2.0
-    
-    a0 = 1.0 + alpha
-    a1 = -2.0 * cos_w0
-    a2 = 1.0 - alpha
-    
-    b = torch.stack([b0, b1, b2]) / a0
-    a = torch.stack([torch.ones_like(a0), a1 / a0, a2 / a0])
-    return b, a
-
-def biquad_bandpass_impl(fc, Q, fs=1.0):
-    """
-    Berechnet biquadratische 2nd-Order Bandpass Filterkoeffizienten b, a.
-    Grenzfrequenz fc und Güte Q können Tensors oder Zahlen sein.
-    Filterdesign ist vollständig differenzierbar!
-    """
-    fs_val = _get_val_hz(fs)
-    
-    if isinstance(fc, Quantity):
-        fc_t = _to_double_tensor(_convert_to_base(fc.value, fc.unit, "frequency"))
-    else:
-        fc_t = _to_double_tensor(fc)
-    Q_t = _to_double_tensor(Q)
-    
-    w0 = 2.0 * 3.141592653589793 * fc_t / fs_val
-    alpha = torch.sin(w0) / (2.0 * Q_t)
-    cos_w0 = torch.cos(w0)
-    
-    b0 = alpha
-    b1 = torch.zeros_like(w0)
-    b2 = -alpha
-    
-    a0 = 1.0 + alpha
-    a1 = -2.0 * cos_w0
-    a2 = 1.0 - alpha
-    
-    b = torch.stack([b0, b1, b2]) / a0
-    a = torch.stack([torch.ones_like(a0), a1 / a0, a2 / a0])
-    return b, a
-
-def freqz_impl(b, a, worN=512):
-    """
-    Berechnet die komplexe Frequenzantwort H(jw) voll vektorisiert an worN Punkten.
-    Vollständig differenzierbar bezüglich b und a.
-    """
-    b_t = _to_double_tensor(b)
-    a_t = _to_double_tensor(a)
-    
-    omega = torch.linspace(0.0, 3.141592653589793, int(worN), dtype=b_t.dtype, device=b_t.device)
-    j_unit = torch.complex(torch.tensor(0.0, dtype=b_t.dtype), torch.tensor(1.0, dtype=b_t.dtype))
-    
-    num = torch.zeros(int(worN), dtype=torch.complex128, device=b_t.device)
-    for k, bk in enumerate(b_t):
-        num = num + bk * torch.exp(-j_unit * k * omega)
-        
-    den = torch.zeros(int(worN), dtype=torch.complex128, device=a_t.device)
-    for k, ak in enumerate(a_t):
-        den = den + ak * torch.exp(-j_unit * k * omega)
-        
-    h = num / den
-    return omega, h
-
-def butter_impl(order, Wn, btype='low', fs=None):
-    """
-    Wrapper für klassisches Butterworth-Filterdesign (SciPy).
-    Gibt die b und a Koeffizienten als PyTorch float64 Tensors zurück.
-    """
-    import scipy.signal as sig  # type: ignore[import-untyped]
-    
-    if isinstance(Wn, Quantity):
-        Wn_val = _convert_to_base(Wn.value, Wn.unit, "frequency")
-    elif hasattr(Wn, "tolist"):
-        Wn_val = Wn.tolist()
-    else:
-        Wn_val = Wn
-        
-    fs_val = _get_val_hz(fs) if fs is not None else None
-    
-    b, a = sig.butter(int(order), Wn_val, btype=btype, fs=fs_val)
-    return torch.tensor(b, dtype=torch.float64), torch.tensor(a, dtype=torch.float64)
-
-def cheby1_impl(order, rp, Wn, btype='low', fs=None):
-    """
-    Wrapper für klassisches Chebyshev Type I Filterdesign (SciPy).
-    Gibt die b und a Koeffizienten als PyTorch float64 Tensors zurück.
-    """
-    import scipy.signal as sig  # type: ignore[import-untyped]
-    
-    if isinstance(Wn, Quantity):
-        Wn_val = _convert_to_base(Wn.value, Wn.unit, "frequency")
-    elif hasattr(Wn, "tolist"):
-        Wn_val = Wn.tolist()
-    else:
-        Wn_val = Wn
-        
-    fs_val = _get_val_hz(fs) if fs is not None else None
-    
-    b, a = sig.cheby1(int(order), float(rp), Wn_val, btype=btype, fs=fs_val)
-    return torch.tensor(b, dtype=torch.float64), torch.tensor(a, dtype=torch.float64)
 # --- Computational Fluid Dynamics (CFD) via Lattice Boltzmann Method ---
 #
 # D2Q9 BGK lattice-Boltzmann Solver, vollständig differenzierbar.
@@ -12328,344 +12629,6 @@ def lbm3d_soft_cylinder_mask_impl(nx, ny, nz, cx, cy, r, axis=0, alpha=1.0):
     mask = torch.sigmoid((r_val - dist) / alpha_val)
     return mask
 
-import torch
-
-class Block:
-    """Base class for differentiable simulation blocks."""
-    def __init__(self):
-        self.inputs = []
-        self._output = torch.tensor(0.0, dtype=torch.float64)
-        self.is_stateful = False
-
-    def set_input(self, inp):
-        self.inputs = [inp]
-        return self
-
-    def set_inputs(self, inps):
-        self.inputs = list(inps)
-        return self
-
-    def _eval_input(self, inp, memo, dt):
-        if isinstance(inp, Block):
-            return inp.eval(memo, dt)
-        # Convert non-block inputs (floats/tensors) to double tensor
-        return _to_tensor(inp).double()
-
-    def eval(self, memo, dt):
-        if self in memo:
-            return memo[self]
-        if self.is_stateful:
-            memo[self] = self._output
-            return self._output
-
-        out = self._compute_output(memo, dt)
-        memo[self] = out
-        return out
-
-    def _compute_output(self, memo, dt):
-        raise NotImplementedError("Subclasses must implement _compute_output")
-
-    def reset(self):
-        pass
-
-
-class ConstantBlock(Block):
-    def __init__(self, value):
-        super().__init__()
-        self.value = value
-
-    def _compute_output(self, memo, dt):
-        return _to_tensor(self.value).double()
-
-
-class GainBlock(Block):
-    def __init__(self, inp=None, K=1.0):
-        super().__init__()
-        self.K = K
-        if inp is not None:
-            self.set_input(inp)
-
-    def _compute_output(self, memo, dt):
-        u = self._eval_input(self.inputs[0], memo, dt)
-        return _to_tensor(self.K).double() * u
-
-
-class SumBlock(Block):
-    def __init__(self, inputs=None, signs=None):
-        super().__init__()
-        self.signs = signs
-        if inputs is not None:
-            self.set_inputs(inputs)
-
-    def _compute_output(self, memo, dt):
-        out = torch.tensor(0.0, dtype=torch.float64, device=self.inputs[0]._output.device if (self.inputs and isinstance(self.inputs[0], Block)) else None)
-        for i, inp in enumerate(self.inputs):
-            val = self._eval_input(inp, memo, dt)
-            sign = 1.0
-            if self.signs is not None and i < len(self.signs):
-                sign = float(self.signs[i])
-            out = out + sign * val
-        return out
-
-
-class ProductBlock(Block):
-    def __init__(self, inputs=None):
-        super().__init__()
-        if inputs is not None:
-            self.set_inputs(inputs)
-
-    def _compute_output(self, memo, dt):
-        out = torch.tensor(1.0, dtype=torch.float64)
-        for inp in self.inputs:
-            val = self._eval_input(inp, memo, dt)
-            out = out * val
-        return out
-
-
-class SaturationBlock(Block):
-    def __init__(self, inp=None, min_val=-1.0, max_val=1.0):
-        super().__init__()
-        self.min_val = min_val
-        self.max_val = max_val
-        if inp is not None:
-            self.set_input(inp)
-
-    def _compute_output(self, memo, dt):
-        u = self._eval_input(self.inputs[0], memo, dt)
-        return torch.clamp(u, self.min_val, self.max_val)
-
-
-class IntegratorBlock(Block):
-    def __init__(self, inp=None, x0=0.0):
-        super().__init__()
-        self.is_stateful = True
-        self.x0 = x0
-        if inp is not None:
-            self.set_input(inp)
-        self.reset()
-
-    def reset(self):
-        self.state = _to_tensor(self.x0).double().clone()
-        self._output = self.state
-
-    def update_state(self, dt, memo):
-        u = self._eval_input(self.inputs[0], memo, dt)
-        self.state = self.state + u * dt
-        self._output = self.state
-
-
-class PIDBlock(Block):
-    def __init__(self, inp=None, Kp=1.0, Ki=0.0, Kd=0.0, min_val=None, max_val=None):
-        super().__init__()
-        self.Kp = Kp
-        self.Ki = Ki
-        self.Kd = Kd
-        self.min_val = min_val
-        self.max_val = max_val
-        if inp is not None:
-            self.set_input(inp)
-        self.reset()
-
-    def reset(self):
-        self.integral = torch.tensor(0.0, dtype=torch.float64)
-        self.prev_err = torch.tensor(0.0, dtype=torch.float64)
-        self.has_prev = False
-
-    def _compute_output(self, memo, dt):
-        err = self._eval_input(self.inputs[0], memo, dt)
-        p_term = _to_tensor(self.Kp).double() * err
-        i_term = _to_tensor(self.Ki).double() * self.integral
-        if self.has_prev:
-            d_term = _to_tensor(self.Kd).double() * (err - self.prev_err) / dt
-        else:
-            d_term = torch.tensor(0.0, dtype=torch.float64, device=err.device)
-        u = p_term + i_term + d_term
-        if self.min_val is not None and self.max_val is not None:
-            u = torch.clamp(u, self.min_val, self.max_val)
-        return u
-
-    def update_state(self, dt, memo):
-        err = self._eval_input(self.inputs[0], memo, dt)
-        self.integral = self.integral + err * dt
-        self.prev_err = err
-        self.has_prev = True
-
-
-def tf2ss(num, den):
-    # Ensure inputs are normalized
-    den_coeffs = [_to_tensor(a).double() for a in den]
-    num_coeffs = [_to_tensor(b).double() for b in num]
-    
-    a_lead = den_coeffs[0]
-    den_coeffs = [a / a_lead for a in den_coeffs]
-    num_coeffs = [b / a_lead for b in num_coeffs]
-    
-    n = len(den_coeffs) - 1
-    # Pad num with zeros if shorter than den
-    if len(num_coeffs) < len(den_coeffs):
-        num_coeffs = [torch.tensor(0.0, dtype=torch.float64, device=a_lead.device)] * (len(den_coeffs) - len(num_coeffs)) + num_coeffs
-        
-    # CCF realization: A is (n, n), B is (n, 1), C is (1, n), D is (1, 1)
-    if n == 0:
-        A = torch.zeros((0, 0), dtype=torch.float64, device=a_lead.device)
-        B = torch.zeros((0,), dtype=torch.float64, device=a_lead.device)
-        C = torch.zeros((0,), dtype=torch.float64, device=a_lead.device)
-        D = num_coeffs[0]
-        return A, B, C, D
-
-    A = [[torch.tensor(0.0, dtype=torch.float64, device=a_lead.device) for _ in range(n)] for _ in range(n)]
-    for i in range(n - 1):
-        A[i][i+1] = torch.tensor(1.0, dtype=torch.float64, device=a_lead.device)
-    for j in range(n):
-        A[n-1][j] = -den_coeffs[len(den_coeffs) - 1 - j]
-        
-    B = [torch.tensor(0.0, dtype=torch.float64, device=a_lead.device) for _ in range(n)]
-    B[n-1] = torch.tensor(1.0, dtype=torch.float64, device=a_lead.device)
-    
-    b_n = num_coeffs[0]
-    C = []
-    for j in range(n):
-        b_j = num_coeffs[len(num_coeffs) - 1 - j]
-        a_j = den_coeffs[len(den_coeffs) - 1 - j]
-        C.append(b_j - b_n * a_j)
-        
-    D = b_n
-    
-    A_t = torch.stack([torch.stack(row) for row in A])
-    B_t = torch.stack(B)
-    C_t = torch.stack(C)
-    D_t = _to_tensor(D).double()
-    return A_t, B_t, C_t, D_t
-
-
-class StateSpaceBlock(Block):
-    def __init__(self, inp=None, A=None, B=None, C=None, D=None):
-        super().__init__()
-        self.is_stateful = True
-        self.A = _to_tensor(A).double()
-        self.B = _to_tensor(B).double()
-        self.C = _to_tensor(C).double()
-        self.D = _to_tensor(D).double() if D is not None else torch.zeros((C.shape[0], B.shape[1] if B.ndim > 1 else 1), dtype=torch.float64)
-        if inp is not None:
-            self.set_input(inp)
-        self.reset()
-
-    def reset(self):
-        n = self.A.shape[0]
-        self.state = torch.zeros((n,), dtype=torch.float64, device=self.A.device)
-        self._output = self.C @ self.state
-
-    def update_state(self, dt, memo):
-        u = self._eval_input(self.inputs[0], memo, dt)
-        dx = self.A @ self.state + self.B * u
-        self.state = self.state + dx * dt
-        self._output = self.C @ self.state
-
-
-class TransferFunctionBlock(Block):
-    def __init__(self, inp=None, num=[1.0], den=[1.0, 1.0]):
-        super().__init__()
-        self.is_stateful = True
-        self.num = num
-        self.den = den
-        if inp is not None:
-            self.set_input(inp)
-        self.reset()
-
-    def reset(self):
-        self.A, self.B, self.C, self.D = tf2ss(self.num, self.den)
-        n = self.A.shape[0]
-        self.state = torch.zeros((n,), dtype=torch.float64, device=self.A.device)
-        self._output = self.C @ self.state
-
-    def update_state(self, dt, memo):
-        u = self._eval_input(self.inputs[0], memo, dt)
-        dx = self.A @ self.state + self.B * u
-        self.state = self.state + dx * dt
-        self._output = self.C @ self.state
-
-
-class BlockDiagram:
-    def __init__(self):
-        self.blocks = []
-
-    def add_block(self, block):
-        if block not in self.blocks:
-            self.blocks.append(block)
-        return block
-
-    def simulate(self, t_max, dt):
-        t_t = _to_tensor(t_max).double()
-        dt_t = _to_tensor(dt).double()
-        steps = int(torch.round(t_t / dt_t).item())
-
-        # Reset states of all blocks
-        for block in self.blocks:
-            block.reset()
-
-        history = {block: [] for block in self.blocks}
-        time_history = []
-
-        t = 0.0
-        for _ in range(steps):
-            memo = {}
-            # Evaluate all blocks recursively
-            for block in self.blocks:
-                block.eval(memo, dt_t)
-
-            # Record outputs
-            for block in self.blocks:
-                history[block].append(memo[block])
-            time_history.append(t)
-
-            # Update states
-            for block in self.blocks:
-                if hasattr(block, 'update_state'):
-                    block.update_state(dt_t, memo)
-
-            t += dt_t.item()
-
-        # Convert history arrays to stacked PyTorch tensors
-        res = {}
-        for block in self.blocks:
-            res[block] = torch.stack(history[block])
-        res["t"] = torch.tensor(time_history, dtype=torch.float64)
-        return res
-
-
-# Helper factories for DDK binding
-def block_diagram_impl():
-    return BlockDiagram()
-
-def constant_block_impl(value):
-    return ConstantBlock(value)
-
-def gain_block_impl(inp, K):
-    return GainBlock(inp, K)
-
-def sum_block_impl(inputs, signs=None):
-    return SumBlock(inputs, signs)
-
-def product_block_impl(inputs):
-    return ProductBlock(inputs)
-
-def saturation_block_impl(inp, min_val, max_val):
-    return SaturationBlock(inp, min_val, max_val)
-
-def integrator_block_impl(inp, x0=0.0):
-    return IntegratorBlock(inp, x0)
-
-def pid_block_impl(inp, Kp, Ki, Kd):
-    return PIDBlock(inp, Kp, Ki, Kd)
-
-def pid_block_saturated_impl(inp, Kp, Ki, Kd, min_val, max_val):
-    return PIDBlock(inp, Kp, Ki, Kd, min_val, max_val)
-
-def state_space_block_impl(inp, A, B, C, D=None):
-    return StateSpaceBlock(inp, A, B, C, D)
-
-def transfer_function_block_impl(inp, num, den):
-    return TransferFunctionBlock(inp, num, den)
 # Dedekind Standard Library: Structural Mechanics & Topology Optimization
 import torch
 import math

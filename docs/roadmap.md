@@ -54,17 +54,17 @@
 *   [x] **Unary Minus**: Codegen emits `-expr`; `Quantity` and `Quaternion` implement `__neg__` for correct behaviour in expressions like `-1.0[C]` and `-1.0 + 0i`.
 
 ### Phase 13: Differentiable ODE Solvers (v0.7) ✅
-*   [x] **ode_solve**: Differenzierbarer ODE-Löser dy/dt = fun(t,y) mit RK4 (default) und Euler; Gradients durch y0 und Parameter in fun.
-*   [x] **linspace**: Zeitgitter für ODE-Integration; Integration mit `grad()` für Physics-Informed ML.
+*   [x] **ode_solve**: Differentiable ODE solver dy/dt = fun(t,y) with RK4 (default) and Euler; gradients through y0 and parameters in fun.
+*   [x] **linspace**: Time grid for ODE integration; integration with `grad()` for Physics-Informed ML.
 
 ### Phase 14: Probabilistic Programming (v0.8) ✅
 *   [x] **Distributions**: `Normal(mu, sigma)`, `Uniform(low, high)`, `Bernoulli(p)` (torch.distributions).
-*   [x] **sample** / **log_prob**: Ziehen und Log-Dichte für Bayesian Inference.
-*   [x] **metropolis**: Metropolis-Hastings MCMC für Posterior-Sampling (log_prior, log_likelihood, data, init, steps).
+*   [x] **sample** / **log_prob**: Sampling and log density for Bayesian Inference.
+*   [x] **metropolis**: Metropolis-Hastings MCMC for posterior sampling (log_prior, log_likelihood, data, init, steps).
 
 ### Phase 15: Differentiable PDE Solvers (v0.8) ✅
-*   [x] **pde_heat_1d**: Differenzierbarer 1D-Heat-Solver \(u_t = k\,u_{xx}\); Finite-Differenzen + `ode_solve`; Dirichlet-Randbedingungen.
-*   [x] **pde_heat_2d**: Differenzierbarer 2D-Heat-Solver \(u_t = k\,(u_{xx}+u_{yy})\); Gradients durch `u0` und `k`.
+*   [x] **pde_heat_1d**: Differentiable 1D heat solver \(u_t = k\,u_{xx}\); finite differences + `ode_solve`; Dirichlet boundary conditions.
+*   [x] **pde_heat_2d**: Differentiable 2D heat solver \(u_t = k\,(u_{xx}+u_{yy})\); gradients through `u0` and `k`.
 
 ## 🔭 Beyond v1.0: Future Vision
 

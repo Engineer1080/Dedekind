@@ -13,8 +13,8 @@ from .ast_nodes import CompileError, Program, UseStmt, FunctionDef, Identifier, 
 
 
 def _module_search_paths(filepath: Optional[str]) -> List[str]:
-    """Suchpfade für `use mymod` (in dieser Reihenfolge): aktuelles Verzeichnis,
-    Projekt-Modulordner `modules/`, examples/dedekind/."""
+    """Search paths for `use mymod` (in this order): current directory,
+    project module folder `modules/`, examples/dedekind/."""
     paths = []
     if filepath:
         paths.append(os.path.dirname(os.path.abspath(filepath)))
@@ -27,8 +27,8 @@ def _module_search_paths(filepath: Optional[str]) -> List[str]:
 
 
 def _resolve_module(name: str, search_paths: List[str], visiting_line: Optional[int]) -> str:
-    """Resolved sowohl flache Namen (`foo`) als auch gepunktete Pfade (`foo.bar.baz`).
-    Gepunktete Namen werden zu verschachtelten Verzeichnis-Pfaden: foo.bar -> foo/bar.ddk."""
+    """Resolves both flat names (`foo`) and dotted paths (`foo.bar.baz`).
+    Dotted names become nested directory paths: foo.bar -> foo/bar.ddk."""
     parts = name.split(".")
     rel_path = os.path.join(*parts) + ".ddk"
     for p in search_paths:
@@ -36,21 +36,21 @@ def _resolve_module(name: str, search_paths: List[str], visiting_line: Optional[
         if os.path.isfile(candidate):
             return candidate
     raise CompileError(
-        f"Modul '{name}' nicht gefunden (gesucht als {rel_path!r} in: "
+        f"Module '{name}' not found (searched as {rel_path!r} in: "
         f"{', '.join(p for p in search_paths)}).",
         line=visiting_line,
     )
 
 
 def _mangled_name(module_name: str, fn_name: str) -> str:
-    """Mangling fuer private (non-pub) Modul-Funktionen: __ddk_<modpath>_<fn>."""
+    """Mangling for private (non-pub) module functions: __ddk_<modpath>_<fn>."""
     flat = module_name.replace(".", "_")
     return f"__ddk_{flat}_{fn_name}"
 
 
 def _rename_in_ast(node: Node, rename_map: Dict[str, str]) -> None:
-    """Walk AST in-place, renaming FunctionDef.name (top-level Ziele) und
-    Identifier.name (alle Referenzen) entsprechend rename_map."""
+    """Walk AST in-place, renaming FunctionDef.name (top-level targets) and
+    Identifier.name (all references) according to rename_map."""
     if node is None or not isinstance(node, Node):
         return
     if isinstance(node, FunctionDef) and node.name in rename_map:
@@ -77,15 +77,15 @@ def _rename_in_ast(node: Node, rename_map: Dict[str, str]) -> None:
 
 
 def _apply_module_visibility(mod_ast: Program, module_name: str) -> Program:
-    """Mangling fuer Modul-Sichtbarkeit.
+    """Mangling for module visibility.
 
-    Verhalten:
-      - Hat das Modul KEINE `pub fn`-Deklaration: Legacy-Modus — alle Funktionen
-        bleiben oeffentlich (rueckwaerts-kompatibel mit Pre-v1.19-Modulen).
-      - Hat das Modul mindestens eine `pub fn`-Deklaration: Opt-in-Modus —
-        ALLE nicht-pub Funktionen bekommen einen Mangling-Prefix
-        `__ddk_<modpath>_` und werden so vor dem Aufrufer versteckt.
-        Aufrufe innerhalb des Moduls werden mit-renamed.
+    Behavior:
+      - If the module has NO `pub fn` declaration: Legacy mode — all functions
+        remain public (backward-compatible with Pre-v1.19 modules).
+      - If the module has at least one `pub fn` declaration: Opt-in mode —
+        ALL non-pub functions get a mangling prefix
+        `__ddk_<modpath>_` and are thus hidden from the caller.
+        Calls within the module are also renamed.
     """
     fn_names = []
     pub_names = []
@@ -95,7 +95,7 @@ def _apply_module_visibility(mod_ast: Program, module_name: str) -> Program:
             if getattr(stmt, "is_pub", False):
                 pub_names.append(stmt.name)
     if not pub_names:
-        # Legacy-Modus: nichts mangling
+        # Legacy mode: no mangling
         return mod_ast
     rename_map = {
         n: _mangled_name(module_name, n)
@@ -109,22 +109,22 @@ def _apply_module_visibility(mod_ast: Program, module_name: str) -> Program:
 
 
 def _expand_uses(ast: Program, filepath: Optional[str], loaded: set) -> Program:
-    """Ersetzt UseStmt-Knoten durch die Top-Level-Statements der referenzierten Module.
-    Wendet Visibility-Mangling an: nur Funktionen mit `pub fn` sind ausserhalb des
-    Moduls sichtbar (falls das Modul mindestens eine `pub fn`-Deklaration hat)."""
+    """Replaces UseStmt nodes with the top-level statements of the referenced modules.
+    Applies visibility mangling: only functions with `pub fn` are visible outside the
+    module (if the module has at least one `pub fn` declaration)."""
     new_stmts = []
     search_paths = _module_search_paths(filepath)
     for stmt in ast.statements:
         if isinstance(stmt, UseStmt):
             if stmt.module in loaded:
-                continue  # zyklisch oder doppelt: ignorieren
+                continue  # cyclic or duplicate: ignore
             mod_path = _resolve_module(stmt.module, search_paths, getattr(stmt, "line", None))
             loaded.add(stmt.module)
             try:
                 with open(mod_path, "r", encoding="utf-8") as f:
                     mod_source = f.read()
             except OSError as e:
-                raise CompileError(f"Modul '{stmt.module}' lesen fehlgeschlagen: {e}",
+                raise CompileError(f"Failed to read module '{stmt.module}': {e}",
                                    line=getattr(stmt, "line", None), filepath=filepath)
             mod_tokens = Lexer(mod_source).tokenize()
             mod_ast = Parser(mod_tokens).parse()
@@ -165,7 +165,7 @@ _DDK_MARKER_RE = re.compile(r"^\s*# ddk:(\d+)\s*$")
 
 
 def _build_line_map(generated_code: str) -> dict:
-    """Liest `# ddk:<line>` Marker und liefert {generated_line_idx_1based: ddk_line}."""
+    """Reads `# ddk:<line>` markers and returns {generated_line_idx_1based: ddk_line}."""
     mapping = {}
     last_ddk = None
     for idx, line in enumerate(generated_code.splitlines(), start=1):
@@ -186,16 +186,16 @@ def _make_virtual_filename(ddk_file: Optional[str]) -> str:
 
 
 def _register_source_for_traceback(virtual_filename: str, generated_code: str) -> None:
-    """Damit Python traceback Quelle anzeigen kann (intern, nur für Debug)."""
+    """So that Python traceback can display the source (internal, only for debug)."""
     src_lines = generated_code.splitlines(keepends=True)
     linecache.cache[virtual_filename] = (len(generated_code), None, src_lines, virtual_filename)
 
 
 def format_dedekind_traceback(exc: BaseException, generated_code: str,
                               ddk_file: Optional[str], ddk_source: Optional[str] = None) -> str:
-    """Rendert einen Traceback so, dass Zeilen im generierten Code auf die ursprüngliche
-    .ddk-Datei zurückgemappt werden. Frames innerhalb der inlinierten Runtime werden als
-    `<runtime>` markiert; die letzte erreichbare User-Zeile steht oben."""
+    """Renders a traceback such that lines in the generated code are mapped back to the original
+    .ddk file. Frames within the inlined runtime are marked as
+    `<runtime>`; the last reachable user line is at the top."""
     virtual = _make_virtual_filename(ddk_file)
     line_map = _build_line_map(generated_code)
     ddk_lines = ddk_source.splitlines() if ddk_source else None
@@ -227,12 +227,12 @@ def format_dedekind_traceback(exc: BaseException, generated_code: str,
                 if src_excerpt:
                     out_lines.append(f"    {src_excerpt}")
             else:
-                # Frame liegt vor dem ersten User-Statement: gehört zur inlined Runtime
+                # Frame is before the first user statement: belongs to inlined runtime
                 out_lines.append(
                     f'  File "<dedekind-runtime>", line {lineno}, in {code.co_name}  (internal)'
                 )
         else:
-            # Externes Modul (scipy, torch, ...): unveränderter Frame
+            # External module (scipy, torch, ...): unmodified frame
             out_lines.append(f'  File "{filename}", line {lineno}, in {code.co_name}')
         tb = tb.tb_next
 
@@ -243,12 +243,12 @@ def format_dedekind_traceback(exc: BaseException, generated_code: str,
 def dedekind_exec(generated_code: str, ddk_file: Optional[str] = None,
                   exec_globals: Optional[dict] = None,
                   ddk_source: Optional[str] = None) -> dict:
-    """Kompiliert + executet generierten Python-Code, fängt Runtime-Fehler ab und re-raises
-    den **Original-Exception-Typ** mit auf die .ddk-Quelle zurückgemappter Nachricht.
+    """Compiles + executes generated Python code, catches runtime errors and re-raises
+    the **original exception type** with a message mapped back to the .ddk source.
 
-    `except AssertionError`/`except ValueError` etc. funktioniert weiter wie bisher; nur
-    `str(e)` ist nun mit Dateipfad und Zeilennummer aus der .ddk-Datei angereichert. Der
-    ursprüngliche Traceback bleibt erhalten und wird über die Exception-Args ergänzt.
+    `except AssertionError`/`except ValueError` etc. continues to work as before; only
+    `str(e)` is now enriched with file path and line number from the .ddk file. The
+    original traceback is preserved and appended via the exception args.
     """
     if exec_globals is None:
         exec_globals = {}
@@ -259,7 +259,7 @@ def dedekind_exec(generated_code: str, ddk_file: Optional[str] = None,
         exec(code_obj, exec_globals)
     except BaseException as exc:
         translated = format_dedekind_traceback(exc, generated_code, ddk_file, ddk_source)
-        # Original-Typ behalten, Nachricht durch übersetzten Traceback ersetzen.
+        # Retain original type, replace message with translated traceback.
         try:
             exc.args = (translated,)
         except Exception:
@@ -270,8 +270,8 @@ def dedekind_exec(generated_code: str, ddk_file: Optional[str] = None,
 
 def export_to_latex(source_code: str) -> str:
     """
-    Dedekind-Quelltext parsen und alle Formeln/Ausdrücke als LaTeX zurückgeben.
-    Nützlich für Papers und Notizen (z. B. Gleichungen aus Zuweisungen und Returns).
+    Parse Dedekind source code and return all formulas/expressions as LaTeX.
+    Useful for papers and notes (e.g., equations from assignments and returns).
     """
     lexer = Lexer(source_code)
     tokens = lexer.tokenize()
@@ -340,14 +340,14 @@ def main():
         print("Executing Code:")
         print("-" * 20)
 
-        # Execute mit auf .ddk-Quelle gemappten Tracebacks
+        # Execute with tracebacks mapped to .ddk source
         dedekind_exec(python_code, ddk_file=filepath, ddk_source=source)
 
     except CompileError as e:
-        print(f"Compiler-Fehler: {e}")
+        print(f"Compiler Error: {e}")
         sys.exit(1)
     except Exception as e:
-        print(f"Runtime-Fehler (zurueckgemappt auf .ddk):\n{e}")
+        print(f"Runtime Error (mapped back to .ddk):\n{e}")
         sys.exit(1)
 
 if __name__ == "__main__":

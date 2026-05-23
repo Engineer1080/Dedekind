@@ -1,10 +1,10 @@
-// modules/stats.ddk — Dedekind-Standardbibliothek: Statistik-Convenience.
-// Aktivierung: `use stats`
+// modules/stats.ddk — Dedekind Standard Library: Statistics Convenience.
+// Activation: `use stats`
 //
-// Ergänzt die eingebauten Funktionen (mean, std, var, ttest_*, ...) um
-// Effektgrößen, Z-Scores, Standardfehler, Modellgüte und einfache CI-Helfer.
+// Complements the built-in functions (mean, std, var, ttest_*, ...) with
+// effect sizes, Z-scores, standard errors, model fit metrics, and simple CI helpers.
 
-// --- Standardisierung & Effektgrößen -----------------------------------------
+// --- Standardization & Effect Sizes ------------------------------------------
 
 fn z_score(x, mu, sigma) {
     return (x - mu) / sigma
@@ -15,7 +15,7 @@ fn cohens_d(mean1, mean2, pooled_std) {
 }
 
 fn pooled_std(s1, s2, n1, n2) {
-    // gepoolte Standardabweichung für zwei Stichproben
+    // pooled standard deviation for two samples
     num = (n1 - 1) * s1 * s1 + (n2 - 1) * s2 * s2
     return sqrt(num / (n1 + n2 - 2))
 }
@@ -25,32 +25,32 @@ fn glass_delta(mean_treat, mean_ctrl, std_ctrl) {
 }
 
 fn hedges_g(mean1, mean2, s1, s2, n1, n2) {
-    // korrigierte Effektgröße (kleinere Stichproben)
+    // corrected effect size (smaller samples)
     sp = pooled_std(s1, s2, n1, n2)
     d = (mean1 - mean2) / sp
     j = 1.0 - 3.0 / (4.0 * (n1 + n2) - 9.0)
     return j * d
 }
 
-// --- Standardfehler & Konfidenzintervalle ------------------------------------
+// --- Standard Error & Confidence Intervals -----------------------------------
 
 fn standard_error_mean(sigma, n) {
     return sigma / sqrt(n)
 }
 
 fn ci_normal_mean(mean_val, sigma, n, z) {
-    // Normal-Approximation: mean ± z * SE
+    // Normal approximation: mean ± z * SE
     se = standard_error_mean(sigma, n)
     return [mean_val - z * se, mean_val + z * se]
 }
 
 fn ci_proportion(p_hat, n, z) {
-    // Wald-Intervall für eine Proportion
+    // Wald interval for a proportion
     se = sqrt(p_hat * (1.0 - p_hat) / n)
     return [p_hat - z * se, p_hat + z * se]
 }
 
-// --- Modellgüte / Regression -------------------------------------------------
+// --- Model Fit / Regression --------------------------------------------------
 
 fn r_squared(y_true, y_pred) {
     y_mean = mean(y_true)
@@ -91,14 +91,14 @@ fn mae(y_true, y_pred) {
     return s / n
 }
 
-// --- Verteilungs-Quickwins ---------------------------------------------------
+// --- Distribution Quickwins --------------------------------------------------
 
 fn coefficient_of_variation(x) {
     return std(x) / mean(x)
 }
 
 fn standardize(x) {
-    // (x - mean) / std elementweise
+    // (x - mean) / std element-wise
     m = mean(x)
     s = std(x)
     return (x - m) / s

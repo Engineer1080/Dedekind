@@ -4,7 +4,7 @@ from typing import List, Tuple
 try:
     from .ast_nodes import CompileError
 except ImportError:
-    CompileError = RuntimeError  # Fallback wenn ast_nodes nicht importierbar
+    CompileError = RuntimeError  # Fallback if ast_nodes is not importable
 
 class Token:
     def __init__(self, type: str, value: str, line: int):
@@ -29,8 +29,8 @@ class Lexer:
         token_specs = [
             ('QUATERNION', r'\d+(\.\d+)?[jk]\b'),   # Quaternion component (j or k)
             ('COMPLEX',  r'\d+(\.\d+)?i\b'),      # Complex number 5.0i
-            ('NUMBER',   r'\d+(\.\d+)?([eE][+-]?\d+)?'), # scientific notation 지원
-            ('RAWSTRING', r'r"[^"]*"'),          # Raw string (r"...") – Backslashes bleiben erhalten
+            ('NUMBER',   r'\d+(\.\d+)?([eE][+-]?\d+)?'), # scientific notation support
+            ('RAWSTRING', r'r"[^"]*"'),          # Raw string (r"...") – backslashes are preserved
             ('STRING',   r'"[^"]*"'),           # String literal
             ('MODIFIER', r'\.(gpu|cpu|single)'), # Modifiers .gpu, .cpu, .single
             ('RETURNS',  r'->'),                # Return-type arrow (must come BEFORE MINUS)
@@ -56,11 +56,11 @@ class Lexer:
             ('RBRACE',   r'\}'),                # }
             ('LBRACKET', r'\['),                # [
             ('RBRACKET', r'\]'),                # ]
-            ('PIPE',     r'\|'),                # | (Betragsstriche: |x| = abs(x))
+            ('PIPE',     r'\|'),                # | (absolute value bars: |x| = abs(x))
             ('COMMA',    r','),                 # ,
             ('DOT',      r'\.'),                # .
             ('CARET',    r'\^'),                # ^ (contravariant index)
-            ('UNDERSCORE', r'_'),               # _ (covariant index, nur wenn nicht in ID)
+            ('UNDERSCORE', r'_'),               # _ (covariant index, only when not in ID)
             ('ID',       r'[A-Za-z][A-Za-z0-9_]*'), # Identifiers (mit _ z.B. check_value)
             ('NEWLINE',  r'\n'),                # Line endings
             ('SKIP',     r'[ \t\r]+'),           # Skip over spaces, tabs, and carriage returns
@@ -86,17 +86,17 @@ class Lexer:
                 pass
             elif kind == 'MISMATCH':
                 raise CompileError(
-                    f"Unerwartetes Zeichen {value!r}. Erlaubt sind Bezeichner, Zahlen, Operatoren, Klammern.",
+                    f"Unexpected character {value!r}. Allowed are identifiers, numbers, operators, brackets.",
                     line=line,
                 )
             else:
                 keywords = {'fn', 'return', 'if', 'else', 'while', 'for', 'in', 'grad', 'einsum',
                            'and', 'or', 'not', 'xor', 'nand', 'nor', 'xnor', 'use', 'try', 'catch', 'pub'}
-                # 'unit' ist ein Soft-Keyword: nur am Statement-Anfang als UNIT erkannt,
-                # damit bestehender Code mit `q.unit`, `unit="V"` weiter funktioniert.
+                # 'unit' is a soft keyword: only recognized as UNIT at the start of a statement,
+                # so that existing code with `q.unit`, `unit="V"` continues to work.
                 if kind == 'ID' and value in keywords:
                     kind = value.upper()
-                # RAWSTRING: Token-Wert = Inhalt ohne r" und "
+                # RAWSTRING: Token value = content without r" and "
                 if kind == 'RAWSTRING':
                     inner = value[2:-1]  # r"..." -> ...
                     tokens.append(Token(kind, inner, line))

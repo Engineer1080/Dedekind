@@ -1,10 +1,10 @@
-// modules/ml.ddk — Dedekind-Standardbibliothek: ML-Convenience.
-// Aktivierung: `use ml`
+// modules/ml.ddk — Dedekind Standard Library: ML Convenience.
+// Activation: `use ml`
 //
-// Ergänzt Sequential/Dense/compile_model um häufige Aktivierungen,
-// Loss-Funktionen und Metriken — keine Black-Box-Modelle.
+// Complements Sequential/Dense/compile_model with common activations,
+// loss functions, and metrics — no black box models.
 
-// --- Aktivierungen -----------------------------------------------------------
+// --- Activations -------------------------------------------------------------
 
 fn leaky_relu(x, alpha) {
     if x >= 0 { return x }
@@ -21,11 +21,11 @@ fn swish(x) {
 }
 
 fn gelu_approx(x) {
-    // GELU-Approximation (Tanh-Form)
+    // GELU approximation (tanh form)
     return 0.5 * x * (1.0 + tanh(0.7978845608 * (x + 0.044715 * x * x * x)))
 }
 
-// --- Loss-Funktionen ---------------------------------------------------------
+// --- Loss Functions ----------------------------------------------------------
 
 fn mse_loss(y_true, y_pred) {
     n = len(y_true)
@@ -49,7 +49,7 @@ fn mae_loss(y_true, y_pred) {
 }
 
 fn binary_crossentropy(y_true, y_pred, eps) {
-    // -[y*log(p) + (1-y)*log(1-p)], mit Clipping
+    // -[y*log(p) + (1-y)*log(1-p)], with clipping
     n = len(y_true)
     s = 0.0
     for i in arange(n) {
@@ -62,7 +62,7 @@ fn binary_crossentropy(y_true, y_pred, eps) {
     return s / n
 }
 
-// --- Metriken (Klassifikation) -----------------------------------------------
+// --- Metrics (Classification) ------------------------------------------------
 
 fn accuracy(y_true, y_pred) {
     n = len(y_true)

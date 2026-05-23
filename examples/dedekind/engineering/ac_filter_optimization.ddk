@@ -1,4 +1,4 @@
-use electronics
+use signals
 
 fn rlc_resonance_loss(p) {
     // p[0] represents L in mH

@@ -1,12 +1,12 @@
-// modules/physics.ddk — Dedekind-Standardbibliothek: Physik-Convenience.
-// Aktivierung: `use physics`
+// modules/physics.ddk — Dedekind Standard Library: Physics Convenience.
+// Activation: `use physics`
 //
-// Diese Funktionen sind reine Convenience auf Basis der eingebauten Operatoren
-// und Konstanten (c, G, k_B, ...). Built-ins bleiben weiterhin global verfügbar.
+// These functions are pure convenience based on built-in operators
+// and constants (c, G, k_B, ...). Built-ins remain globally available.
 
-// Numerische Konstanten ohne Einheiten — vermeiden Einheiten-Fehler in den Formeln,
-// wenn der Aufrufer mit reinen Zahlen rechnet. Für unit-tracked Anwendung weiter
-// die globalen c, G, k_B, ... als Quantity verwenden.
+// Numerical constants without units — avoids unit errors in formulas
+// when the caller calculates with pure numbers. For unit-tracked application,
+// continue to use the global c, G, k_B, ... as Quantity.
 C_NUM       = 299792458.0          // m/s
 G_NUM       = 6.67430e-11          // m^3/(kg*s^2)
 K_B_NUM     = 1.380649e-23         // J/K
@@ -15,7 +15,7 @@ K_E_NUM     = 8.9875517923e9       // N*m^2/C^2
 R_GAS_NUM   = 8.314462618          // J/(K*mol)
 SIGMA_SB_NUM = 5.670374419e-8      // W/(m^2*K^4)
 
-// --- Mechanik ----------------------------------------------------------------
+// --- Mechanics ---------------------------------------------------------------
 
 fn kinetic_energy(m, v) {
     return 0.5 * m * v * v
@@ -43,7 +43,7 @@ fn spring_period(m, k) {
     return 2.0 * pi * sqrt(m / k)
 }
 
-// --- Schwerkraft & Bahnen ----------------------------------------------------
+// --- Gravity & Orbits --------------------------------------------------------
 
 fn newton_gravity(m1, m2, r) {
     // F = G * m1 * m2 / r^2
@@ -60,7 +60,7 @@ fn orbital_period(a, M) {
     return 2.0 * pi * sqrt((a * a * a) / (G_NUM * M))
 }
 
-// --- Relativität -------------------------------------------------------------
+// --- Relativity --------------------------------------------------------------
 
 fn relativistic_gamma(v) {
     // gamma = 1 / sqrt(1 - (v/c)^2)
@@ -88,7 +88,7 @@ fn ohms_law_voltage(I, R) {
     return I * R
 }
 
-// --- Thermodynamik -----------------------------------------------------------
+// --- Thermodynamics ----------------------------------------------------------
 
 fn ideal_gas_pressure(n, T, V) {
     // P*V = n*R*T  -> P = n*R*T/V
@@ -109,13 +109,13 @@ fn blackbody_radiance(T) {
     return SIGMA_SB_NUM * T * T * T * T
 }
 
-// --- Wellen ------------------------------------------------------------------
+// --- Waves -------------------------------------------------------------------
 
 fn wave_speed(freq, wavelength) {
     return freq * wavelength
 }
 
 fn doppler_classical(f0, v_source, v_observer, v_wave) {
-    // beobachtete Frequenz bei klassischem Doppler-Effekt
+    // observed frequency in classical Doppler effect
     return f0 * (v_wave + v_observer) / (v_wave - v_source)
 }

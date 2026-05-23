@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-Skript zum Kompilieren und Ausführen aller .ddk-Beispiele in examples/dedekind.
-Findet automatisch alle *.ddk-Dateien; funktioniert auch bei neu hinzugefügten Dateien.
+Script to compile and execute all .ddk examples in examples/dedekind.
+Automatically finds all *.ddk files; works even with newly added files.
 
-Verwendung (aus Projektroot):
-  python run_examples.py           # Kompilieren + Ausführen, kurze Ausgabe
-  python run_examples.py -v        # Ausführliche Ausgabe pro Beispiel
-  python run_examples.py -q        # Nur Zusammenfassung (Erfolg/Fehler pro Datei)
-  python run_examples.py --compile  # Nur kompilieren, nicht ausführen
+Usage (from project root):
+  python run_examples.py           # Compile + execute, short output
+  python run_examples.py -v        # Verbose output per example
+  python run_examples.py -q        # Summary only (success/failure per file)
+  python run_examples.py --compile  # Compile only, do not execute
 """
 
 import sys
@@ -15,25 +15,25 @@ import os
 import io
 import argparse
 
-# Projektroot = Verzeichnis, in dem dieses Skript liegt
+# Project root = directory containing this script
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = SCRIPT_DIR
 EXAMPLES_DIR = os.path.join(PROJECT_ROOT, "examples", "dedekind")
 SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 
 def main():
-    parser = argparse.ArgumentParser(description="Alle Dedekind-Beispiele kompilieren und ausführen.")
-    parser.add_argument("-v", "--verbose", action="store_true", help="Vollständige Ausgabe pro Beispiel")
-    parser.add_argument("-q", "--quiet", action="store_true", help="Nur Zusammenfassung (ein Zeile pro Datei)")
-    parser.add_argument("--compile", action="store_true", help="Nur kompilieren, nicht ausführen")
-    parser.add_argument("--filter", type=str, default="", help="Nur Dateien, deren Name diesen String enthalten (z.B. hello)")
+    parser = argparse.ArgumentParser(description="Compile and run all Dedekind examples.")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Full output per example")
+    parser.add_argument("-q", "--quiet", action="store_true", help="Summary only (one line per file)")
+    parser.add_argument("--compile", action="store_true", help="Compile only, do not execute")
+    parser.add_argument("--filter", type=str, default="", help="Only files whose name contains this string (e.g. hello)")
     args = parser.parse_args()
 
     if not os.path.isdir(EXAMPLES_DIR):
-        print(f"Fehler: Beispiele-Ordner nicht gefunden: {EXAMPLES_DIR}")
+        print(f"Error: Examples directory not found: {EXAMPLES_DIR}")
         sys.exit(1)
 
-    # Alle .ddk-Dateien rekursiv finden (sortiert für reproduzierbare Reihenfolge)
+    # Find all .ddk files recursively (sorted for reproducible order)
     ddk_files = []
     for root, dirs, files in os.walk(EXAMPLES_DIR):
         for f in files:
@@ -48,16 +48,16 @@ def main():
     ddk_files.sort()
 
     if not ddk_files:
-        print("Keine .ddk-Dateien gefunden.")
+        print("No .ddk files found.")
         sys.exit(0)
 
-    # Compiler importieren (src muss im Pfad sein)
+    # Import compiler (src must be on the path)
     if SRC_DIR not in sys.path:
         sys.path.insert(0, SRC_DIR)
     try:
         from dedekind import compile_source, dedekind_exec
     except ImportError as e:
-        print(f"Fehler: Compiler nicht gefunden. Bitte aus Projektroot ausführen: {e}")
+        print(f"Error: Compiler not found. Please run from project root: {e}")
         sys.exit(1)
 
     results = []
@@ -67,27 +67,27 @@ def main():
             with open(filepath, "r", encoding="utf-8") as f:
                 source = f.read()
         except Exception as e:
-            results.append((filename, False, f"Lesefehler: {e}"))
+            results.append((filename, False, f"Read error: {e}"))
             continue
 
         try:
             python_code = compile_source(source, filepath=filepath)
         except Exception as e:
-            results.append((filename, False, f"Kompilierung: {e}"))
+            results.append((filename, False, f"Compilation: {e}"))
             if args.verbose:
                 import traceback
                 traceback.print_exc()
             continue
 
         if args.compile:
-            results.append((filename, True, "OK (nur kompiliert)"))
+            results.append((filename, True, "OK (compiled only)"))
             if args.verbose:
-                print(f"--- {filename} (generierter Code gekürzt) ---")
+                print(f"--- {filename} (generated code truncated) ---")
                 lines = python_code.split("\n")
                 print("\n".join(lines[:20] + ["..."] if len(lines) > 20 else lines))
             continue
 
-        # Ausführen mit gefangenem stdout
+        # Execute with captured stdout
         old_stdout = sys.stdout
         out = io.StringIO()
         try:
@@ -98,21 +98,21 @@ def main():
             results.append((filename, True, None))
             if args.verbose:
                 print(f"--- {filename} ---")
-                print(output or "(keine Ausgabe)")
+                print(output or "(no output)")
                 print()
         except Exception as e:
             sys.stdout = old_stdout
-            results.append((filename, False, f"Laufzeit: {e}"))
+            results.append((filename, False, f"Runtime: {e}"))
             if args.verbose:
                 import traceback
                 traceback.print_exc()
         finally:
             sys.stdout = old_stdout
 
-    # Ausgabe
+    # Output
     if not args.quiet:
         print("=" * 60)
-        print("Dedekind-Beispiele: Kompilieren & Ausführen")
+        print("Dedekind Examples: Compile & Run")
         print("=" * 60)
     passed = sum(1 for _, ok, _ in results if ok)
     failed = len(results) - passed
@@ -127,7 +127,7 @@ def main():
                 print(f"       {err}")
     if not args.quiet:
         print("=" * 60)
-        print(f"Ergebnis: {passed}/{len(results)} bestanden, {failed} fehlgeschlagen.")
+        print(f"Result: {passed}/{len(results)} passed, {failed} failed.")
     if failed:
         sys.exit(1)
     sys.exit(0)

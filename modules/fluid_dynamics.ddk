@@ -1,5 +1,5 @@
 // --- Computational Fluid Dynamics (CFD) Module ---
-// Aktivierung: `use fluid_dynamics`
+// Activation: `use fluid_dynamics`
 
 pub fn lbm_simulation(nx, ny, tau) {
     return lbm_simulation_impl(nx, ny, tau, [0.0], 0.0)
@@ -37,10 +37,10 @@ pub fn lbm_karman_benchmark(re, nx, ny, n_steps) {
     return lbm_karman_benchmark_impl(re, nx, ny, n_steps, 0.4)
 }
 
-// --- Einheiten-bewusste API ---
+// --- Unit-Aware API ---
 //
-// Eingaben als Quantity in SI-Einheiten (m, m/s, m^2/s, kg/m^3, s),
-// Ausgaben als Quantity in physikalischen Einheiten ([m/s], [Pa], [N/m]).
+// Inputs as Quantity in SI units (m, m/s, m^2/s, kg/m^3, s),
+// Outputs as Quantity in physical units ([m/s], [Pa], [N/m]).
 
 pub fn lbm_physical(domain_x, domain_y, nx, inlet_u, nu, rho) {
     return lbm_physical_impl(domain_x, domain_y, nx, inlet_u, nu, rho, 0, 0, "bgk", "soft")

@@ -6,8 +6,8 @@ def random_matrix(rows, cols):
 
 def shuffle(x, dim=0):
     """
-    Zufälliges Mischen entlang Achse dim. x: Tensor. dim: Achse (default 0).
-    Rückgabe: Tensor gleicher Form (Permutation entlang dim). Nutzt aktuellen Zufallsstand.
+    Random shuffle along axis dim. x: Tensor. dim: axis (default 0).
+    Returns: Tensor of same shape (permutation along dim). Uses current random state.
     """
     t = _to_tensor(x).clone()
     idx = torch.randperm(t.shape[dim], device=t.device)
@@ -15,32 +15,32 @@ def shuffle(x, dim=0):
 
 def permutation(n):
     """
-    Zufällige Permutation der Indizes 0 .. n-1. n: ganze Zahl. Rückgabe: 1D Long-Tensor.
+    Random permutation of indices 0 .. n-1. n: integer. Returns: 1D Long tensor.
     """
     n_int = int(n)
     if n_int < 0:
-        raise ValueError("permutation: n muss nichtnegativ sein.")
+        raise ValueError("permutation: n must be non-negative.")
     return torch.randperm(n_int)
 
 def choice(a, size=1, replace=True):
     """
-    Zufällige Stichprobe aus a. a: 1D-Tensor oder Liste. size: Anzahl Ziehungen (default 1).
-    replace: True = mit Zurücklegen, False = ohne. Rückgabe: Tensor der Länge size.
+    Random sample from a. a: 1D tensor or list. size: number of draws (default 1).
+    replace: True = with replacement, False = without. Returns: Tensor of length size.
     """
     a_t = _to_tensor(a).float().flatten()
     n = a_t.numel()
     if n == 0:
-        raise ValueError("choice: a darf nicht leer sein.")
+        raise ValueError("choice: a must not be empty.")
     size_int = int(size)
     if not replace and size_int > n:
-        raise ValueError("choice: size darf bei replace=False nicht größer als len(a) sein.")
+        raise ValueError("choice: size must not exceed len(a) when replace=False.")
     idx = torch.randint(0, n, (size_int,), device=a_t.device) if replace else torch.randperm(n, device=a_t.device)[:size_int]
     return a_t[idx]
 
 def autocorr(x, max_lag=None):
     """
-    Autokorrelation (normiert, Lag 0 = 1). x: 1D-Tensor. max_lag: optional (default len(x)-1).
-    Rückgabe: 1D-Tensor der Länge max_lag+1.
+    Autocorrelation (normalized, lag 0 = 1). x: 1D tensor. max_lag: optional (default len(x)-1).
+    Returns: 1D tensor of length max_lag+1.
     """
     x_t = _to_tensor(x).float().flatten()
     n = x_t.numel()
@@ -59,8 +59,8 @@ def autocorr(x, max_lag=None):
 
 def moving_mean(x, window):
     """
-    Gleitender Mittelwert. x: 1D-Tensor. window: Fensterbrechte (ungerade empfohlen).
-    Rückgabe: 1D-Tensor (Länge len(x)-window+1); keine Randbehandlung (reduzierte Länge).
+    Moving average. x: 1D tensor. window: window width (odd recommended).
+    Returns: 1D tensor (length len(x)-window+1); no boundary handling (reduced length).
     """
     x_t = _to_tensor(x).float().flatten()
     w = _builtin_max(1, int(window))
@@ -86,12 +86,12 @@ def dot_product(a, b):
 
 def cross(a, b):
     """
-    Kreuzprodukt (3D). a, b: 1D-Tensoren der Länge 3. Rückgabe: 1D-Tensor der Länge 3.
+    Cross product (3D). a, b: 1D tensors of length 3. Returns: 1D tensor of length 3.
     """
     a_t = _to_tensor(a).float().flatten()
     b_t = _to_tensor(b).float().flatten()
     if a_t.numel() != 3 or b_t.numel() != 3:
-        raise ValueError("cross: a und b müssen Länge 3 haben.")
+        raise ValueError("cross: a and b must have length 3.")
     return torch.linalg.cross(a_t, b_t)
 
 # --- Standard Library: Machine Learning ---
@@ -142,8 +142,8 @@ def ifft(data):
 
 def fftfreq(n, d=1.0):
     """
-    Frequenzachsen für FFT. n: Anzahl Punkte (int). d: Abtastabstand (Skalar, default 1).
-    Rückgabe: 1D-Tensor der Länge n mit Frequenzen (Einheit 1/d); für Interpretation von fft(x).
+    Frequency bins for FFT. n: number of points (int). d: sample spacing (scalar, default 1).
+    Returns: 1D tensor of length n with frequencies (unit 1/d); for interpretation of fft(x).
     """
     n_int = int(n)
     d_val = float(_to_tensor(d).float().squeeze().item()) if d != 1.0 else 1.0
@@ -151,8 +151,8 @@ def fftfreq(n, d=1.0):
 
 def diff(x, n=1, dim=-1):
     """
-    Diskrete Ableitung (Differenzen): diff(x) = x[1:] - x[:-1].
-    x: Tensor. n: Ordnung (default 1). dim: Achse (default -1). Rückgabe: Tensor (Länge um n kürzer entlang dim).
+    Discrete derivative (differences): diff(x) = x[1:] - x[:-1].
+    x: Tensor. n: order (default 1). dim: axis (default -1). Returns: Tensor (length reduced by n along dim).
     """
     t = _to_tensor(x).float()
     for _ in range(n):
@@ -161,8 +161,8 @@ def diff(x, n=1, dim=-1):
 
 def cumsum(x, dim=None):
     """
-    Kumulative Summe entlang Achse. x: Tensor. dim: Achse (None = über alle, dann flach).
-    Rückgabe: Tensor gleicher Form wie x (bzw. 1D wenn dim None).
+    Cumulative sum along axis. x: Tensor. dim: axis (None = over all, then flat).
+    Returns: Tensor of same shape as x (or 1D if dim is None).
     """
     t = _to_tensor(x).float()
     if dim is None:
@@ -172,7 +172,7 @@ def cumsum(x, dim=None):
 # --- Standard Library: Differentiable ODE Solvers ---
 
 def linspace(start, stop, steps):
-    """Erzeugt einen 1D-Tensor mit `steps` äquidistanten Werten von start bis stop."""
+    """Creates a 1D tensor with `steps` equally spaced values from start to stop."""
     s = _to_tensor(start).float().squeeze()
     e = _to_tensor(stop).float().squeeze()
     n = int(steps)
@@ -181,7 +181,7 @@ def linspace(start, stop, steps):
                           n)
 
 def logspace(start, stop, steps, base=10.0):
-    """Erzeugt einen 1D-Tensor mit `steps` logarithmisch verteilten Werten von base^start bis base^stop."""
+    """Creates a 1D tensor with `steps` logarithmically spaced values from base^start to base^stop."""
     s = _to_tensor(start).float().squeeze()
     e = _to_tensor(stop).float().squeeze()
     b = float(_to_tensor(base).float().squeeze().item())
@@ -191,18 +191,18 @@ def logspace(start, stop, steps, base=10.0):
                           n, base=b)
 
 
-# --- Mathematische Folgen (arithmetisch, geometrisch, allgemein) ---
+# --- Mathematical Sequences (arithmetic, geometric, general) ---
 
 def arange(start_or_stop, stop=None, step=None):
     """
-    Integer-Folge wie numpy.arange.
-    arange(n) → [0, 1, 2, ..., n-1]
-    arange(start, stop) → [start, start+1, ..., stop-1]
-    arange(start, stop, step) → [start, start+step, ...] (stop exklusive)
+    Integer sequence like numpy.arange.
+    arange(n) -> [0, 1, 2, ..., n-1]
+    arange(start, stop) -> [start, start+1, ..., stop-1]
+    arange(start, stop, step) -> [start, start+step, ...] (stop exclusive)
 
-    Rückgabe-Dtype: int64 für reine Integer-Aufrufe (geeignet für Indexierung),
-    float32 sobald ein expliziter `step` (auch ganzzahliger) angegeben ist (Konsistenz
-    mit `linspace`). Tensor-Arithmetik promotet bei Mischung mit Floats automatisch.
+    Return dtype: int64 for pure integer calls (suitable for indexing),
+    float32 as soon as an explicit `step` (even integer) is given (consistency
+    with `linspace`). Tensor arithmetic promotes automatically when mixed with floats.
     """
     if stop is None and step is None:
         return torch.arange(int(start_or_stop), dtype=torch.int64)
@@ -213,9 +213,9 @@ def arange(start_or_stop, stop=None, step=None):
 
 def arithmetic(a0, d, n):
     """
-    Arithmetische Folge: a_n = a0 + n*d für n = 0, 1, ..., n-1.
-    a0: Startwert, d: Differenz, n: Anzahl Glieder.
-    Rückgabe: 1D-Tensor [a0, a0+d, a0+2d, ..., a0+(n-1)d]; differenzierbar in a0, d.
+    Arithmetic sequence: a_n = a0 + n*d for n = 0, 1, ..., n-1.
+    a0: start value, d: common difference, n: number of terms.
+    Returns: 1D tensor [a0, a0+d, a0+2d, ..., a0+(n-1)d]; differentiable in a0, d.
     """
     a0_t = _to_tensor(a0).float().squeeze()
     d_t = _to_tensor(d).float().squeeze()
@@ -226,9 +226,9 @@ def arithmetic(a0, d, n):
 
 def geometric(a0, r, n):
     """
-    Geometrische Folge: a_n = a0 * r^n für n = 0, 1, ..., n-1.
-    a0: Startwert, r: Quotient, n: Anzahl Glieder.
-    Rückgabe: 1D-Tensor [a0, a0*r, a0*r^2, ..., a0*r^(n-1)]; differenzierbar in a0, r.
+    Geometric sequence: a_n = a0 * r^n for n = 0, 1, ..., n-1.
+    a0: start value, r: common ratio, n: number of terms.
+    Returns: 1D tensor [a0, a0*r, a0*r^2, ..., a0*r^(n-1)]; differentiable in a0, r.
     """
     a0_t = _to_tensor(a0).float().squeeze()
     r_t = _to_tensor(r).float().squeeze()
@@ -239,10 +239,10 @@ def geometric(a0, r, n):
 
 def sequence(f, n):
     """
-    Allgemeine Folge: [f(0), f(1), ..., f(n-1)].
-    f: Funktion mit einem Argument (Index n); n: Anzahl Glieder.
-    Nutzung: fn term(k) { return k * k }; seq = sequence(term, 10)
-    Rückgabe: 1D-Tensor; f muss Skalar oder 0D-Tensor zurückgeben.
+    General sequence: [f(0), f(1), ..., f(n-1)].
+    f: function with one argument (index n); n: number of terms.
+    Usage: fn term(k) { return k * k }; seq = sequence(term, 10)
+    Returns: 1D tensor; f must return a scalar or 0D tensor.
     """
     n_val = int(n)
     out = []
@@ -255,26 +255,26 @@ def sequence(f, n):
 
 
 def labeled_tensor(data, dims, coords=None, name=None, attrs=None):
-    """Erzeugt ein xarray.DataArray fuer Klima-/Geo-/Earth-Science-Workflows.
+    """Creates an xarray.DataArray for climate/geo/earth science workflows.
 
-    Im Gegensatz zu nackten Tensoren tragen Labeled Tensors die *Namen* ihrer
-    Achsen mit ('lat', 'lon', 'time', ...), und xarray-Operationen koennen
-    namens-basiert (statt indexbasiert) arbeiten. Das verhindert die klassische
-    Verwechslung 'mean ueber lat vs. mean ueber time'.
+    Unlike bare tensors, labeled tensors carry the *names* of their
+    axes ('lat', 'lon', 'time', ...), and xarray operations can
+    work name-based (instead of index-based). This prevents the classic
+    confusion 'mean over lat vs. mean over time'.
 
-    Parameter:
-      data:   Tensor/numpy-Array/Liste ÔÇö die Werte.
-      dims:   Liste/Tuple von Strings ÔÇö Namen der Achsen, gleiche Reihenfolge wie data.shape.
-      coords: Optional Dict {dim_name: 1D-Werte} ÔÇö Koordinaten-Achsen.
-      name:   Optional Name fuer das DataArray.
-      attrs:  Optional Dict ÔÇö Metadaten (z. B. {"units": "K", "crs": "EPSG:4326"}).
+    Parameters:
+      data:   Tensor/numpy array/list — the values.
+      dims:   List/tuple of strings — axis names, same order as data.shape.
+      coords: Optional dict {dim_name: 1D values} — coordinate axes.
+      name:   Optional name for the DataArray.
+      attrs:  Optional dict — metadata (e.g. {"units": "K", "crs": "EPSG:4326"}).
 
-    Rueckgabe: xarray.DataArray.
+    Returns: xarray.DataArray.
     """
     try:
         import xarray as _xr  # type: ignore[import-untyped]
     except ImportError:
-        raise RuntimeError("labeled_tensor benoetigt xarray. Installation: pip install xarray")
+        raise RuntimeError("labeled_tensor requires xarray. Installation: pip install xarray")
     import numpy as _np  # type: ignore[reportMissingImports]
     if hasattr(data, "detach"):
         arr = data.detach().cpu().numpy()
@@ -283,8 +283,8 @@ def labeled_tensor(data, dims, coords=None, name=None, attrs=None):
     dims_t = tuple(str(d) for d in dims)
     if len(dims_t) != arr.ndim:
         raise ValueError(
-            f"labeled_tensor: data hat {arr.ndim} Achsen, dims hat {len(dims_t)} "
-            f"({dims_t!r}). Anzahl muss uebereinstimmen."
+            f"labeled_tensor: data has {arr.ndim} axes, dims has {len(dims_t)} "
+            f"({dims_t!r}). Counts must match."
         )
     coords_dict = dict(coords) if coords else {}
     return _xr.DataArray(arr, dims=dims_t, coords=coords_dict if coords_dict else None,

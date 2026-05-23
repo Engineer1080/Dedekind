@@ -1,16 +1,16 @@
-// modules/chemistry.ddk — Dedekind-Standardbibliothek: Chemie-Convenience.
-// Aktivierung: `use chemistry`
+// modules/chemistry.ddk — Dedekind Standard Library: Chemistry Convenience.
+// Activation: `use chemistry`
 //
-// Ergänzt die eingebauten chemischen Konstanten (R_gas, N_A, F_faraday) und
-// Funktionen (michaelis_menten, arrhenius, chemical_equilibrium, ...) um
-// Säure-Base, Verdünnung, Gasgesetze und Elektrochemie.
+// Complements the built-in chemical constants (R_gas, N_A, F_faraday) and
+// functions (michaelis_menten, arrhenius, chemical_equilibrium, ...) with
+// acid-base, dilution, gas laws, and electrochemistry.
 
-// Numerische Werte ohne Einheiten — vermeidet Einheiten-Fehler in Mischrechnungen.
-// Für unit-tracked Rechnungen bitte die globalen R_gas, F_faraday als Quantity nutzen.
+// Numerical values without units — avoids unit errors in mixed calculations.
+// For unit-tracked calculations, please use the global R_gas, F_faraday as Quantity.
 R_GAS_NUM = 8.314462618        // J/(K*mol)
 F_FARADAY_NUM = 96485.33212    // C/mol
 
-// --- Säure / Base ------------------------------------------------------------
+// --- Acid / Base -------------------------------------------------------------
 
 fn pH_from_concentration(H) {
     // pH = -log10([H+])
@@ -34,7 +34,7 @@ fn pka_from_ka(Ka) {
     return -log10(Ka)
 }
 
-// --- Verdünnung & Mischung ---------------------------------------------------
+// --- Dilution & Mixture ------------------------------------------------------
 
 fn dilution_volume(c1, v1, c2) {
     // c1*v1 = c2*v2 -> v2 = c1*v1/c2
@@ -53,20 +53,20 @@ fn mass_fraction(mass_solute, mass_total) {
     return mass_solute / mass_total
 }
 
-// --- Gasgesetze --------------------------------------------------------------
+// --- Gas Laws ----------------------------------------------------------------
 
 fn boyle_volume(p1, v1, p2) {
-    // p1*v1 = p2*v2  (isotherm)
+    // p1*v1 = p2*v2  (isothermal)
     return p1 * v1 / p2
 }
 
 fn charles_volume(v1, t1, t2) {
-    // v1/t1 = v2/t2  (isobar, T in K)
+    // v1/t1 = v2/t2  (isobaric, T in K)
     return v1 * t2 / t1
 }
 
 fn gay_lussac_pressure(p1, t1, t2) {
-    // p1/t1 = p2/t2  (isochor)
+    // p1/t1 = p2/t2  (isochoric)
     return p1 * t2 / t1
 }
 
@@ -77,28 +77,28 @@ fn combined_gas_law_v2(p1, v1, t1, p2, t2) {
 
 fn van_der_waals_pressure(n, T, V, a, b) {
     // (P + a*n^2/V^2) * (V - n*b) = n*R*T  ->  P
-    // R_GAS_NUM ist dimensionslos; rufende Seite ist für konsistente Einheiten verantwortlich.
+    // R_GAS_NUM is dimensionless; calling side is responsible for consistent units.
     return (n * R_GAS_NUM * T) / (V - n * b) - a * (n * n) / (V * V)
 }
 
-// --- Elektrochemie -----------------------------------------------------------
+// --- Electrochemistry ---------------------------------------------------------
 
 fn nernst_potential(E0, n, Q, T) {
-    // E = E0 - (R*T)/(n*F) * ln(Q); dimensionslose Konstanten, Aufrufer sorgt für Konsistenz.
+    // E = E0 - (R*T)/(n*F) * ln(Q); dimensionless constants, caller ensures consistency.
     return E0 - (R_GAS_NUM * T) / (n * F_FARADAY_NUM) * log(Q)
 }
 
 fn nernst_potential_25C(E0, n, Q) {
-    // bei 298.15 K: -(R*T)/F ≈ -0.0257 V; mit log10: -0.0592/n * log10(Q)
+    // at 298.15 K: -(R*T)/F ≈ -0.0257 V; with log10: -0.0592/n * log10(Q)
     return E0 - 0.0592 / n * log10(Q)
 }
 
 fn faraday_mass(I, t, M, n_e) {
-    // m = I*t*M / (n_e * F) - Elektrolyse, abgeschiedene Masse
+    // m = I*t*M / (n_e * F) - electrolysis, deposited mass
     return I * t * M / (n_e * F_FARADAY_NUM)
 }
 
-// --- Reaktionsordnungen ------------------------------------------------------
+// --- Reaction Orders ---------------------------------------------------------
 
 fn half_life_first_order(k) {
     // t_{1/2} = ln(2) / k

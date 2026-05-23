@@ -1,4 +1,4 @@
-use control
+use signals
 
 fn pid_loss(params) {
     Kp = params[0]
