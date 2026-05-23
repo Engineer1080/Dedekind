@@ -1,0 +1,24 @@
+Dedekind
+Copyright 2026 Mario Heinrich and Dedekind Contributors
+
+This product is licensed under the Apache License, Version 2.0
+(see LICENSE).
+
+This product bundles or depends on the following third-party software,
+each distributed under its own license:
+
+  - PyTorch (BSD-3-Clause)              https://pytorch.org
+  - NumPy (BSD-3-Clause)                https://numpy.org
+  - SymPy (BSD-3-Clause)                https://www.sympy.org
+
+Optional dependencies, loaded only when the corresponding feature is
+used:
+
+  - SciPy (BSD-3-Clause)                https://scipy.org
+  - Matplotlib (PSF-based)              https://matplotlib.org
+  - xarray (Apache-2.0)                 https://xarray.dev
+  - RDKit (BSD-3-Clause)                https://www.rdkit.org
+  - OpenMM (MIT / LGPL-3.0)             https://openmm.org
+  - PyTorch Geometric (MIT)             https://pyg.org
+  - IPyKernel / jupyter_client (BSD-3-Clause)
+                                        https://jupyter.org

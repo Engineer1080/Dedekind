@@ -3,7 +3,40 @@
 Historical record of Dedekind releases. Most recent first.
 
 
-### What's New in v2.9.0 (Public Release, Library Consolidation, New Inference Algorithms)
+### What's New in v3.0.0 (First Stable PyPI Release)
+
+The 3.0.0 release marks Dedekind's first publication on PyPI. The
+codebase carries the work that accumulated in the unreleased 2.9.x
+line (see below) and adds the final round of release hardening:
+
+- **Standard library ships inside the wheel.** `use math`, `use atomic`,
+  `use control`, `use physics` and friends resolve against
+  `dedekind/stdlib/*.ddk` from the installed package — no git clone
+  required.
+- **CLI hardening.** `dedekind --help`, `dedekind --version`, and proper
+  non-zero exit codes on missing or invalid arguments.
+- **Trusted Publishing workflow.** Tag-triggered release pipeline builds
+  sdist + wheel, publishes to PyPI via OIDC (no API tokens), and
+  creates a GitHub Release with auto-generated notes.
+- **Apache 2.0 license** with filled-in copyright header, plus
+  `NOTICE`, `SECURITY.md`, and `CONTRIBUTING.md` files.
+- **CI matrix:** Python 3.10, 3.11, 3.12, **and 3.13** on Ubuntu, with
+  the full test suite and end-to-end compilation of every example per
+  run.
+- **English-only runtime.** All user-facing error messages translated
+  to English; bare `except:` clauses narrowed to specific exception
+  types; scipy/xarray optional-dependency imports now surface
+  actionable `ImportError` messages pointing at the matching extra.
+- **`control.ddk` reinstated.** Documented in the spec but accidentally
+  dropped during consolidation — now ships as a thin wrapper around
+  the runtime block-diagram primitives.
+
+Everything from the v2.9.x development line is included; the sections
+below describe that work in detail.
+
+---
+
+### What's New in v2.9.0 (Library Consolidation, New Inference Algorithms)
 
 **Inference & Sampling**
 - **No-U-Turn Sampler (`nuts`):** Adaptive trajectory-length HMC variant for Bayesian inference. Available standalone and via `fit(..., method="nuts")`. Eliminates the manual leapfrog-step tuning that classical HMC requires.
