@@ -2,7 +2,7 @@
 //Additionally: Pappus theorem (volume = 2*pi * R * A, R = distance from center of gravity axis)
 
 fn main() {
-    print("--- Dedekind: Rotationskoerper ---")
+    print("--- Dedekind: Solid of Revolution ---")
     
     //Sphere: y = sqrt(r^2 - x^2) from -r to r, rotation around x-axis
     // V = (4/3)*pi*r^3
@@ -44,13 +44,13 @@ fn main() {
     
     //Pappus' theorem: V = 2*pi * R * A (R = distance from center of gravity axis)
     v_pappus_v = pappus_volume_vertical(f_par, 0.0, 1.0, 0.0, 300)
-    print("Pappus (vertikal, x0=0): Paraboloid y=x^2:")
+    print("Pappus (vertical, x0=0): Paraboloid y=x^2:")
     print("  pappus_volume_vertical:", v_pappus_v)
     
     v_pappus_h = pappus_volume_horizontal(f_kegel, 0.0, r, 0.0, 300)
-    print("Pappus (horizontal, y0=0): Kegel y=2x:")
+    print("Pappus (horizontal, y0=0): Cone y=2x:")
     print("  pappus_volume_horizontal:", v_pappus_h)
     
-    print("Rotationskoerper aktiv.")
+    print("Solid of revolution active.")
 }
 main()

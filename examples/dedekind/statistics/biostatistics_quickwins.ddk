@@ -7,8 +7,8 @@ x = [12.3, 11.8, 13.1, 12.5, 12.9, 11.7, 12.4]
 ci = confidence_interval(x, 0.05)
 lo = ci[0]
 hi = ci[1]
-print("Daten:", x)
-print("95% Konfidenzintervall: [", lo, ",", hi, "]")
+print("Data:", x)
+print("95% confidence interval: [", lo, ",", hi, "]")
 
 //Odds ratio from 2x2 table: | TP FN |
 //                               | FP  TN |

@@ -9,15 +9,15 @@ fn main() {
     x = linspace(0, 4 * pi, 200)
 
     //Two harmonic waves: f(x) = sin(k1*x) + 0.5*sin(k2*x)
-    // k1=1, k2=2 -> Grundwelle + zweite Harmonische
+    // k1=1, k2=2 -> fundamental wave + second harmonic
     wave1 = sin(x)
     wave2 = 0.5 * sin(2 * x)
     superposition = wave1 + wave2
 
-    plot(x, superposition, title="Wellen-Superposition: sin(x) + 0.5·sin(2x)", xlabel="x [rad]", ylabel="Amplitude")
+    plot(x, superposition, title="Wave Superposition: sin(x) + 0.5·sin(2x)", xlabel="x [rad]", ylabel="Amplitude")
 
     //Individual waves for comparison (optional: second plot)
-    plot(x, wave1, title="Grundwelle sin(x)", xlabel="x [rad]", ylabel="Amplitude")
+    plot(x, wave1, title="Fundamental wave sin(x)", xlabel="x [rad]", ylabel="Amplitude")
 
     print("Plots: superposition and fundamental wave. Dedekind uses pi and sin() natively.")
 }

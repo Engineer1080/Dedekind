@@ -1,7 +1,7 @@
 //pinn_ode_demo.ddk — Physics-Informed Neural Network for a 1D ODE.
 //
 //Problem: y'(x) + y(x) = 0 with boundary condition y(0) = 1.
-// Analytische Loesung: y(x) = exp(-x).
+// Analytical solution: y(x) = exp(-x).
 //
 //PINN idea: a neural network learns y(x), where the loss function has two terms:
 //   1. boundary_loss:  ||y_net(0) - 1||^2
@@ -34,7 +34,7 @@ fn pinn_loss(params, data) {
     diff_bc = u_pred_bc - u_bc
     bc_loss = (diff_bc * diff_bc).sum()
 
-    // 2) ODE-Residuum: y' + y = 0
+    // 2) ODE residual: y' + y = 0
     u_coll = mlp_eval(params, x_coll)
     u_x = partial(u_coll, x_coll)
     residual = u_x + u_coll
@@ -46,24 +46,24 @@ fn pinn_loss(params, data) {
 fn main() {
     print("=== PINN: y' + y = 0, y(0) = 1 (v1.10) ===")
 
-    // Reproduzierbarkeit
+    // Reproducibility
     seed(42)
 
     //Boundary condition
     x_bc = [[0.0]]
     u_bc = [[1.0]]
 
-    // Collocation-Punkte im Intervall [0, 1]
+    // Collocation points in the interval [0, 1]
     x_coll = linspace(0.0, 1.0, 20).reshape(-1, 1).with_grad()
 
-    // Init: kleine zufaellige Gewichte
+    // Init: small random weights
     params_init = random_vector(31) * 0.1
 
     // Train
     print("Training (2000 steps)...")
     params_opt = fit(pinn_loss, params_init, [x_bc, u_bc, x_coll], method="gd", lr=0.02, steps=2000)
 
-    // Evaluate: 5 Testpunkte gleichmaessig in [0, 1]
+    // Evaluate: 5 test points uniformly in [0, 1]
     x_test = linspace(0.0, 1.0, 5).reshape(-1, 1)
     u_pred = mlp_eval(params_opt, x_test)
     print("")

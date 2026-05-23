@@ -1,5 +1,5 @@
 fn main() {
-    print("--- Dedekind: Wellengleichung (u_tt = c² u_xx) ---")
+    print("--- Dedekind: Wave Equation (u_tt = c² u_xx) ---")
     print_latex(r"u_{tt} = c^2 \nabla^2 u \quad \mathrm{Welle}")
     
     //1D: Excited string, periodic edges
@@ -14,14 +14,14 @@ fn main() {
     sol = pde_wave_1d(u0, x, t, c)
     print("1D Wave: u(t=0) pulse in the middle")
     print("1D Wave: u(t=2) pulse has spread (periodic)")
-    print("Shape (Zeit, Raum):")
+    print("Shape (Time, Space):")
     print(sol.shape)
     
-    // Plot: Anfang, Mitte, Ende
-    plot(x, sol[0], title="t=0 (Anfang)")
-    plot(x, sol[100], title="t=1 (Ausbreitung)")
-    plot(x, sol[200], title="t=2 (zurueck)")
+    // Plot: initial, middle, final
+    plot(x, sol[0], title="t=0 (initial)")
+    plot(x, sol[100], title="t=1 (propagation)")
+    plot(x, sol[200], title="t=2 (returned)")
     
-    print("Wellen-Solver aktiv.")
+    print("Wave solver active.")
 }
 main()

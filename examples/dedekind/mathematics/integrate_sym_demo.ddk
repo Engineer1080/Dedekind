@@ -2,7 +2,7 @@
 
 print("=== Symbolic integration in Dedekind ===")
 
-// Grundintegrale
+// Basic integrals
 print("integrate_sym(x^2, x)     =", integrate_sym("x^2", "x"))
 print("integrate_sym(x, x)       =", integrate_sym("x", "x"))
 print("integrate_sym(1, x)       =", integrate_sym("1", "x"))
@@ -11,14 +11,14 @@ print("integrate_sym(cos(x), x)  =", integrate_sym("cos(x)", "x"))
 print("integrate_sym(exp(x), x)  =", integrate_sym("exp(x)", "x"))
 print("integrate_sym(1/x, x)     =", integrate_sym("1/x", "x"))
 
-// Kombinationen
+// Combinations
 print("")
 print("integrate_sym(x^2 + 2*x, x) =", integrate_sym("x^2 + 2*x", "x"))
 print("integrate_sym(x*sin(x), x)  =", integrate_sym("x*sin(x)", "x"))
 
-//Verification: Derivation of the antiderivative = integrand
+//Verification: Derivative of the antiderivative = integrand
 f = integrate_sym("x^3 + cos(x)", "x")
 df = diff_sym(f, "x")
 print("")
 print("Antiderivative of x^3 + cos(x):", f)
-print("Derivation of this (should be integrand):", df)
+print("Derivative of this (should be integrand):", df)

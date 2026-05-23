@@ -14,13 +14,13 @@ fn main() {
     sol_1d = pde_advection_1d(u0, x, t, v)
     print("1D Advection: u(t=0) maximum at x~0.2")
     print("1D Advection: u(t=0.5) Maximum moved to x~0.7 (v*t=0.5)")
-    print("Shape (Zeit, Raum):")
+    print("Shape (Time, Space):")
     print(sol_1d.shape)
     
     //Plot: initial and final states
-    plot(x, sol_1d[0], title="t=0 (Anfang)")
-    plot(x, sol_1d[50], title="t=0.5 (nach Advection)")
+    plot(x, sol_1d[0], title="t=0 (initial)")
+    plot(x, sol_1d[50], title="t=0.5 (after advection)")
     
-    print("Advection-Solver aktiv.")
+    print("Advection solver active.")
 }
 main()

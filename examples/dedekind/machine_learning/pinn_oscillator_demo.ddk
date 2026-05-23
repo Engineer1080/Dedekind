@@ -1,7 +1,7 @@
 //pinn_oscillator_demo.ddk — PINN for harmonic oscillator (2nd order).
 //
 //Problem: u''(x) + u(x) = 0 with u(0) = 1, u'(0) = 0.
-// Analytische Loesung: u(x) = cos(x).
+// Analytical solution: u(x) = cos(x).
 //
 //Demonstrates `partial(u, x, order=2)`: second derivative of the network output by
 //the network input — the key, the Dedekind as a Physics-Informed-NN framework
@@ -40,7 +40,7 @@ fn pinn_loss(params, data) {
     u_x_at0 = partial(u_pred_bcd, x_bc_d)
     bcd_loss = (u_x_at0 * u_x_at0).sum()
 
-    // 3) ODE-Residuum: u'' + u = 0
+    // 3) ODE residual: u'' + u = 0
     u_coll = mlp_eval(params, x_coll)
     u_xx = partial(u_coll, x_coll, order=2)
     residual = u_xx + u_coll
@@ -54,11 +54,11 @@ fn main() {
     seed(7)
 
     //Boundary conditions
-    x_bc   = linspace(0.0, 0.0, 1).reshape(-1, 1)   // shape (1,1): nur x=0
+    x_bc   = linspace(0.0, 0.0, 1).reshape(-1, 1)   // shape (1,1): only x=0
     u_bc   = linspace(1.0, 1.0, 1).reshape(-1, 1)   // shape (1,1): u=1
     x_bc_d = linspace(0.0, 0.0, 1).reshape(-1, 1).with_grad()
 
-    // Collocation-Punkte im Intervall [0, pi/2]
+    // Collocation points in the interval [0, pi/2]
     x_coll = linspace(0.0, 1.5708, 40).reshape(-1, 1).with_grad()
 
     // Training
@@ -67,7 +67,7 @@ fn main() {
     params_opt = fit(pinn_loss, params_init, [x_bc, u_bc, x_bc_d, x_coll],
                      method="gd", lr=0.01, steps=5000)
 
-    // Vergleich an 5 Punkten in [0, pi/2]
+    // Comparison at 5 points in [0, pi/2]
     x_test = linspace(0.0, 1.5708, 5).reshape(-1, 1)
     u_pred = mlp_eval(params_opt, x_test)
     print("")

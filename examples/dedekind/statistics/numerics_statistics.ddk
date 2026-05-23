@@ -1,11 +1,11 @@
 //Numerics and statistics: mean, std, var, median, quantile, percentile, cov, corrcoef, skew, kurtosis, histogram,
 // solve, eigh, svd, lstsq, cond, rank, pinv, expm, logm, interp, trapz, root_bisect
 fn main() {
-    print("--- Dedekind: Numerik & Statistik ---")
+    print("--- Dedekind: Numerics & Statistics ---")
 
-    // Statistik
+    // Statistics
     data = [1.0, 2.0, 3.0, 4.0, 5.0]
-    print("Daten:")
+    print("Data:")
     print(data)
     print("mean(data):")
     print(mean(data))
@@ -20,7 +20,7 @@ fn main() {
     print("percentile(data, 50):")
     print(percentile(data, 50))
 
-    // Zusaetzliche Statistik: cov, corrcoef, skew, kurtosis, histogram
+    // Additional statistics: cov, corrcoef, skew, kurtosis, histogram
     x = [1.0, 2.0, 3.0, 4.0, 5.0]
     y = [2.0, 4.0, 5.0, 4.0, 6.0]
     print("cov(x, y):")
@@ -58,10 +58,10 @@ fn main() {
     A_ls = [[1.0, 1.0], [1.0, 2.0], [1.0, 3.0]]
     y_ls = [2.0, 4.0, 6.0]
     x_ls = lstsq(A_ls, y_ls)
-    print("lstsq(A, y) Loesung:")
+    print("lstsq(A, y) solution:")
     print(x_ls)
 
-    // Zusaetzliche Numerik: cond, rank, pinv, expm, interp, trapz, root_bisect
+    // Additional numerics: cond, rank, pinv, expm, interp, trapz, root_bisect
     print("cond(A):")
     print(cond(A))
     print("rank(A_ls):")
@@ -87,13 +87,13 @@ fn main() {
     print("trapz(y, x):")
     print(trapz(y_trap, x_trap))
 
-    // Nullstelle per Bisektion: f(x)=x^2-2, Nullstelle sqrt(2)
+    // Root by bisection: f(x)=x^2-2, root sqrt(2)
     fn f(x) { return x * x - 2.0 }
     root = root_bisect(f, 1.0, 2.0)
     print("root_bisect(x^2-2, 1, 2) ~ sqrt(2):")
     print(root)
 
-    // Weitere Algorithmen: qr, cholesky, polyfit, polyval, unique, argsort, convolve1d, minimize_scalar, newton
+    // Other algorithms: qr, cholesky, polyfit, polyval, unique, argsort, convolve1d, minimize_scalar, newton
     print("qr(A) Q[0,:]:")
     qr_res = qr(A)
     print(qr_res[0][0])
@@ -123,7 +123,7 @@ fn main() {
     print("newton(x^2-2, 1.5) ~ sqrt(2):")
     print(root_n)
 
-    // Signal & Reduktionen: diff, cumsum, clip, shuffle, fftfreq
+    // Signal & reductions: diff, cumsum, clip, shuffle, fftfreq
     v = [1.0, 2.0, 4.0, 7.0]
     print("diff([1,2,4,7]):")
     print(diff(v))
@@ -137,6 +137,6 @@ fn main() {
     print("shuffle([1,2,3,4]) (Permutation):")
     print(s)
 
-    print("Numerik & Statistik aktiv.")
+    print("Numerics & Statistics active.")
 }
 main()

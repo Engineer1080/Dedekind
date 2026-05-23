@@ -26,7 +26,7 @@ fn main() {
     print("LaTeX (booktabs, ready to paste into papers):")
     print_table(df, format="latex",
                 caption="Temperature measurement over 4 s, with air pressure.",
-                label="tab:messung")
+                label="tab:measurement")
     print("")
 
     // 2) UncertainQuantity: automatic "val +/- std [unit]" notation
@@ -43,7 +43,7 @@ fn main() {
     print("Same table as LaTeX (for manuscript):")
     print_table(rows, headers=headers, format="latex",
                 caption="Voltage measurements with 1-sigma uncertainty.",
-                label="tab:spannung")
+                label="tab:voltage")
 
     print("Paper tables active.")
 }

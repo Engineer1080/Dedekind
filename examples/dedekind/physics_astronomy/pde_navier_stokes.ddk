@@ -25,15 +25,15 @@ fn main() {
     v_sol = result[1]
     
     print("Navier-Stokes: Taylor-Green-like initial condition")
-    print("Shape u_sol (Zeit, nx, ny):")
+    print("Shape u_sol (Time, nx, ny):")
     print(u_sol.shape)
     
     //Speed amount for visualization
     speed0 = sqrt(u_sol[0] * u_sol[0] + v_sol[0] * v_sol[0])
     speed_end = sqrt(u_sol[40] * u_sol[40] + v_sol[40] * v_sol[40])
     
-    contour(x, y, speed0, title="|u| t=0 (Anfang)", levels=8)
-    contour(x, y, speed_end, title="|u| t=0.2 (nach NS)", levels=8)
+    contour(x, y, speed0, title="|u| t=0 (initial)", levels=8)
+    contour(x, y, speed_end, title="|u| t=0.2 (after NS)", levels=8)
     
     print("Navier-Stokes solver (Chorin projection) active.")
 }

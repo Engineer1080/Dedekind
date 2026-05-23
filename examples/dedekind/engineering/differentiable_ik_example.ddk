@@ -18,11 +18,11 @@ fn main() {
     
     //2. Definition of the target (where the gripper should go)
     target_pos = [1.5, 1.5, 0.0]
-    print("Zielkoordinate (x, y, z):", target_pos)
+    print("Target coordinate (x, y, z):", target_pos)
     
-    // Start-Pose (initiale Gelenkwinkel)
+    // Start pose (initial joint angles)
     q_init = [0.1, 0.2, 0.3]
-    print("Start-Pose (q_init):", q_init)
+    print("Start pose (q_init):", q_init)
     
     //Set joint limits: We choose very tight limits of -0.5 to 0.5 rad (approx. -28.6° to 28.6°),
     //to dramatically demonstrate the impact of the restrictions.
@@ -33,9 +33,9 @@ fn main() {
     print("")
 
     // ==================================================================
-    // ANSATZ 1: Soft Constraints (Penalty Terms / Weiche Schranken)
+    // APPROACH 1: Soft Constraints (Penalty Terms / Soft Limits)
     // ==================================================================
-    print("--- Ansatz 1: Soft Constraints via Penalty Term (L-BFGS / minimize) ---")
+    print("--- Approach 1: Soft Constraints via Penalty Term (L-BFGS / minimize) ---")
     
     fn ik_loss_soft(q) {
         T = arm.forward_kinematics(q)
@@ -60,15 +60,15 @@ fn main() {
     T_soft = arm.forward_kinematics(q_opt_soft)
     pos_soft = end_effector_pos(T_soft)
     
-    print("Gefundene Gelenkwinkel (Soft):", q_opt_soft)
-    print("Erreichte Position (Soft):    ", pos_soft)
+    print("Found joint angles (Soft):", q_opt_soft)
+    print("Reached position (Soft):    ", pos_soft)
     print("Maximum limit exceeded:", max(abs(q_opt_soft) - q_max_val))
     print("")
 
     // ==================================================================
-    // ANSATZ 2: Hard Constraints (Harte Schranken via SLSQP)
+    // APPROACH 2: Hard Constraints (Hard Limits via SLSQP)
     // ==================================================================
-    print("--- Ansatz 2: Hard Constraints via SLSQP (minimize_constrained) ---")
+    print("--- Approach 2: Hard Constraints via SLSQP (minimize_constrained) ---")
     
     //Standard loss without penalty term
     fn ik_loss_pure(q) {
@@ -91,13 +91,13 @@ fn main() {
     T_hard = arm.forward_kinematics(q_opt_hard)
     pos_hard = end_effector_pos(T_hard)
     
-    print("Gefundene Gelenkwinkel (Hard):", q_opt_hard)
-    print("Erreichte Position (Hard):    ", pos_hard)
+    print("Found joint angles (Hard):", q_opt_hard)
+    print("Reached position (Hard):    ", pos_hard)
     print("Maximum limit exceeded:", max(abs(q_opt_hard) - q_max_val))
     print("")
     
-    print("Fazit:")
-    print("- Soft Constraints erlauben minimale Verletzungen (z.B. im Mikrorad-Bereich),")
+    print("Conclusion:")
+    print("- Soft constraints allow minimal violations (e.g. in the microradian range),")
     print("But they are extremely fast and use pure PyTorch gradient descent.")
     print("- Hard constraints guarantee exact adherence to the limits required")
     print("however, a constrained solver (SLSQP via SciPy).")

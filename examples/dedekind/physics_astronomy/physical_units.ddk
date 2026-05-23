@@ -4,9 +4,9 @@ fn main() {
 
     dist = 10[m]
     time = 2[s]
-    print("Strecke:")
+    print("Distance:")
     print(dist)
-    print("Zeit:")
+    print("Time:")
     print(time)
 
     //Speed = distance / time
@@ -37,6 +37,6 @@ fn main() {
     print(freq)
     print(illuminance)
 
-    print("--- Ende ---")
+    print("--- End ---")
 }
 main()

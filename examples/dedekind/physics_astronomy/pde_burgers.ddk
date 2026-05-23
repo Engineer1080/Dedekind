@@ -14,12 +14,12 @@ fn main() {
     sol_1d = pde_burgers_1d(u0_1d, x, t, nu)
     print("1D Burgers: u(t=0) pulse in the middle")
     print("1D Burgers: u(t=0.5) advection + diffusion")
-    print("Shape (Zeit, Raum):")
+    print("Shape (Time, Space):")
     print(sol_1d.shape)
     
     //Plot: beginning and end
-    plot(x, sol_1d[0], title="1D t=0 (Anfang)")
-    plot(x, sol_1d[100], title="1D t=0.5 (nach Burgers)")
+    plot(x, sol_1d[0], title="1D t=0 (initial)")
+    plot(x, sol_1d[100], title="1D t=0.5 (after Burgers)")
     
     // 2D: u_t + u*u_x + u*u_y = nu*(u_xx + u_yy)
     nx = 51
@@ -34,11 +34,11 @@ fn main() {
     sol_2d = pde_burgers_2d(u0_2d, x2, y2, t2, nu)
     print("2D Burgers: u(t=0) Gaussian hump in the middle")
     print("2D Burgers: u(t=0.3) advection + diffusion")
-    print("Shape (Zeit, nx, ny):")
+    print("Shape (Time, nx, ny):")
     print(sol_2d.shape)
     
-    contour(x2, y2, sol_2d[0], title="2D t=0 (Anfang)", levels=8)
-    contour(x2, y2, sol_2d[30], title="2D t=0.3 (nach Burgers)", levels=8)
+    contour(x2, y2, sol_2d[0], title="2D t=0 (initial)", levels=8)
+    contour(x2, y2, sol_2d[30], title="2D t=0.3 (after Burgers)", levels=8)
     
     print("Burgers solver (1D + 2D) active.")
 }

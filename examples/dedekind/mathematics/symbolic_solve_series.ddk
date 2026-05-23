@@ -1,4 +1,4 @@
-// Feature 11: Tiefere Symbolik — solve_sym, simplify_sym, series.
+// Feature 11: In-depth Symbolics — solve_sym, simplify_sym, series.
 //Supplements the existing diff_sym / integrate_sym.
 
 fn main() {
@@ -10,10 +10,10 @@ fn main() {
     print(sols)    // ["2", "3"]
 
     quad = solve_sym("a*x^2 + b*x + c = 0", "x")
-    print("Allgemeine quadratische Formel:")
+    print("General quadratic formula:")
     print(quad)
 
-    // 2) Komplexe Wurzeln
+    // 2) Complex roots
     img = solve_sym("x^2 + 1", "x")
     print("x^2 + 1 = 0  -> ")
     print(img)     // ["-I", "I"]
@@ -23,7 +23,7 @@ fn main() {
     print("Linear 2x2 system x+y=5, x-y=1:")
     print(sys_sol)
 
-    // 4) Vereinfachung
+    // 4) Simplification
     s1 = simplify_sym("sin(x)^2 + cos(x)^2")
     s2 = simplify_sym("(x^2 - 1) / (x - 1)")
     print("sin^2 + cos^2 =")

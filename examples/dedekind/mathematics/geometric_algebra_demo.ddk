@@ -1,23 +1,23 @@
 // geometric_algebra_demo.ddk — 3D Geometric (Clifford) Algebra G(3,0) (v1.18)
 //
-// Geometric Algebra (GA) vereinheitlicht Skalare, Vektoren, Bivektoren
+// Geometric Algebra (GA) unifies scalars, vectors, bivectors
 //(oriented surfaces) and pseudoscalars (oriented volumes) in one
 //single algebraic system. Rotations, reflections and projections
 //become simple products — without separate quaternions, matrices
 //or Lie algebra libraries.
 //
-// Dedekind implementiert G(3,0) (3D Euklidisch) nativ in 8 Komponenten:
+// Dedekind implements G(3,0) (3D Euclidean) natively in 8 components:
 //   1, e1, e2, e3, e12, e13, e23, e123
 
 fn main() {
     print("=== 3D Geometric Algebra G(3,0) (v1.18) ===")
     print("")
 
-    // --- 1. Grundlegende Vektoren -----------------------------------------
+    // --- 1. Basic Vectors -----------------------------------------
     e1 = vector(1, 0, 0)
     e2 = vector(0, 1, 0)
     e3 = vector(0, 0, 1)
-    print("[1] Basis-Vektoren")
+    print("[1] Basis vectors")
     print("  e1 =", e1)
     print("  e2 =", e2)
     print("  e3 =", e3)
@@ -30,21 +30,21 @@ fn main() {
     print("    a*b = a.b (skalar) + a wedge b (bivector)")
     print("  a*b =", a * b)
     print("  a.dot(b) =", a.dot(b), "  (orthogonal -> 0)")
-    print("  a.wedge(b) =", a.wedge(b), "  (orientierte Flaeche, 3*4=12)")
+    print("  a.wedge(b) =", a.wedge(b), "  (oriented area, 3*4=12)")
     print("")
 
     // --- 3. e1*e1 = 1 (Quadrat eines Einheitsvektors) ---------------------
-    print("[3] e1*e1 =", e1 * e1, "  (Signatur (3,0): alle Basis-Vektoren² = +1)")
+    print("[3] e1*e1 =", e1 * e1, "  (signature (3,0): all basis vectors² = +1)")
     print("    e123*e123 =", pseudoscalar(1) * pseudoscalar(1), "  (in G(3,0): -1)")
     print("")
 
-    // --- 4. Rotation via Rotor — ersetzt Quaternionen ---------------------
+    // --- 4. Rotation via Rotor — replaces quaternions ---------------------
     print("[4] Rotation: 90 deg in the e1-e2 plane")
     R_xy = rotor(1.5707963, 1, 0, 0)
     print("  Rotor R =", R_xy)
-    print("  rotate(e1, R) =", rotate(e1, R_xy), "  (sollte e2 sein)")
-    print("  rotate(e2, R) =", rotate(e2, R_xy), "  (sollte -e1 sein)")
-    print("  rotate(e3, R) =", rotate(e3, R_xy), "  (achsenparallel -> unveraendert)")
+    print("  rotate(e1, R) =", rotate(e1, R_xy), "  (should be e2)")
+    print("  rotate(e2, R) =", rotate(e2, R_xy), "  (should be -e1)")
+    print("  rotate(e3, R) =", rotate(e3, R_xy), "  (parallel to axis -> unchanged)")
     print("")
 
     //--- 5. Rotor composition: two 45 deg = one 90 deg ----------------
@@ -55,12 +55,12 @@ fn main() {
     print("  rotate(e1, R_45*R_45) =", rotate(e1, R_90), "  (=> e2)")
     print("")
 
-    // --- 6. Bivektor als orientierte Flaeche -----------------------------
-    print("[6] Bivektor = orientierte Flaeche")
-    plane = bivector(1, 0, 0)     // e12 = xy-Ebene
-    print("  xy-Ebene =", plane)
-    flipped = -plane              // -e12 = umgekehrt orientierte xy-Ebene
-    print("  -xy-Ebene =", flipped)
+    // --- 6. Bivector as oriented area -----------------------------
+    print("[6] Bivector = oriented area")
+    plane = bivector(1, 0, 0)     // e12 = xy plane
+    print("  xy plane =", plane)
+    flipped = -plane              // -e12 = reverse oriented xy plane
+    print("  -xy plane =", flipped)
     print("")
 
     //--- 7. Pseudoscalar — oriented volume -------------------------
@@ -75,7 +75,7 @@ fn main() {
     print("cos(t) + sin(t)*e12 behaves like cos(t) + i*sin(t)")
     z = scalar(0.5) + bivector(0.866, 0, 0)   // cos(60) + sin(60)*e12
     print("  z =", z)
-    print("  z*z =", z * z, "  (sollte cos(120) + sin(120)*e12 sein)")
+    print("  z*z =", z * z, "  (should be cos(120) + sin(120)*e12)")
     print("")
     print("USP: GA unifies quaternions, complex numbers, cross-")
     print("and dot-product, rotations, reflections — an algebra")

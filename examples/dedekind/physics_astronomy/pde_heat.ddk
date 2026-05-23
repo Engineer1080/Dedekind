@@ -12,9 +12,9 @@ fn main() {
     print(sol_1d[0][5])
     print("1D Heat: u(t=0.05) Middle (cooled down):")
     print(sol_1d[5][5])
-    print("1D Heat: Loesung Shape (Zeit, Raum):")
+    print("1D Heat: Solution Shape (Time, Space):")
     print(sol_1d.shape)
     
-    print("PDE-Solver (differenzierbar) aktiv.")
+    print("PDE solver (differentiable) active.")
 }
 main()
