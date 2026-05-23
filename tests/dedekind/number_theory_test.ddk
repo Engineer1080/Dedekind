@@ -16,6 +16,6 @@ fn main() {
 
     assert(mod_pow(2, 10, 1000) == 24)
 
-    print("number_theory_test: bestanden.")
+    print("number_theory_test: passed.")
 }
 main()

@@ -3,7 +3,7 @@
 //Problem: Minimize ⟨H⟩ for H = 0.5*ZI - 0.5*IZ + 0.3*XX
 //Smallest eigenvalue: analytically approx. -0.866 (singlet state)
 
-// Hamiltonian als Pauli-Terme: [(Koeffizient, Pauli-String)]
+// Hamiltonian as Pauli terms: [(coefficient, Pauli string)]
 //H = 0.5 ZI - 0.5 IZ + 0.3 XX (2-qubit system)
 
 n_qubits = 2
