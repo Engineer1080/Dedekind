@@ -305,9 +305,10 @@ Examples: \(\int_0^1 x^2\,dx = 1/3\), \(\int_0^\pi \sin(x)\,dx = 2\); see `examp
 - **`use math`** — constants `PHI`, `TAU`; sequences `fibonacci`, `harmonic_sum`, `geometric_sum`; number theory `lcm`, `is_perfect_square`, `digital_root`; geometry `circle_area`, `circle_circumference`, `sphere_volume`, `sphere_surface`, `cylinder_volume`, `cone_volume`, `hypotenuse`, `law_of_cosines_c`; helpers `lerp`, `clamp_scalar`, `sigmoid`, `softplus`.
 - **`use ml`** — activations `leaky_relu`, `elu`, `swish`, `gelu_approx`; losses `mse_loss`, `mae_loss`, `binary_crossentropy`; metrics `accuracy`, `precision_binary`, `recall_binary`, `f1_score`.
 - **`use space`** — N-body simulation (`n_body_simulate`, `n_body_simulate_advanced`), Kepler equation solvers (`kepler_solve`), Keplerian-Cartesian conversions (`kepler_to_cartesian`, `kepler_to_cartesian_from_E`, `cartesian_to_kepler`).
-- **`use control`** — Differentiable block-diagram simulation: `block_diagram`, `constant_block`, `gain_block`, `sum_block`, `product_block`, `saturation_block`, `integrator_block`; controllers `pid_block`, `pid_block_saturated`; LTI plants `transfer_function_block`, `state_space_block`.
-- **`use electronics`** — circuit builder (`circuit`), complex AC analysis (`phasor`), resistance calculations (`parallel_resistors`), RC time constants (`rc_time_constant`), and resonance frequencies (`rlc_resonance_freq`).
-- **`use dsp`** — Finite Impulse Response filtering (`fir_filter`), Infinite Impulse Response filtering (`iir_filter`), Biquad filter coefficient generators (`biquad_lowpass`, `biquad_highpass`, `biquad_bandpass`), frequency response calculation (`freqz`), and filter design (`butter`, `cheby1`).
+- **`use signals`** — Unified electrical engineering, control theory, and digital signal processing.
+  - **Electronics:** circuit builder (`circuit`), complex AC analysis (`phasor`), parallel resistance (`parallel_resistors`), RC time constant (`rc_time_constant`), RLC resonance (`rlc_resonance_freq`).
+  - **DSP:** FIR/IIR filtering (`fir_filter`, `iir_filter`), biquad coefficient generators (`biquad_lowpass`, `biquad_highpass`, `biquad_bandpass`), frequency response (`freqz`), filter design (`butter`, `cheby1`).
+  - **Control:** block-diagram primitives (`block_diagram`, `constant_block`, `gain_block`, `sum_block`, `product_block`, `saturation_block`, `integrator_block`), controllers (`pid_block`, `pid_block_saturated`), LTI plants (`transfer_function_block`, `state_space_block`, `state_space_block_with_d`), plus higher-level `state_space`, `pi_controller`, `bode_plot`.
 - **`use structural`** — 2D meshes (`structural_mesh_2d`), static finite element solver (`structural_solve_2d`, `structural_solve_2d_params`), compliance calculations (`structural_compliance_2d`), Optimality Criteria topology optimization (`topo_opt_oc_2d`, `topo_opt_oc_2d_advanced`), and character-based visualization (`print_structural_topology_2d`).
 - **`use thermal`** — 2D thermal meshes (`thermal_mesh_2d`), steady-state solver (`thermal_solve_2d`, `thermal_solve_2d_params`), transient thermal solver (`thermal_solve_transient_2d`, `thermal_solve_transient_2d_params`), thermal topology optimization (`topo_opt_thermal_oc_2d`, `topo_opt_thermal_oc_2d_advanced`), and character-based visualization (`print_thermal_topology_2d`).
 - **`use fluid_dynamics`** — Lattice Boltzmann Method CFD solvers (`lbm_simulation`, `lbm_simulation_with_mask`), simulation iteration handlers (`simulation_step`, `simulation_run`), field extractors (`simulation_get_velocity`, `simulation_get_density`), force calculators (`simulation_get_drag_lift`, `simulation_get_drag_lift_for_mask`), dynamic obstacle modifier (`simulation_set_obstacle`), and soft masks (`soft_cylinder_mask`, `soft_airfoil_mask`, `add_wind_tunnel_walls`).
@@ -1140,12 +1141,15 @@ Example standard geosciences calculations: Test: `tests/dedekind/geosciences_tes
 
 Dedekind v2.1 introduces the concept of **Differentiable Engineering**, providing native integration of Electronic Circuit Simulation and Linear Time-Invariant (LTI) Control Theory directly into PyTorch's Autograd ecosystem.
 
-**1. Differentiable Circuit Simulation (`use electronics`)**
+Both circuit simulation and block-diagram control live in the unified
+`use signals` module (along with DSP filters).
+
+**1. Differentiable Circuit Simulation**
 
 The `Circuit` primitive allows you to declaratively model an electrical network and solve for its DC node voltages and branch currents using Modified Nodal Analysis (MNA). Because the solver operates seamlessly on Autograd-enabled tensors, all component parameters can be optimized via `jacobian` or `minimize`.
 
 ```dedekind
-use electronics
+use signals
 
 c = circuit()
 c.add_voltage_source("V1", 1, 0, 10.0[V])  // Node 1 to 0 (GND)
@@ -1156,7 +1160,7 @@ res = c.solve_dc()
 v2 = res["v_2"]  // = 5.0[V]
 ```
 
-**2. Block-Diagram Control (`use control`)**
+**2. Block-Diagram Control**
 
 Dedekind provides differentiable block-diagram primitives for closed-loop
 control. Plants are expressed as `transfer_function_block` or
@@ -1166,7 +1170,7 @@ into a `block_diagram` that can be simulated and optimized end-to-end via
 autograd.
 
 ```dedekind
-use control
+use signals
 
 // First-order plant: dx/dt = -x + u
 plant = state_space_block(u, [[-1.0]], [[1.0]], [[1.0]], [[0.0]])
@@ -1410,7 +1414,7 @@ Dedekind v2.0 includes native Digital Signal Processing (DSP) primitives, enabli
 - **`cheby1(order, rp, Wn)`**: Designs an N-th order digital Chebyshev Type I filter with peak-to-peak passband ripple `rp` (dB) and normalized cutoff frequency `Wn`. Returns `[b, a]`.
 
 ```dedekind
-use dsp
+use signals
 
 fn get_lowpass_b0(fc) {
     res = biquad_lowpass(fc, 0.707, 1.0)

@@ -95,11 +95,6 @@ _RUNTIME_BUILTIN_NAMES = frozenset({
     'lbm3d_simulation_impl', 'lbm3d_step_impl', 'lbm3d_run_impl', 'lbm3d_velocity_impl',
     'lbm3d_density_impl', 'lbm3d_drag_lift_force_impl', 'lbm3d_set_obstacle_impl',
     'voxelize_stl_impl', 'lbm3d_soft_sphere_mask_impl', 'lbm3d_soft_cylinder_mask_impl',
-    # Control / Block-diagram (use control)
-    'block_diagram_impl', 'constant_block_impl', 'gain_block_impl',
-    'sum_block_impl', 'product_block_impl', 'saturation_block_impl',
-    'integrator_block_impl', 'pid_block_impl', 'pid_block_saturated_impl',
-    'state_space_block_impl', 'transfer_function_block_impl',
     # Constants (from ml_runtime)
     'pi', 'e', 'c', 'G', 'h', 'k_B', 'k_e', 'hbar', 'e_charge', 'epsilon_0', 'mu_0',
     'm_e', 'm_p', 'N_A', 'R_gas', 'alpha', 'sigma_SB', 'F_faraday',

@@ -10,7 +10,7 @@ codebase carries the work that accumulated in the unreleased 2.9.x
 line (see below) and adds the final round of release hardening:
 
 - **Standard library ships inside the wheel.** `use math`, `use atomic`,
-  `use control`, `use physics` and friends resolve against
+  `use signals`, `use physics` and friends resolve against
   `dedekind/stdlib/*.ddk` from the installed package — no git clone
   required.
 - **CLI hardening.** `dedekind --help`, `dedekind --version`, and proper
@@ -27,9 +27,6 @@ line (see below) and adds the final round of release hardening:
   to English; bare `except:` clauses narrowed to specific exception
   types; scipy/xarray optional-dependency imports now surface
   actionable `ImportError` messages pointing at the matching extra.
-- **`control.ddk` reinstated.** Documented in the spec but accidentally
-  dropped during consolidation — now ships as a thin wrapper around
-  the runtime block-diagram primitives.
 
 Everything from the v2.9.x development line is included; the sections
 below describe that work in detail.
@@ -44,7 +41,7 @@ below describe that work in detail.
 
 **Standard Library Consolidation**
 - **Atomic (`use atomic`):** Merged the former `molecular` (Molecular Dynamics, OpenMM bridge) and `crystallography` (structure analysis, scattering factors) modules into a single `atomic.ddk` library. Function signatures (`molecular_lj_simulate`, `cryst_symmetry_apply`, …) preserved.
-- **Signals (`use signals`):** Folded the former `control`, `dsp`, and `electronics` modules into `signals.ddk`. Block-diagram control (`pid_block`, `state_space_block`, …), biquad/FIR/IIR filters, circuit primitives, and Z-transform helpers now share one namespace. `use control`, `use dsp`, and `use electronics` remain available as thin compatibility wrappers.
+- **Signals (`use signals`):** Folded the former `control`, `dsp`, and `electronics` modules into a single `signals.ddk` covering electrical engineering, control theory, and digital signal processing. Block-diagram control (`pid_block`, `state_space_block`, …), biquad/FIR/IIR filters, circuit primitives, and Z-transform helpers now share one namespace. The standalone `use control`, `use dsp`, and `use electronics` module names are gone — use `use signals` instead.
 - **Geometry into Math:** Dropped the standalone `geometry` module; `area_circle`, `volume_sphere`, solids-of-revolution helpers and friends live in `math.ddk`.
 - **Legacy Mathlib Removed:** Deleted the deprecated `mathlib` example module; its helpers (`square`, `cube`, `PHI`) are part of `math.ddk`.
 
@@ -75,7 +72,7 @@ below describe that work in detail.
 
 ### What's New in v2.2.0 (Differentiable Engineering)
 
-- **Differentiable Control Theory (`use control`):** Native support for block-diagram-based simulations. Enables stateful/static blocks (PID controllers, integrators, transfer functions, saturation blocks) and automatic loop resolution for parameter-based optimization.
+- **Differentiable Control Theory (originally `use control`, merged into `use signals` in v2.9):** Native support for block-diagram-based simulations. Enables stateful/static blocks (PID controllers, integrators, transfer functions, saturation blocks) and automatic loop resolution for parameter-based optimization.
 - **Differentiable Fluid Dynamics (`use fluid_dynamics`):** Vectorized Lattice Boltzmann Method (D2Q9) for fluid simulation of incompressible flows with continuously differentiable obstacle masks (cylinders, NACA airfoils) for drag and lift optimization.
 - **Differentiable Structural Mechanics (`use structural`):** Stationary 2D Finite Element simulation (Q4 bilinear elements) of linear elasticity problems and topology optimization (generative design) via the SIMP material density model and Optimality Criteria (OC) solver with Unicode ASCII visualization in the terminal.
 - **Differentiable Heat Transfer & Thermodynamics (`use thermal`):** Stationary and transient (implicit backward Euler method) thermal diffusion simulation on Q4 elements, thermal SIMP conductance interpolation, and OC topology optimization for heat-dissipating structures (heatsinks).

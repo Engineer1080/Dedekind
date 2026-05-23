@@ -43,7 +43,7 @@
 
 ## Differentiable Engineering (v2.2)
 
-- **Control engineering (`use control`):** Differentiable control blocks for dynamic system modeling. Supports stateful blocks such as PID controllers (`PIDBlock`), transfer functions (`TransferFunctionBlock`), integrators (`IntegratorBlock`), and saturation elements (`SaturationBlock`). Provides automatic loop resolution for parameter-based optimization of closed control loops.
+- **Control engineering (`use signals`):** Differentiable control blocks for dynamic system modeling. Supports stateful blocks such as PID controllers (`PIDBlock`), transfer functions (`TransferFunctionBlock`), integrators (`IntegratorBlock`), and saturation elements (`SaturationBlock`). Provides automatic loop resolution for parameter-based optimization of closed control loops.
 - **Fluid dynamics (`use fluid_dynamics`):** Fully differentiable CFD pipeline.
   - **LBM D2Q9:** BGK and MRT collision (`lbm_physical_mrt`, Lallemand-Luo 2000) for high Reynolds numbers; soft & hard (halfway) bounce-back boundary handling.
   - **Unit-aware API:** `lbm_physical(domain_x[m], domain_y[m], nx, inlet[m/s], nu[m²/s], rho[kg/m³])` returns drag/lift in `N/m`, pressure in `Pa`, velocity in `m/s` — Quantity consistency is checked at compile and runtime.
