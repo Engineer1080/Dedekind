@@ -7018,9 +7018,9 @@ def energy_gap_check(E):
     return E
 def read_file(path):
     """
-    Liest eine Datei als Text (UTF-8).
-    path: String (Dateipfad).
-    Rückgabe: String (Inhalt).
+    Reads a file as text (UTF-8).
+    path: string (file path).
+    Returns: string (content).
     """
     p = str(path)
     with open(p, 'r', encoding='utf-8') as f:
@@ -7029,8 +7029,8 @@ def read_file(path):
 
 def write_file(path, content):
     """
-    Schreibt Text in eine Datei (UTF-8); überschreibt bei Existenz.
-    path: String (Dateipfad). content: String (Inhalt).
+    Writes text to a file (UTF-8); overwrites if it exists.
+    path: string (file path). content: string (content).
     """
     p = str(path)
     with open(p, 'w', encoding='utf-8') as f:
@@ -7039,8 +7039,8 @@ def write_file(path, content):
 
 def file_exists(path):
     """
-    Prüft, ob eine Datei existiert.
-    path: String (Dateipfad). Rückgabe: bool.
+    Checks whether a file exists.
+    path: string (file path). Returns: bool.
     """
     import os
     return os.path.isfile(str(path))
@@ -7048,8 +7048,8 @@ def file_exists(path):
 
 def http_get(url):
     """
-    HTTP GET-Anfrage; gibt Antworttext (UTF-8) zurück.
-    url: String (z. B. \"https://example.com\").
+    HTTP GET request; returns response text (UTF-8).
+    url: string (e.g. \"https://example.com\").
     """
     import urllib.request
     req = urllib.request.Request(str(url), method='GET')
@@ -7059,8 +7059,8 @@ def http_get(url):
 
 def http_post(url, data):
     """
-    HTTP POST-Anfrage. data: String (Body) oder Dict/List (wird als JSON gesendet).
-    url: String. Rückgabe: Antworttext (UTF-8).
+    HTTP POST request. data: string (body) or dict/list (sent as JSON).
+    url: string. Returns: response text (UTF-8).
     """
     import urllib.request
     import json
@@ -7077,8 +7077,8 @@ def http_post(url, data):
 
 def json_parse(s):
     """
-    Parst einen JSON-String zu einem Objekt (Dict/List); für Zugriff z. B. obj[\"key\"].
-    s: String (gültiger JSON).
+    Parses a JSON string into an object (dict/list); access e.g. obj[\"key\"].
+    s: string (valid JSON).
     """
     import json
     return json.loads(str(s))
@@ -7086,7 +7086,7 @@ def json_parse(s):
 
 def json_stringify(obj):
     """
-    Wandelt ein Objekt (Dict, List, Zahl, String) in einen JSON-String um.
+    Converts an object (dict, list, number, string) into a JSON string.
     """
     import json
     if hasattr(obj, 'tolist'):
@@ -7099,8 +7099,8 @@ def json_stringify(obj):
 
 def _dedekind_assert(condition, message=None):
     """
-    Prüft eine Bedingung; löst AssertionError aus, wenn condition falsch ist.
-    assert(condition) oder assert(condition, "Fehlermeldung").
+    Checks a condition; raises AssertionError when condition is false.
+    assert(condition) or assert(condition, "error message").
     """
     val = condition
     if hasattr(val, "item") and (hasattr(val, "numel") or hasattr(val, "size")):
@@ -7111,8 +7111,8 @@ def _dedekind_assert(condition, message=None):
     if not bool(val):
         raise AssertionError(message if message is not None else "Assertion failed")
 
-# --- Standard Library: Symbolische Ableitung (eingebettet, kein Import) ---
-# Einfacher AST für Ausdrücke
+# --- Standard library: symbolic differentiation (embedded, no import) ---
+# Simple AST for expressions
 class _SymExpr:
     pass
 
@@ -7178,7 +7178,7 @@ class _SymSqrt(_SymExpr):
         self.arg = arg
 
 def _sym_tokenize(s):
-    """Tokenizer ohne re: Zeichen für Zeichen."""
+    """Tokenizer without re: character by character."""
     tokens = []
     i = 0
     n = len(s)
@@ -7234,7 +7234,7 @@ def _sym_tokenize(s):
             try:
                 value = float(s[start:i])
             except ValueError:
-                raise ValueError("Ungültige Zahl: " + s[start:i])
+                raise ValueError("Invalid number: " + s[start:i])
             tokens.append(("NUMBER", value))
             continue
         if c.isalpha() or c == "_":
@@ -7243,7 +7243,7 @@ def _sym_tokenize(s):
                 i += 1
             tokens.append(("ID", s[start:i]))
             continue
-        raise ValueError("Unerwartetes Zeichen: " + repr(c))
+        raise ValueError("Unexpected character: " + repr(c))
     return tokens
 
 class _SymParser:
@@ -7350,21 +7350,21 @@ class _SymParser:
             e = self._parse_expr()
             rp = self._advance()
             if rp is None or rp[0] != "RPAREN":
-                raise ValueError("Fehlende ')'")
+                raise ValueError("Missing ')'")
             return e
-        raise ValueError(f"Unerwartetes Token: {p}")
+        raise ValueError(f"Unexpected token: {p}")
 
 def _sym_parse(expr_str):
     s = expr_str.strip().replace(" ", "")
     if not s:
-        raise ValueError("Leerer Ausdruck")
+        raise ValueError("Empty expression")
     tokens = _sym_tokenize(s)
     if not tokens:
-        raise ValueError("Keine gültigen Tokens")
+        raise ValueError("No valid tokens")
     p = _SymParser(tokens)
     e = p._parse_expr()
     if p.pos < len(tokens):
-        raise ValueError("Rest nach Ausdruck")
+        raise ValueError("Trailing content after expression")
     return e
 
 def _sym_diff(e, var):
@@ -7527,15 +7527,15 @@ def _sym_simplify(e):
 
 def diff_sym(expr, var):
     """
-    Symbolische Ableitung: leitet den Ausdruck expr nach der Variable var ab.
-    expr: String, z.B. 'x^2 + sin(x)', 'exp(x)*log(x)'.
-    var: Name der Variable, z.B. 'x'.
-    Rückgabe: Ableitung als String.
+    Symbolic differentiation: differentiates the expression expr with respect to var.
+    expr: string, e.g. 'x^2 + sin(x)', 'exp(x)*log(x)'.
+    var: name of the variable, e.g. 'x'.
+    Returns: derivative as string.
     """
     expr = str(expr).strip()
     var = str(var).strip()
     if not var:
-        raise ValueError("Variable darf nicht leer sein")
+        raise ValueError("Variable must not be empty")
     ast = _sym_parse(expr)
     d = _sym_diff(ast, var)
     d = _sym_simplify(d)
@@ -7544,38 +7544,38 @@ def diff_sym(expr, var):
 
 def integrate_sym(expr, var):
     """
-    Unbestimmtes (symbolisches) Integral: ∫ expr d(var).
-    expr: String, z.B. 'x^2', 'sin(x)', 'exp(x)*x'.
-    var: Name der Integrationsvariable, z.B. 'x'.
-    Rückgabe: Stammfunktion als String (ohne Integrationskonstante C).
-    Nutzt SymPy für robuste symbolische Integration.
+    Indefinite (symbolic) integral: integral of expr d(var).
+    expr: string, e.g. 'x^2', 'sin(x)', 'exp(x)*x'.
+    var: name of the integration variable, e.g. 'x'.
+    Returns: antiderivative as string (without constant of integration C).
+    Uses SymPy for robust symbolic integration.
     """
     try:
         import sympy  # type: ignore[reportMissingImports]
     except ImportError:
-        raise ImportError("integrate_sym erfordert sympy. Bitte installieren: pip install sympy")
+        raise ImportError("integrate_sym requires sympy. Please install: pip install sympy")
     expr_str = str(expr).strip().replace(" ", "")
     var_str = str(var).strip()
     if not var_str:
-        raise ValueError("Integrationsvariable darf nicht leer sein")
-    # Dedekind-Syntax (^) für SymPy (**) konvertieren
+        raise ValueError("Integration variable must not be empty")
+    # Convert Dedekind syntax (^) to SymPy (**)
     expr_sympy = expr_str.replace("^", "**")
     try:
         x = sympy.Symbol(var_str)
         sym_expr = sympy.sympify(expr_sympy)
         result = sympy.integrate(sym_expr, x)
         out = str(result)
-        # Optional: ** zurück zu ^ für Dedekind-Konsistenz
+        # Optional: convert ** back to ^ for Dedekind consistency
         return out.replace("**", "^")
     except Exception as e:
-        raise ValueError(f"integrate_sym: Konnte '{expr}' nicht nach {var_str} integrieren: {e}") from e
+        raise ValueError(f"integrate_sym: could not integrate '{expr}' with respect to {var_str}: {e}") from e
 
 # --- Standard Library: Jacobian / Hessian (Autograd) ---
 
 def jacobian(f, x):
     """
-    Jacobi-Matrix von f an der Stelle x. f: R^n -> R^m (Callable, Tensor -> Tensor).
-    x: 1D-Tensor der Länge n. Rückgabe: Tensor (m, n); Zeile i = Gradient von f_i.
+    Jacobian matrix of f at point x. f: R^n -> R^m (callable, tensor -> tensor).
+    x: 1D tensor of length n. Returns: tensor (m, n); row i = gradient of f_i.
     """
     x_t = _to_tensor(x).float().clone().detach().requires_grad_(True)
     out = f(x_t)
@@ -7594,8 +7594,8 @@ def jacobian(f, x):
 
 def hessian(f, x):
     """
-    Hesse-Matrix von f an der Stelle x. f: R^n -> R (skalar).
-    x: 1D-Tensor der Länge n. Rückgabe: Tensor (n, n).
+    Hessian matrix of f at point x. f: R^n -> R (scalar).
+    x: 1D tensor of length n. Returns: tensor (n, n).
     """
     x_t = _to_tensor(x).float().clone().detach().requires_grad_(True)
     out = f(x_t)
@@ -7621,12 +7621,12 @@ def quicksort(data):
     return sort(data)
 
 # --- Standard Library: Visualization ---
-# Plots werden in _dedekind_plots gesammelt und vom Server an die IDE zurückgegeben.
+# Plots are collected in _dedekind_plots and returned by the server to the IDE.
 
 _dedekind_plots = []
 
 def _plot_ndarray(x, y=None, title=None, xlabel=None, ylabel=None, kind="line", xscale="linear", yscale="linear"):
-    """Intern: Erzeugt einen Plot und hängt ihn als Base64-PNG an _dedekind_plots. kind: line, scatter."""
+    """Internal: creates a plot and appends it as base64 PNG to _dedekind_plots. kind: line, scatter."""
     try:
         import base64
         import io
@@ -7634,7 +7634,7 @@ def _plot_ndarray(x, y=None, title=None, xlabel=None, ylabel=None, kind="line", 
         matplotlib.use('Agg')
         import matplotlib.pyplot as plt  # type: ignore[import-untyped]
     except ImportError:
-        print("plot(): matplotlib nicht installiert. pip install matplotlib")
+        print("plot(): matplotlib not installed. pip install matplotlib")
         return
     if y is None:
         y = x
@@ -7753,9 +7753,9 @@ def print_latex(s):
 
 def plot(x=None, y=None, title=None, xlabel=None, ylabel=None, xscale="linear", yscale="linear"):
     """
-    Zeichnet Daten (Linie) und zeigt sie in Dedekind Studio an.
-    plot(y) – y über Index; plot(x, y) – y über x.
-    xscale, yscale: "linear" (default) oder "log".
+    Plots data (line) and displays it in Dedekind Studio.
+    plot(y) -- y over index; plot(x, y) -- y over x.
+    xscale, yscale: "linear" (default) or "log".
     """
     if x is None and y is None:
         return
@@ -7770,8 +7770,8 @@ def plot(x=None, y=None, title=None, xlabel=None, ylabel=None, xscale="linear", 
 
 def scatter(x=None, y=None, title=None, xlabel=None, ylabel=None):
     """
-    Streudiagramm: Punkte (x, y). scatter(y) – y über Index; scatter(x, y) – Punkte.
-    Zeigt in Dedekind Studio an.
+    Scatter plot: points (x, y). scatter(y) -- y over index; scatter(x, y) -- points.
+    Displayed in Dedekind Studio.
     """
     if x is None and y is None:
         return
@@ -7786,27 +7786,27 @@ def scatter(x=None, y=None, title=None, xlabel=None, ylabel=None):
 
 def contour(X, Y, Z, title=None, xlabel=None, ylabel=None, levels=10):
     """
-    Höhenlinien-Plot. X, Y: 1D- oder 2D-Koordinaten (z. B. linspace); Z: 2D-Matrix (Werte).
-    levels: Anzahl Konturlinien (default 10). Zeigt in Dedekind Studio an.
+    Contour plot. X, Y: 1D or 2D coordinates (e.g. linspace); Z: 2D matrix (values).
+    levels: number of contour lines (default 10). Displayed in Dedekind Studio.
     """
     import numpy as np  # type: ignore[reportMissingImports]
     X_t = _to_tensor(X).float().detach().cpu().numpy()
     Y_t = _to_tensor(Y).float().detach().cpu().numpy()
     Z_t = _to_tensor(Z).float().detach().cpu().numpy()
     if Z_t.ndim != 2:
-        raise ValueError("contour: Z muss 2D-Matrix sein.")
+        raise ValueError("contour: Z must be a 2D matrix.")
     if X_t.ndim == 1 and Y_t.ndim == 1:
         X_t, Y_t = np.meshgrid(X_t, Y_t)
     _plot_contour_inner(X_t, Y_t, Z_t, title=title, xlabel=xlabel, ylabel=ylabel, levels=levels)
 
 
 # ============================================================================
-# Reproduzierbarkeit: Seed-Manager + Daten-Hash
+# Reproducibility: seed manager + data hash
 # ============================================================================
 
 def seed(n):
-    """Setzt deterministischen Seed in Python (`random`), NumPy und PyTorch.
-    Verwendung: `seed(42)` ganz am Anfang eines Skripts; Zufallsoperationen werden reproduzierbar."""
+    """Sets a deterministic seed in Python (`random`), NumPy, and PyTorch.
+    Usage: `seed(42)` at the very start of a script; random operations become reproducible."""
     try:
         import random as _random
         _random.seed(int(n))
@@ -7827,8 +7827,8 @@ def seed(n):
 
 
 def data_hash(x):
-    """Liefert SHA256-Hex-Digest einer Eingabe (Tensor, Liste, Dict, Zahl, String, DataFrame).
-    Nützlich für Reproduzierbarkeits-Protokolle: `print("Input hash:", data_hash(data))`."""
+    """Returns the SHA256 hex digest of an input (tensor, list, dict, number, string, DataFrame).
+    Useful for reproducibility logs: `print("Input hash:", data_hash(data))`."""
     import hashlib
     import json
     if isinstance(x, DataFrame):
@@ -7861,20 +7861,20 @@ def _json_default(o):
 # ============================================================================
 
 class DataFrame:
-    """Leichte spaltenorientierte Tabelle mit optionalen Einheiten pro Spalte.
+    """Lightweight column-oriented table with optional per-column units.
 
-    Konstruktion:
+    Construction:
       df = DataFrame({"t": [0.0, 1.0, 2.0], "T": [20.0, 22.0, 25.0]}, units={"t": "s", "T": "K"})
-      df["T"]              -> Liste der Werte
+      df["T"]              -> list of values
       df.units["T"]        -> "K"
-      df.rows              -> Iterator über Zeilen (dict)
-      df.column_with_unit("T") -> Liste von Quantity-Werten
+      df.rows              -> iterator over rows (dict)
+      df.column_with_unit("T") -> list of Quantity values
     """
     def __init__(self, data=None, units=None):
         if data is None:
             data = {}
         def _to_plain_list(seq):
-            # Torch-Tensor: .tolist() liefert Plain-Python-Zahlen.
+            # Torch tensor: .tolist() returns plain Python numbers.
             if hasattr(seq, "detach") and hasattr(seq, "cpu") and hasattr(seq, "tolist"):
                 return list(seq.detach().cpu().tolist())
             out = []
@@ -7894,11 +7894,11 @@ class DataFrame:
             cols_names = list(data[0].keys())
             cols = [_to_plain_list([row.get(c) for row in data]) for c in cols_names]
         else:
-            raise TypeError("DataFrame: data muss dict of lists oder list of dicts sein.")
+            raise TypeError("DataFrame: data must be a dict of lists or a list of dicts.")
         n_rows = _builtin_max([len(c) for c in cols]) if cols else 0
         for c in cols:
             if len(c) != n_rows:
-                raise ValueError("DataFrame: alle Spalten müssen gleiche Länge haben.")
+                raise ValueError("DataFrame: all columns must have the same length.")
         self.columns = cols_names
         self._cols = cols
         self._units = {}
@@ -7921,14 +7921,14 @@ class DataFrame:
 
     def __getitem__(self, key):
         if key not in self.columns:
-            raise KeyError(f"DataFrame: Spalte '{key}' nicht gefunden. Verfügbar: {self.columns}.")
+            raise KeyError(f"DataFrame: column '{key}' not found. Available: {self.columns}.")
         return list(self._cols[self.columns.index(key)])
 
     def __contains__(self, key):
         return key in self.columns
 
     def column_with_unit(self, key):
-        """Spalte als Liste von Quantity-Werten (verwendet self.units[key] falls vorhanden)."""
+        """Column as a list of Quantity values (uses self.units[key] if present)."""
         vals = self[key]
         u = self._units.get(key, "")
         if not u:
@@ -7946,7 +7946,7 @@ class DataFrame:
         return DataFrame(head_cols, units=self._units)
 
     def __repr__(self):
-        # Kompakte Darstellung mit Einheiten in Spaltenüberschriften.
+        # Compact representation with units in column headers.
         if self.n_rows == 0:
             return f"DataFrame(0 rows, columns={self.columns})"
         widths = []
@@ -7980,10 +7980,10 @@ def _csv_parse_unit_in_header(header):
 
 
 def read_csv(path, units=None, has_header=True):
-    """Liest eine CSV-Datei in eine DataFrame ein.
-    - Header-Zeile darf Einheiten im Format `name [unit]` enthalten; diese werden in `df.units` übernommen.
-    - `units` (optional Dict) überschreibt erkannte Einheiten.
-    - Numerische Werte werden zu float konvertiert (Fallback: String belassen).
+    """Reads a CSV file into a DataFrame.
+    - The header row may contain units in the format `name [unit]`; these are stored in `df.units`.
+    - `units` (optional dict) overrides detected units.
+    - Numeric values are converted to float (fallback: leave as string).
     """
     import csv
     p = str(path)
@@ -8042,52 +8042,52 @@ def write_csv(path, df, include_units_in_header=True):
 
 
 def read_parquet(path):
-    """Liest eine Parquet-Datei (benötigt pyarrow). Einheiten werden nicht persistiert; nur Spalten."""
+    """Reads a Parquet file (requires pyarrow). Units are not persisted; only columns."""
     try:
         import pyarrow.parquet as pq  # type: ignore[import-untyped]
     except ImportError:
-        raise RuntimeError("read_parquet: pyarrow nicht installiert (pip install pyarrow).")
+        raise RuntimeError("read_parquet: pyarrow not installed (pip install pyarrow).")
     table = pq.read_table(str(path))
     data = {name: table.column(name).to_pylist() for name in table.column_names}
     return DataFrame(data)
 
 
 def write_parquet(path, df):
-    """Schreibt eine DataFrame als Parquet (benötigt pyarrow)."""
+    """Writes a DataFrame as Parquet (requires pyarrow)."""
     try:
         import pyarrow as pa  # type: ignore[import-untyped]
         import pyarrow.parquet as pq  # type: ignore[import-untyped]
     except ImportError:
-        raise RuntimeError("write_parquet: pyarrow nicht installiert (pip install pyarrow).")
+        raise RuntimeError("write_parquet: pyarrow not installed (pip install pyarrow).")
     if not isinstance(df, DataFrame):
-        raise TypeError("write_parquet: df muss DataFrame sein.")
+        raise TypeError("write_parquet: df must be a DataFrame.")
     table = pa.table({c: df._cols[j] for j, c in enumerate(df.columns)})
     pq.write_table(table, str(path))
 
 
 def read_hdf5(path, dataset=None):
-    """Liest ein HDF5-Dataset (benötigt h5py). Wenn `dataset=None`: erstes Dataset wird gewählt."""
+    """Reads an HDF5 dataset (requires h5py). If `dataset=None`: the first dataset is selected."""
     try:
         import h5py  # type: ignore[import-untyped]
     except ImportError:
-        raise RuntimeError("read_hdf5: h5py nicht installiert (pip install h5py).")
+        raise RuntimeError("read_hdf5: h5py not installed (pip install h5py).")
     import numpy as _np  # type: ignore[reportMissingImports]
     with h5py.File(str(path), "r") as f:
         if dataset is None:
             keys = list(f.keys())
             if not keys:
-                raise ValueError("read_hdf5: Datei enthält keine Datasets.")
+                raise ValueError("read_hdf5: file contains no datasets.")
             dataset = keys[0]
         arr = _np.array(f[dataset])
     return arr
 
 
 def write_hdf5(path, data, dataset="data"):
-    """Schreibt ein Tensor/Array in eine HDF5-Datei (benötigt h5py)."""
+    """Writes a tensor/array to an HDF5 file (requires h5py)."""
     try:
         import h5py  # type: ignore[import-untyped]
     except ImportError:
-        raise RuntimeError("write_hdf5: h5py nicht installiert (pip install h5py).")
+        raise RuntimeError("write_hdf5: h5py not installed (pip install h5py).")
     import numpy as _np  # type: ignore[reportMissingImports]
     if hasattr(data, "detach"):
         data = data.detach().cpu().numpy()
@@ -8097,18 +8097,18 @@ def write_hdf5(path, data, dataset="data"):
 
 
 def read_netcdf(path, variable=None):
-    """Liest eine NetCDF-Variable (benötigt netCDF4). Wenn `variable=None`: erste Variable wird gewählt."""
+    """Reads a NetCDF variable (requires netCDF4). If `variable=None`: the first variable is selected."""
     try:
         import netCDF4  # type: ignore[import-untyped]
     except ImportError:
-        raise RuntimeError("read_netcdf: netCDF4 nicht installiert (pip install netCDF4).")
+        raise RuntimeError("read_netcdf: netCDF4 not installed (pip install netCDF4).")
     import numpy as _np  # type: ignore[reportMissingImports]
     ds = netCDF4.Dataset(str(path), "r")
     try:
         if variable is None:
             names = list(ds.variables.keys())
             if not names:
-                raise ValueError("read_netcdf: Datei enthält keine Variablen.")
+                raise ValueError("read_netcdf: file contains no variables.")
             variable = names[0]
         arr = _np.array(ds.variables[variable][:])
     finally:
@@ -8117,11 +8117,11 @@ def read_netcdf(path, variable=None):
 
 
 # ============================================================================
-# Einheiten-Annotationen für Funktionssignaturen (`fn f(x: [m]) -> [J]`)
+# Unit annotations for function signatures (`fn f(x: [m]) -> [J]`)
 # ============================================================================
 
-# Abgeleitete SI-Einheiten -> Basisdimensionen (kg, m, s, A, K, mol, cd)
-# Wir tracken nur die 7 SI-Basisdimensionen.
+# Derived SI units -> base dimensions (kg, m, s, A, K, mol, cd)
+# We only track the 7 SI base dimensions.
 _DERIVED_UNIT_TO_BASE = {
     "":     {},
     "1":    {},
@@ -8251,17 +8251,17 @@ _DERIVED_UNIT_TO_BASE = {
 
 
 def _parse_unit_to_base_dims(unit_str):
-    """Wandelt einen Einheiten-String ('kg*m^2/s^2', '(kg)*(m/s)*(m/s)', 'J', ...) in
-    ein Dict {base_unit: exponent} der 7 SI-Basisdimensionen um.
+    """Converts a unit string ('kg*m^2/s^2', '(kg)*(m/s)*(m/s)', 'J', ...) into
+    a dict {base_unit: exponent} over the 7 SI base dimensions.
 
-    Tokenizer-ähnlich: zerlegt nach *, /, ^ und Klammern; jeder atomare Einheiten-Token
-    wird über _DERIVED_UNIT_TO_BASE in Basisdimensionen aufgelöst. Unbekannte Tokens
-    erzeugen None (Vergleich schlägt dann fehl).
+    Tokenizer-like: splits on *, /, ^ and parentheses; each atomic unit token
+    is resolved to base dimensions via _DERIVED_UNIT_TO_BASE. Unknown tokens
+    produce None (comparison then fails).
     """
     s = (unit_str or "").strip()
     if not s:
         return {}
-    # Tokenize: Klammern, *, /, ^, atomare Einheiten (Buchstabenfolge), Zahlen (für Exponenten).
+    # Tokenize: parentheses, *, /, ^, atomic units (letter sequences), numbers (for exponents).
     import re as _re
     tokens = _re.findall(r"\(|\)|\*|/|\^|-?\d+|[A-Za-z][A-Za-z_]*", s)
     if not tokens:
@@ -8278,7 +8278,7 @@ def _parse_unit_to_base_dims(unit_str):
             if pos[0] < len(tokens) and tokens[pos[0]] == ")":
                 pos[0] += 1
             return val
-        # Atomare Einheit oder Zahl
+        # Atomic unit or number
         if t and t[0].isalpha():
             pos[0] += 1
             base = _DERIVED_UNIT_TO_BASE.get(t)
@@ -8298,7 +8298,7 @@ def _parse_unit_to_base_dims(unit_str):
                     pos[0] += 1
                     return {k: v * exp for k, v in base.items()}
             return dict(base)
-        # Pure Zahl als Faktor (z.B. konstante 1) -> dimensionslos
+        # Plain number as a factor (e.g. constant 1) -> dimensionless
         try:
             int(t)
             pos[0] += 1
@@ -8324,12 +8324,12 @@ def _parse_unit_to_base_dims(unit_str):
     result = parse_term()
     if result is None:
         return None
-    # Null-Exponenten entfernen
+    # Remove zero exponents
     return {k: v for k, v in result.items() if v != 0}
 
 
 def _units_dimensionally_equal(u1, u2):
-    """True, wenn u1 und u2 sich auf dieselbe SI-Basisdimension reduzieren (z.B. J == kg*m²/s²)."""
+    """True if u1 and u2 reduce to the same SI base dimensions (e.g. J == kg*m^2/s^2)."""
     d1 = _parse_unit_to_base_dims(u1)
     d2 = _parse_unit_to_base_dims(u2)
     if d1 is None or d2 is None:
@@ -8338,14 +8338,14 @@ def _units_dimensionally_equal(u1, u2):
 
 
 def _coerce_to_expected_unit(value, expected_unit, context_label):
-    """Bringt `value` auf `expected_unit`, wenn dimensional kompatibel.
+    """Coerces `value` to `expected_unit` if dimensionally compatible.
 
-    Pfade (in Reihenfolge):
-    1) String-Gleichheit (gleiche Einheit) → unverändert
-    2) Gleiche eindeutige Dimension (Länge, Masse, Zeit, …) → numerisch umrechnen
-    3) Gleiche SI-Basisdimensionen (kg·m²/s² == J) → Wert als Quantity in expected_unit übernehmen
-    4) Reine Zahl + expected_unit → mit Einheit wrappen
-    Wirft sonst ValueError.
+    Paths (in order):
+    1) String equality (same unit) -> unchanged
+    2) Same unique dimension (length, mass, time, ...) -> numeric conversion
+    3) Same SI base dimensions (kg*m^2/s^2 == J) -> value adopted as Quantity in expected_unit
+    4) Plain number + expected_unit -> wrap with unit
+    Otherwise raises ValueError.
     """
     expected = (expected_unit or "").strip()
     if isinstance(value, Quantity):
@@ -8366,7 +8366,7 @@ def _coerce_to_expected_unit(value, expected_unit, context_label):
         if _units_dimensionally_equal(value.unit, expected):
             return Quantity(value.value, expected)
         raise ValueError(
-            f"Einheitenfehler in {context_label}: erwartet [{expected}], erhalten [{value.unit}]."
+            f"Unit error in {context_label}: expected [{expected}], got [{value.unit}]."
         )
     if isinstance(value, (int, float)):
         if expected:
@@ -8380,18 +8380,18 @@ def _check_signature_unit(value, expected_unit, fn_name, arg_name):
 
 
 def _check_return_unit(value, expected_unit, fn_name):
-    return _coerce_to_expected_unit(value, expected_unit, f"return von {fn_name}")
+    return _coerce_to_expected_unit(value, expected_unit, f"return of {fn_name}")
 
 
 # ============================================================================
-# Unit-aware Plotting: Quantity-Listen erhalten automatisch Achsenbeschriftung "[unit]"
+# Unit-aware plotting: lists of Quantity automatically receive axis labels "[unit]"
 # ============================================================================
 
 def _strip_unit_from_seq(seq):
-    """Wenn `seq` eine Liste/Tuple von Quantity ist, gib (values_list, unit_str) zurück; sonst (seq, None)."""
+    """If `seq` is a list/tuple of Quantity, returns (values_list, unit_str); otherwise (seq, None)."""
     if isinstance(seq, (list, tuple)) and seq and all(isinstance(v, Quantity) for v in seq):
         unit = seq[0].unit
-        # Wenn Einheiten in der Liste variieren, lieber neutral lassen.
+        # If units vary across the list, leave it neutral.
         if all(v.unit == unit for v in seq):
             return [v.value for v in seq], unit
     if isinstance(seq, Quantity):
@@ -8416,7 +8416,7 @@ _dedekind_contour_inner = contour
 
 
 def plot(x=None, y=None, title=None, xlabel=None, ylabel=None, xscale="linear", yscale="linear"):
-    """Wie `plot`, aber wenn x/y Listen von Quantity sind, werden Werte extrahiert und Einheiten als Achsenbeschriftung übernommen."""
+    """Like `plot`, but when x/y are lists of Quantity, values are extracted and units used as axis labels."""
     new_x, ux = _strip_unit_from_seq(x) if x is not None else (None, None)
     new_y, uy = _strip_unit_from_seq(y) if y is not None else (None, None)
     if y is None and x is not None and ux:
@@ -9458,8 +9458,8 @@ def lipinski_rule_of_five(smiles):
     }
 
 def _notebook_in_progress_set():
-    """Process-weite Re-Entry-Tracking-Menge. Liegt auf sys, damit sie über exec-Kontexte
-    persistent ist (jeder exec(compile_source(...)) bekommt sonst eine frische ml_runtime-Kopie)."""
+    """Process-wide re-entry tracking set. Stored on sys so it persists across exec contexts
+    (each exec(compile_source(...)) would otherwise get a fresh ml_runtime copy)."""
     import sys as _sys
     key = "_dedekind_notebook_export_in_progress"
     s = getattr(_sys, key, None)
@@ -9471,18 +9471,18 @@ def _notebook_in_progress_set():
 
 def export_notebook(source_path, output_path=None, format="html", title=None,
                     include_hash=True, capture_plots=True):
-    """Führt eine .ddk-Datei aus und schreibt eine Standalone-Datei (HTML oder Markdown),
-    die Quellcode, Stdout-Ausgabe, Plots (Base64-PNG) und einen SHA-256-Hash des Quelltexts bündelt.
+    """Runs a .ddk file and writes a standalone file (HTML or Markdown) bundling
+    source code, stdout output, plots (base64 PNG), and a SHA-256 hash of the source.
 
-    Parameter:
-      source_path: Pfad zur .ddk-Datei.
-      output_path: Zieldatei (default: `<source>.html` bzw. `.md`).
-      format: "html" oder "md".
-      title: Optionaler Titel; default = Dateiname ohne Endung.
-      include_hash: Fügt SHA-256-Hash des Quelltexts in den Output ein (Reproduzierbarkeit).
-      capture_plots: Sammelt `_dedekind_plots` und bettet sie als Base64-PNG ein.
+    Parameters:
+      source_path: path to the .ddk file.
+      output_path: target file (default: `<source>.html` or `.md`).
+      format: "html" or "md".
+      title: optional title; default = filename without extension.
+      include_hash: includes a SHA-256 hash of the source in the output (reproducibility).
+      capture_plots: collects `_dedekind_plots` and embeds them as base64 PNG.
 
-    Rückgabe: Pfad zur erzeugten Datei.
+    Returns: path to the generated file.
     """
     import os
     import sys
@@ -9490,9 +9490,9 @@ def export_notebook(source_path, output_path=None, format="html", title=None,
     import hashlib
     src_path = os.path.abspath(str(source_path))
     if not os.path.isfile(src_path):
-        raise FileNotFoundError(f"export_notebook: Datei nicht gefunden: {src_path}")
-    # Re-Entry-Schutz: wenn die Quelldatei sich selbst exportiert, würde sie sich beim Ausführen
-    # endlos wiederaufrufen. Wir markieren den Pfad und liefern beim re-entry einen Stub zurück.
+        raise FileNotFoundError(f"export_notebook: file not found: {src_path}")
+    # Re-entry guard: if the source file exports itself, it would call itself infinitely while
+    # executing. We mark the path and return a stub on re-entry.
     in_progress = _notebook_in_progress_set()
     if src_path in in_progress:
         return output_path or (os.path.splitext(src_path)[0] +
@@ -9502,15 +9502,15 @@ def export_notebook(source_path, output_path=None, format="html", title=None,
         source = f.read()
     fmt = str(format).lower()
     if fmt not in ("html", "md", "markdown"):
-        raise ValueError("export_notebook: format muss 'html' oder 'md' sein.")
+        raise ValueError("export_notebook: format must be 'html' or 'md'.")
     if output_path is None:
         ext = "html" if fmt == "html" else "md"
         output_path = os.path.splitext(src_path)[0] + f".{ext}"
     title_str = str(title) if title else os.path.basename(os.path.splitext(src_path)[0])
     src_hash = hashlib.sha256(source.encode("utf-8")).hexdigest()
 
-    # Quelltext kompilieren und in isoliertem Globals-Dict ausführen; Stdout abfangen.
-    # Wir importieren lokal, um Zirkular-Imports beim Inlinen zu vermeiden.
+    # Compile the source and execute it in an isolated globals dict; capture stdout.
+    # We import locally to avoid circular imports when inlining.
     try:
         from dedekind import compile_source  # type: ignore[import-not-found]
         py_code = compile_source(source, filepath=src_path)
@@ -9617,11 +9617,11 @@ def _render_notebook_markdown(title, source, stdout_text, plots_b64, src_hash, s
 
 
 # ============================================================================
-# Paper-Mode-Output: print_table mit LaTeX-Booktabs / Markdown / CSV + ± für UncertainQuantity
+# Paper-mode output: print_table with LaTeX booktabs / Markdown / CSV + +/- for UncertainQuantity
 # ============================================================================
 
 def _format_cell_value(v, precision=4):
-    """Formatiert eine Zelle: UncertainQuantity → 'val ± std [unit]', Quantity → 'val [unit]'."""
+    """Formats a cell: UncertainQuantity -> 'val +/- std [unit]', Quantity -> 'val [unit]'."""
     if isinstance(v, UncertainQuantity):
         unit = f" [{v.unit}]" if getattr(v, "unit", "") else ""
         return f"{v.value:.{precision}g} ± {v.std:.{precision}g}{unit}"
@@ -9640,7 +9640,7 @@ def _format_cell_value(v, precision=4):
 
 
 def _format_cell_latex(v, precision=4):
-    """Wie _format_cell_value, aber LaTeX-tauglich (`\\pm`, `\\,[\\mathrm{...}]`)."""
+    """Like _format_cell_value, but LaTeX-ready (`\\pm`, `\\,[\\mathrm{...}]`)."""
     if isinstance(v, UncertainQuantity):
         unit = f"\\,[\\mathrm{{{v.unit}}}]" if getattr(v, "unit", "") else ""
         return f"${v.value:.{precision}g} \\pm {v.std:.{precision}g}{unit}$"
@@ -10684,8 +10684,8 @@ import torch
 
 class KinematicChain:
     """
-    Modelliert einen Roboterarm (kinematische Kette) über Denavit-Hartenberg Parameter.
-    Vollständig differenzierbar für Inverse Kinematik via Gradientenabstieg.
+    Models a robotic arm (kinematic chain) via Denavit-Hartenberg parameters.
+    Fully differentiable for inverse kinematics via gradient descent.
     """
     def __init__(self):
         self.joints = []
@@ -10696,7 +10696,7 @@ class KinematicChain:
         return float(v)
 
     def add_revolute_joint(self, d, a, alpha):
-        """Fügt ein Drehgelenk hinzu. (d=offset, a=link length, alpha=twist)"""
+        """Adds a revolute joint. (d=offset, a=link length, alpha=twist)"""
         d_val = self._get_val(d, "length")
         a_val = self._get_val(a, "length")
         alpha_val = self._get_val(alpha, "angle")
@@ -10704,7 +10704,7 @@ class KinematicChain:
         return self
 
     def add_prismatic_joint(self, theta, a, alpha):
-        """Fügt ein Schubgelenk hinzu. (theta=angle, a=link length, alpha=twist)"""
+        """Adds a prismatic joint. (theta=angle, a=link length, alpha=twist)"""
         t_val = self._get_val(theta, "angle")
         a_val = self._get_val(a, "length")
         alpha_val = self._get_val(alpha, "angle")
@@ -10713,15 +10713,15 @@ class KinematicChain:
 
     def forward_kinematics(self, joint_vars):
         """
-        Berechnet die homogene 4x4 Transformationsmatrix des Endeffektors.
-        `joint_vars` ist ein 1D Tensor/Liste für eine Konfiguration, oder 2D (Batched).
+        Computes the 4x4 homogeneous transformation matrix of the end effector.
+        `joint_vars` is a 1D tensor/list for a single configuration, or 2D (batched).
         """
         jv = _to_tensor(joint_vars).double()
         if jv.ndim == 1:
             jv = jv.unsqueeze(0)  # (1, num_joints)
             
         if jv.shape[1] != len(self.joints):
-            raise ValueError(f"Erwartete {len(self.joints)} Gelenkvariablen, aber bekam {jv.shape[1]}")
+            raise ValueError(f"Expected {len(self.joints)} joint variables, but got {jv.shape[1]}")
 
         N = jv.shape[0]
         T = torch.eye(4, dtype=torch.float64).unsqueeze(0).repeat(N, 1, 1)  # (N, 4, 4)
@@ -10749,7 +10749,7 @@ class KinematicChain:
             d_t = d * one
             a_t = a * one
             
-            # Baue Matrix A_i über torch.stack auf, um die Autograd-Graphen für theta/d zu erhalten!
+            # Build matrix A_i via torch.stack to preserve autograd graphs for theta/d!
             row0 = torch.stack([ct, -st*ca, st*sa, a_t*ct], dim=1)
             row1 = torch.stack([st, ct*ca, -ct*sa, a_t*st], dim=1)
             row2 = torch.stack([zero, sa, ca, d_t], dim=1)
