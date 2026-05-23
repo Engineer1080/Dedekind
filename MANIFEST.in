@@ -1,0 +1,14 @@
+include LICENSE
+include README.md
+include pyproject.toml
+include run_tests.py
+include run_examples.py
+recursive-include docs *.md
+recursive-include examples *.ddk
+recursive-include tests *.ddk
+recursive-include src/dedekind/stdlib *.ddk
+recursive-include src/dedekind/runtime_modules *.py
+recursive-include src/dedekind_jupyter_kernel/kernelspec *
+global-exclude __pycache__
+global-exclude *.py[cod]
+global-exclude *.egg-info

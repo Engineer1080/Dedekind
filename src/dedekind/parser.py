@@ -217,7 +217,8 @@ class Parser:
 
     def parse_use_stmt(self):
         """Accepts `use foo`, `use foo.bar`, `use foo.bar.baz` -- dotted
-        paths resolve to modules/foo/bar/baz.ddk."""
+        paths resolve to <search_path>/foo/bar/baz.ddk
+        (see dedekind.compiler._module_search_paths)."""
         start_line = self.peek().line
         self.consume('USE')
         parts = [self.consume('ID').value]

@@ -92,7 +92,7 @@ dedekind hello.ddk
   every PyPI package is one line away.
 
 Full feature catalogue: [docs/language.md](docs/language.md).
-Why it matters in detail: [docs/language.md#core-features](docs/language.md).
+Why it matters in detail: [docs/language.md#core-features](docs/language.md#core-features).
 
 ---
 

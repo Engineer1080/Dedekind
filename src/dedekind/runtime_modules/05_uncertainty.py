@@ -350,7 +350,12 @@ def confidence_interval(x, alpha=0.05):
     x: 1D-Tensor oder Liste. alpha: Signifikanzniveau (z.B. 0.05 für 95% CI).
     Rückgabe: (untere_Grenze, obere_Grenze).
     """
-    import scipy.stats as scistats  # type: ignore[import-untyped]
+    try:
+        import scipy.stats as scistats  # type: ignore[import-untyped]
+    except ImportError:
+        raise ImportError(
+            "confidence_interval() requires scipy. Install with: pip install 'dedekind[sci]'"
+        )
     t = _to_tensor(x).float().flatten()
     n = t.numel()
     if n < 2:

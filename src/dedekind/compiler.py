@@ -13,12 +13,15 @@ from .ast_nodes import CompileError, Program, UseStmt, FunctionDef, Identifier, 
 
 
 def _module_search_paths(filepath: Optional[str]) -> List[str]:
-    """Search paths for `use mymod` (in this order): current directory,
-    project module folder `modules/`, examples/dedekind/."""
+    """Search paths for `use mymod` (in this order): current file's directory,
+    package-shipped stdlib (`dedekind/stdlib/`), repo-level `modules/`
+    (editable installs only), `examples/dedekind/`, and the current working
+    directory."""
     paths = []
     if filepath:
         paths.append(os.path.dirname(os.path.abspath(filepath)))
     here = os.path.dirname(os.path.abspath(__file__))
+    paths.append(os.path.join(here, "stdlib"))
     project_root = os.path.dirname(os.path.dirname(here))
     paths.append(os.path.join(project_root, "modules"))
     paths.append(os.path.join(project_root, "examples", "dedekind"))
@@ -280,9 +283,32 @@ def export_to_latex(source_code: str) -> str:
     return program_to_latex(ast)
 
 
+USAGE = """\
+Usage: dedekind <source_file.ddk> [options]
+
+Options:
+  --latex                          Emit LaTeX rendering of the source AST.
+  --reproducibility-report PATH    Write a reproducibility report (git commit,
+                                   package versions, RNG seeds, methods section)
+                                   to PATH.
+  --no-units-check                 Disable compile-time unit checking.
+  --no-purity-check                Disable purity checks on jit/grad/fit args.
+  -h, --help                       Show this help message and exit.
+  --version                        Show the installed version and exit.
+"""
+
+
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python compiler.py <source_file> [--latex] [--reproducibility-report PATH]")
+        print(USAGE)
+        sys.exit(2)
+
+    if sys.argv[1] in ("-h", "--help"):
+        print(USAGE)
+        return
+    if sys.argv[1] == "--version":
+        from . import __version__
+        print(f"dedekind {__version__}")
         return
 
     raw_args = list(sys.argv[1:])
@@ -295,21 +321,20 @@ def main():
         i = raw_args.index("--reproducibility-report")
         if i + 1 >= len(raw_args):
             print("Error: --reproducibility-report requires an output PATH argument.")
-            return
+            sys.exit(2)
         repro_path = raw_args[i + 1]
         del raw_args[i:i + 2]
 
     args = [a for a in raw_args
             if a not in ("--no-units-check", "--no-purity-check", "--latex")]
     if not args:
-        print("Usage: python compiler.py <source_file> [--latex] "
-              "[--reproducibility-report PATH] [--no-units-check] [--no-purity-check]")
-        return
+        print(USAGE)
+        sys.exit(2)
 
     filepath = args[0]
     if not os.path.exists(filepath):
         print(f"Error: File '{filepath}' not found.")
-        return
+        sys.exit(1)
 
     with open(filepath, 'r') as f:
         source = f.read()
