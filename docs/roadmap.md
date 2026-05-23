@@ -17,8 +17,7 @@
 *   [x] Implementation of `.gpu()` and `.cpu()` modifiers.
 
 ### Phase 4: Production (v0.2) ✅
-*   [x] **Native Performance**: Integration with MLIR/Inductor via `.fast()`.
-*   [x] **MLIR Prototype**: Dedekind-Dialect IR generation.
+*   [x] **Native Performance**: Integration with PyTorch Inductor via `.fast()` (`torch.compile`).
 *   [x] **Studio Upgrade**: Resizable terminal and UI polish.
 
 ### Phase 5: Advanced Mathematics ✅
@@ -28,11 +27,6 @@
 ### Phase 6: Tensor Contraction & Logic (v0.3) ✅
 *   [x] **Einsum**: High-level elective tensor contraction syntax.
 *   [x] **Complex/Quaternion**: Built-in support for rotational math.
-
-### Phase 8: AOT Compilation & LLVM Backend ✅
-*   [x] **Static Binary**: Standalone `.exe` generation without Python.
-*   [x] **MLIR Pipeline**: Dedekind -> MLIR -> LLVM -> Binary.
-*   [x] **Verification**: Native binary execution on Windows.
 
 ### Phase 9: Ricci Calculus & Universal Constants ✅
 *   [x] **Index Notation**: Support for `^` and `_` suffixes.
@@ -65,6 +59,13 @@
 ### Phase 15: Differentiable PDE Solvers (v0.8) ✅
 *   [x] **pde_heat_1d**: Differentiable 1D heat solver \(u_t = k\,u_{xx}\); finite differences + `ode_solve`; Dirichlet boundary conditions.
 *   [x] **pde_heat_2d**: Differentiable 2D heat solver \(u_t = k\,(u_{xx}+u_{yy})\); gradients through `u0` and `k`.
+
+### Phase 16: Native MLIR Backend & AOT Compilation (planned)
+The current `src/dedekind/mlir_codegen.py` only emits MLIR-style text and `src/dedekind/aot_compiler.py` falls back to C++ stubs — there is no real MLIR/LLVM toolchain integration yet. This phase delivers a production-grade native backend.
+*   [ ] **MLIR Dialect**: Promote the prototype text emitter to a real `dedekind` MLIR dialect (TableGen / Python bindings).
+*   [ ] **MLIR Pipeline**: Wire up `mlir-opt` and `mlir-translate` so Dedekind -> MLIR -> LLVM IR -> object code runs end-to-end.
+*   [ ] **Static Binary**: Replace the C++ stub generator in `aot_compiler.py` with real LLVM linking; produce standalone `.exe` / ELF without Python.
+*   [ ] **Verification**: Execute the AOT-compiled binaries on Windows, Linux, and macOS in CI.
 
 ## 🔭 Beyond v1.0: Future Vision
 

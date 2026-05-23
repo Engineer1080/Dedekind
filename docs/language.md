@@ -23,7 +23,7 @@ Living catalogue of every Dedekind built-in, operator and runtime function. Gene
 - **Datei-I/O**: `read_file(path)` (Text UTF-8), `write_file(path, content)`, `file_exists(path)`.
 - **Netzwerk**: `http_get(url)`, `http_post(url, data)` (data String oder Dict/List als JSON); Antworttext UTF-8.
 - **JSON**: `json_parse(s)` → Objekt (Dict/List; Zugriff `obj["key"]`), `json_stringify(obj)` → String.
-- **AOT Compilation**: Truly native binary generation via MLIR and LLVM.
+- **AOT Compilation** *(planned, see Roadmap Phase 16)*: Native binary generation via MLIR and LLVM. The current `aot_compiler.py` is a prototype that emits MLIR-style text and C++ stubs; the real toolchain integration is not yet wired up.
 - **IDE-Integration**: Der **Dedekind Jupyter Kernel** (`src/dedekind_jupyter_kernel/`, installiert via `python -m dedekind.install_kernel`) lässt Dedekind nativ in Jupyter, JupyterLab, Spyder und VS Code laufen. Eine eigenständige IDE — **Dedekind Studio** (Spyder-Fork) — wird in einem separaten, geschlossenen Repository gepflegt; die Sprache ist davon unabhängig.
 
 ## Chemistry & biology

@@ -49,7 +49,7 @@ Unlike general-purpose languages retrofitted with parallel computing capabilitie
 - **Fundamental Constants**: Native access to `c`, `G`, `h`, `k_B`, `k_e` as **Quantity** with SI units (see §15).
 - **Physical Units**: Literals with units (`10[m]`, `5[m/s]`, `1.0[kg]`); arithmetic combines units; display simplified to J, N where applicable.
 - **4D Rotational Math**: Native Quaternion support (`i`, `j`, `k` suffixes) and `.rotate()` method; unary minus supported (`-1.0 + 0i`).
-- AOT Compilation (MLIR/LLVM), Dedekind Studio IDE (v0.6).
+- AOT Compilation (MLIR/LLVM) *(planned, see Roadmap Phase 16; current implementation is a text-only prototype)*, Dedekind Studio IDE (v0.6).
 
 ## 4. Syntax Overview
 

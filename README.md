@@ -1,6 +1,6 @@
 # Dedekind
 
-![Version](https://img.shields.io/badge/Version-2.9.0-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Version](https://img.shields.io/badge/Version-2.9.0-blue) ![License](https://img.shields.io/badge/License-Apache_2.0-green) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **A programming language for scientific computing.** Write your simulator
 once in readable code with units — and get inverse problems, topology
@@ -134,4 +134,4 @@ is one option among many.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+Apache 2.0. See [LICENSE](LICENSE).
