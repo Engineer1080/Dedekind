@@ -78,11 +78,28 @@ below describe that work in detail.
 - **Differentiable Heat Transfer & Thermodynamics (`use thermal`):** Stationary and transient (implicit backward Euler method) thermal diffusion simulation on Q4 elements, thermal SIMP conductance interpolation, and OC topology optimization for heat-dissipating structures (heatsinks).
 - **Differentiable DSP & Electronics:** Native biquad IIR and FIR filter structures with autograd, and a complex MNA nodal network solver for AC circuit analysis with complex phase angles.
 
+### What's New in v2.1.0 (Electrical Engineering, Control Theory & Robotics)
+
+- **Differentiable Circuit Simulation (`use signals`):** Declarative modeling of electrical networks with solvers for DC node voltages and branch currents via Modified Nodal Analysis (MNA), fully compatible with Autograd-based parameter optimization.
+- **Block-Diagram Control Theory (`use signals`):** Stateful block-diagram modeling for closed-loop LTI control simulations using transfer functions, state-space models, PID controllers, and saturations.
+- **Differentiable Robotics (`use robotics`):** Serial-link manipulator modeling via the `KinematicChain` class defined by Denavit-Hartenberg (DH) parameters, enabling forward kinematics, Jacobian extraction, and limit analysis.
+- **Unit Safety**: Enforces strict unit checking for electrical units (Volt, Ampere, Ohm) and kinematic states.
+
 ### What's New in v2.0.0 (Release)
 
 - **Earth Sciences, Climatology & Meteorology:** Dedekind now provides native support for Earth science calculations (e.g., `coriolis_parameter`, `saturated_vapor_pressure`, `dew_point`, `wind_chill`, `heat_index`) and geophysical units like `hPa`.
 - **Cleaned and Unified Codebase:** All duplicates have been eliminated. The cheminformatics functions (`smiles_descriptors`, `lipinski_rule_of_five`) have been unified and now feature a robust, pure Python fallback if `rdkit` is not installed.
 - **Consolidation of All Features:** Full merge of the Quantum Computing Bridge, Clifford/Geometric Algebra G(3,0), Generics, Try/Catch & Slicing, and Multi-File Modules into a stable master branch. All 52 test suites pass.
+
+### What's New in v1.21.0 (Quantum Computing Bridge)
+
+- **Quantum Computing Layer:** Native, zero-dependency simulator. Model quantum algorithms with `quantum_circuit(n)` supporting standard single/multi-qubit gates (`h`, `x`, `y`, `z`, `cx`, `cz`, `rx`, `ry`, `rz`, `swap`), measurement, and expectations.
+- **Simulator & Metrics:** `statevec_sim()` (statevector simulator with optional shots), `statevec_probs()`, and expectation calculations (`statevec_expectation`).
+- **Convenience Constructors:** Ready-to-use helpers for `bell_state(i)`, `ghz_state(n)`, and `grover_circuit(n, target)`.
+- **Variational Quantum Eigensolver (VQE):** Differentiable quantum-classical optimization with `vqe_circuit()` and `vqe_energy()` supporting parameter training via autograd.
+- **Information Utilities:** Compute `fidelity()`, `entropy_von_neumann()`, and `schmidt_rank()`.
+- **Physical Unit Checks:** Native validation of physical hardware limits: `qubit_frequency_check()` (in GHz/MHz/THz), `coherence_time_check()` (in us/ns/ms/s), and `energy_gap_check()` (in eV/meV/J).
+- Examples: `quantum_bell.ddk`, `quantum_grover.ddk`, `quantum_vqe.ddk`. Test: `quantum_circuit_test.ddk`.
 
 ### What's New in v1.20.0
 
