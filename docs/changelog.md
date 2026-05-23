@@ -45,22 +45,22 @@ Historical record of Dedekind releases. Most recent first.
 ### What's New in v1.19.0
 
 - **Multi-File-Module mit Sichtbarkeit.** Zwei zusammengehoerende Sprach-Features fuer reale Projekt-Strukturen.
-- **Gepunktete Modul-Pfade:** `use foo.bar.baz` resolved auf `modules/foo/bar/baz.ddk`. Verschachtelte Verzeichnis-Struktur fuer thematische Gliederung statt einem flachen `modules/`-Ordner.
+- **Gepunktete Modul-Pfade:** `use foo.bar.baz` resolved auf `modules/foo/bar/baz.ddk` (bzw. abweichender Pfad in examples). Verschachtelte Verzeichnis-Struktur fuer thematische Gliederung statt einem flachen `modules/`-Ordner.
   ```dedekind
-  use geometry.area       // -> modules/geometry/area.ddk
-  use geometry.volume     // -> modules/geometry/volume.ddk
+  use compiler_features.demo_geometry.area       // -> examples/dedekind/compiler_features/demo_geometry/area.ddk
+  use compiler_features.demo_geometry.volume     // -> examples/dedekind/compiler_features/demo_geometry/volume.ddk
   ```
 - **`pub fn` fuer Export-Kontrolle:** Nur als `pub fn name()` deklarierte Funktionen sind ausserhalb des Moduls sichtbar; alle anderen Funktionen werden zur Compile-Zeit mit `__ddk_<modpath>_<name>` umbenannt und sind damit von aussen nicht erreichbar.
   ```dedekind
-  // modules/geometry/area.ddk
+  // examples/dedekind/compiler_features/demo_geometry/area.ddk
   fn priv_pi() { return 3.14159265358979 }   // privat
   pub fn circle_area(r) {                     // exportiert
       return priv_pi() * r * r
   }
   ```
-- **Backward-Kompatibel:** Module ohne jede `pub`-Deklaration laufen im **Legacy-Modus** — alle Funktionen bleiben oeffentlich. Damit bleiben die bestehenden 7 Standardbibliotheks-Module (`physics`, `stats`, `chemistry`, `biology`, `math`, `ml`, `mathlib`) ohne Aenderung funktionsfaehig. Wer Sichtbarkeit haben will, deklariert mindestens eine Funktion als `pub` — ab dann gilt der Opt-In-Modus.
-- **Visibility-Mangling** zur Compile-Zeit via `_apply_module_visibility(mod_ast, module_name)`: AST-Walker (`_rename_in_ast`) ersetzt sowohl `FunctionDef.name` als auch jeden `Identifier`-Reference auf private Funktionen — Aufrufe innerhalb des Moduls werden konsistent mit-renamed.
-- Beispiel: `multi_file_modules_demo.ddk` mit zwei Submodulen `geometry.area` und `geometry.volume`, plus Legacy-Modul `math`. Test: `multi_file_modules_test.ddk` (10 Asserts: gepunktete Pfade, private Funktionen unsichtbar via try/catch aus v1.17, Backward-Kompatibilitaet). 45/45 Tests gruen, 101/101 Beispiele kompilieren.
+- **Backward-Kompatibel:** Module ohne jede `pub`-Deklaration laufen im **Legacy-Modus** — alle Funktionen bleiben oeffentlich. Damit bleiben die bestehenden 6 Standardbibliotheks-Module (`physics`, `stats`, `chemistry`, `biology`, `math`, `ml`) ohne Aenderung funktionsfaehig. Wer Sichtbarkeit haben will, deklariert mindestens eine Funktion als `pub` — ab dann gilt der Opt-In-Modus.
+- **Visibility-Mangling** zur Compile-Zeit via `_apply_module_visibility(mod_ast, module_name)`: AST-Walker (`_rename_in_ast`) ersetzt sowohl `FunctionDef.name` als auch jede `Identifier`-Reference auf private Funktionen — Aufrufe innerhalb des Moduls werden konsistent mit-renamed.
+- Beispiel: `multi_file_modules_demo.ddk` mit zwei Submodulen `compiler_features.demo_geometry.area` and `compiler_features.demo_geometry.volume`, plus Legacy-Modul `math`. Test: `multi_file_modules_test.ddk` (10 Asserts: gepunktete Pfade, private Funktionen unsichtbar via try/catch aus v1.17, Backward-Kompatibilitaet). 45/45 Tests gruen, 101/101 Beispiele kompilieren.
 
 ### What's New in v1.18.0
 

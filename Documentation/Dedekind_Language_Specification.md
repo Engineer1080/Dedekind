@@ -948,8 +948,7 @@ Two language features that turn `use` from a simple file include into a proper m
 **Dotted module paths:**
 
 ```dedekind
-use myproject.math.algebra  // -> modules/myproject/math/algebra.ddk
-use geometry                // -> modules/geometry.ddk  (flat)
+use compiler_features.demo_geometry.area  // -> examples/dedekind/compiler_features/demo_geometry/area.ddk
 ```
 
 `_resolve_module` splits the name on `.` and treats each segment as a directory level (`os.path.join(*parts) + ".ddk"`). This lets you organize larger codebases thematically instead of in a flat folder.
@@ -957,7 +956,7 @@ use geometry                // -> modules/geometry.ddk  (flat)
 **Public/private functions:**
 
 ```dedekind
-// modules/geometry.ddk
+// examples/dedekind/compiler_features/demo_geometry/area.ddk
 
 fn priv_pi() { return 3.14159265358979 }      // private
 fn priv_half(x) { return x / 2.0 }            // private
@@ -973,11 +972,11 @@ pub fn triangle_area(base, height) {
 
 After import, `circle_area` and `triangle_area` are visible; `priv_pi` and `priv_half` are not. The compile-time pass `_apply_module_visibility` renames every private function to `__ddk_<flat_modpath>_<name>` and rewrites all call sites inside the module accordingly. Attempting to call a private function from outside raises a runtime error (mangled name not defined).
 
-**Backward compatibility:** modules that have **no** `pub` declarations run in *legacy mode* — every function stays public, matching pre-v1.19 behavior. The standard library modules (`physics`, `stats`, `chemistry`, `biology`, `math`, `ml`, `mathlib`, etc.) continue to work unchanged. Adding a single `pub fn` to any of them flips the file into opt-in mode, where everything else becomes private.
+**Backward compatibility:** modules that have **no** `pub` declarations run in *legacy mode* — every function stays public, matching pre-v1.19 behavior. The standard library modules (`physics`, `stats`, `chemistry`, `biology`, `math`, `ml`, etc.) continue to work unchanged. Adding a single `pub fn` to any of them flips the file into opt-in mode, where everything else becomes private.
 
 **Constraint:** `use` statements must remain at the top level — they are expanded in the `_expand_uses` pre-pass before parsing function bodies. Inline `use` inside a function body is not supported.
 
-Example: `examples/dedekind/compiler_features/multi_file_modules_demo.ddk` (uses the `geometry` module to show visibility, plus the legacy `math` module). Test: `tests/dedekind/multi_file_modules_test.ddk`.
+Example: `examples/dedekind/compiler_features/multi_file_modules_demo.ddk` (uses the `compiler_features.demo_geometry.area` and `compiler_features.demo_geometry.volume` modules to show visibility, plus the legacy `math` module). Test: `tests/dedekind/multi_file_modules_test.ddk`.
 
 ### 15.26 Generics / Type Parameters (v1.20)
 
