@@ -44,7 +44,7 @@ class FunctionDef(Node):
 
 @dataclass
 class UseStmt(Node):
-    """Modul-/Import-Anweisung: `use mathlib` lädt mathlib.ddk in den aktuellen Kompilier-Pass."""
+    """Modul-/Import-Anweisung: `use math` lädt math.ddk in den aktuellen Kompilier-Pass."""
     module: str
 
 

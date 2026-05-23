@@ -1,6 +1,6 @@
 // v1.4 Features-Showcase: Module, Seed, DataFrame+CSV, Unit-aware Plots, @units-Signaturen
 
-use mathlib  // lädt modules/mathlib.ddk -> square, cube, PHI
+use math  // lädt modules/math.ddk -> square, cube, PHI
 
 fn kinetic_energy(m: [kg], v: [m/s]) -> [J] {
     // Compile-Zeit-Annotation: m in kg, v in m/s; Rückgabe in J.

@@ -1,5 +1,5 @@
-// Modul-System: `use mathlib` lädt modules/mathlib.ddk und stellt square/cube/PHI bereit.
-use mathlib
+// Modul-System: `use math` lädt modules/math.ddk und stellt square/cube/PHI bereit.
+use math
 
 fn main() {
     assert(square(4) == 16, "square(4) == 16")

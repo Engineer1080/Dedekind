@@ -107,3 +107,12 @@ fn sigmoid(x) {
 fn softplus(x) {
     return log(1.0 + exp(x))
 }
+
+fn square(x) {
+    return x * x
+}
+
+fn cube(x) {
+    return x * x * x
+}
+
