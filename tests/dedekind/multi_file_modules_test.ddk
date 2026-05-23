@@ -1,8 +1,9 @@
 // Tests fuer Multi-File-Module mit Sichtbarkeit (v1.19).
 //
-// Voraussetzung: modules/geometry.ddk existiert mit pub-Annotationen.
+// Voraussetzung: examples/dedekind/compiler_features/demo_geometry/ existiert mit pub-Annotationen.
 
-use geometry
+use compiler_features.demo_geometry.area
+use compiler_features.demo_geometry.volume
 use math      // Backward-Kompatibilitaet: kein pub -> alles public
 
 fn approx(a, b, tol) {
@@ -12,13 +13,13 @@ fn approx(a, b, tol) {
 }
 
 fn main() {
-    // --- 1. Flächenberechnungen aus geometry ---
-    assert(approx(circle_area(1.0), 3.14159265, 1e-6), "circle_area aus geometry")
-    assert(approx(triangle_area(4.0, 3.0), 6.0, 1e-9), "triangle_area aus geometry")
+    // --- 1. Flächenberechnungen aus demo_geometry.area ---
+    assert(approx(circle_area(1.0), 3.14159265, 1e-6), "circle_area aus demo_geometry.area")
+    assert(approx(triangle_area(4.0, 3.0), 6.0, 1e-9), "triangle_area aus demo_geometry.area")
 
-    // --- 2. Volumenberechnungen aus geometry ---
-    assert(approx(cube_volume(3.0), 27.0, 1e-9), "cube_volume aus geometry")
-    assert(approx(sphere_volume(1.0), 4.18879, 1e-4), "sphere_volume aus geometry")
+    // --- 2. Volumenberechnungen aus demo_geometry.volume ---
+    assert(approx(cube_volume(3.0), 27.0, 1e-9), "cube_volume aus demo_geometry.volume")
+    assert(approx(sphere_volume(1.0), 4.18879, 1e-4), "sphere_volume aus demo_geometry.volume")
 
     // --- 3. Sichtbarkeits-Check: private Funktionen unsichtbar ---
     private_inaccessible = false

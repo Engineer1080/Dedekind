@@ -1,0 +1,10 @@
+fn priv_half(x) { return x / 2.0 }
+fn priv_pi() { return 3.14159265358979 }
+
+pub fn circle_area(r) {
+    return priv_pi() * r * r
+}
+
+pub fn triangle_area(base, height) {
+    return priv_half(base * height)
+}

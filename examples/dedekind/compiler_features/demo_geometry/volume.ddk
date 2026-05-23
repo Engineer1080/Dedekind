@@ -1,18 +1,6 @@
-// Modul: geometry — Geometrische Berechnungen (Flächen und Volumen)
-// Nutzt pub-Sichtbarkeit: nur öffentliche Funktionen werden exportiert.
-
-fn priv_half(x) { return x / 2.0 }
 fn priv_pi() { return 3.14159265358979 }
 fn priv_one_third() { return 1.0 / 3.0 }
 fn priv_four_thirds() { return 4.0 / 3.0 }
-
-pub fn circle_area(r) {
-    return priv_pi() * r * r
-}
-
-pub fn triangle_area(base, height) {
-    return priv_half(base * height)
-}
 
 pub fn cube_volume(side) {
     return side * side * side

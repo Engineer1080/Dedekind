@@ -77,6 +77,8 @@ fn sphere_volume(r) { return (4.0 / 3.0) * pi * r * r * r }
 fn sphere_surface(r) { return 4.0 * pi * r * r }
 fn cylinder_volume(r, h) { return pi * r * r * h }
 fn cone_volume(r, h) { return pi * r * r * h / 3.0 }
+fn triangle_area(base, height) { return 0.5 * base * height }
+fn cube_volume(side) { return side * side * side }
 
 fn hypotenuse(a, b) {
     return sqrt(a * a + b * b)
