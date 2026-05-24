@@ -40,8 +40,8 @@ def main():
         print("No .ddk test files found.")
         sys.exit(0)
 
-    if SRC_DIR not in sys.path:
-        sys.path.insert(0, SRC_DIR)
+    # Ensure local src/ takes precedence even if already in sys.path
+    sys.path = [SRC_DIR] + [p for p in sys.path if p != SRC_DIR]
     try:
         from dedekind import compile_source, dedekind_exec
     except ImportError as e:
