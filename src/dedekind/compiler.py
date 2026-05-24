@@ -283,6 +283,45 @@ def export_to_latex(source_code: str) -> str:
     return program_to_latex(ast)
 
 
+def init_examples():
+    import urllib.request
+    import zipfile
+    import io
+    print("Downloading Dedekind examples from GitHub...")
+    url = "https://github.com/Engineer1080/Dedekind/archive/refs/heads/master.zip"
+    try:
+        req = urllib.request.Request(
+            url, 
+            headers={'User-Agent': 'Mozilla/5.0'}
+        )
+        with urllib.request.urlopen(req) as response:
+            zip_data = response.read()
+        
+        with zipfile.ZipFile(io.BytesIO(zip_data)) as zip_ref:
+            extracted = 0
+            for file_info in zip_ref.infolist():
+                name = file_info.filename
+                # Match files under 'Dedekind-master/examples/'
+                match = re.match(r"^Dedekind-master/examples/(.*)$", name)
+                if match:
+                    rel_path = match.group(1)
+                    if not rel_path:  # skip base directory
+                        continue
+                    
+                    target_path = os.path.join("examples", rel_path)
+                    if file_info.is_dir():
+                        os.makedirs(target_path, exist_ok=True)
+                    else:
+                        os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                        with zip_ref.open(name) as source_file, open(target_path, "wb") as target_file:
+                            target_file.write(source_file.read())
+                        extracted += 1
+            print(f"Successfully downloaded and initialized {extracted} example files in ./examples/")
+    except Exception as e:
+        print(f"Error downloading examples: {e}")
+        print("Please visit https://github.com/Engineer1080/Dedekind to clone the repository manually.")
+
+
 USAGE = """\
 Usage: dedekind <source_file.ddk> [options]
 
@@ -293,12 +332,26 @@ Options:
                                    to PATH.
   --no-units-check                 Disable compile-time unit checking.
   --no-purity-check                Disable purity checks on jit/grad/fit args.
+  --init-examples                  Initialize showcase examples in the current directory.
   -h, --help                       Show this help message and exit.
   --version                        Show the installed version and exit.
 """
 
 
 def main():
+    # Configure stdout/stderr to use UTF-8 on Windows to prevent UnicodeEncodeError
+    if sys.platform.startswith("win"):
+        if hasattr(sys.stdout, "reconfigure"):
+            try:
+                sys.stdout.reconfigure(encoding="utf-8")
+            except Exception:
+                pass
+        if hasattr(sys.stderr, "reconfigure"):
+            try:
+                sys.stderr.reconfigure(encoding="utf-8")
+            except Exception:
+                pass
+
     if len(sys.argv) < 2:
         print(USAGE)
         sys.exit(2)
@@ -309,6 +362,9 @@ def main():
     if sys.argv[1] == "--version":
         from . import __version__
         print(f"dedekind {__version__}")
+        return
+    if sys.argv[1] == "--init-examples":
+        init_examples()
         return
 
     raw_args = list(sys.argv[1:])

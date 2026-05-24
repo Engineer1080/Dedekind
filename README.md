@@ -98,6 +98,12 @@ Why it matters in detail: [docs/language.md#core-features](docs/language.md#core
 
 ## Showcase examples
 
+If you installed Dedekind via `pip`, you can initialize the showcase examples in your current directory by running:
+```bash
+dedekind --init-examples
+```
+This will automatically download and extract the `./examples/` directory.
+
 A curated entry-point selection (full list:
 [examples/dedekind/](examples/dedekind/)):
 
