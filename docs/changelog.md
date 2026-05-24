@@ -3,6 +3,16 @@
 Historical record of Dedekind releases. Most recent first.
 
 
+### What's New in v3.0.1 (UX Enhancements & Windows Fixes)
+
+The 3.0.1 release addresses minor onboarding issues for researchers installing purely via PyPI:
+
+- **Windows Console Encoding Fix.** The compiler now automatically configures `sys.stdout` and `sys.stderr` to use UTF-8 when running on Windows. This prevents crashes with `UnicodeEncodeError` when outputting mathematical symbols like `≈` or `∂` in CMD or PowerShell.
+- **Showcase Examples Downloader.** Added the `--init-examples` CLI flag. Running `dedekind --init-examples` downloads and extracts the official showcase examples directly from the GitHub repository (`master` branch) into a local `./examples/` directory.
+- **Onboarding Documentation.** Updated the `README.md` to document the new examples initialization command.
+
+---
+
 ### What's New in v3.0.0 (First Stable PyPI Release)
 
 The 3.0.0 release marks Dedekind's first publication on PyPI. The
