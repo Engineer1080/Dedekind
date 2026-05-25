@@ -1,0 +1,42 @@
+// Test for imperial units module and new constants (g_0, m_n, mu_B, R_inf)
+
+use imperial
+
+fn approx(a, b, tol) {
+    d = unwrap(a) - unwrap(b)
+    if d < 0 { d = -d }
+    return d < tol
+}
+
+fn main() {
+    // 1. Check constants values and units
+    assert(approx(g_0 + 0.0[m/s^2], 9.80665, 1e-5), "g_0 value")
+    assert(approx(m_n + 0.0[kg], 1.67492749804e-27, 1e-35), "m_n value")
+    assert(approx(mu_B + 0.0[J/T], 9.2740100783e-24, 1e-32), "mu_B value")
+    assert(approx(R_inf + 0.0[1/m], 10973731.56816, 1e-4), "R_inf value")
+
+    // 2. Check imperial unit conversions
+    assert(approx(0.0[m] + 1.0[inch], 0.0254, 1e-7), "inch to m")
+    assert(approx(0.0[m] + 1.0[foot], 0.3048, 1e-7), "foot to m")
+    assert(approx(0.0[m] + 1.0[yard], 0.9144, 1e-7), "yard to m")
+    assert(approx(0.0[m] + 1.0[mile], 1609.344, 1e-4), "mile to m")
+    
+    assert(approx(0.0[kg] + 1.0[pound], 0.45359237, 1e-7), "pound to kg")
+    assert(approx(0.0[kg] + 1.0[ounce], 0.028349523125, 1e-10), "ounce to kg")
+
+    assert(approx(0.0[N] + 1.0[lbf], 4.4482216152605, 1e-7), "lbf to N")
+    assert(approx(0.0[Pa] + 1.0[psi], 6894.757293168, 1e-4), "psi to Pa")
+    assert(approx(0.0[W] + 1.0[hp], 745.6998715822702, 1e-4), "hp to W")
+    assert(approx(0.0[J] + 1.0[BTU], 1055.05585262, 1e-4), "BTU to J")
+    assert(approx(0.0[L] + 1.0[gallon], 3.785411784, 1e-7), "gallon to L")
+
+    // 3. Check compound custom unit arithmetic (BTU/h to W)
+    heater = 1.0[BTU/h]
+    heater_w = 0.0[W] + heater
+    expected_w = 1055.05585262 / 3600.0
+    assert(approx(heater_w, expected_w, 1e-7), "BTU/h to W conversion")
+
+    print("imperial_units_and_constants_test: All asserts passed successfully!")
+}
+
+main()

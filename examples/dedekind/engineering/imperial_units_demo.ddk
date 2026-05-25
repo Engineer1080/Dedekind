@@ -1,0 +1,61 @@
+// Demonstration of the new imperial/US customary units module:
+// - use imperial
+// Demonstrates unit conversion and calculations for distance, pressure, force, and energy.
+
+use imperial
+
+fn print_separator() {
+    print("---------------------------------------------")
+}
+
+fn main() {
+    print("Dedekind Imperial/US Customary Units Demonstration")
+    print_separator()
+
+    // 1. Length conversions: feet, yards, miles to meters
+    print("1. Length Conversions:")
+    d_feet = 5280.0[ft]
+    d_miles = 0.0[mile] + d_feet // Converts to miles (first operand defines result unit)
+    print("5280 feet in miles: ", d_miles)
+    
+    // Convert to meters (target unit [m] on the left side of '+')
+    d_meters = 0.0[m] + d_miles
+    print("1 mile in meters: ", d_meters)
+    print_separator()
+
+    // 2. Pressure and Stress: psi (pounds per square inch) to Pascals
+    print("2. Pressure & Stress (psi vs Pa):")
+    tire_pressure = 32.0[psi]
+    tire_pressure_pa = 0.0[Pa] + tire_pressure
+    print("Car tire pressure (32 psi) in Pascals: ", tire_pressure_pa)
+    print_separator()
+
+    // 3. Force: lbf (pound-force)
+    print("3. Force (lbf vs N):")
+    rocket_thrust = 1000.0[lbf]
+    rocket_thrust_n = 0.0[N] + rocket_thrust
+    print("Thrust (1000 lbf) in Newtons: ", rocket_thrust_n)
+    print_separator()
+
+    // 4. Power and Energy: hp (horsepower) and BTU (British Thermal Unit)
+    print("4. Power & Energy (hp, BTU, W, J):")
+    engine_power = 150.0[hp]
+    engine_power_w = 0.0[W] + engine_power
+    print("Engine power (150 hp) in Watts: ", engine_power_w)
+    
+    heater_output = 12000.0[BTU/h] // compound unit
+    heater_output_w = 0.0[W] + heater_output // BTU/h is equivalent to power (J/s = W)
+    print("Heater output (12000 BTU/h) in Watts: ", heater_output_w)
+    print_separator()
+
+    // 5. Volume: gallon (gal) to Litres
+    print("5. Volume (gal vs L):")
+    fuel_tank = 15.0[gal]
+    fuel_tank_litres = 0.0[L] + fuel_tank
+    print("Fuel tank (15 gallons) in Litres: ", fuel_tank_litres)
+    print_separator()
+
+    print("Demo successfully completed!")
+}
+
+main()

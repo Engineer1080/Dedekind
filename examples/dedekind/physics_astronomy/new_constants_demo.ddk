@@ -1,0 +1,51 @@
+// Demonstration of the new fundamental physical constants in Dedekind:
+// - g_0 (Standard gravity)
+// - m_n (Neutron mass)
+// - mu_B (Bohr magneton)
+// - R_inf (Rydberg constant)
+
+fn print_separator() {
+    print("---------------------------------------------")
+}
+
+fn main() {
+    print("Dedekind Fundamental Constants Demonstration")
+    print_separator()
+
+    // 1. Standard gravity g_0
+    print("1. Standard Gravity (g_0):")
+    h_drop = 100.0[m]
+    // Time to fall t = sqrt(2 * h / g_0)
+    t_fall = sqrt(2.0 * h_drop / g_0)
+    print("Free fall from 100m takes: ", t_fall) // in seconds
+    print_separator()
+
+    // 2. Neutron Mass m_n vs Proton Mass m_p
+    print("2. Mass Comparison (m_n vs m_p vs m_e):")
+    print("Neutron mass (m_n): ", m_n)
+    print("Proton mass (m_p):  ", m_p)
+    print("Electron mass (m_e): ", m_e)
+    mass_diff = m_n - m_p
+    print("Mass difference (m_n - m_p): ", mass_diff)
+    print_separator()
+
+    // 3. Bohr Magneton mu_B
+    print("3. Bohr Magneton (mu_B):")
+    // Magnetic potential energy U = - mu_B * B
+    B_field = 1.5[T] // magnetic field of a strong magnet/MRI
+    energy_gap = 2.0 * mu_B * B_field
+    print("Energy gap in a 1.5 T magnetic field: ", energy_gap)
+    print_separator()
+
+    // 4. Rydberg Constant R_inf
+    print("4. Rydberg Formula (R_inf):")
+    // Lyman-alpha transition: 1/lambda = R_inf * (1/1^2 - 1/2^2) = R_inf * 3/4
+    inv_lambda = R_inf * 0.75
+    lambda_lyman = 1.0 / inv_lambda
+    print("Lyman-alpha wavelength: ", lambda_lyman) // should be around 1.216e-7 m (121.6 nm)
+    print_separator()
+    
+    print("Demo successfully completed!")
+}
+
+main()

@@ -98,6 +98,7 @@ _RUNTIME_BUILTIN_NAMES = frozenset({
     # Constants (from ml_runtime)
     'pi', 'e', 'c', 'G', 'h', 'k_B', 'k_e', 'hbar', 'e_charge', 'epsilon_0', 'mu_0',
     'm_e', 'm_p', 'N_A', 'R_gas', 'alpha', 'sigma_SB', 'F_faraday',
+    'g_0', 'm_n', 'mu_B', 'R_inf',
 })
 
 

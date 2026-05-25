@@ -109,7 +109,7 @@ class Quantity:
         return _normalize_unit_for_compare(self.unit) == _normalize_unit_for_compare(other.unit)
 
     def _add_sub_quantity(self, other, is_add):
-        """Addition/subtraction with automatic conversion for the same dimension (length, mass, time, pressure)."""
+        """Addition/subtraction with automatic conversion for the same dimension."""
         dim_self = _get_dimension(self.unit)
         dim_other = _get_dimension(other.unit)
         if dim_self is not None and dim_self == dim_other:
@@ -121,9 +121,20 @@ class Quantity:
         if self._same_unit(other):
             v = (self.value + other.value) if is_add else (self.value - other.value)
             return Quantity(v, self.unit)
+        # Fallback to general parsing of base dimensions (handles compound and custom units)
+        d1 = _parse_unit_to_base_dims(self.unit)
+        d2 = _parse_unit_to_base_dims(other.unit)
+        if d1 is not None and d2 is not None and d1 == d2:
+            f1 = _parse_unit_factor(self.unit)
+            f2 = _parse_unit_factor(other.unit)
+            v_self_base = self.value * f1
+            v_other_base = other.value * f2
+            result_base = (v_self_base + v_other_base) if is_add else (v_self_base - v_other_base)
+            result_value = result_base / f1
+            return Quantity(result_value, self.unit)
         raise ValueError(
             f"Unit error during {'addition' if is_add else 'subtraction'}: [{self.unit}] vs [{other.unit}]. "
-            "Same unit or compatible units of the same dimension (e.g., length, mass, time, pressure, current, temperature, mol, cd, volume, energy, voltage, frequency, charge, resistance, power, angle rad/deg) required."
+            "Same unit or compatible units of the same dimension required."
         )
 
     def __add__(self, other):
@@ -470,6 +481,10 @@ R_gas   = Quantity(8.314462618, "J/(K*mol)")  # universal gas constant R = N_A *
 alpha   = Quantity(7.2973525693e-3, "")      # fine-structure constant (dimensionless)
 sigma_SB = Quantity(5.670374419e-8, "W/(m^2*K^4)")  # Stefan-Boltzmann
 F_faraday = Quantity(96485.33212, "C/mol")   # Faraday constant F = e_charge * N_A
+g_0     = Quantity(9.80665, "m/s^2")         # standard gravity
+m_n     = Quantity(1.67492749804e-27, "kg")  # neutron mass
+mu_B    = Quantity(9.2740100783e-24, "J/T")   # Bohr magneton
+R_inf   = Quantity(10973731.56816, "1/m")    # Rydberg constant
 # ----------------------------------------------------------------------------------
 
 class Quaternion:
@@ -818,6 +833,12 @@ def _register_user_unit(name, factor, base_unit):
         )
     DIMENSION_TO_BASE[target_dim][1][name] = factor * base_factor
     _rebuild_additive_unit_sets()
+    try:
+        base_dims = _parse_unit_to_base_dims(base_unit)
+        if base_dims is not None:
+            _DERIVED_UNIT_TO_BASE[name] = base_dims
+    except Exception:
+        pass
     return name
 
 def _unit_of_value(value):
@@ -8507,6 +8528,74 @@ def _units_dimensionally_equal(u1, u2):
     if d1 is None or d2 is None:
         return False
     return d1 == d2
+
+
+def _parse_unit_factor(unit_str):
+    """Computes the overall scale factor of a unit string relative to SI base units.
+    E.g. 'km' -> 1000.0, 'cm' -> 0.01, 'BTU/h' -> 1055.05585262 / 3600.0.
+    """
+    s = (unit_str or "").strip()
+    if not s:
+        return 1.0
+    import re as _re
+    tokens = _re.findall(r"\(|\)|\*|/|\^|-?\d+\.\d+|-?\d+|[A-Za-z][A-Za-z_]*", s)
+    if not tokens:
+        return 1.0
+    pos = [0]
+
+    def _get_atomic_factor(tok):
+        # Look up in DIMENSION_TO_BASE
+        for dim, (_b, tab) in DIMENSION_TO_BASE.items():
+            if tok in tab:
+                return tab[tok]
+        return 1.0
+
+    def parse_factor():
+        if pos[0] >= len(tokens):
+            return 1.0
+        t = tokens[pos[0]]
+        if t == "(":
+            pos[0] += 1
+            val = parse_term()
+            if pos[0] < len(tokens) and tokens[pos[0]] == ")":
+                pos[0] += 1
+            return val
+        if t and t[0].isalpha():
+            pos[0] += 1
+            factor = _get_atomic_factor(t)
+            if pos[0] < len(tokens) and tokens[pos[0]] == "^":
+                pos[0] += 1
+                if pos[0] < len(tokens):
+                    try:
+                        exp = float(tokens[pos[0]])
+                    except ValueError:
+                        exp = 1.0
+                    pos[0] += 1
+                    return factor ** exp
+            return factor
+        try:
+            val = float(t)
+            pos[0] += 1
+            return val
+        except ValueError:
+            return 1.0
+
+    def parse_term():
+        left = parse_factor()
+        while pos[0] < len(tokens) and tokens[pos[0]] in ("*", "/"):
+            op = tokens[pos[0]]
+            pos[0] += 1
+            right = parse_factor()
+            if op == "*":
+                left *= right
+            else:
+                left /= right if right != 0 else 1.0
+        return left
+
+    try:
+        return parse_term()
+    except Exception:
+        return 1.0
 
 
 def _coerce_to_expected_unit(value, expected_unit, context_label):

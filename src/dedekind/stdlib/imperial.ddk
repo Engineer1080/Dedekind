@@ -1,0 +1,25 @@
+// Dedekind Standard Library: Imperial / US Customary Units
+// Provides conversions and registrations for common non-SI units.
+// Usage: use imperial
+
+unit inch   = 0.0254[m]
+unit foot   = 0.3048[m]
+unit ft     = 0.3048[m]
+unit yard   = 0.9144[m]
+unit yd     = 0.9144[m]
+unit mile   = 1609.344[m]
+unit mi     = 1609.344[m]
+
+unit pound  = 0.45359237[kg]
+unit lb     = 0.45359237[kg]
+unit lbs    = 0.45359237[kg]
+unit ounce  = 0.028349523125[kg]
+unit oz     = 0.028349523125[kg]
+
+unit lbf    = 4.4482216152605[N]
+unit psi    = 6894.757293168[Pa]
+unit hp     = 745.69987158227022[W]
+unit BTU    = 1055.05585262[J]
+
+unit gallon = 3.785411784[L]
+unit gal    = 3.785411784[L]

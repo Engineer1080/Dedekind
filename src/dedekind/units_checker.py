@@ -17,6 +17,7 @@ KNOWN_UNITS: Dict[str, str] = {
     "k_B": "J/K", "k_e": "N*m^2/C^2", "e_charge": "C", "epsilon_0": "F/m",
     "mu_0": "N/A^2", "m_e": "kg", "m_p": "kg", "N_A": "1/mol", "R_gas": "J/(K*mol)",
     "alpha": "", "sigma_SB": "W/(m^2*K^4)", "F_faraday": "C/mol",
+    "g_0": "m/s^2", "m_n": "kg", "mu_B": "J/T", "R_inf": "1/m",
     "pi": "", "e": "",
 }
 
