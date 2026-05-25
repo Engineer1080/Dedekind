@@ -283,39 +283,78 @@ def export_to_latex(source_code: str) -> str:
     return program_to_latex(ast)
 
 
-def init_examples():
+def _fetch_zip(url: str) -> bytes | None:
+    """Download a zip from GitHub; return bytes or None on 404."""
+    import urllib.error
     import urllib.request
-    import zipfile
-    import io
-    print("Downloading Dedekind examples from GitHub...")
-    url = "https://github.com/Engineer1080/Dedekind/archive/refs/heads/master.zip"
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
     try:
-        req = urllib.request.Request(
-            url, 
-            headers={'User-Agent': 'Mozilla/5.0'}
-        )
         with urllib.request.urlopen(req) as response:
-            zip_data = response.read()
-        
+            return response.read()
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return None
+        raise
+
+
+def init_examples():
+    """Download the showcase examples into ./examples/.
+
+    Pins to the git tag matching the installed dedekind version (e.g. v3.0.4
+    -> tag v3.0.4) so the examples never use language features the installed
+    compiler does not yet support. Falls back to the master branch if the
+    tag does not exist on GitHub yet (e.g. for dev installs or pre-releases).
+    """
+    import io
+    import zipfile
+
+    from . import __version__
+
+    tag = f"v{__version__}"
+    tag_url = f"https://github.com/Engineer1080/Dedekind/archive/refs/tags/{tag}.zip"
+    master_url = "https://github.com/Engineer1080/Dedekind/archive/refs/heads/master.zip"
+
+    print(f"Downloading Dedekind examples for v{__version__} from GitHub...")
+    try:
+        zip_data = _fetch_zip(tag_url)
+        if zip_data is None:
+            print(f"  Tag {tag} not found on GitHub; falling back to master branch.")
+            print("  (Examples may use features newer than your installed compiler.)")
+            zip_data = _fetch_zip(master_url)
+            if zip_data is None:
+                print("Error: neither the tag archive nor the master archive could be fetched.")
+                return
+
         with zipfile.ZipFile(io.BytesIO(zip_data)) as zip_ref:
+            # GitHub archive prefixes:
+            #   - tag v3.0.4   -> 'Dedekind-3.0.4/'  (the leading 'v' is stripped)
+            #   - branch master -> 'Dedekind-master/'
+            # Detect the actual prefix from the archive instead of hard-coding it.
+            names = zip_ref.namelist()
+            top = next((n.split("/", 1)[0] for n in names if "/" in n), None)
+            if not top:
+                print("Error: downloaded archive is empty or malformed.")
+                return
+            pattern = re.compile(rf"^{re.escape(top)}/examples/(.*)$")
+
             extracted = 0
             for file_info in zip_ref.infolist():
-                name = file_info.filename
-                # Match files under 'Dedekind-master/examples/'
-                match = re.match(r"^Dedekind-master/examples/(.*)$", name)
-                if match:
-                    rel_path = match.group(1)
-                    if not rel_path:  # skip base directory
-                        continue
-                    
-                    target_path = os.path.join("examples", rel_path)
-                    if file_info.is_dir():
-                        os.makedirs(target_path, exist_ok=True)
-                    else:
-                        os.makedirs(os.path.dirname(target_path), exist_ok=True)
-                        with zip_ref.open(name) as source_file, open(target_path, "wb") as target_file:
-                            target_file.write(source_file.read())
-                        extracted += 1
+                match = pattern.match(file_info.filename)
+                if not match:
+                    continue
+                rel_path = match.group(1)
+                if not rel_path:  # skip base directory
+                    continue
+
+                target_path = os.path.join("examples", rel_path)
+                if file_info.is_dir():
+                    os.makedirs(target_path, exist_ok=True)
+                else:
+                    os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                    with zip_ref.open(file_info.filename) as source_file, \
+                            open(target_path, "wb") as target_file:
+                        target_file.write(source_file.read())
+                    extracted += 1
             print(f"Successfully downloaded and initialized {extracted} example files in ./examples/")
     except Exception as e:
         print(f"Error downloading examples: {e}")

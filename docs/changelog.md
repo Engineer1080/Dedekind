@@ -3,6 +3,16 @@
 Historical record of Dedekind releases. Most recent first.
 
 
+### What's New in v3.0.5 (Documentation Polish & Version-Pinned Examples)
+
+A docs-only patch release with one small CLI improvement:
+
+- **Examples and tests normalized to English.** Translated remaining German remnants and smoothed DeepL-style awkward phrasings across 88 files (33 examples, 54 tests, 1 spec doc). No Dedekind code semantics changed; the test suite remains at 73/73 and the example suite at 134/138 (same four pre-existing PyPI-install-only failures).
+- **Version-pinned `dedekind --init-examples`.** The CLI now downloads the showcase examples from the git tag matching the installed compiler version (e.g. `v3.0.5` → `tags/v3.0.5.zip`), so users never get examples that rely on language features their installed compiler does not support. Falls back to the `master` branch with a clear warning if the tag does not yet exist on GitHub (dev installs, pre-releases).
+- **MILP error-string fix in spec.** `docs/Dedekind_Language_Specification.md` §15.19 had a stale German `ValueError: MILP-Einheiten passen nicht …` string; replaced with the actual English runtime message.
+
+---
+
 ### What's New in v3.0.4 (Affine Temperature Units)
 
 The 3.0.4 release adds first-class support for affine temperature scales, closing the long-standing gap between Kelvin (a ratio scale) and Celsius/Fahrenheit (offset scales whose arithmetic is not multiplicative):

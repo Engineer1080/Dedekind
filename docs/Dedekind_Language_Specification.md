@@ -93,7 +93,7 @@ Python-based compiler transpiling Dedekind AST to Python code; execution via a P
 
 ## 14. Conclusion
 
-Dedekind aims to bridge productivity and performance for compute-intensive applications. This specification is updated to **v3.0.4** to reflect current stable runtime behaviour and language features.
+Dedekind aims to bridge productivity and performance for compute-intensive applications. This specification is updated to **v3.0.5** to reflect current stable runtime behaviour and language features.
 
 ---
 
