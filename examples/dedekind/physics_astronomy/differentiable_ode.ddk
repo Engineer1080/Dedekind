@@ -10,7 +10,7 @@ fn main() {
     t = linspace(0, 10, 101)
     traj = ode_solve(rhs, y0, t)
     
-    print("Anfangsbedingung y0:")
+    print("Initial condition y0:")
     print(y0)
     print("Time grid t (first 5):")
     print(t[0])
@@ -19,14 +19,14 @@ fn main() {
     print(traj[0])
     print(traj[50])
     print(traj[100])
-    
-    //Gradient of the end position y(T) to y0 (theoretically exp(-1) = 0.368)
+
+    //Gradient of the final state y(T) w.r.t. y0 (theoretically exp(-1) = 0.368)
     fn final_state(y0) {
         tr = ode_solve(rhs, y0, t)
         return tr[100]
     }
     dydy0 = grad(final_state, y0)
-    print("d y(10) / d y0 (sollte ca. exp(-1) = 0.368):")
+    print("d y(10) / d y0 (should be approx. exp(-1) = 0.368):")
     print(dydy0)
     
     print("Differentiable ODE solver active.")

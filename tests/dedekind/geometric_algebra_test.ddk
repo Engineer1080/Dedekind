@@ -1,4 +1,4 @@
-// Tests fuer 3D Geometric Algebra G(3,0) (v1.18).
+// Tests for 3D geometric algebra G(3,0) (v1.18).
 
 fn approx(a, b, tol) {
     d = a - b
@@ -7,7 +7,7 @@ fn approx(a, b, tol) {
 }
 
 fn main() {
-    // --- Basis-Vektoren und Quadrate ---
+    // --- Basis vectors and squares ---
     e1 = vector(1, 0, 0)
     e2 = vector(0, 1, 0)
     e3 = vector(0, 0, 1)
@@ -17,56 +17,56 @@ fn main() {
     assert(approx((e2*e2).scalar_part(), 1.0, 1e-9), "e2*e2 = 1")
     assert(approx((e3*e3).scalar_part(), 1.0, 1e-9), "e3*e3 = 1")
 
-    // Anti-Kommutativitaet: e1*e2 = -e2*e1
+    // Anti-commutativity: e1*e2 = -e2*e1
     p12 = e1 * e2
     p21 = e2 * e1
     sum_anti = p12 + p21
-    // Skalar-Anteil sollte 0 sein, Bivektor-Anteile heben sich
+    // The scalar part should be 0, the bivector parts cancel.
     assert(approx((p12 + p21).norm(), 0.0, 1e-9), "e1*e2 + e2*e1 = 0")
 
-    // --- Pseudoskalar I^2 = -1 ---
+    // --- Pseudoscalar I^2 = -1 ---
     I = pseudoscalar(1)
     II = I * I
     assert(approx(II.scalar_part(), -1.0, 1e-9), "I*I = -1 in G(3,0)")
 
     // --- Wedge: e1 ^ e2 = e12 ---
     w = e1.wedge(e2)
-    assert(approx(w.c[3], 1.0, 1e-9), "e1 wedge e2 hat e12-Komponente 1")
+    assert(approx(w.c[3], 1.0, 1e-9), "e1 wedge e2 has e12 component 1")
 
-    // --- Wedge parallel = 0 ---
+    // --- Wedge of parallel vectors = 0 ---
     parallel = vector(2, 0, 0).wedge(vector(5, 0, 0))
-    assert(approx(parallel.norm(), 0.0, 1e-9), "parallele Vektoren: wedge = 0")
+    assert(approx(parallel.norm(), 0.0, 1e-9), "parallel vectors: wedge = 0")
 
-    // --- Dot orthogonal = 0 ---
+    // --- Dot of orthogonal vectors = 0 ---
     d_ortho = e1.dot(e2)
     assert(approx(d_ortho.norm(), 0.0, 1e-9), "orthogonal: dot = 0")
 
-    // --- Dot kollinear: a.dot(b) = a*b - a wedge b ---
+    // --- Dot of collinear vectors: a.dot(b) = a*b - a wedge b ---
     a = vector(3, 0, 0)
     b = vector(4, 0, 0)
     d_coll = a.dot(b)
-    assert(approx(d_coll.scalar_part(), 12.0, 1e-9), "a.dot(b) fuer kollineare 3,4 = 12")
+    assert(approx(d_coll.scalar_part(), 12.0, 1e-9), "a.dot(b) for collinear 3,4 = 12")
 
-    // --- Rotor: 90 deg dreht e1 -> e2 ---
+    // --- Rotor: 90 deg rotates e1 -> e2 ---
     pi_half = 3.14159265 / 2.0
     R = rotor(pi_half, 1, 0, 0)
     e1_rot = rotate(e1, R)
-    // e1-Komponente ~ 0, e2-Komponente ~ 1
-    assert(approx(e1_rot.c[1], 0.0, 1e-5), "rotate(e1, 90 deg in xy): e1-Komp ~ 0")
-    assert(approx(e1_rot.c[2], 1.0, 1e-5), "rotate(e1, 90 deg in xy): e2-Komp ~ 1")
+    // e1 component ~ 0, e2 component ~ 1
+    assert(approx(e1_rot.c[1], 0.0, 1e-5), "rotate(e1, 90 deg in xy): e1 comp ~ 0")
+    assert(approx(e1_rot.c[2], 1.0, 1e-5), "rotate(e1, 90 deg in xy): e2 comp ~ 1")
 
     e2_rot = rotate(e2, R)
-    assert(approx(e2_rot.c[1], -1.0, 1e-5), "rotate(e2, 90 deg in xy): e1-Komp ~ -1")
-    assert(approx(e2_rot.c[2], 0.0, 1e-5), "rotate(e2, 90 deg in xy): e2-Komp ~ 0")
+    assert(approx(e2_rot.c[1], -1.0, 1e-5), "rotate(e2, 90 deg in xy): e1 comp ~ -1")
+    assert(approx(e2_rot.c[2], 0.0, 1e-5), "rotate(e2, 90 deg in xy): e2 comp ~ 0")
 
     e3_rot = rotate(e3, R)
-    assert(approx(e3_rot.c[4], 1.0, 1e-9), "rotate(e3, 90 deg in xy): unveraendert")
+    assert(approx(e3_rot.c[4], 1.0, 1e-9), "rotate(e3, 90 deg in xy): unchanged")
 
-    // --- Rotor-Komposition ---
+    // --- Rotor composition ---
     R_45 = rotor(pi_half / 2.0, 1, 0, 0)
     R_comp = R_45 * R_45
     e1_rot2 = rotate(e1, R_comp)
-    assert(approx(e1_rot2.c[2], 1.0, 1e-5), "zwei 45 deg = 90 deg: e2-Komp ~ 1")
+    assert(approx(e1_rot2.c[2], 1.0, 1e-5), "two 45 deg = 90 deg: e2 comp ~ 1")
 
     // --- Reverse: ~(ab) = ~b ~a; ~e12 = -e12 ---
     rev = bivector(1, 0, 0).reverse()
@@ -76,6 +76,6 @@ fn main() {
     v = vector(3, 4, 0)
     assert(approx(v.norm(), 5.0, 1e-9), "norm of (3,4,0) = 5")
 
-    print("geometric_algebra_test: 16 Asserts bestanden")
+    print("geometric_algebra_test: 16 asserts passed")
 }
 main()

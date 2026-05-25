@@ -1,4 +1,4 @@
-// Test fuer md_simulate_lj — OpenMM-Bruecke mit Unit-Validierung.
+// Test for md_simulate_lj — OpenMM bridge with unit validation.
 
 fn approx(a, b, tol) {
     d = a - b
@@ -7,7 +7,7 @@ fn approx(a, b, tol) {
 }
 
 fn main() {
-    // Argon-Cluster, deterministisch via seed
+    // Argon cluster, deterministic via seed
     res = md_simulate_lj(
         n_particles=8,
         sigma=0.34[nm],
@@ -20,25 +20,25 @@ fn main() {
         seed=123
     )
 
-    // Strukturelle Asserts: alle Felder vorhanden, korrekte Typen/Shapes
+    // Structural asserts: all fields present, correct types/shapes
     pos = res["positions"]
-    assert(pos.shape[0] == 8, "8 Teilchen-Positionen")
-    assert(pos.shape[1] == 3, "3-D Positionen")
+    assert(pos.shape[0] == 8, "8 particle positions")
+    assert(pos.shape[1] == 3, "3-D positions")
 
     PE = res["potential_energy"]
     KE = res["kinetic_energy"]
     T  = res["temperature"]
-    assert(PE.unit == "kJ/mol", "PE ist in kJ/mol")
-    assert(KE.unit == "kJ/mol", "KE ist in kJ/mol")
-    assert(T.unit == "K", "Temperatur ist in K")
+    assert(PE.unit == "kJ/mol", "PE is in kJ/mol")
+    assert(KE.unit == "kJ/mol", "KE is in kJ/mol")
+    assert(T.unit == "K", "temperature is in K")
 
-    // Physikalische Plausibilitaet: KE > 0 (positive Bewegungsenergie)
-    assert(KE.value > 0, "KE positiv")
-    // Equipartition: T sollte in der Naehe von 100 K liegen (innerhalb 4x — Langevin braucht Zeit)
-    assert(T.value > 20.0, "Temperatur > 20 K (Langevin equilibriert)")
-    assert(T.value < 400.0, "Temperatur < 400 K (kein runaway)")
+    // Physical plausibility: KE > 0 (positive kinetic energy)
+    assert(KE.value > 0, "KE positive")
+    // Equipartition: T should be near 100 K (within 4x — Langevin needs time)
+    assert(T.value > 20.0, "temperature > 20 K (Langevin equilibrates)")
+    assert(T.value < 400.0, "temperature < 400 K (no runaway)")
 
-    // Alternative Einheiten: Angstrom + kcal/mol akzeptiert
+    // Alternative units: Angstrom + kcal/mol accepted
     res2 = md_simulate_lj(
         n_particles=8,
         sigma=3.4[Angstrom],
@@ -50,10 +50,10 @@ fn main() {
         box_size=15[Angstrom],
         seed=123
     )
-    assert(res2["positions"].shape[0] == 8, "Angstrom-Eingabe ergibt ebenfalls 8 Positionen")
-    assert(res2["potential_energy"].unit == "kJ/mol", "PE normalisiert auf kJ/mol")
+    assert(res2["positions"].shape[0] == 8, "Angstrom input also yields 8 positions")
+    assert(res2["potential_energy"].unit == "kJ/mol", "PE normalized to kJ/mol")
 
-    print("md_simulate_lj_test: 8 Asserts bestanden")
+    print("md_simulate_lj_test: 8 asserts passed")
 }
 
 main()

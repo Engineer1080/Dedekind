@@ -1,10 +1,10 @@
-// quantum_circuit_test.ddk — Tests fuer QuantumCircuit und statevec_sim (v1.21)
+// quantum_circuit_test.ddk — tests for QuantumCircuit and statevec_sim (v1.21)
 
 fn approx(a, b, tol) {
     return abs(a - b) < tol
 }
 
-// Test 1: |0> nach Hadamard -> gleichmaessige Superposition
+// Test 1: |0> after Hadamard -> uniform superposition
 qc = quantum_circuit(1)
 qc.h(0)
 sv = statevec_sim(qc)
@@ -13,7 +13,7 @@ p1 = abs(sv[1]) * abs(sv[1])
 assert(approx(p0, 0.5, 1e-6), "H|0> -> P(0)=0.5")
 assert(approx(p1, 0.5, 1e-6), "H|0> -> P(1)=0.5")
 
-// Test 2: Bell-Zustand Phi+
+// Test 2: Bell state Phi+
 qc2 = quantum_circuit(2)
 qc2.h(0)
 qc2.cx(0, 1)
@@ -23,54 +23,54 @@ assert(abs(sv2[1]) < 1e-5, "Bell |01> amplitude = 0")
 assert(abs(sv2[2]) < 1e-5, "Bell |10> amplitude = 0")
 assert(approx(abs(sv2[3]), 0.7071067, 1e-5), "Bell |11> amplitude")
 
-// Test 3: Pauli-X flippt |0> zu |1>
+// Test 3: Pauli-X flips |0> to |1>
 qc3 = quantum_circuit(1)
 qc3.x(0)
 sv3 = statevec_sim(qc3)
 assert(abs(sv3[0]) < 1e-6, "X|0> -> |1>: P(0)=0")
 assert(approx(abs(sv3[1]), 1.0, 1e-6), "X|0> -> |1>: P(1)=1")
 
-// Test 4: Erwartungswert <Z> fuer |0> = +1
+// Test 4: Expectation <Z> for |0> = +1
 qc4 = quantum_circuit(1)
 exp_z0 = statevec_expectation(qc4, "Z")
 assert(approx(exp_z0, 1.0, 1e-6), "<Z>|0> = +1")
 
-// Test 5: <Z> fuer |1> = -1
+// Test 5: <Z> for |1> = -1
 qc5 = quantum_circuit(1)
 qc5.x(0)
 exp_z1 = statevec_expectation(qc5, "Z")
 assert(approx(exp_z1, -1.0, 1e-6), "<Z>|1> = -1")
 
-// Test 6: Fidelitaet identischer Zustaende = 1
+// Test 6: Fidelity of identical states = 1
 sv_a = statevec_sim(bell_state(0))
 sv_b = statevec_sim(bell_state(0))
 f_same = fidelity(sv_a, sv_b)
-assert(approx(f_same, 1.0, 1e-6), "Fidelitaet identischer Zustaende = 1")
+assert(approx(f_same, 1.0, 1e-6), "fidelity of identical states = 1")
 
-// Test 7: Fidelitaet orthogonaler Bell-Zustaende nahe 0
+// Test 7: Fidelity of orthogonal Bell states is near 0
 sv_phi = statevec_sim(bell_state(0))
 sv_psi = statevec_sim(bell_state(2))
 f_orth = fidelity(sv_phi, sv_psi)
-assert(f_orth < 1e-5, "Fidelitaet |Phi+> vs |Psi+> = 0")
+assert(f_orth < 1e-5, "fidelity |Phi+> vs |Psi+> = 0")
 
-// Test 8: GHZ-Zustand 3 Qubits
+// Test 8: GHZ state on 3 qubits
 ghz = ghz_state(3)
 p_ghz = statevec_probs(ghz)
 assert(approx(p_ghz[0], 0.5, 1e-5), "GHZ P(|000>)=0.5")
 assert(approx(p_ghz[7], 0.5, 1e-5), "GHZ P(|111>)=0.5")
 
-// Test 9: Schaltkreis-Metadaten
+// Test 9: Circuit metadata
 qc9 = quantum_circuit(2)
 qc9.h(0)
 qc9.cx(0, 1)
 qc9.z(1)
-assert(qc9.n_gates() == 3, "3 Gatter im Schaltkreis")
-assert(qc9.n_qubits == 2, "2 Qubits")
-assert(qc9.depth() >= 2, "Tiefe mindestens 2")
+assert(qc9.n_gates() == 3, "3 gates in the circuit")
+assert(qc9.n_qubits == 2, "2 qubits")
+assert(qc9.depth() >= 2, "depth at least 2")
 
-// Test 10: Entropie der Gleichverteilung = 2 Bits
+// Test 10: Entropy of the uniform distribution = 2 bits
 probs_uniform = [0.25, 0.25, 0.25, 0.25]
 s = entropy_von_neumann(probs_uniform)
-assert(approx(s, 2.0, 1e-5), "Entropie Gleichverteilung 4 Zustaende = 2 Bits")
+assert(approx(s, 2.0, 1e-5), "entropy of uniform distribution over 4 states = 2 bits")
 
-print("Alle Quantum-Tests bestanden!")
+print("All quantum tests passed.")

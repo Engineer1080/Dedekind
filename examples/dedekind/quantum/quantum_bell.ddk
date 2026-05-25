@@ -14,12 +14,12 @@ probs = statevec_probs(qc)
 print("Probabilities [|00⟩, |01⟩, |10⟩, |11⟩]:")
 print(probs)
 
-// 2. Sampling: 1000 Messungen
+// 2. Sampling: 1000 measurements
 counts = statevec_sim(qc, 1000)
 print("Measurement results (1000 shots):")
 print(counts)
 
-//3. All four barking states via helper
+//3. All four Bell states via helper
 phi_plus  = bell_state(0)
 phi_minus = bell_state(1)
 psi_plus  = bell_state(2)
@@ -33,7 +33,7 @@ f = fidelity(sv0, sv1)
 print("Fidelity |Φ+⟩ vs |Φ-⟩ (expected: ~0):")
 print(f)
 
-// 4. Schaltkreis-Info
+// 4. Circuit info
 print("Gates in circuit:", qc.n_gates())
 print("Depth:", qc.depth())
 

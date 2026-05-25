@@ -87,7 +87,7 @@ fn main() {
     test_steady_state()
     test_transient()
     test_gradient_flow()
-    print("thermal_test: Alle Tests bestanden!")
+    print("thermal_test: all tests passed.")
 }
 
 main()

@@ -1,4 +1,4 @@
-// Tests fuer Generics / Typ-Parameter (v1.20).
+// Tests for generics / type parameters (v1.20).
 
 fn approx(a, b, tol) {
     d = a - b
@@ -6,35 +6,35 @@ fn approx(a, b, tol) {
     return d < tol
 }
 
-// Polymorphe Einheits-Funktion
+// Polymorphic unit function
 fn add_same<U>(a: [U], b: [U]) -> [U] { return a + b }
 
-// Multi-Typ-Parameter
+// Multi type parameter
 fn pair<A, B>(a: [A], b: [B]) -> [B] {
-    // einfache Identitaet auf b, A wird nur in der Signatur verwendet
+    // Simple identity on b; A is only used in the signature.
     return b
 }
 
-// Shape-Parameter (Backward-Kompatibilitaet zu v1.9-Symbolen)
+// Shape parameter (backward-compatible with v1.9 symbols)
 fn dot3<N>(a: Vector[N], b: Vector[N]) -> Scalar {
     return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]
 }
 
 fn main() {
-    // --- 1. Polymorphe Einheit: gleiche Einheit ---
+    // --- 1. Polymorphic unit: same unit ---
     r1 = add_same(2[m], 3[m])
-    assert(approx(r1.value, 5.0, 1e-9), "add_same: 2m + 3m = 5m (Wert)")
-    assert(r1.unit == "m", "add_same: Einheit erhalten")
+    assert(approx(r1.value, 5.0, 1e-9), "add_same: 2m + 3m = 5m (value)")
+    assert(r1.unit == "m", "add_same: unit preserved")
 
     r2 = add_same(10[kg], 5[kg])
     assert(approx(r2.value, 15.0, 1e-9), "add_same: 10kg + 5kg = 15kg")
-    assert(r2.unit == "kg", "add_same: kg-Einheit erhalten")
+    assert(r2.unit == "kg", "add_same: kg unit preserved")
 
-    // --- 2. Auto-Konvertierung bei gleicher Dimension ---
+    // --- 2. Auto conversion for the same dimension ---
     r3 = add_same(2[m], 100[cm])
-    assert(approx(r3.value, 3.0, 1e-6), "add_same: 2m + 100cm = 3m (m bleibt)")
+    assert(approx(r3.value, 3.0, 1e-6), "add_same: 2m + 100cm = 3m (m wins)")
 
-    // --- 3. Dimensions-Mismatch erkannt ---
+    // --- 3. Dimension mismatch is detected ---
     mismatch_caught = false
     try {
         bad = add_same(2[m], 3[kg])
@@ -43,12 +43,12 @@ fn main() {
     }
     assert(mismatch_caught, "add_same: m vs kg -> ValueError")
 
-    // --- 4. Multi-Typ-Parameter ---
+    // --- 4. Multi type parameter ---
     p = pair(2[m], 5[kg])
     assert(p.value == 5.0, "pair: returns b's value")
     assert(p.unit == "kg", "pair: returns b's unit")
 
-    // --- 5. Shape-Parameter ---
+    // --- 5. Shape parameter ---
     s = dot3([1.0, 2.0, 3.0], [4.0, 5.0, 6.0])
     assert(approx(s, 32.0, 1e-9), "dot3<N>: 1*4 + 2*5 + 3*6 = 32")
 
@@ -60,6 +60,6 @@ fn main() {
     }
     assert(shape_mismatch, "dot3: Vector[3] vs Vector[2] -> ValueError")
 
-    print("generics_test: 9 Asserts bestanden")
+    print("generics_test: 9 asserts passed")
 }
 main()

@@ -1,22 +1,22 @@
-//Quick Wins: Materials — Johnson-Mehl-Avrami-Kolmogorov phase transformation
+// Quick Wins: Materials — Johnson-Mehl-Avrami-Kolmogorov phase transformation
 fn main() {
-    print("--- Dedekind: Werkstoffe JMAK Quick Wins ---")
+    print("--- Dedekind: materials JMAK quick wins ---")
 
-    //f(t) = 1 - exp(-(k*t)^n)
+    // f(t) = 1 - exp(-(k*t)^n)
     k = 0.1
     n = 2.5
     t = 5.0
 
     f = johnson_mehl_avrami(t, k, n)
-    print("JMAK conversion proportion f(t=5, k=0.1, n=2.5):")
+    print("JMAK transformed fraction f(t=5, k=0.1, n=2.5):")
     print(f)
 
-    // Zeitableitung df/dt
+    // Time derivative df/dt
     dfdt = avrami_rate(t, k, n)
     print("JMAK rate df/dt at t=5:")
     print(dfdt)
 
-    //Curve over time
+    // Curve over time
     print("f(t) for t = 0, 2, 5, 10:")
     times = [0.0, 2.0, 5.0, 10.0]
     for ti in times {
@@ -26,6 +26,6 @@ fn main() {
         print(fi)
     }
 
-    print("JMAK Quick Wins aktiv.")
+    print("JMAK quick wins active.")
 }
 main()

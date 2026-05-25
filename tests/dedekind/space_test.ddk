@@ -117,7 +117,7 @@ fn main() {
     test_conversions()
     test_n_body()
     test_gradient()
-    print("space_test: Alle Tests bestanden!")
+    print("space_test: all tests passed.")
 }
 
 main()

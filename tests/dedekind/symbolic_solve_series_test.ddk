@@ -1,31 +1,31 @@
-// Tests für solve_sym, simplify_sym und series.
+// Tests for solve_sym, simplify_sym, and series.
 
 fn main() {
-    // solve_sym: Wurzeln einer quadratischen Gleichung
+    // solve_sym: roots of a quadratic
     sols = solve_sym("x^2 - 5*x + 6", "x")
-    assert(len(sols) == 2, "zwei Wurzeln erwartet")
-    assert(sols[0] == "2", "erste Wurzel = 2")
-    assert(sols[1] == "3", "zweite Wurzel = 3")
+    assert(len(sols) == 2, "two roots expected")
+    assert(sols[0] == "2", "first root = 2")
+    assert(sols[1] == "3", "second root = 3")
 
-    // solve_sym mit explizitem "="
+    // solve_sym with explicit "="
     one = solve_sym("x + 7 = 10", "x")
-    assert(one[0] == "3", "Linear: x = 3")
+    assert(one[0] == "3", "linear: x = 3")
 
     // System
     syst = solve_sym(["x + y = 5", "x - y = 1"], ["x", "y"])
-    assert(syst[0]["x"] == "3", "System: x = 3")
-    assert(syst[0]["y"] == "2", "System: y = 2")
+    assert(syst[0]["x"] == "3", "system: x = 3")
+    assert(syst[0]["y"] == "2", "system: y = 2")
 
     // simplify_sym
     s = simplify_sym("sin(x)^2 + cos(x)^2")
     assert(s == "1", "Pythagoras")
 
     s2 = simplify_sym("(x^2 - 1) / (x - 1)")
-    assert(s2 == "x + 1", "Polynomdivision")
+    assert(s2 == "x + 1", "polynomial division")
 
-    // Taylor-Reihe (SymPy gibt sin(x) bis Ordnung 6 als x - x**3/6 + x**5/120 zurück)
+    // Taylor series (SymPy returns sin(x) up to order 6 as x - x**3/6 + x**5/120)
     sin5 = series("sin(x)", "x", 0, 6)
-    assert(sin5 == "x**5/120 - x**3/6 + x", "sin-Taylor-Reihe (umgekehrte Term-Reihenfolge)")
+    assert(sin5 == "x**5/120 - x**3/6 + x", "sin Taylor series (reverse term order)")
 
     print("symbolic_solve_series_test OK")
 }

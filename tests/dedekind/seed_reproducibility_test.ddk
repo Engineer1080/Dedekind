@@ -1,4 +1,4 @@
-// Seed-Manager: zwei Aufrufe mit gleichem Seed müssen identische Zufallszahlen liefern.
+// Seed manager: two calls with the same seed must produce identical samples.
 
 fn run() {
     seed(123)
@@ -6,15 +6,15 @@ fn run() {
     seed(123)
     b = sample(Normal(0.0, 1.0))
     diff = abs(a - b)
-    assert(diff < 1e-9, "Seed 123 reproduziert: a und b identisch")
+    assert(diff < 1e-9, "seed 123 reproduces: a and b identical")
 }
 
 fn hash_consistency() {
     h1 = data_hash([1, 2, 3])
     h2 = data_hash([1, 2, 3])
     h3 = data_hash([1, 2, 4])
-    assert(h1 == h2, "data_hash deterministisch")
-    assert(h1 != h3, "data_hash unterscheidet verschiedene Inputs")
+    assert(h1 == h2, "data_hash deterministic")
+    assert(h1 != h3, "data_hash distinguishes different inputs")
 }
 
 run()

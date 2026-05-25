@@ -1,54 +1,54 @@
 // ============================================================================
-//Dedekind v1.6.2: Comprehensive scientific units
+// Dedekind v1.6.2: comprehensive scientific units
 // ============================================================================
-//Dedekind now understands an enormous range of units natively
-//through all disciplines. Additions with different units
-//of the same dimension are automatically scaled!
+// Dedekind now understands an enormous range of units natively across
+// all disciplines. Additions with different units of the same dimension
+// are automatically scaled.
 
-print("--- 1. Quantenphysik ---")
-//Energy in electron volts
+print("--- 1. Quantum physics ---")
+// Energy in electronvolts
 E_photon = 2.5[eV]
 E_thermal = 1.0[meV]
 
-//Automatic addition and conversion
+// Automatic addition and conversion
 E_diff = E_photon - E_thermal
 print("Energy difference:", E_diff)
 
-//Conversion to joules (the first unit dominates the result)
+// Conversion to joules (the first unit dominates the result)
 E_joule = 0[J] + E_photon
-print("In Joule (SI):          ", E_joule)
+print("In joules (SI):         ", E_joule)
 
-//And another practical example:
+// And another practical example:
 W_battery = 0[kWh] + 3.6[MJ]
-print("3.6 MJ als Batterie:    ", W_battery)
+print("3.6 MJ as battery energy:", W_battery)
 
 
-print("\n--- 2. Magnetismus ---")
-B_erdmagnetfeld = 0.5[G]       // Gauss
-B_mrt = 3.0[T]                 // Tesla
+print("\n--- 2. Magnetism ---")
+B_earth_field = 0.5[G]       // Gauss
+B_mri         = 3.0[T]       // Tesla
 
-B_total = B_mrt + B_erdmagnetfeld
-print("Magnetfeld (MRT + Erde):", B_total)
+B_total = B_mri + B_earth_field
+print("Magnetic field (MRI + Earth):", B_total)
 
 
-print("\n--- 3. Astronomie ---")
-dist_alpha_centauri = 1.34[pc] // Parsec
-dist_sirius = 8.6[ly]          // Lichtjahre
+print("\n--- 3. Astronomy ---")
+dist_alpha_centauri = 1.34[pc] // parsec
+dist_sirius         = 8.6[ly]  // light-years
 
 dist_total = dist_alpha_centauri + dist_sirius
-print("Distanz (Parsec + Ly):  ", dist_total)
-//Back in SI (meters)
+print("Distance (parsec + ly):  ", dist_total)
+// Back in SI (meters)
 dist_m = dist_total + 0[m]
-print("Distanz in Metern:      ", dist_m)
+print("Distance in meters:      ", dist_m)
 
 
-print("\n--- 4. Biologie & Thermodynamik ---")
-// Kalorien in Joule umrechnen
+print("\n--- 4. Biology & thermodynamics ---")
+// Convert calories to joules
 snack_energy = 250[kcal]
-snack_joule = 0[MJ] + snack_energy
-print("250 kcal in Megajoule:  ", snack_joule)
+snack_joule  = 0[MJ] + snack_energy
+print("250 kcal in megajoules:  ", snack_joule)
 
-// Molare Konzentrationen
-c_blutzucker = 5.5[mM] // Millimolar
-c_si = 0[M] + c_blutzucker // Mol pro Liter
+// Molar concentrations
+c_blood_sugar = 5.5[mM] // millimolar
+c_si          = 0[M] + c_blood_sugar // mol per liter
 print("Blood sugar in M (mol/L):", c_si)

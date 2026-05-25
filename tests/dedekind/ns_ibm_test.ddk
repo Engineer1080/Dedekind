@@ -1,4 +1,4 @@
-// Tests für Navier-Stokes Chorin-Solver + IBM (Brinkman-Penalisierung)
+// Tests for Navier-Stokes Chorin solver + IBM (Brinkman penalization).
 
 fn make_soft_disk(nx, ny, cx, cy, r) {
     rows = linspace(0.0, nx - 1.0, nx)
@@ -10,7 +10,7 @@ fn make_soft_disk(nx, ny, cx, cy, r) {
 }
 
 fn test_chorin_no_obstacle() {
-    print("Testing Chorin solver ohne Hindernis (Taylor-Green)...")
+    print("Testing Chorin solver without obstacle (Taylor-Green)...")
     nx = 32
     ny = 32
     x  = linspace(0.0, 1.0, nx)
@@ -27,23 +27,23 @@ fn test_chorin_no_obstacle() {
 
     result = pde_navier_stokes_2d(u0, v0, x, y, t, nu)
 
-    // Muss ein 3-Tupel liefern
+    // Must return a 3-tuple
     assert(len(result) == 3)
 
     u_sol = result[0]
     v_sol = result[1]
 
-    // Energie muss abnehmen (viskose Dämpfung)
+    // Energy must decrease (viscous damping)
     E0 = mean(u_sol[0]  * u_sol[0]  + v_sol[0]  * v_sol[0])
     Ef = mean(u_sol[10] * u_sol[10] + v_sol[10] * v_sol[10])
-    print("  KE: ", E0, " → ", Ef)
+    print("  KE: ", E0, " -> ", Ef)
     assert(Ef < E0)
 
-    print("[OK] Chorin Taylor-Green Energieabnahme")
+    print("[OK] Chorin Taylor-Green energy decay")
 }
 
 fn test_ibm_returns_4tuple() {
-    print("Testing IBM liefert 4-Tupel mit F_history...")
+    print("Testing that IBM returns a 4-tuple with F_history...")
     nx = 24
     ny = 12
     x  = linspace(0.0, 1.0, nx)
@@ -66,11 +66,11 @@ fn test_ibm_returns_4tuple() {
     assert(F.shape[0] == 5)
     assert(F.shape[1] == 2)
 
-    print("[OK] IBM liefert korrektes 4-Tupel")
+    print("[OK] IBM returns the correct 4-tuple")
 }
 
 fn test_ibm_noslip_in_solid() {
-    print("Testing IBM: No-Slip im Solid (u ≈ 0 im Zylinderzentrum)...")
+    print("Testing IBM: no-slip inside the solid (u ~ 0 at cylinder center)...")
     nx = 32
     ny = 16
     x  = linspace(0.0, 2.0, nx)
@@ -90,18 +90,18 @@ fn test_ibm_noslip_in_solid() {
                                    obstacle_mask=M, rho=1.0)
     u_sol = result[0]
 
-    u_in  = u_sol[20][10][8]    // Zylinderzentrum
-    u_out = u_sol[20][10][0]    // Weit außerhalb
+    u_in  = u_sol[20][10][8]    // cylinder center
+    u_out = u_sol[20][10][0]    // far outside
 
-    print("  u im Solid:", u_in, "  u draußen:", u_out)
+    print("  u in solid:", u_in, "  u outside:", u_out)
     assert(abs(u_in) < 1e-6)
     assert(u_out > abs(u_in))
 
-    print("[OK] No-Slip im Solid")
+    print("[OK] No-slip inside the solid")
 }
 
 fn test_ibm_drag_positive() {
-    print("Testing IBM: Drag muss positiv sein (Strömung wird gebremst)...")
+    print("Testing IBM: drag must be positive (flow is slowed)...")
     nx = 32
     ny = 16
     x  = linspace(0.0, 2.0, nx)
@@ -123,7 +123,7 @@ fn test_ibm_drag_positive() {
     print("  Drag Fx:", drag)
     assert(drag > 0.0)
 
-    print("[OK] IBM Drag > 0")
+    print("[OK] IBM drag > 0")
 }
 
 fn main() {

@@ -1,32 +1,32 @@
-//Ricci notation: matrix-vector product A^ij * v^j and visualization
-//Dedekind feature: Einstein summation natively (A^ij * B_jk) – in Python you would need einsum by hand.
+// Ricci notation: matrix-vector product A^ij * v^j and visualization.
+// Dedekind feature: Einstein summation natively (A^ij * B_jk) — in Python you would need einsum by hand.
 
 fn main() {
-    print("--- Dedekind: Apply Ricci tensor and plot result ---")
+    print("--- Dedekind: apply Ricci tensor and plot the result ---")
 
-    //Symmetrical 2×2 matrix (e.g. covariance or inertia)
+    // Symmetric 2x2 matrix (e.g. covariance or inertia)
     A = [[1.0, 0.3], [0.3, 0.8]]
-    // Einheitsvektor in x-Richtung
+    // Unit vector in the x direction
     v = [1.0, 0.0]
 
-    //Matrix-vector product in Ricci notation: w^i = A^ij * v^j
+    // Matrix-vector product in Ricci notation: w^i = A^ij * v^j
     w = A^ij * v^j
 
-    print("Matrix A (2×2):")
+    print("Matrix A (2x2):")
     print(A)
-    print("Vektor v:")
+    print("Vector v:")
     print(v)
-    print("Ergebnis w = A^ij * v^j:")
+    print("Result w = A^ij * v^j:")
     print(w)
 
-    //Plot: components of w (index 0 and 1)
+    // Plot: components of w (index 0 and 1)
     indices = [0.0, 1.0]
-    plot(indices, w, title="Komponenten von w = A·v (Ricci-Notation)", xlabel="Index i", ylabel="w^i")
+    plot(indices, w, title="Components of w = A*v (Ricci notation)", xlabel="Index i", ylabel="w^i")
 
-    //Second example: Contraction A^ij * B_ij -> Scalar (inner product of the matrices)
+    // Second example: contraction A^ij * B_ij -> scalar (inner product of the matrices)
     B = [[0.5, 0.2], [0.2, 0.6]]
     scalar = A^ij * B_ij
-    print("Kontraktion A^ij * B_ij (Skalar):")
+    print("Contraction A^ij * B_ij (scalar):")
     print(scalar)
 
     print("Ricci notation and plot. Dedekind: Einstein indices native.")

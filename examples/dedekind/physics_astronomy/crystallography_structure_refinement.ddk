@@ -1,17 +1,17 @@
-//Differentiable crystal structure refinement against structure factors
+// Differentiable crystal structure refinement against structure factors.
 //
-//Task: An atom at the "half" Wyckoff position (0.5, 0.5, 0.5) becomes
-//deflected from its ideal position; we use the module `atomic`,
-//to calculate the structure factor F(hkl) and find the displacement
-//via Autograd + Adam back - exactly the procedure of a Rietveld/SF refinement
-//loop, except that the gradients flow directly through the Dedekind compiler.
+// Task: an atom at the "half" Wyckoff position (0.5, 0.5, 0.5) is
+// displaced from its ideal position; we use the `atomic` module to
+// compute the structure factor F(hkl) and recover the displacement
+// via autograd + Adam — exactly the procedure of a Rietveld/SF refinement
+// loop, except the gradients flow directly through the Dedekind compiler.
 //
-//Killer feature: no FD sweep, no manual adjoint — `cryst_structure_factor_atoms`
-//is natively differentiable.
+// Killer feature: no FD sweep, no hand-written adjoint —
+// `cryst_structure_factor_atoms` is natively differentiable.
 
 use atomic
 
-//Target structure factor (atom exactly to 0.5, 0.5, 0.5)
+// Target structure factor (atom exactly at 0.5, 0.5, 0.5)
 fn target_F() {
     coords = [[0.0, 0.0, 0.0], [0.5, 0.5, 0.5]]
     sf     = [1.0, 1.0]
@@ -19,7 +19,7 @@ fn target_F() {
     return cryst_structure_factor_atoms(coords, sf, hkl)
 }
 
-//Loss: |F_model - F_target|^2, summed over all reflexes
+// Loss: |F_model - F_target|^2, summed over all reflections
 fn sf_loss(p) {
     F_target = target_F()
     coords   = [[0.0, 0.0, 0.0], [p[0], p[1], p[2]]]
@@ -42,22 +42,22 @@ fn main() {
     print("Differentiable structure factor refinement")
     print("===============================================================")
 
-    // Startpunkt: ausgelenkte Position
+    // Starting point: displaced position
     p0 = [0.42, 0.55, 0.48]
     L0 = sf_loss(p0)[0]
-    print("Start-Position:", p0)
-    print("Start-Loss:    ", L0)
+    print("Start position:", p0)
+    print("Start loss:    ", L0)
 
-    //Adam differentiates through FFT-like complex sum
+    // Adam differentiates through the FFT-like complex sum
     result = minimize(sf_loss, p0, "adam", 0.05, 80)
     p_opt  = result[0]
     L_opt  = sf_loss([p_opt[0], p_opt[1], p_opt[2]])[0]
 
     print("")
-    print("Refined Position:", p_opt[0], p_opt[1], p_opt[2])
-    print("Final Loss:      ", L_opt)
+    print("Refined position:", p_opt[0], p_opt[1], p_opt[2])
+    print("Final loss:      ", L_opt)
 
-    //Plausibility: significantly closer to (0.5, 0.5, 0.5) as starting value
+    // Plausibility: significantly closer to (0.5, 0.5, 0.5) than the start
     dx = abs(p_opt[0] - 0.5)
     dy = abs(p_opt[1] - 0.5)
     dz = abs(p_opt[2] - 0.5)
@@ -68,7 +68,7 @@ fn main() {
 
     print("")
     print("===============================================================")
-    print("Autodegree by complex structure factors -> atomic coordinates")
+    print("Autograd through complex structure factors -> atomic coordinates")
     print("converge to the Wyckoff position (0.5, 0.5, 0.5).")
     print("===============================================================")
 }

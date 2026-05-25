@@ -1,4 +1,4 @@
-// Test: Einheiten % w/v, pH-Funktionen
+// Test: units % w/v and pH functions
 fn main() {
     // 1% w/v = 10 g/L
     q = Quantity(1, "percent_wv")
@@ -15,6 +15,6 @@ fn main() {
     assert(c_back > 9.9e-8)
     assert(c_back < 1.1e-7)
 
-    print("units_ph_test: bestanden.")
+    print("units_ph_test: passed.")
 }
 main()

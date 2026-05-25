@@ -14,7 +14,7 @@ fn test_two_compartment_pk() {
     assert(res[1] < 100.0)
     assert(res[2] < res[1])
     assert(res[3] < res[2])
-    print("test_two_compartment_pk: bestanden.")
+    print("test_two_compartment_pk: passed.")
 }
 
 fn test_smiles_molecular_weight() {
@@ -31,7 +31,7 @@ fn test_smiles_molecular_weight() {
     mw_water = smiles_molecular_weight("O")
     assert(abs(mw_water.value - 18.015) < 1e-2)
     
-    print("test_smiles_molecular_weight: bestanden.")
+    print("test_smiles_molecular_weight: passed.")
 }
 
 fn test_lipinski_rule_of_five() {
@@ -49,7 +49,7 @@ fn test_lipinski_rule_of_five() {
     assert(desc_aspirin["violations"] == 0)
     assert(desc_aspirin["passes"])
     
-    print("test_lipinski_rule_of_five: bestanden.")
+    print("test_lipinski_rule_of_five: passed.")
 }
 
 fn test_pubchem_get_molecular_formula() {
@@ -59,7 +59,7 @@ fn test_pubchem_get_molecular_formula() {
     formula_water = pubchem_get_molecular_formula("water")
     assert(formula_water == "H2O")
     
-    print("test_pubchem_get_molecular_formula: bestanden.")
+    print("test_pubchem_get_molecular_formula: passed.")
 }
 
 fn test_chembl_get_ic50() {
@@ -71,7 +71,7 @@ fn test_chembl_get_ic50() {
     assert(ic50_egfr.value > 0.0)
     assert(ic50_egfr.unit == "nM")
     
-    print("test_chembl_get_ic50: bestanden.")
+    print("test_chembl_get_ic50: passed.")
 }
 
 fn main() {
@@ -80,6 +80,6 @@ fn main() {
     test_lipinski_rule_of_five()
     test_pubchem_get_molecular_formula()
     test_chembl_get_ic50()
-    print("life_sciences_phase1_test: Alle Tests bestanden!")
+    print("life_sciences_phase1_test: all tests passed.")
 }
 main()

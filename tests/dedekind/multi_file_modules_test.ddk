@@ -1,10 +1,10 @@
-// Tests fuer Multi-File-Module mit Sichtbarkeit (v1.19).
+// Tests for multi-file modules with visibility (v1.19).
 //
-// Voraussetzung: examples/dedekind/compiler_features/demo_geometry/ existiert mit pub-Annotationen.
+// Prerequisite: examples/dedekind/compiler_features/demo_geometry/ exists with pub annotations.
 
 use compiler_features.demo_geometry.area
 use compiler_features.demo_geometry.volume
-use math      // Backward-Kompatibilitaet: kein pub -> alles public
+use math      // backward compatibility: no pub -> everything is public
 
 fn approx(a, b, tol) {
     d = a - b
@@ -13,15 +13,15 @@ fn approx(a, b, tol) {
 }
 
 fn main() {
-    // --- 1. Flächenberechnungen aus demo_geometry.area ---
-    assert(approx(circle_area(1.0), 3.14159265, 1e-6), "circle_area aus demo_geometry.area")
-    assert(approx(triangle_area(4.0, 3.0), 6.0, 1e-9), "triangle_area aus demo_geometry.area")
+    // --- 1. Area calculations from demo_geometry.area ---
+    assert(approx(circle_area(1.0), 3.14159265, 1e-6), "circle_area from demo_geometry.area")
+    assert(approx(triangle_area(4.0, 3.0), 6.0, 1e-9), "triangle_area from demo_geometry.area")
 
-    // --- 2. Volumenberechnungen aus demo_geometry.volume ---
-    assert(approx(cube_volume(3.0), 27.0, 1e-9), "cube_volume aus demo_geometry.volume")
-    assert(approx(sphere_volume(1.0), 4.18879, 1e-4), "sphere_volume aus demo_geometry.volume")
+    // --- 2. Volume calculations from demo_geometry.volume ---
+    assert(approx(cube_volume(3.0), 27.0, 1e-9), "cube_volume from demo_geometry.volume")
+    assert(approx(sphere_volume(1.0), 4.18879, 1e-4), "sphere_volume from demo_geometry.volume")
 
-    // --- 3. Sichtbarkeits-Check: private Funktionen unsichtbar ---
+    // --- 3. Visibility check: private functions are inaccessible ---
     private_inaccessible = false
     try {
         bad = priv_pi()
@@ -29,7 +29,7 @@ fn main() {
     } catch e {
         private_inaccessible = true
     }
-    assert(private_inaccessible, "priv_pi() ist von aussen unsichtbar")
+    assert(private_inaccessible, "priv_pi() is invisible from outside")
 
     private_inaccessible2 = false
     try {
@@ -38,7 +38,7 @@ fn main() {
     } catch e {
         private_inaccessible2 = true
     }
-    assert(private_inaccessible2, "priv_four_thirds() ist unsichtbar")
+    assert(private_inaccessible2, "priv_four_thirds() is invisible")
 
     private_inaccessible3 = false
     try {
@@ -47,13 +47,13 @@ fn main() {
     } catch e {
         private_inaccessible3 = true
     }
-    assert(private_inaccessible3, "priv_half() ist unsichtbar")
+    assert(private_inaccessible3, "priv_half() is invisible")
 
-    // --- 4. Backward-Kompatibilitaet: Modul ohne pub -> alles public ---
-    assert(fibonacci(10) == 55, "fibonacci aus math (Legacy-Modus)")
-    assert(approx(hypotenuse(3.0, 4.0), 5.0, 1e-6), "hypotenuse aus math")
-    assert(approx(PHI, 1.618033, 1e-4), "PHI aus math")
+    // --- 4. Backward compatibility: module without pub -> everything public ---
+    assert(fibonacci(10) == 55, "fibonacci from math (legacy mode)")
+    assert(approx(hypotenuse(3.0, 4.0), 5.0, 1e-6), "hypotenuse from math")
+    assert(approx(PHI, 1.618033, 1e-4), "PHI from math")
 
-    print("multi_file_modules_test: 10 Asserts bestanden")
+    print("multi_file_modules_test: 10 asserts passed")
 }
 main()

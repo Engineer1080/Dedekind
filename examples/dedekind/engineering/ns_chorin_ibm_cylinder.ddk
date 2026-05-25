@@ -50,28 +50,28 @@ fn main() {
     u_sol   = result[0]   // (nt, nx, ny)
     v_sol   = result[1]
     p_sol   = result[2]
-    F_hist  = result[3]   // (nt, 2)  [Fx, Fy] pro Zeitschritt
+    F_hist  = result[3]   // (nt, 2)  [Fx, Fy] per time step
 
-    //Evaluation at the last step
+    // Evaluation at the last step
     drag = F_hist[80][0]
     lift = F_hist[80][1]
     print("Drag Fx at the end:", drag, "N/m")
-    print("Lift Fy am Ende:", lift, "N/m")
+    print("Lift Fy at the end:", lift, "N/m")
 
-    //Speed inside and outside the cylinder
+    // Velocity inside and outside the cylinder
     ux = 16
     uy = 12
     u_in  = u_sol[80][ux][uy]
     u_out = u_sol[80][ux][0]
-    print("u in the cylinder center (should be ~0):", u_in)
-    print("u outside cylinder:", u_out)
+    print("u at cylinder center (should be ~0):", u_in)
+    print("u outside the cylinder:", u_out)
 
-    //Plausibility checks
-    assert(drag > 0.0)                   //Drag has to be positive
-    assert(abs(u_in) < 1e-6)            // No-slip im Solid
-    assert(u_out > abs(u_in))           // Fluid bewegt sich
+    // Plausibility checks
+    assert(drag > 0.0)                   // drag must be positive
+    assert(abs(u_in) < 1e-6)             // no-slip inside the solid
+    assert(u_out > abs(u_in))            // the fluid is moving
 
-    print("Chorin + IBM: PASSED — Brinkman Penalization Forces No-Slip.")
+    print("Chorin + IBM: PASSED — Brinkman penalization enforces no-slip.")
 }
 
 main()

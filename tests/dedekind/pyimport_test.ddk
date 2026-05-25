@@ -1,4 +1,4 @@
-// Test fuer `pyimport` — direkter Zugriff auf Python-Module.
+// Test for `pyimport` — direct access to Python modules.
 
 pyimport scipy.special as sp
 pyimport math
@@ -20,7 +20,7 @@ fn main() {
     assert(approx(sp.erfc(0.0), 1.0, 1e-9), "erfc(0)=1")
 
     // math.pi vs Dedekind pi
-    assert(approx(math.pi, 3.141592653589793, 1e-12), "math.pi konsistent")
+    assert(approx(math.pi, 3.141592653589793, 1e-12), "math.pi consistent")
 
     // math.log2(8) = 3
     assert(approx(math.log2(8.0), 3.0, 1e-9), "log2(8)=3")
@@ -28,7 +28,7 @@ fn main() {
     // math.factorial(6) = 720
     assert(math.factorial(6) == 720, "factorial(6)=720")
 
-    print("pyimport_test: 6 Asserts bestanden")
+    print("pyimport_test: 6 asserts passed")
 }
 
 main()

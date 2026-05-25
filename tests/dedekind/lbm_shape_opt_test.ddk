@@ -1,23 +1,23 @@
-// Tests für differenzierbare Ellipsen-Mask + Shape-Optimierung
+// Tests for the differentiable ellipse mask + shape optimization.
 
 use fluid_dynamics
 
 fn test_ellipse_mask_shape() {
-    print("Testing soft_ellipse_mask Form...")
+    print("Testing soft_ellipse_mask shape...")
     M = soft_ellipse_mask(40, 30, 20.0, 15.0, 5.0, 3.0, 0.3)
     assert(M.shape[0] == 40)
     assert(M.shape[1] == 30)
 
-    // Zentrum muss ~1 sein
+    // Center must be ~ 1
     center = M[20][15]
-    print("  Mask im Zentrum:", center)
+    print("  Mask at center:", center)
     assert(center > 0.95)
 
-    // Weit weg muss ~0 sein
+    // Far away must be ~ 0
     far = M[0][0]
-    print("  Mask in Ecke:", far)
+    print("  Mask at corner:", far)
     assert(far < 0.05)
-    print("[OK] Ellipsen-Maskenform")
+    print("[OK] Ellipse mask shape")
 }
 
 fn drag_of_ellipse(x_arr) {
@@ -34,7 +34,7 @@ fn drag_of_ellipse(x_arr) {
 }
 
 fn test_ellipse_drag_gradient() {
-    print("Testing Gradient von Drag bzgl. Ellipsen-Aspect (Autograd vs FD)...")
+    print("Testing gradient of drag w.r.t. ellipse aspect (autograd vs FD)...")
     // Autograd
     j = jacobian(drag_of_ellipse, [0.0])
     grad_ag = j[0][0]
@@ -46,31 +46,31 @@ fn test_ellipse_drag_gradient() {
     grad_fd = (fp - fm) / (2.0 * h)
 
     rel_err = abs(grad_ag - grad_fd) / abs(grad_fd)
-    print("  Autograd-Gradient:", grad_ag)
-    print("  FD-Gradient:      ", grad_fd)
-    print("  Rel. Fehler:      ", rel_err)
+    print("  Autograd gradient:", grad_ag)
+    print("  FD gradient:      ", grad_fd)
+    print("  Rel. error:       ", rel_err)
     assert(rel_err < 1e-3)
-    print("[OK] Ellipsen-Drag ist End-to-End differenzierbar")
+    print("[OK] Ellipse drag is end-to-end differentiable")
 }
 
 fn test_shape_optimization_reduces_drag() {
-    print("Testing Adam reduziert Drag durch Form-Optimierung...")
-    x0 = [0.0]                        // Kreis (a/b = 1)
+    print("Testing that Adam reduces drag via shape optimization...")
+    x0 = [0.0]                        // circle (a/b = 1)
     d_circle = drag_of_ellipse(x0)[0]
 
-    // Kurze Adam-Optimierung (wenige Schritte, niedrige Auflösung)
+    // Short Adam run (few steps, low resolution)
     result = minimize(drag_of_ellipse, x0, "adam", 0.2, 6)
     x_opt  = result[0]
     d_opt  = drag_of_ellipse([x_opt[0]])[0]
     aspect = exp(x_opt[0])
 
-    print("  Drag (Kreis):     ", d_circle)
-    print("  Drag (optimiert): ", d_opt)
-    print("  a/b nach Opt:     ", aspect)
+    print("  Drag (circle):    ", d_circle)
+    print("  Drag (optimized): ", d_opt)
+    print("  a/b after opt:    ", aspect)
 
-    assert(d_opt < d_circle)          // Adam findet bessere Form
-    assert(aspect > 1.1)              // Optimum ist schlanker als Kreis
-    print("[OK] Shape-Optimierung reduziert Drag")
+    assert(d_opt < d_circle)          // Adam finds a better shape
+    assert(aspect > 1.1)              // optimum is slimmer than the circle
+    print("[OK] Shape optimization reduces drag")
 }
 
 fn main() {

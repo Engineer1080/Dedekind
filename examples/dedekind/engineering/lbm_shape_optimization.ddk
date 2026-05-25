@@ -1,25 +1,25 @@
-//Shape optimization: Adam finds the optimal ellipse for minimal drag
+// Shape optimization: Adam finds the ellipse with minimal drag.
 //
-//Problem: How slim does an ellipse have to be in order to reach a fixed volume?
-//to have the lowest flow resistance? (Volume constraint: a b = const.)
+// Problem: how slender does an ellipse have to be, at a fixed volume,
+// to minimize flow resistance? (Volume constraint: a*b = const.)
 //
-//Methodologically: We parameterize the form by x = log(a/b). volume is
-//fixed → b = V/a → 1 free parameter remains. Adam differentiates through
-//the ENTIRE LBM simulation (200 steps D2Q9) via PyTorch-Autograd.
+// Approach: we parameterize the shape by x = log(a/b). Volume is fixed
+// -> b = V/a -> one free parameter remains. Adam differentiates through
+// the ENTIRE LBM simulation (200 D2Q9 steps) via PyTorch autograd.
 //
-// Killer feature: no adjoint codes, no finite differences — Dedekind
-//inherits differentiability directly from the compiler.
+// Killer feature: no adjoint code, no finite differences — Dedekind
+// inherits differentiability directly from the compiler.
 //
-//Expectation: Adam reduces the drag by ~15-20% compared to the circle (a/b=1).
+// Expectation: Adam reduces drag by ~15-20 % compared to the circle (a/b=1).
 
 use fluid_dynamics
 
-//Drag an ellipse with a fixed volume V=a b
+// Drag of an ellipse at fixed volume V = a*b
 fn drag_for_aspect(x_arr) {
     aspect_log = x_arr[0]
     aspect     = exp(aspect_log)          // a/b
-    V          = 12.0                     //constant "volume"
-    a          = sqrt(V * aspect)         //x semi-axis (parallel to the flow)
+    V          = 12.0                     // constant "volume"
+    a          = sqrt(V * aspect)         // x semi-axis (parallel to the flow)
     b          = V / a                    // y semi-axis (transverse)
 
     nx = 80
@@ -36,13 +36,13 @@ fn main() {
     print("Shape optimization: Adam finds the optimal ellipse shape")
     print("===============================================================")
 
-    // Starting point: circle (a/b = 1 → log(a/b) = 0)
+    // Starting point: circle (a/b = 1 -> log(a/b) = 0)
     x0       = [0.0]
     d0       = drag_for_aspect(x0)[0]
     aspect_0 = exp(x0[0])
     print("Start (circle a/b=1): drag =", d0)
 
-    //Adam optimization
+    // Adam optimization
     result   = minimize(drag_for_aspect, x0, "adam", 0.2, 15)
     x_opt    = result[0]
     aspect_opt = exp(x_opt[0])
@@ -51,22 +51,22 @@ fn main() {
     print("")
     print("Optimum after 15 Adam steps:")
     print("  a/b  =", aspect_opt)
-    print("drag =", d_opt)
+    print("  drag =", d_opt)
 
     // Comparison
     reduction = (d0 - d_opt) / d0 * 100.0
     print("")
     print("Drag reduction versus circle:", reduction, " %")
 
-    //Plausibility checks
-    assert(aspect_opt > 1.5)      //Optimum is significantly slimmer than circle
-    assert(d_opt < d0)            //Drag has actually been reduced
-    assert(reduction > 5.0)       // At least 5% reduction
+    // Plausibility checks
+    assert(aspect_opt > 1.5)      // optimum is significantly slimmer than the circle
+    assert(d_opt < d0)            // drag was actually reduced
+    assert(reduction > 5.0)       // at least 5 % reduction
 
     print("")
     print("===============================================================")
-    print("End-to-end differentiable CFD: Autodegree through 200")
-    print("LBM steps → shape gradient → Adam → optimal geometry.")
+    print("End-to-end differentiable CFD: autograd through 200 LBM steps")
+    print("-> shape gradient -> Adam -> optimal geometry.")
     print("===============================================================")
 }
 

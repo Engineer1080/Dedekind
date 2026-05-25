@@ -34,51 +34,51 @@ fn test_lbm_step() {
 }
 
 fn test_lbm_autograd() {
-    print("Testing LBM Autograd (Gradient flow from Drag to Radius)...")
-    
+    print("Testing LBM autograd (gradient flow from drag to radius)...")
+
     nx = 20
     ny = 10
-    
+
     fn get_drag_from_radius(r_arr) {
         r = r_arr[0]
-        
-        // Erzeuge Zylindermaske mit Radius r
+
+        // Create a cylinder mask with radius r
         mask = soft_cylinder_mask(nx, ny, 8.0, 5.0, r, 0.5)
-        
-        // Initialisiere Simulation mit Maske
+
+        // Initialize the simulation with the mask
         sim = lbm_simulation_with_mask(nx, ny, 0.8, mask)
-        
-        // Lasse Simulation für 4 Schritte laufen
+
+        // Run the simulation for 4 steps
         simulation_run(sim, 4, 0.05)
-        
-        // Berechne Widerstandskraft
+
+        // Compute the drag force
         forces = simulation_get_drag_lift(sim)
         drag = forces[0]
         return [drag]
     }
-    
-    // Initialer Radius als 1-elementiger Vektor für jacobian
+
+    // Initial radius as a 1-element vector for jacobian
     r_init = [1.5]
-    
-    // Berechne Ableitung der Drag-Kraft nach dem Radius r
+
+    // Compute the derivative of drag w.r.t. radius r
     deriv = jacobian(get_drag_from_radius, r_init)
-    print("Derivative of drag w.r.t radius r:", deriv)
-    
-    // Die Ableitung muss ungleich Null sein, da größerer Radius mehr Widerstand erzeugt
-    // d(drag)/d(r) sollte positiv sein!
+    print("Derivative of drag w.r.t. radius r:", deriv)
+
+    // The derivative must be non-zero: a larger radius creates more drag,
+    // so d(drag)/d(r) should be positive.
     assert(deriv[0][0] > 0.0)
-    
-    print("[OK] LBM Autograd")
+
+    print("[OK] LBM autograd")
 }
 
 fn test_lbm_reynolds() {
     print("Testing Reynolds helpers...")
-    // Re = u*L/nu, nu = (tau-0.5)/3 → bei tau=0.8, u=0.05, L=10: Re=5
+    // Re = u*L/nu, nu = (tau-0.5)/3 -> with tau=0.8, u=0.05, L=10: Re=5
     re = lbm_reynolds(0.05, 10.0, 0.8)
     print("Re(u=0.05, L=10, tau=0.8) =", re)
     assert(abs(re - 5.0) < 1e-9)
 
-    // Umkehr: tau aus Re
+    // Inverse: tau from Re
     tau = lbm_tau_from_reynolds(100.0, 0.05, 20.0)
     print("tau(Re=100, u=0.05, L=20) =", tau)
     // nu = u*L/Re = 0.01, tau = 3*nu + 0.5 = 0.53
@@ -91,23 +91,23 @@ fn test_lbm_stability_check() {
     print("Testing tau stability check...")
     caught = false
     try {
-        // tau=0.5 muss als instabil abgelehnt werden
+        // tau=0.5 must be rejected as unstable
         sim = lbm_simulation(10, 10, 0.5)
     } catch e {
         caught = true
-        print("Erwarteter Fehler:", e)
+        print("Expected error:", e)
     }
     assert(caught)
     print("[OK] tau stability check")
 }
 
 fn test_lbm_mem_no_obstacle() {
-    print("Testing MEM-Drag returns zero without obstacle...")
+    print("Testing that MEM drag is zero without an obstacle...")
     sim = lbm_simulation(20, 12, 0.8)
     simulation_run(sim, 10, 0.05)
     forces = simulation_get_drag_lift(sim)
     print("F_x, F_y (no obstacle):", forces)
-    // Ohne Hindernis: M=0 überall, MEM-Force muss exakt 0 sein
+    // Without an obstacle, M=0 everywhere, so the MEM force must be exactly 0.
     assert(abs(forces[0]) < 1e-12)
     assert(abs(forces[1]) < 1e-12)
     print("[OK] MEM zero-obstacle invariant")
@@ -120,7 +120,7 @@ fn test_lbm_pressure() {
     p = simulation_get_pressure(sim)
     rho = simulation_get_density(sim)
     print("p shape:", p.shape, " rho shape:", rho.shape)
-    // p = rho/3 in Lattice-Einheiten
+    // p = rho/3 in lattice units
     diff = abs(mean(p) * 3.0 - mean(rho))
     print("mean(p)*3 - mean(rho) =", diff)
     assert(diff < 1e-6)
@@ -128,14 +128,14 @@ fn test_lbm_pressure() {
 }
 
 fn test_karman_quick() {
-    print("Testing Karman benchmark (quick: 1500 steps, klein)...")
-    // Sehr kurze Variante; misst nur, dass die API durchläuft und plausible
-    // Werte liefert (nicht textbook-Konvergenz).
+    print("Testing Karman benchmark (quick: 1500 steps, small)...")
+    // Very short variant; only checks that the API runs through and produces
+    // plausible values (not textbook convergence).
     result = lbm_karman_benchmark(100.0, 120, 40, 1500)
     cd = result["C_D_mean"]
     st = result["strouhal"]
     print("C_D =", cd, "  St =", st)
-    // Sehr lockere Schranken; bei dieser Auflösung erwarten wir nur Größenordnung
+    // Very loose bounds; at this resolution we only expect the right order of magnitude.
     assert(cd > 0.5)
     assert(cd < 6.0)
     assert(st >= 0.0)
@@ -163,24 +163,24 @@ fn test_physical_setup() {
 }
 
 fn test_physical_units_validation() {
-    print("Testing dass falsche Einheiten abgelehnt werden...")
+    print("Testing that wrong units are rejected...")
     caught = false
     try {
-        // domain_x mit kg statt m → muss fehlschlagen
+        // domain_x in kg instead of m -> must fail
         sim = lbm_physical(
             5.0[kg], 0.04[m], 50,
             0.01[m/s], 1.0e-4[m^2/s], 1000.0[kg/m^3]
         )
     } catch e {
         caught = true
-        print("Erwarteter Fehler:", e)
+        print("Expected error:", e)
     }
     assert(caught)
     print("[OK] Unit validation")
 }
 
 fn test_physical_drag_units() {
-    print("Testing dass drag/lift in N/m kommt mit korrektem Konvertierungsfaktor...")
+    print("Testing that drag/lift comes out in N/m with the correct conversion factor...")
     sim = lbm_physical(
         0.10[m], 0.04[m], 80,
         0.01[m/s], 1.0e-4[m^2/s], 1000.0[kg/m^3]
@@ -190,21 +190,21 @@ fn test_physical_drag_units() {
     lbm_run_steps(sim, 200)
 
     F = lbm_drag_lift(sim)
-    print("  Drag-Force = ", F[0])
-    // Quantity-Einheit muss N/m sein
+    print("  Drag force = ", F[0])
+    // Quantity unit must be N/m
     assert(F[0].unit == "N/m")
-    // Drag muss positiv sein
+    // Drag must be positive
     assert(F[0].value > 0.0)
     print("[OK] Drag in physical [N/m]")
 }
 
 fn test_physical_run_time() {
-    print("Testing Lauf für physikalische Zeit (Quantity)...")
+    print("Testing run for a physical time (Quantity)...")
     sim = lbm_physical(
         0.10[m], 0.04[m], 80,
         0.01[m/s], 1.0e-4[m^2/s], 1000.0[kg/m^3]
     )
-    // 1 Sekunde physikalisch bei dt=0.00625 s → 160 Schritte
+    // 1 second of physical time at dt=0.00625 s -> 160 steps
     lbm_run_time(sim, 1.0[s])
     p = lbm_pressure(sim)
     assert(p.unit == "Pa")
@@ -220,7 +220,7 @@ fn test_mrt_collision_runs() {
     lbm_run_steps(sim, 300)
     F = lbm_drag_lift(sim)
     print("  MRT drag =", F[0])
-    // Finitheit prüfen
+    // Finiteness check
     drag_val = F[0].value
     assert(drag_val > 0.0)
     assert(drag_val < 100.0)
@@ -243,15 +243,15 @@ fn test_hard_vs_soft_bounce() {
     lbm_run_steps(sim_hard, 400)
     F_hard = lbm_drag_lift(sim_hard)
 
-    print("  Soft-Bounce drag =", F_soft[0].value)
-    print("  Hard-Bounce drag =", F_hard[0].value)
-    // Hard sollte signifikant höher sein (scharfes Hindernis = mehr Widerstand)
+    print("  Soft-bounce drag =", F_soft[0].value)
+    print("  Hard-bounce drag =", F_hard[0].value)
+    // Hard should be significantly higher (sharper obstacle = more drag)
     assert(F_hard[0].value > F_soft[0].value)
     print("[OK] hard > soft as expected")
 }
 
 fn test_autograd_validates_against_fd() {
-    print("Testing Autograd-Gradient stimmt mit finitem-Differenzen-Gradient überein...")
+    print("Testing that the autograd gradient agrees with the finite-difference gradient...")
 
     nx = 24
     ny = 16
@@ -270,19 +270,19 @@ fn test_autograd_validates_against_fd() {
     j = jacobian(drag_at_radius, r0)
     grad_autograd = j[0][0]
 
-    // Zentrale finite Differenzen
+    // Central finite differences
     h = 0.001
     f_plus = drag_at_radius([2.0 + h])
     f_minus = drag_at_radius([2.0 - h])
     grad_fd = (f_plus[0] - f_minus[0]) / (2.0 * h)
 
     rel_err = abs(grad_autograd - grad_fd) / abs(grad_fd)
-    print("  Autograd-Gradient    =", grad_autograd)
-    print("  Finite-Diff-Gradient =", grad_fd)
-    print("  Relativer Fehler     =", rel_err)
-    // Mit tau=0.7 und 20 Schritten muss die Übereinstimmung sehr eng sein
+    print("  Autograd gradient    =", grad_autograd)
+    print("  Finite-diff gradient =", grad_fd)
+    print("  Relative error       =", rel_err)
+    // With tau=0.7 and 20 steps the agreement must be very tight
     assert(rel_err < 1e-4)
-    print("[OK] Autograd ≈ Finite-Differenzen (validates differentiable LBM end-to-end)")
+    print("[OK] Autograd ~ finite-difference (validates differentiable LBM end-to-end)")
 }
 
 fn main() {

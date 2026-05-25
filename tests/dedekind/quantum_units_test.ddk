@@ -1,52 +1,52 @@
-// quantum_units_test.ddk — Tests fuer Quanten-Einheiten (v1.21)
+// quantum_units_test.ddk — tests for quantum units (v1.21)
 
 fn approx(a, b, tol) {
     return abs(a - b) < tol
 }
 
-// Test 1: eV ist eine gueltige Energieeinheit
+// Test 1: eV is a valid energy unit
 e = 2.5[eV]
 e2 = 1.5[eV]
 e_sum = e + e2
-assert(approx(e_sum.value, 4.0, 1e-6), "eV-Addition")
+assert(approx(e_sum.value, 4.0, 1e-6), "eV addition")
 
-// Test 2: meV addierbar mit eV (gleiche Dimension: energy) — Ergebnis in erster Einheit (meV)
+// Test 2: meV is addable with eV (same dimension: energy) — result in the first unit (meV)
 e_mev = 500.0[meV]
 e_ev  = 1.0[eV]
 e_total = e_mev + e_ev
-assert(e_total.unit == "meV", "meV + eV ergibt meV (erste Einheit bleibt erhalten)")
+assert(e_total.unit == "meV", "meV + eV yields meV (first unit is preserved)")
 
-// Test 3: GHz additiv
+// Test 3: GHz additive
 f1 = 5.0[GHz]
 f2 = 0.5[GHz]
 f_sum = f1 + f2
-assert(approx(f_sum.value, 5.5, 1e-6), "GHz-Addition")
+assert(approx(f_sum.value, 5.5, 1e-6), "GHz addition")
 
-// Test 4: THz additiv mit GHz (gleiche Dimension: frequency) — Ergebnis in THz (erste Einheit)
+// Test 4: THz additive with GHz (same dimension: frequency) — result in THz (first unit)
 f_thz = 1.0[THz]
 f_ghz = 500.0[GHz]
 f_mix = f_thz + f_ghz
-assert(f_mix.unit == "THz", "THz + GHz ergibt THz (erste Einheit bleibt erhalten)")
+assert(f_mix.unit == "THz", "THz + GHz yields THz (first unit is preserved)")
 assert(approx(f_mix.value, 1.5, 1e-6), "1 THz + 500 GHz = 1.5 THz")
 
-// Test 5: qubit_frequency_check akzeptiert GHz
+// Test 5: qubit_frequency_check accepts GHz
 freq = 4.8[GHz]
 freq_out = qubit_frequency_check(freq)
 assert(approx(freq_out.value, 4.8, 1e-5), "qubit_frequency_check GHz")
 
-// Test 6: coherence_time_check akzeptiert us
+// Test 6: coherence_time_check accepts us
 t1 = 50.0[us]
 t1_out = coherence_time_check(t1)
 assert(t1_out.unit == "us", "coherence_time_check us")
 
-// Test 7: energy_gap_check akzeptiert eV
+// Test 7: energy_gap_check accepts eV
 eg = 1.2[eV]
 eg_out = energy_gap_check(eg)
 assert(eg_out.unit == "eV", "energy_gap_check eV")
 
-// Test 8: energy_gap_check akzeptiert meV
+// Test 8: energy_gap_check accepts meV
 eg_m = 50.0[meV]
 eg_m_out = energy_gap_check(eg_m)
 assert(eg_m_out.unit == "meV", "energy_gap_check meV")
 
-print("Alle Quanten-Einheiten-Tests bestanden!")
+print("All quantum-units tests passed.")

@@ -1,4 +1,4 @@
-// Test: Symbolische Vereinfachung (x+0, x*1, 0*x, 2*3, etc.)
+// Test: symbolic simplification (x+0, x*1, 0*x, 2*3, etc.)
 fn main() {
     a = 2 * 3
     assert(a == 6)
@@ -33,6 +33,6 @@ fn main() {
     k = 5^1
     assert(k == 5)
 
-    print("simplify_test: bestanden.")
+    print("simplify_test: passed.")
 }
 main()

@@ -1,4 +1,4 @@
-// Tests fuer LabeledTensor-Shape-Annotation und labeled_tensor()-Helper.
+// Tests for the LabeledTensor shape annotation and the labeled_tensor() helper.
 
 pyimport numpy as np
 
@@ -11,29 +11,29 @@ fn need_lat_lon_time(t: LabeledTensor[lat, lon, time]) -> LabeledTensor[lat, lon
 }
 
 fn main() {
-    // 1) Korrekter Workflow
+    // 1) Correct workflow
     raw2d = np.random.rand(3, 5)
     t2 = labeled_tensor(raw2d, dims=["lat", "lon"],
                         attrs={"units": "K"})
     out = need_lat_lon(t2)
-    assert(out.shape[0] == 3, "Mean over lon: shape erhaelt lat=3")
-    assert(out.dims[0] == "lat", "Mean over lon: dim ist 'lat'")
+    assert(out.shape[0] == 3, "mean over lon: shape preserves lat=3")
+    assert(out.dims[0] == "lat", "mean over lon: dim is 'lat'")
 
-    // 2) 3-D Klimadatensatz
+    // 2) 3-D climate dataset
     raw3d = np.random.rand(2, 4, 6)
     t3 = labeled_tensor(raw3d, dims=["lat", "lon", "time"])
     out3 = need_lat_lon_time(t3)
-    assert(out3.shape[0] == 2, "Time-Mean: lat-Dim erhalten")
-    assert(out3.shape[1] == 4, "Time-Mean: lon-Dim erhalten")
+    assert(out3.shape[0] == 2, "time mean: lat dim preserved")
+    assert(out3.shape[1] == 4, "time mean: lon dim preserved")
 
-    // 3) Reihenfolge ist egal: dims=[lon, lat] passt trotzdem zu [lat, lon]
+    // 3) Order does not matter: dims=[lon, lat] still matches [lat, lon]
     raw_rev = np.random.rand(5, 3)
     t_rev = labeled_tensor(raw_rev, dims=["lon", "lat"])
     out_rev = need_lat_lon(t_rev)
-    // xarray's .mean(dim="lon") erhaelt 'lat' -> shape (3,)
-    assert(out_rev.shape[0] == 3, "Reihenfolge irrelevant: lat-Dim erhalten")
+    // xarray's .mean(dim="lon") preserves 'lat' -> shape (3,)
+    assert(out_rev.shape[0] == 3, "order irrelevant: lat dim preserved")
 
-    // 4) labeled_tensor mit coords
+    // 4) labeled_tensor with coords
     lats = np.linspace(-90.0, 90.0, 5)
     lons = np.linspace(-180.0, 180.0, 10)
     raw_c = np.random.rand(5, 10)
@@ -42,13 +42,13 @@ fn main() {
     assert(t_c.shape[0] == 5, "coords: shape ok")
     assert(t_c.dims[0] == "lat", "coords: dim names ok")
 
-    // 5) Attribute werden mitgefuehrt
+    // 5) Attributes are carried along
     t_a = labeled_tensor(np.random.rand(3, 3), dims=["x", "y"],
                          attrs={"units": "Pa", "source": "ERA5"})
-    assert(t_a.attrs["units"] == "Pa", "attrs[units] erhalten")
-    assert(t_a.attrs["source"] == "ERA5", "attrs[source] erhalten")
+    assert(t_a.attrs["units"] == "Pa", "attrs[units] preserved")
+    assert(t_a.attrs["source"] == "ERA5", "attrs[source] preserved")
 
-    print("labeled_tensors_test: 9 Asserts bestanden")
+    print("labeled_tensors_test: 9 asserts passed")
 }
 
 main()

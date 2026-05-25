@@ -1,4 +1,4 @@
-// Tests für 3D LBM (D3Q19) und STL-Voxelizer
+// Tests for 3D LBM (D3Q19) and the STL voxelizer.
 
 use fluid_dynamics
 
@@ -160,9 +160,9 @@ fn test_lbm3d_autograd() {
     grad_fd = (fp - fm) / (2.0 * h)
     
     rel_err = abs(grad_ag - grad_fd) / abs(grad_fd)
-    print("  Autograd-Gradient:", grad_ag)
-    print("  FD-Gradient:      ", grad_fd)
-    print("  Rel. Fehler:      ", rel_err)
+    print("  Autograd gradient:", grad_ag)
+    print("  FD gradient:      ", grad_fd)
+    print("  Rel. error:       ", rel_err)
     
     assert(rel_err < 1e-3)
     print("[OK] 3D LBM Autograd")

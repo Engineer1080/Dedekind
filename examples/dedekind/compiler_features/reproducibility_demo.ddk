@@ -1,36 +1,37 @@
-// Reproducibility-Report-Demo
+// Reproducibility-report demo
 //
-//This file is intentionally kept small and contains typical components
-//a scientific methods section: deterministic seed, constants
-//with units, a Lagrangian function and an ODE integration call.
+// This file is intentionally kept small and contains the typical pieces
+// of a scientific methods section: a deterministic seed, constants with
+// units, a Lagrangian function and an ODE integration call.
 //
-//Call for the reproducibility appendix:
-//python -m src.compiler.compiler \
-//       examples/dedekind/compiler_features/reproducibility_demo.ddk \
-//       --reproducibility-report repro.md
+// To generate the reproducibility appendix:
+//   python -m src.compiler.compiler \
+//          examples/dedekind/compiler_features/reproducibility_demo.ddk \
+//          --reproducibility-report repro.md
 //
-//The written `repro.md` contains:
-//- SHA-256 of the source and Git commit (dirty flag)
-//   - Python-/torch-/numpy-/scipy-Versionen, CUDA-Verfuegbarkeit
-//- the seed(...) calls recognized in the source (here: 42)
-//- the Methods section as LaTeX, generated from the AST
+// The generated `repro.md` contains:
+//   - SHA-256 of the source and the git commit (with a dirty flag)
+//   - Python / torch / numpy / scipy versions, CUDA availability
+//   - the seed(...) calls detected in the source (here: 42)
+//   - the methods section as LaTeX, generated from the AST
 //
-//The LaTeX block is *single source of truth*: the same AST drives it
-//Simulation and provides the formulas for the manuscript. Drift impossible.
+// The LaTeX block is the *single source of truth*: the same AST drives
+// the simulation and provides the formulas for the manuscript. Drift
+// between paper and code is structurally impossible.
 
 seed(42)
 
-//Spring stiffness and mass (dimensionless, see unit demo
-//physical_units.ddk; here the focus is on the reproducibility report)
+// Spring stiffness and mass (dimensionless — see the unit demo
+// physical_units.ddk; here the focus is on the reproducibility report).
 m = 1.0
 k = 4.0
 
-// Lagrangian eines harmonischen Oszillators
+// Lagrangian of a harmonic oscillator
 fn L(q, v) {
     return 0.5 * m * v[0] * v[0] - 0.5 * k * q[0] * q[0]
 }
 
-//Euler-Lagrange gives q-ddot = -k/m * q -> ode_solve integrated
+// Euler-Lagrange yields q-ddot = -k/m * q -> integrated via ode_solve
 rhs    = lagrange_ode_rhs(L)
 t_grid = linspace(0, 2 * pi, 51)
 y0     = [1.0, 0.0]

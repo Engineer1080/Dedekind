@@ -1,44 +1,44 @@
-// Tests für print_table mit verschiedenen Formaten und UncertainQuantity.
+// Tests for print_table with several formats and UncertainQuantity.
 
 fn check_contains(haystack, needle, label) {
-    // Wir nutzen str.find() (Python-passthrough); -1 bedeutet "nicht gefunden".
+    // We use str.find() (Python passthrough); -1 means "not found".
     pos = haystack.find(needle)
     assert(pos >= 0, label)
 }
 
 fn main() {
-    // 1) Einfache Tabelle
+    // 1) Simple table
     rows = [[1, 2.5, "x"], [3, 4.5, "y"]]
     headers = ["a", "b", "c"]
     md = print_table(rows, headers=headers, format="markdown")
-    check_contains(md, "| a | b   | c |", "Markdown-Header mit a/b/c")
-    check_contains(md, "1 | 2.5 | x", "Erste Zeile")
+    check_contains(md, "| a | b   | c |", "markdown header with a/b/c")
+    check_contains(md, "1 | 2.5 | x", "first row")
 
-    // 2) CSV-Format
+    // 2) CSV format
     csv = print_table(rows, headers=headers, format="csv")
-    check_contains(csv, "a,b,c", "CSV-Header")
-    check_contains(csv, "1,2.5,x", "CSV-Zeile")
+    check_contains(csv, "a,b,c", "CSV header")
+    check_contains(csv, "1,2.5,x", "CSV row")
 
-    // 3) LaTeX-Format
+    // 3) LaTeX format
     tex = print_table(rows, headers=headers, format="latex", caption="Demo", label="tab:t")
-    check_contains(tex, r"\begin{tabular}", "LaTeX-tabular")
-    check_contains(tex, r"\toprule", "Booktabs-toprule")
-    check_contains(tex, r"\caption{Demo}", "LaTeX-Caption")
+    check_contains(tex, r"\begin{tabular}", "LaTeX tabular")
+    check_contains(tex, r"\toprule", "booktabs toprule")
+    check_contains(tex, r"\caption{Demo}", "LaTeX caption")
 
-    // 4) UncertainQuantity: ± mit Einheit
+    // 4) UncertainQuantity: +/- with unit
     rows_u = [["U1", uncertain(2.34, 0.05, unit="V")]]
-    md_u = print_table(rows_u, headers=["Messung", "Spannung"], format="markdown")
-    check_contains(md_u, "2.34 ± 0.05 [V]", "Markdown ± mit Einheit")
+    md_u = print_table(rows_u, headers=["Measurement", "Voltage"], format="markdown")
+    check_contains(md_u, "2.34 ± 0.05 [V]", "markdown +/- with unit")
 
-    tex_u = print_table(rows_u, headers=["Messung", "Spannung"], format="latex")
+    tex_u = print_table(rows_u, headers=["Measurement", "Voltage"], format="latex")
     check_contains(tex_u, r"\pm", "LaTeX \pm")
-    check_contains(tex_u, r"\mathrm{V}", "LaTeX-Einheit als mathrm")
+    check_contains(tex_u, r"\mathrm{V}", "LaTeX unit as mathrm")
 
-    // 5) DataFrame mit Einheiten in Header
+    // 5) DataFrame with units in the header
     df = DataFrame({"t": [0.0, 1.0], "T": [20.0, 22.5]}, units={"t": "s", "T": "K"})
     md_df = print_table(df, format="markdown")
-    check_contains(md_df, "t [s]", "DataFrame-Header trägt Einheit")
-    check_contains(md_df, "T [K]", "DataFrame-Header trägt zweite Einheit")
+    check_contains(md_df, "t [s]", "DataFrame header carries unit")
+    check_contains(md_df, "T [K]", "DataFrame header carries the second unit")
 
     print("paper_table_test OK")
 }

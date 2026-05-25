@@ -17,7 +17,7 @@ fn main() {
     print("Sample from Bernoulli(0.7):")
     print(z)
     
-    // Mehrere Ziehungen
+    // Multiple draws
     samples_10 = sample(d, 10)
     print("10 samples from Normal(0,1):")
     print(samples_10)
@@ -52,6 +52,6 @@ fn main() {
     print(posterior_samples[499])
     print("(Mean of posterior should be near 2.5)")
     
-    print("Probabilistic Programming aktiv.")
+    print("Probabilistic programming active.")
 }
 main()

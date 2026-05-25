@@ -1,20 +1,20 @@
-//Quick Wins: Units kN, MPa, MN, D, mD (construction, materials, geology)
+// Quick Wins: units kN, MPa, MN, D, mD (civil engineering, materials, geology)
 fn main() {
-    print("--- Dedekind: Quick Wins Units (kN, MPa, MN, D, mD) ---")
+    print("--- Dedekind: Quick Wins units (kN, MPa, MN, D, mD) ---")
 
-    // === Kraft (Bauingenieurwesen) ===
+    // === Force (civil engineering) ===
     print("1[kN] + 500[N]:")
     print(1[kN] + 500[N])
     print("10[MN] + 2[kN]:")
     print(10[MN] + 2[kN])
 
-    // === Druck (Werkstoffe, Bau) ===
+    // === Pressure (materials, construction) ===
     print("1[MPa] + 500[kPa]:")
     print(1[MPa] + 500[kPa])
     print("100[MPa] + 1[bar]:")
     print(100[MPa] + 1[bar])
 
-    //=== Permeability Darcy (Geology) ===
+    // === Permeability Darcy (geology) ===
     print("1[D] + 100[mD] (in D):")
     print(1[D] + 100[mD])
     print("1000[mD] in D:")

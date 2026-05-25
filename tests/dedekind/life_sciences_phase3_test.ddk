@@ -19,7 +19,7 @@ fn test_pressure_units() {
     assert(abs(p_diff.value - 0.0) < 1e-4)
     assert(p_diff.unit == "atm")
 
-    print("test_pressure_units: bestanden.")
+    print("test_pressure_units: passed.")
 }
 
 fn test_concentration_units() {
@@ -40,7 +40,7 @@ fn test_concentration_units() {
     assert(abs(c_sum2.value - 20.0) < 1e-4)
     assert(c_sum2.unit == "g/L")
 
-    print("test_concentration_units: bestanden.")
+    print("test_concentration_units: passed.")
 }
 
 fn test_ph_conventions() {
@@ -57,13 +57,13 @@ fn test_ph_conventions() {
     ph_direct = -log10(h_conc.value)
     assert(abs(ph_direct - 3.0) < 1e-4)
 
-    print("test_ph_conventions: bestanden.")
+    print("test_ph_conventions: passed.")
 }
 
 fn main() {
     test_pressure_units()
     test_concentration_units()
     test_ph_conventions()
-    print("life_sciences_phase3_test: Alle Tests bestanden!")
+    print("life_sciences_phase3_test: all tests passed.")
 }
 main()

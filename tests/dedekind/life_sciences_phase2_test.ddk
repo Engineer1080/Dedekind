@@ -9,7 +9,7 @@ fn test_smith_waterman_string() {
     assert(score == 6.0)
     assert(aligned_1 == "GCA")
     assert(aligned_2 == "GCA")
-    print("test_smith_waterman_string: bestanden.")
+    print("test_smith_waterman_string: passed.")
 }
 
 fn test_smith_waterman_tensor() {
@@ -19,7 +19,7 @@ fn test_smith_waterman_tensor() {
     score = res["score"]
 
     assert(score == 6.0)
-    print("test_smith_waterman_tensor: bestanden.")
+    print("test_smith_waterman_tensor: passed.")
 }
 
 fn test_protein_structure_parse() {
@@ -86,13 +86,13 @@ HETATM 3 O O HOH A 2 15.000 25.000 35.000 0.50 20.00
     assert(abs(x_cif[0].value - 11.111) < 1e-3)
     assert(x_cif[0].unit == "angstrom")
 
-    print("test_protein_structure_parse: bestanden.")
+    print("test_protein_structure_parse: passed.")
 }
 
 fn main() {
     test_smith_waterman_string()
     test_smith_waterman_tensor()
     test_protein_structure_parse()
-    print("life_sciences_phase2_test: alles bestanden.")
+    print("life_sciences_phase2_test: all tests passed.")
 }
 main()

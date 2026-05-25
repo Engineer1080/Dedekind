@@ -1,4 +1,4 @@
-// Tests für modules/physics.ddk
+// Tests for modules/physics.ddk
 use physics
 
 fn approx(a, b, tol) {
@@ -11,29 +11,29 @@ fn main() {
     // E_kin = 0.5 * 2 * 3^2 = 9
     assert(approx(kinetic_energy(2.0, 3.0), 9.0, 1e-9), "Ek")
 
-    // Pendel T = 2*pi*sqrt(1/9.81) ≈ 2.006
+    // Pendulum T = 2*pi*sqrt(1/9.81) ~ 2.006
     T = pendulum_period(1.0, 9.81)
     assert(approx(T, 2.006, 0.01), "T_pendulum")
 
     // Ohm: V = I*R = 2*5 = 10
     assert(approx(ohms_law_voltage(2.0, 5.0), 10.0, 1e-9), "Ohm")
 
-    // Stefan-Boltzmann bei 100 K: sigma * 1e8 ≈ 5.67
-    assert(approx(blackbody_radiance(100.0), 5.670374, 0.001), "BB-Strahlung")
+    // Stefan-Boltzmann at 100 K: sigma * 1e8 ~ 5.67
+    assert(approx(blackbody_radiance(100.0), 5.670374, 0.001), "BB radiance")
 
     // ideal gas: P = n*R*T/V
     P = ideal_gas_pressure(1.0, 273.15, 0.02271)
     assert(approx(P, 100000.0, 1000.0), "ideal_gas_pressure ~ 1 bar")
 
-    // Relativistischer gamma bei 0.6c: 1/sqrt(1-0.36) = 1.25
+    // Relativistic gamma at 0.6c: 1/sqrt(1-0.36) = 1.25
     g = relativistic_gamma(0.6 * C_NUM)
     assert(approx(g, 1.25, 1e-6), "gamma(0.6c)")
 
-    // Newton-Gravitation Erde-Mensch (ungefähr)
+    // Newtonian gravitation: Earth-human (approximate)
     F = newton_gravity(80.0, 5.972e24, 6.371e6)
-    assert(approx(F, 785.0, 5.0), "F_grav Mensch")
+    assert(approx(F, 785.0, 5.0), "F_grav human on Earth")
 
-    print("stdlib_physics_test: alle 7 Asserts bestanden")
+    print("stdlib_physics_test: all 7 asserts passed")
 }
 
 main()

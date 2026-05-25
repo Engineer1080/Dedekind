@@ -10,38 +10,38 @@ fn main() {
     //We use the .with_grad() modifier
     x = [3.0].with_grad()
     
-    print("Eingabewert x:")
+    print("Input value x:")
     print(x)
-    
-    //3. Calculate the derivative at x=3.0
-    //The theoretical derivative of x^2 + 5 is 2*x. At x=3 so 6.
+
+    //3. Compute the derivative at x=3.0
+    //The analytical derivative of x^2 + 5 is 2*x. At x=3 that is 6.
     dx = grad(parabola, x)
-    
-    print("Calculated derivative (degree) at x=3:")
+
+    print("Computed derivative (gradient) at x=3:")
     print(dx)
-    
+
     //4. More complex example: optimization step
     print("--- Optimization of a squared error ---")
-    
+
     target = 100.0
     weight = [2.0].with_grad()
     learning_rate = 0.1
-    
+
     fn error_fn(w) {
         prediction = w * w
         return (prediction - 100.0) * (prediction - 100.0)
     }
-    
-    print("Start-Gewicht:")
+
+    print("Initial weight:")
     print(weight)
-    
-    //A simple manual optimization step
+
+    //A single manual optimization step
     g_w = grad(error_fn, weight)
     weight = weight - learning_rate * g_w
-    
-    print("Weight after an optimization step:")
+
+    print("Weight after one optimization step:")
     print(weight)
-    
-    print("Executed successfully! Dedekind now understands analysis. 🦅📈")
+
+    print("Executed successfully! Dedekind now does calculus.")
 }
 main()

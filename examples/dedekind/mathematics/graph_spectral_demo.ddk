@@ -1,19 +1,18 @@
-//graph_spectral_demo.ddk — Spectral graph methods using the Dedekind-Laplacian.
+// graph_spectral_demo.ddk — Spectral graph methods built on the Dedekind Laplacian.
 //
-// Dedekind v1.11 fuegt `graph_laplacian(adj, normalized=False)` als Built-in
-//added. Together with the iterative solvers (`cg`,
-//`gmres`, `bicgstab`) results in a complete toolbox for
-//spectral graph analyzes — without `pyimport`.
+// Dedekind v1.11 adds `graph_laplacian(adj, normalized=False)` as a built-in.
+// Together with the iterative solvers (`cg`, `gmres`, `bicgstab`) this yields
+// a complete toolbox for spectral graph analysis — without `pyimport`.
 //
-//We demonstrate two classic applications:
-//1. Heat diffusion on the graph via implicit Euler method (CG).
-//2. Fiedler vector (second eigenvalue) for graph partitioning.
+// We demonstrate two classic applications:
+// 1. Heat diffusion on the graph via implicit Euler (CG).
+// 2. Fiedler vector (second eigenvalue) for graph partitioning.
 //
-//Test graph: two clusters (4 nodes each as an "almost complete" subgraph),
-//connected by a single bridge edge between node 3 and node 4.
+// Test graph: two clusters (4 nodes each, "almost complete" subgraphs),
+// connected by a single bridge edge between node 3 and node 4.
 
 fn build_two_cluster_adj() {
-    // 8x8 Adjazenz: Cluster 1 = {0,1,2,3}, Cluster 2 = {4,5,6,7}, Bruecke 3-4.
+    // 8x8 adjacency: cluster 1 = {0,1,2,3}, cluster 2 = {4,5,6,7}, bridge 3-4.
     return [
         [0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0],
         [1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0],
@@ -58,24 +57,24 @@ fn main() {
         u = res["x"]
     }
     print("u(t=5*dt) after 5 steps:" + str(u))
-    print("-> Energy is distributed, cluster 1 warms up first,")
-    print("Cluster 2 is slowly learning about the narrow bridge.")
+    print("-> Energy spreads: cluster 1 warms first,")
+    print("   cluster 2 only slowly via the narrow bridge.")
     print("")
 
-    //--- Application 2: Fiedler Vector / Spectral Partitioning ----------
-    //Second smallest eigenvalue + associated eigenvector of L.
-    //Sign of the vector separates the clusters.
-    print("[2] Spectral partitioning via Fiedler vector")
+    //--- Application 2: Fiedler vector / spectral partitioning ----------
+    // Second-smallest eigenvalue + associated eigenvector of L.
+    // The sign of the vector entries separates the clusters.
+    print("[2] Spectral partitioning via the Fiedler vector")
     res_eig = eigh(L)
     eigvals = res_eig[0]
-    eigvecs = res_eig[1]   //Columns = eigenvectors
+    eigvecs = res_eig[1]   // Columns = eigenvectors
     print("Eigenvalues (sorted):")
     print(eigvals)
-    print("Fiedler-Vektor (zweiter Eigenvektor, Spalte 1):")
+    print("Fiedler vector (second eigenvector, column 1):")
     fiedler = eigvecs.narrow(1, 1, 1).reshape(-1)
     print(fiedler)
-    print("-> Sign split returns the two clusters:")
-    print("Nodes with Fiedler[i] < 0 in one cluster, > 0 in the other.")
+    print("-> Sign split recovers the two clusters:")
+    print("   nodes with Fiedler[i] < 0 in one cluster, > 0 in the other.")
 }
 
 main()

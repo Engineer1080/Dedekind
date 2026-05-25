@@ -1,4 +1,4 @@
-// Kern-Algorithmen: lu, matrix_power, cdist, cross, simpson, permutation, choice, autocorr, moving_mean, erf, gamma
+// Core algorithms: lu, matrix_power, cdist, cross, simpson, permutation, choice, autocorr, moving_mean, erf, gamma
 fn main() {
     // LU
     A = [[2.0, 1.0], [1.0, 3.0]]
@@ -53,6 +53,6 @@ fn main() {
     assert(erf(0.0) < 0.01)
     assert(gamma(1.0) - 1.0 < 0.01)
 
-    print("kern_algorithms_test: bestanden.")
+    print("kern_algorithms_test: passed.")
 }
 main()

@@ -131,7 +131,7 @@ fn main() {
     test_morse_potential()
     test_lj_dynamics_nve()
     test_lj_dynamics_nvt()
-    print("molecular_test: Alle Tests bestanden!")
+    print("molecular_test: all tests passed.")
 }
 
 main()

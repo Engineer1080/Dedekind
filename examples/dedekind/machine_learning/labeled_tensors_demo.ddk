@@ -1,47 +1,48 @@
-//labeled_tensors_demo.ddk — Climate/Geo/Earth Science workflows with
-// dimensions-namens-bewussten Tensoren (Dedekind v1.15).
+// labeled_tensors_demo.ddk — climate / geo / earth-science workflows with
+// dimension-name-aware tensors (Dedekind v1.15).
 //
-//The problem: large-scale climate data are 4-D tensors (lat, lon, time,
-// level), oft im NetCDF-Format. In nacktem NumPy verwechselt man leicht
-//'mean over lat' with 'mean over time' — the tensor knows its axes-
-//Not names. xarray.DataArray solves that, but has no type system.
+// The problem: large-scale climate data are 4-D tensors (lat, lon, time,
+// level), often in NetCDF. In bare NumPy it is easy to confuse
+// "mean over lat" with "mean over time" — the tensor knows its axes
+// as numbers, not as names. xarray.DataArray solves that, but has no type
+// system.
 //
-//Dedekind's USP: LabeledTensor[lat, lon, time] shape annotation checks
-//Runtime that the data transferred has exactly these axis names.
-//Combined with attrs={units: ...} the result is true type-safe
-// Geo-Pipeline.
+// Dedekind's USP: the LabeledTensor[lat, lon, time] shape annotation
+// checks at runtime that the data passed in has exactly these axis names.
+// Combined with attrs={units: ...} the result is a truly type-safe
+// geo pipeline.
 
 pyimport numpy as np
 
-//Helper: simple monthly average over the time axis
+// Helper: simple monthly average over the time axis
 fn temporal_mean(t: LabeledTensor[lat, lon, time]) -> LabeledTensor[lat, lon] {
     return t.mean(dim="time")
 }
 
-//Helper: zonal mean (averaged over length)
+// Helper: zonal mean (averaged over longitude)
 fn zonal_mean(t: LabeledTensor[lat, lon, time]) -> LabeledTensor[lat, time] {
     return t.mean(dim="lon")
 }
 
-//Anomaly = value minus time average
+// Anomaly = value minus time average
 fn temperature_anomaly(t: LabeledTensor[lat, lon, time]) -> LabeledTensor[lat, lon, time] {
     return t - t.mean(dim="time")
 }
 
 fn main() {
-    print("=== Labeled Tensors for Earth Science (v1.15) ===")
+    print("=== Labeled tensors for earth science (v1.15) ===")
     seed(42)
 
-    //1) Synthetic data set: 4 degrees of latitude x 8 degrees of longitude x 12 months
+    // 1) Synthetic dataset: 4 latitude bands x 8 longitude bands x 12 months
     n_lat = 4
     n_lon = 8
     n_time = 12
 
-    // Realistische Temperaturen: kuehler an Polen, waermer am Aequator,
-    // jahreszeitliche Variation
+    // Realistic temperatures: cooler at the poles, warmer at the equator,
+    // with seasonal variation.
     lats = np.linspace(-60.0, 60.0, n_lat)
     lons = np.linspace(-180.0, 180.0, n_lon)
-    times = np.linspace(2020.0, 2020.917, n_time)   // 12 Monate in 2020
+    times = np.linspace(2020.0, 2020.917, n_time)   // 12 months in 2020
     raw = np.random.rand(n_lat, n_lon, n_time) * 5.0 + 283.0   // ~283-288 K
 
     T = labeled_tensor(raw,
@@ -51,11 +52,11 @@ fn main() {
         attrs={"units": "K", "crs": "EPSG:4326"}
     )
 
-    print("Dataset:" + str(T.shape) + "with dims" + str(T.dims))
-    print("Attribute: " + str(T.attrs))
+    print("Dataset:" + str(T.shape) + " with dims " + str(T.dims))
+    print("Attributes: " + str(T.attrs))
     print("")
 
-    //2) Time average: shape collapses from (4,8,12) to (4,8)
+    // 2) Time average: shape collapses from (4,8,12) to (4,8)
     T_mean = temporal_mean(T)
     print("[temporal_mean] dims=" + str(T_mean.dims) + " shape=" + str(T_mean.shape))
 
@@ -63,18 +64,18 @@ fn main() {
     T_zonal = zonal_mean(T)
     print("[zonal_mean] dims=" + str(T_zonal.dims) + " shape=" + str(T_zonal.shape))
 
-    //4) Anomaly: Form is retained (4, 8, 12)
+    // 4) Anomaly: shape is preserved at (4, 8, 12)
     T_anom = temperature_anomaly(T)
     print("[anomaly] dims=" + str(T_anom.dims) + " shape=" + str(T_anom.shape))
 
-    //5) Selection on a named axis — xarray's .sel()
+    // 5) Selection along a named axis — like xarray's .sel()
     T_arctic = T.sel(lat=60.0, method="nearest")
     print("[sel lat=60] dims=" + str(T_arctic.dims) + " shape=" + str(T_arctic.shape))
 
     print("")
-    print("USP: in NumPy .mean(axis=2) is one of the most common bugs in the")
-    print("Climate research. LabeledTensor enforces explicit axis names.")
-    print("LabeledTensor[x, y, z] against DataArray with [lat, lon, time] would")
-    print("throw a ValueError before the record is misinterpreted.")
+    print("USP: in NumPy .mean(axis=2) is one of the most common bugs in")
+    print("climate research. LabeledTensor enforces explicit axis names.")
+    print("LabeledTensor[x, y, z] against a DataArray with [lat, lon, time]")
+    print("raises a ValueError before the record is misinterpreted.")
 }
 main()

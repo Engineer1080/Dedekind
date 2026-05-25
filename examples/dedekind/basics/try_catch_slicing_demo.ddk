@@ -64,7 +64,7 @@ fn main() {
 
     // --- 4. try/catch: I/O with fallback ---
     print("[4] File reading with fallback")
-    content = read_or_default("/nicht/existent.txt", "DEFAULT_CONTENT")
+    content = read_or_default("/does/not/exist.txt", "DEFAULT_CONTENT")
     print("  Content:", content)
     print("")
 

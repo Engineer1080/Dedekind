@@ -1,5 +1,5 @@
-// SDE-Solver: geometrische Brownsche Bewegung dY = mu Y dt + sigma Y dW.
-// Mittelwert der Endwerte sollte ungefähr Y0 * exp(mu * T) sein.
+// SDE solver: geometric Brownian motion dY = mu Y dt + sigma Y dW.
+// The mean of the final values should be approximately Y0 * exp(mu * T).
 
 fn drift(t, y) {
     return 0.1 * y
@@ -11,19 +11,19 @@ fn diffusion(t, y) {
 
 fn main() {
     t = linspace(0.0, 1.0, 201)
-    // Mehrere Pfade als Tensor (M Pfade in einem Batch)
-    Y0 = random_vector(50) * 0.0 + 1.0  // 50 Pfade, alle starten bei 1
+    // Multiple paths as a tensor (M paths in one batch)
+    Y0 = random_vector(50) * 0.0 + 1.0  // 50 paths, all starting at 1
     Y = sde_solve(drift, diffusion, Y0, t, method="euler_maruyama", seed_value=7)
     YT = Y[200]
     m = mean(YT)
     expected = exp(0.1)  // E[Y(1)] = Y0 * exp(mu * T)
-    // Mit 50 Pfaden und sigma=0.2 ist ±0.15 ein großzügiger Korridor.
-    assert(abs(m - expected) < 0.15, "Mittelwert nahe E[Y(T)] = exp(0.1)")
+    // With 50 paths and sigma=0.2, +/-0.15 is a generous corridor.
+    assert(abs(m - expected) < 0.15, "mean close to E[Y(T)] = exp(0.1)")
 
-    // Milstein sollte bei gleicher Brownschen Bewegung ähnliche Werte liefern.
+    // Milstein should give similar values for the same Brownian motion.
     Y_m = sde_solve(drift, diffusion, Y0, t, method="milstein", seed_value=7)
     mm = mean(Y_m[200])
-    assert(abs(m - mm) < 0.3, "Milstein nahe Euler-Maruyama bei gleichem Seed")
+    assert(abs(m - mm) < 0.3, "Milstein close to Euler-Maruyama for the same seed")
     print("sde_solve_test OK")
 }
 main()

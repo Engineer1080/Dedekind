@@ -1,28 +1,28 @@
-// quantity_stripping_demo.ddk — `unwrap(x)` entfernt Quantity-Wrapper
-// in performance-kritischen Pfaden.
+// quantity_stripping_demo.ddk — `unwrap(x)` removes the Quantity wrapper
+// on performance-critical paths.
 //
-//Background: Scalar quantity objects carry unit metadata.
-//Negligible for a few calls; in JIT/Autograd/MCMC loops
-//10,000+ iterations the wrapper overhead becomes visible — and
-// `torch.compile` mag keine Python-Objekte im Hot Path.
+// Background: scalar Quantity objects carry unit metadata. Negligible for
+// a few calls; in JIT / autograd / MCMC loops with 10,000+ iterations the
+// wrapper overhead becomes visible — and `torch.compile` does not like
+// Python objects in the hot path.
 //
-//The compile-time unit check has long since validated the dimensions;
-//at runtime the bare float is sufficient. `unwrap(x)`:
+// The compile-time unit check has already validated the dimensions; at
+// runtime the bare float is sufficient. `unwrap(x)`:
 //
 //   - Quantity(value, "J")  ->  value (float)
-//   - UncertainQuantity     ->  value (std verworfen)
-//- 0-d torch.Tensor -> .item()
-//   - Liste/Tuple           ->  elementweise
-//   - sonst                 ->  passthrough
+//   - UncertainQuantity     ->  value (std discarded)
+//   - 0-d torch.Tensor      ->  .item()
+//   - list/tuple            ->  element-wise
+//   - otherwise             ->  passthrough
 
 fn pure_loss(params, data) {
-    // Ersten Schritt: alle Eingaben strippen
+    // First step: strip all inputs
     a = unwrap(params[0])
     b = unwrap(params[1])
     x = unwrap(data[0])
     y = unwrap(data[1])
 
-    //From here on out, just float arithmetic — no quantity wrap/unwrap overhead
+    // From here on out, pure float arithmetic — no Quantity wrap/unwrap overhead
     diff = a * x + b - y
     return diff * diff
 }
@@ -38,26 +38,26 @@ fn diff_pure(t, y) {
 }
 
 fn main() {
-    print("=== Quantity Stripping (v1.9) ===")
+    print("=== Quantity stripping (v1.9) ===")
 
-    // 1) Einzel-unwrap
+    // 1) Single unwrap
     qE = 5.0[J]
-    print("Quantity vor unwrap: " + str(qE))
-    print("unwrap(5[J])       = " + str(unwrap(qE)))
+    print("Quantity before unwrap: " + str(qE))
+    print("unwrap(5[J])          = " + str(unwrap(qE)))
 
-    //2) List of mixed entities -> List of floats
+    // 2) List of mixed quantities -> list of floats
     qs = [1.0[m], 2.0[m], 3.0[m]]
-    print("unwrap([1m,2m,3m]) = " + str(unwrap(qs)))
+    print("unwrap([1m,2m,3m])    = " + str(unwrap(qs)))
 
-    //3) Loss function with quantity inputs — everything floats within the function
-    params = [2.0[m], 0.5[m]]    //Parameter with unit (e.g. from measurement)
+    // 3) Loss function with Quantity inputs — pure floats inside the function
+    params = [2.0[m], 0.5[m]]    // parameters with unit (e.g. from measurement)
     data   = [1.5, 4.5]          // raw data
     L = pure_loss(params, data)
-    print("loss          = " + str(L))   //raw float, no quantity wrap
+    print("loss                  = " + str(L))   // raw float, no Quantity wrap
 
-    //4) Use in jit/sde_solve/fit — same function, no adjustment necessary
+    // 4) Use inside jit / sde_solve / fit — same function, no changes needed
     fast_loss = jit(pure_loss)
     L2 = fast_loss(params, data)
-    print("jit(loss)     = " + str(L2))
+    print("jit(loss)             = " + str(L2))
 }
 main()

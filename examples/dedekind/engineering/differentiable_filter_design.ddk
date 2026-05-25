@@ -1,18 +1,18 @@
-//Differentiable filter design via gradient descent (use signals)
+// Differentiable filter design via gradient descent (use signals).
 //
-//This showcase demonstrates how Dedekind's autograd capabilities
-// can be used to autonomously optimize a biquad IIR filter (cutoff frequency fc, quality factor Q)
-// such that a noisy signal is filtered.
+// This showcase demonstrates how Dedekind's autograd can be used to
+// optimize a biquad IIR filter (cutoff frequency fc, quality factor Q)
+// so that a noisy signal is filtered cleanly.
 //
-// We start with a noisy signal (desired signal 10 Hz + interference signal 150 Hz),
-// set a poor starting value for fc and Q, and let L-BFGS
-// find the optimal filter parameters.
+// We start with a noisy signal (desired 10 Hz tone + 150 Hz interference),
+// set a poor starting guess for fc and Q, and let L-BFGS find the
+// optimal filter parameters.
 
 use signals
 
 fn main() {
     print("==================================================================")
-    print("Differentiable DSP: Automatic IIR Biquad Filter Design")
+    print("Differentiable DSP: automatic IIR biquad filter design")
     print("==================================================================")
     
     fs = 1000.0 // Sampling rate: 1000 Hz
@@ -37,17 +37,16 @@ fn main() {
     print("- Samples: ", N)
     print("")
     
-    //2. Definition of the optimization loss
-    // We want to optimize the cutoff frequency (fc) and quality factor (Q).
-    //Parameter vector p = [fc, Q]
-    
+    // 2. Definition of the optimization loss.
+    // We optimize the cutoff frequency (fc) and quality factor (Q).
+    // Parameter vector p = [fc, Q].
+
     fn filter_loss(p) {
         fc = p[0]
         Q = p[1]
-        
-        // Soft constraints for fc and Q
-        // fc should lie in the range [5.0, 450.0] Hz.
-        // Q should lie in the range [0.2, 5.0].
+
+        // Soft constraints for fc and Q.
+        // fc should lie in [5.0, 450.0] Hz, Q in [0.2, 5.0].
         penalty = 0.0
         if fc < 5.0 {
             penalty = penalty + 1000.0 * (5.0 - fc)^2
@@ -61,70 +60,70 @@ fn main() {
         if Q > 5.0 {
             penalty = penalty + 1000.0 * (Q - 5.0)^2
         }
-        
-        // Calculate biquad coefficients
+
+        // Compute biquad coefficients
         res = biquad_lowpass(fc, Q, fs)
         b = res[0]
         a = res[1]
-        
+
         // Filter the noisy signal
         y = iir_filter(x_noisy, b, a)
-        
-        // Calculate the mean squared error to the desired signal (MSE)
+
+        // Mean squared error against the desired signal (MSE)
         err = y - x_clean
         mse = mean(err^2)
-        
+
         return mse + penalty
     }
-    
-    // 3. Initial values and optimization
-    //Starting value: cutoff frequency 150 Hz (much too high) and Q = 1.0
+
+    // 3. Initial values and optimization.
+    // Starting guess: cutoff frequency 150 Hz (far too high) and Q = 1.0.
     p_init = [150.0, 1.0]
-    
+
     print("Initial filter state:")
-    print("- Start-fc: ", p_init[0], " Hz")
-    print("- Start-Q:  ", p_init[1])
-    
-    // Calculate initial loss
+    print("- start fc: ", p_init[0], " Hz")
+    print("- start Q:  ", p_init[1])
+
+    // Compute initial loss
     loss_init = filter_loss(p_init)
-    print("- Initial MSE loss: ", loss_init)
+    print("- initial MSE loss: ", loss_init)
     print("")
-    
-    print("Starting optimization via L-BFGS (Autograd through IIR loop)...")
+
+    print("Starting optimization via L-BFGS (autograd through the IIR loop)...")
     res_opt = minimize(filter_loss, p_init, "lbfgs")
     p_opt = res_opt[0]
     loss_opt = res_opt[1]
-    
+
     print("")
-    print("Optimization completed!")
+    print("Optimization complete.")
     print("Optimized filter parameters:")
-    print("- fc_opt: ", p_opt[0], " Hz  (expected: approx. 20 - 45 Hz for optimal 150 Hz attenuation)")
-    print("- Q_opt:  ", p_opt[1], "      (Butterworth characteristic approx. 0.707)")
-    print("- End MSE loss: ", loss_opt)
-    
-    // 4. Verification of the attenuation
-    // Calculate the frequency response with the optimized parameters at 10 Hz and 150 Hz
+    print("- fc_opt: ", p_opt[0], " Hz  (expected: ~20-45 Hz for good 150 Hz attenuation)")
+    print("- Q_opt:  ", p_opt[1], "      (Butterworth characteristic ~0.707)")
+    print("- final MSE loss: ", loss_opt)
+
+    // 4. Verify the attenuation.
+    // Compute the frequency response with the optimized parameters at 10 Hz and 150 Hz.
     opt_coeffs = biquad_lowpass(p_opt[0], p_opt[1], fs)
     b_opt = opt_coeffs[0]
     a_opt = opt_coeffs[1]
-    
-    // Calculate frequency response (freqz)
+
+    // Frequency response (freqz)
     freqz_res = freqz(b_opt, a_opt, 512)
     omega = freqz_res[0]
     h = freqz_res[1]
-    
-    // Find indices corresponding to the frequencies
-    // omega_10Hz = 2 * pi * 10 / 1000 = 0.06283 rad/sample
+
+    // Indices corresponding to the relevant frequencies:
+    // omega_10Hz  = 2 * pi *  10 / 1000 = 0.06283 rad/sample
     // omega_150Hz = 2 * pi * 150 / 1000 = 0.94248 rad/sample
-    
-    // We can verify the frequency response directly by filtering the output signal
+
+    // We can verify the frequency response directly by filtering the signal.
     y_opt = iir_filter(x_noisy, b_opt, a_opt)
-    
+
     print("")
     print("Verification of filter performance:")
-    print("- Deviation from desired signal (L2 norm): ", norm(y_opt - x_clean))
-    print("- Improvement of the signal-to-noise ratio is significant!")
-    
+    print("- deviation from the desired signal (L2 norm): ", norm(y_opt - x_clean))
+    print("- signal-to-noise ratio is significantly improved.")
+
     assert(loss_opt < loss_init)
 }
 

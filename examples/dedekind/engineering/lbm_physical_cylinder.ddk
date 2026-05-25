@@ -1,13 +1,13 @@
-//Unit-aware CFD: Flow around cylinders in physical units.
+// Unit-aware CFD: flow around a cylinder in physical units.
 //
-//Setup: Water (20°C) flows through a 20 cm long, 5 cm high channel
-//a 1 cm thick cylinder as an obstacle. Inlet 4 mm/s → Re ≈ 40 am
-//Cylinder (steady-flow area, no vortex shedding).
+// Setup: water (20 °C) flows through a 20 cm long, 5 cm tall channel
+// past a 1 cm wide cylinder. Inlet 4 mm/s -> Re ~ 40 at the cylinder
+// (steady-flow regime, no vortex shedding).
 //
-//All inputs are quantities with real SI units. Drag/Lift come
-//in [N/m] (2D, force per unit depth), speed in [m/s], pressure
-//in [Pa]. The LBM solver automatically selects lattice scaling (dx, dt,
-//tau) such that the Mach and BGK stability conditions are met.
+// All inputs are quantities with real SI units. Drag/lift come out in
+// [N/m] (2D, force per unit depth), velocity in [m/s], pressure in [Pa].
+// The LBM solver automatically picks the lattice scaling (dx, dt, tau)
+// so that Mach and BGK stability conditions are satisfied.
 
 use fluid_dynamics
 
@@ -16,52 +16,52 @@ fn main() {
     print("Unit-aware LBM flow around cylinders (water, Re ≈ 40)")
     print("==================================================================")
 
-    //1. Physical setup in SI units
+    // 1. Physical setup in SI units
     sim = lbm_physical(
-        0.20[m],          //Channel length
-        0.05[m],          //Channel height
-        200,              //Resolution in x (→ dx = 1 mm)
-        0.004[m/s],       //Inflow velocity
-        1.0e-6[m^2/s],    //kinematic viscosity water at 20°C
-        1000.0[kg/m^3]    //Dense water
+        0.20[m],          // channel length
+        0.05[m],          // channel height
+        200,              // resolution in x (-> dx = 1 mm)
+        0.004[m/s],       // inflow velocity
+        1.0e-6[m^2/s],    // kinematic viscosity of water at 20 °C
+        1000.0[kg/m^3]    // density of water
     )
 
-    //2nd obstacle: cylinder in the middle of the channel
+    // 2. Obstacle: cylinder in the middle of the channel
     lbm_set_cylinder(sim, 0.04[m], 0.025[m], 0.005[m])
     lbm_add_walls(sim)
 
     print("")
     print("Setup:")
     s = lbm_summary(sim)
-    print("  Lattice-Spacing dx       =", s["dx_m"], "m")
-    print("  Lattice-Step    dt       =", s["dt_s"], "s")
-    print("  BGK Relaxation  tau      =", s["tau"])
-    print("Lattice viscosity =", s["nu_lattice"])
-    print("Reynolds (channel height) =", s["Reynolds_Ly"])
+    print("  Lattice spacing  dx       =", s["dx_m"], "m")
+    print("  Lattice timestep dt       =", s["dt_s"], "s")
+    print("  BGK relaxation   tau      =", s["tau"])
+    print("  Lattice viscosity         =", s["nu_lattice"])
+    print("  Reynolds (channel height) =", s["Reynolds_Ly"])
     print("")
 
-    //3. Allow the flow to settle physically for 100 s
+    // 3. Let the flow settle for 100 s physical time
     print("Simulation: 100 s physical time (~22 s wall clock)...")
     lbm_run_time(sim, 100.0[s])
 
-    //4. Evaluation in SI units
+    // 4. Evaluation in SI units
     F = lbm_drag_lift(sim)
     print("")
-    print("Ergebnis:")
-    print("Drag force per depth =", F)
-    print("  Lift-Kraft pro Tiefe     =", F[1])
+    print("Result:")
+    print("  Drag force per depth      =", F[0])
+    print("  Lift force per depth      =", F[1])
 
     p = lbm_pressure(sim)
-    print("Pressure (Range) is Quantity in [Pa]")
+    print("Pressure (range) is a Quantity in [Pa]")
 
     u = lbm_velocity(sim)
-    print("Speed is Quantity in [m/s]")
+    print("Velocity is a Quantity in [m/s]")
 
-    //5. Sanity check: Drag positive (obstacle slows down flow)
+    // 5. Sanity check: drag positive (obstacle slows the flow)
     F_drag_x = F[0]
     print("")
     assert(F_drag_x.value > 0.0)
-    print("Validation: Drag > 0 — Obstacle creates resistance as expected.")
+    print("Validation: drag > 0 — obstacle creates resistance as expected.")
 }
 
 main()

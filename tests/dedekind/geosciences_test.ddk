@@ -10,7 +10,7 @@ fn test_coriolis() {
     assert(abs(f45.value - 1.03125e-4) < 1e-6)
     assert(f45.unit == "s^-1")
 
-    print("test_coriolis: bestanden.")
+    print("test_coriolis: passed.")
 }
 
 fn test_humidity() {
@@ -26,7 +26,7 @@ fn test_humidity() {
     Td2 = dew_point(293.15[K], 50.0)
     assert(abs(Td2.value - 282.42) < 0.1)
 
-    print("test_humidity: bestanden.")
+    print("test_humidity: passed.")
 }
 
 fn test_seismology() {
@@ -47,7 +47,7 @@ fn test_seismology() {
     assert(abs(vp.value - 5443.31) < 1.0)
     assert(abs(vs.value - 3333.33) < 1.0)
 
-    print("test_seismology: bestanden.")
+    print("test_seismology: passed.")
 }
 
 fn test_geosciences_autograd() {
@@ -64,7 +64,7 @@ fn test_geosciences_autograd() {
     assert(J[0][0] > 0.0)
     assert(J[0][1] > 0.0)
 
-    print("test_geosciences_autograd: bestanden.")
+    print("test_geosciences_autograd: passed.")
 }
 
 fn main() {
@@ -72,6 +72,6 @@ fn main() {
     test_humidity()
     test_seismology()
     test_geosciences_autograd()
-    print("geosciences_test: Alle Tests bestanden!")
+    print("geosciences_test: all tests passed.")
 }
 main()

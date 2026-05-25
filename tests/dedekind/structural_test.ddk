@@ -218,7 +218,7 @@ fn main() {
     test_modal_analysis()
     test_concrete_beam()
     test_steel_buckling()
-    print("structural_test: Alle Tests bestanden!")
+    print("structural_test: all tests passed.")
 }
 
 main()

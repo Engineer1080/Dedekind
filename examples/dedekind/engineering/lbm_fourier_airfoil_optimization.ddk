@@ -1,26 +1,27 @@
-//Fourier-based aerodynamic shape optimization
+// Fourier-based aerodynamic shape optimization
 // =============================================
 //
-//Industrial application: profile design for wings, car bodies, ships,
-//Wind turbines. Instead of a classic NACA profile, we parameterize it
-//Contour through K Fourier harmonics per Cos/Sin (8 parameters total for K=4):
+// Industrial application: profile design for wings, car bodies, ships,
+// wind turbines. Instead of a classical NACA profile, we parameterize the
+// contour by K Fourier harmonics per cos/sin (8 parameters total for K=4):
 //
-//     r(θ) = r0 · (1 + Σ_{k=1..K} a_k·cos(k·θ) + b_k·sin(k·θ))
+//     r(theta) = r0 * (1 + Sum_{k=1..K} a_k*cos(k*theta) + b_k*sin(k*theta))
 //
-//Advantages over NACA:
-//   - Glatte, beliebig komplexe Topologien darstellbar
-//- Volume can be controlled separately (r0 fixed, coefficients free)
-//- Standard in the industry's "Class Shape Transformation" (CST).
+// Advantages over NACA:
+//   - smooth, arbitrarily complex topologies representable
+//   - volume can be controlled separately (r0 fixed, coefficients free)
+//   - the industry standard "Class Shape Transformation" (CST).
 //
-//Differentiability: Dedekind compiler propagates the gradient over
-//PyTorch autograde through the ENTIRE LBM pipeline (D2Q9, 150 steps) up to
-//the Fourier coefficient. Adam optimizes all 8 parameters simultaneously.
+// Differentiability: the Dedekind compiler propagates the gradient via
+// PyTorch autograd through the ENTIRE LBM pipeline (D2Q9, 150 steps) all
+// the way to the Fourier coefficients. Adam optimizes all 8 parameters
+// simultaneously.
 //
-//Scientific meaning: same methodology as adjoint-based
-//Shape optimization in OpenFOAM/SU2, but without a separate adjoint solver —
-//the gradients automatically fall out of the forward pass.
+// Scientific significance: same methodology as adjoint-based shape
+// optimization in OpenFOAM/SU2, but without a separate adjoint solver —
+// the gradients fall out of the forward pass automatically.
 //
-//Expectation: ~15-25% drag reduction over circle with fixed base radius.
+// Expectation: ~15-25 % drag reduction over the circle at fixed base radius.
 
 use fluid_dynamics
 
@@ -29,8 +30,8 @@ fn nx_lat() { return 80 }
 fn ny_lat() { return 40 }
 fn cx_obj() { return 25.0 }
 fn cy_obj() { return 20.0 }
-fn r_base() { return 4.0 }       //Base radius in grid units
-fn u_inlet_lat() { return 0.06 } //Inlet speed (lattice)
+fn r_base() { return 4.0 }       // base radius in grid units
+fn u_inlet_lat() { return 0.06 } // inlet velocity (lattice)
 
 //Drag function: accepts 8-parameter vector [a_1..a_4, b_1..b_4].
 fn drag_of_shape(coeffs) {
@@ -54,21 +55,21 @@ fn main() {
     print("K=4 harmonics → 8 parameters, Adam optimization via Autograd.")
     print("")
 
-    // Startpunkt: Kreis (alle Koeffizienten = 0)
+    // Starting point: circle (all coefficients = 0)
     x0 = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     d_circle = drag_of_shape(x0)[0]
     print("Reference (circle, all coefficients = 0): drag =", d_circle)
     print("")
 
-    //Adam optimization: lr=0.05, 20 steps
+    // Adam optimization: lr=0.05, 20 steps
     print("--- Adam optimization (lr=0.05, 20 steps) ---")
     result = minimize(drag_of_shape, x0, "adam", 0.05, 20)
     x_opt = result[0]
     d_opt = drag_of_shape([x_opt[0], x_opt[1], x_opt[2], x_opt[3],
                             x_opt[4], x_opt[5], x_opt[6], x_opt[7]])[0]
     print("")
-    print("Optimierte Koeffizienten (a_1..a_4):", x_opt[0], x_opt[1], x_opt[2], x_opt[3])
-    print("Optimierte Koeffizienten (b_1..b_4):", x_opt[4], x_opt[5], x_opt[6], x_opt[7])
+    print("Optimized coefficients (a_1..a_4):", x_opt[0], x_opt[1], x_opt[2], x_opt[3])
+    print("Optimized coefficients (b_1..b_4):", x_opt[4], x_opt[5], x_opt[6], x_opt[7])
     print("")
     print("Drag after optimization: drag =", d_opt)
 
@@ -76,20 +77,20 @@ fn main() {
     print("")
     print(">>> Drag reduction versus circle:", reduction, "%")
 
-    //Plausibility checks
-    assert(d_opt < d_circle)        //Optimization improves drag
-    assert(reduction > 10.0)        // Mindestens 10 % Reduktion
+    // Plausibility checks
+    assert(d_opt < d_circle)        // optimization improves drag
+    assert(reduction > 10.0)        // at least 10 % reduction
 
-    //a_1 > 0 (positive Cos coefficient) corresponds to a drop shape
-    //Peak downstream: r(θ=0) > r(θ=π), i.e. the shape fills the wake.
-    //This is the classic “streamlining” solution.
-    assert(x_opt[1] > 0.2)          // a_2 (zweite Harmonische) wird stark genutzt
+    // a_1 > 0 (positive cos coefficient) corresponds to a tear-drop shape:
+    // tip downstream, r(theta=0) > r(theta=pi), i.e. the shape fills its wake.
+    // This is the classic "streamlining" solution.
+    assert(x_opt[1] > 0.2)          // a_2 (second harmonic) is strongly used
 
     print("")
     print("=========================================================================")
-    print("Meaning: Adam differentiates through 150 D2Q9 LBM steps")
+    print("Significance: Adam differentiates through 150 D2Q9 LBM steps")
     print("and finds the optimal Fourier coefficients. No adjoint code")
-    print("necessary — Dedekind inherits differentiability from the compiler.")
+    print("required — Dedekind inherits differentiability from the compiler.")
     print("=========================================================================")
 }
 

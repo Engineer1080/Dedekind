@@ -8,20 +8,20 @@ fn main() {
     //=== Mass ===
     print("1[kg] + 500[g]:")
     print(1[kg] + 500[g])
-    // === Zeit ===
+    // === Time ===
     print("1[h] + 30[min]:")
     print(1[h] + 30[min])
-    // === Druck ===
+    // === Pressure ===
     print("1[bar] + 100000[Pa]:")
     print(1[bar] + 100000[Pa])
 
-    // === Strom (A, mA, kA) ===
+    // === Current (A, mA, kA) ===
     print("1[A] + 500[mA]:")
     print(1[A] + 500[mA])
     //=== Temperature (K, mK) ===
     print("300[K] + 1000[mK]:")
     print(300[K] + 1000[mK])
-    // === Stoffmenge (mol, mmol, kmol) ===
+    // === Amount of substance (mol, mmol, kmol) ===
     print("1[mol] + 500[mmol]:")
     print(1[mol] + 500[mmol])
     //=== Luminous intensity (cd, mcd) ===
@@ -34,16 +34,16 @@ fn main() {
     //=== Energy (J, kJ, Wh) ===
     print("1[kJ] + 500[J]:")
     print(1[kJ] + 500[J])
-    // === Spannung (V, mV, kV) ===
+    // === Voltage (V, mV, kV) ===
     print("1[kV] + 300[V]:")
     print(1[kV] + 300[V])
-    // === Frequenz (Hz, kHz, MHz) ===
+    // === Frequency (Hz, kHz, MHz) ===
     print("1[MHz] + 500[kHz]:")
     print(1[MHz] + 500[kHz])
-    // === Ladung (C, mC) ===
+    // === Charge (C, mC) ===
     print("1[C] + 100[mC]:")
     print(1[C] + 100[mC])
-    // === Widerstand (ohm, kohm) ===
+    // === Resistance (ohm, kohm) ===
     print("1[kohm] + 500[ohm]:")
     print(1[kohm] + 500[ohm])
     //=== Power (W, kW) ===

@@ -8,12 +8,12 @@
 
 // --- Demo 1: Vehicle Routing -----------------------------------------------
 fn demo_vehicle_routing() {
-    print("[1] Vehicle routing: minimize costs over route + number of trucks")
+    print("[1] Vehicle routing: minimize cost over distance + number of trucks")
 
-    x = Variable("strecke", lower=0[km])
+    x = Variable("distance", lower=0[km])
     trucks = Variable("trucks", lower=1, integer=true)
 
-    // Costs: 2.50 EUR/km fuel + 1000 EUR/truck daily flat rate
+    // Cost: 2.50 EUR/km fuel + 1000 EUR/truck daily flat rate
     cost = 2.5 * x + 1000 * trucks
 
     res = optimize_milp(cost, [
@@ -21,19 +21,19 @@ fn demo_vehicle_routing() {
         trucks * 200[km] >= x          // each truck can cover 200 km
     ])
 
-    print("   route   = " + str(res["strecke"]) + " km")
-    print("   trucks  = " + str(res["trucks"]))
-    print("   costs   = " + str(res["objective"]) + " EUR")
+    print("   distance = " + str(res["distance"]) + " km")
+    print("   trucks   = " + str(res["trucks"]))
+    print("   cost     = " + str(res["objective"]) + " EUR")
     print("   (expected: 500 km, 3 trucks (ceil(500/200)), 2.5*500 + 1000*3 = 4250 EUR)")
     print("")
 }
 
-// --- Demo 2: Production Mix (max profit) ----------------------------------
+// --- Demo 2: Production mix (max profit) ----------------------------------
 fn demo_production_mix() {
     print("[2] Production mix: max profit of two products under resource constraints")
 
-    a = Variable("produkt_A", lower=0)
-    b = Variable("produkt_B", lower=0)
+    a = Variable("product_A", lower=0)
+    b = Variable("product_B", lower=0)
 
     // Profit: 40 EUR per A, 30 EUR per B
     profit = 40 * a + 30 * b
@@ -43,8 +43,8 @@ fn demo_production_mix() {
         1 * a + 3 * b <= 90         // material units
     ], sense="maximize")
 
-    print("   A = " + str(res["produkt_A"]))
-    print("   B = " + str(res["produkt_B"]))
+    print("   A = " + str(res["product_A"]))
+    print("   B = " + str(res["product_B"]))
     print("   profit = " + str(res["objective"]) + " EUR")
     print("")
 }
@@ -65,18 +65,18 @@ fn demo_energy_mix() {
     print("   solar = " + str(res["solar"]) + " kW (max 300)")
     print("   wind  = " + str(res["wind"])  + " kW (max 500)")
     print("   gas   = " + str(res["gas"])   + " kW")
-    print("   total costs = " + str(res["objective"]) + " EUR/h")
+    print("   total cost = " + str(res["objective"]) + " EUR/h")
     print("")
 }
 
-// --- Demo 4: Unit-Check als Sicherheitsnetz --------------------------------
+// --- Demo 4: Unit check as a safety net ------------------------------------
 fn demo_unit_safety() {
-    print("[4] Unit Safety Demo: a km vs kg mismatch is caught")
-    print("(commented out; would terminate optimize_milp() with ValueError)")
+    print("[4] Unit safety demo: a km vs kg mismatch is caught")
+    print("(commented out; would abort optimize_milp() with ValueError)")
     print("")
     print("    // x = Variable(name=x, lower=0[km])")
     print("    // res = optimize_milp(2*x, [x >= 100[kg]])")
-    print("// -> ValueError: MILP units do not fit in constraint: [km] vs [kg]")
+    print("// -> ValueError: MILP units do not match in constraint: [km] vs [kg]")
 }
 
 fn main() {

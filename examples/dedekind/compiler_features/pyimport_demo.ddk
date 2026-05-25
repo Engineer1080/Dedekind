@@ -1,9 +1,9 @@
-//pyimport_demo.ddk — Direct access to PyPI libraries via `pyimport`.
+// pyimport_demo.ddk — direct access to PyPI libraries via `pyimport`.
 //
-// Syntax:  pyimport <modul[.untermodul]> [as <alias>]
-//Creates an `import ... as ...` in the generated code. Values from the imported module
-//are called via `alias.name(...)`. If no alias is specified, the
-//last part of the module path used as an alias (`pyimport math` → `math.pi`).
+// Syntax:  pyimport <module[.submodule]> [as <alias>]
+// Lowers to an `import ... as ...` in the generated code. Values from the
+// imported module are called via `alias.name(...)`. If no alias is given,
+// the last segment of the module path is used (`pyimport math` -> `math.pi`).
 
 pyimport scipy.special as sp
 pyimport scipy.stats as st
@@ -11,32 +11,32 @@ pyimport numpy as np
 pyimport math
 
 fn main() {
-    print("=== pyimport-Demo (v1.8) ===")
+    print("=== pyimport demo (v1.8) ===")
 
-    //1) scipy.special: Special functions
+    // 1) scipy.special: special functions
     g5 = sp.gamma(5.0)              // gamma(5) = 4! = 24
     print("gamma(5) = " + str(g5))
 
     erfc_2 = sp.erfc(2.0)
     print("erfc(2) = " + str(erfc_2))
 
-    // 2) scipy.stats: Normalverteilung CDF
+    // 2) scipy.stats: normal-distribution CDF
     p = st.norm.cdf(1.96)
     print("Phi(1.96) = " + str(p))
 
-    //3) numpy: Aggregations over lists
+    // 3) numpy: aggregations over lists
     arr = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
     print("np.mean = " + str(np.mean(arr)))
     print("np.std  = " + str(np.std(arr)))
 
-    //4) Python stdlib math (without alias)
+    // 4) Python stdlib math (no explicit alias)
     print("math.pi   = " + str(math.pi))
     print("math.tau  = " + str(math.tau))
     print("math.log2(1024) = " + str(math.log2(1024.0)))
 
-    // 5) Mischbarkeit: numpy-Ergebnis in Dedekind-Built-in einspeisen
+    // 5) Interop: feed a numpy result into a Dedekind built-in
     avg = np.mean(arr)
-    print("doppelter mean = " + str(2.0 * avg))
+    print("twice the mean = " + str(2.0 * avg))
 }
 
 main()

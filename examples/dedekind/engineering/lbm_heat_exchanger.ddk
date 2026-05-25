@@ -78,12 +78,12 @@ fn main() {
     nu_mid    = nu_for_rod_height(25.0, 2000)
     nu_high   = nu_for_rod_height(40.0, 2000)
 
-    print("cy=10 (near hot ground): Nu =", nu_low,
-          "  Delta vs Baseline =", nu_low - nu_base)
-    print("  cy=25 (Mitte):             Nu =", nu_mid,
-          "  Delta vs Baseline =", nu_mid - nu_base)
-    print("  cy=40 (nahe kalter Decke): Nu =", nu_high,
-          "  Delta vs Baseline =", nu_high - nu_base)
+    print("  cy=10 (near hot floor):    Nu =", nu_low,
+          "  delta vs baseline =", nu_low - nu_base)
+    print("  cy=25 (middle):            Nu =", nu_mid,
+          "  delta vs baseline =", nu_mid - nu_base)
+    print("  cy=40 (near cold ceiling): Nu =", nu_high,
+          "  delta vs baseline =", nu_high - nu_base)
     print("")
 
     // Active Adam Optimization
@@ -100,15 +100,15 @@ fn main() {
     print("Optimized Nusselt number:", nu_opt)
     print("")
 
-    //Plausibility checks
-    assert(nu_base > 1.1)                       //Convection is ongoing
-    assert(nu_low < nu_base)                    //Rod below reduces Nu
-    assert(nu_high < nu_base)                   //Rod above reduces Nu also
-    assert(nu_low < nu_high)                    // Aber unten reduziert mehr
-    
+    // Plausibility checks
+    assert(nu_base > 1.1)                       // convection is sustained
+    assert(nu_low < nu_base)                    // a low rod reduces Nu
+    assert(nu_high < nu_base)                   // a high rod reduces Nu too
+    assert(nu_low < nu_high)                    // but a low rod reduces it more
+
     // Assert that the optimized rod height converges towards the top wall
     assert(cy_opt > 25.0)
-    print("[OK] Optimization successfully pushed rod towards the top wall")
+    print("[OK] Optimization pushed the rod towards the top wall.")
 
     print("=================================================================")
     print("Optimization successfully completed!")

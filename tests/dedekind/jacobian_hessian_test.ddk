@@ -1,4 +1,4 @@
-// Mini-Test: jacobian(f, x) und hessian(f, x)
+// Mini-test: jacobian(f, x) and hessian(f, x)
 fn main() {
     // f(x) = x[0]^2 + x[1]^2  -> grad = (2*x0, 2*x1), Hessian = diag(2,2)
     fn f(x) {
@@ -15,6 +15,6 @@ fn main() {
     assert(H.shape[1] == 2)
     assert(H[0][0] - 2.0 < 0.01)
     assert(H[1][1] - 2.0 < 0.01)
-    print("jacobian_hessian_test: bestanden.")
+    print("jacobian_hessian_test: passed.")
 }
 main()

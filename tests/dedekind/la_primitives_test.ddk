@@ -1,13 +1,13 @@
-// Test: Weitere LA-Primitive (kron, outer, vander, matrix_sqrt, matrix_norm)
+// Test: additional linear-algebra primitives (kron, outer, vander, matrix_sqrt, matrix_norm)
 fn main() {
-    // Kronecker-Produkt
+    // Kronecker product
     A = [[1, 2], [3, 4]]
     B = [[0, 5], [6, 7]]
     K = kron(A, B)
     assert(K.shape[0] == 4)
     assert(K.shape[1] == 4)
 
-    // Äußeres Produkt
+    // Outer product
     a = [1, 2, 3]
     b = [4, 5]
     O = outer(a, b)
@@ -20,19 +20,19 @@ fn main() {
     assert(V.shape[0] == 3)
     assert(V.shape[1] == 3)
 
-    // Matrix-Norm (Frobenius)
+    // Matrix norm (Frobenius)
     M = [[1.0, 0.0], [0.0, 1.0]]
     nf = matrix_norm(M, "fro")
     assert(nf > 1.3)
     assert(nf < 1.5)
 
-    // Matrix-Quadratwurzel (A = B*B für symmetrische pos. def. A)
+    // Matrix square root (A = B*B for symmetric positive-definite A)
     S = [[4.0, 0.0], [0.0, 9.0]]
     B = matrix_sqrt(S)
     check = B @ B
     err = (check - S).abs().max()
     assert(err < 0.01)
 
-    print("la_primitives_test: bestanden.")
+    print("la_primitives_test: passed.")
 }
 main()

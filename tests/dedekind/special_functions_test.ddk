@@ -1,4 +1,4 @@
-// Test: Spezialfunktionen bessel_j0, bessel_j1, legendre, hypergeom
+// Test: special functions bessel_j0, bessel_j1, legendre, hypergeom
 fn main() {
     x = 0.5
     j0 = bessel_j0(x)
@@ -26,6 +26,6 @@ fn main() {
     assert(h > 0.99)
     assert(h < 1.01)
 
-    print("special_functions_test: bestanden.")
+    print("special_functions_test: passed.")
 }
 main()

@@ -1,11 +1,11 @@
-//purity_check_demo.ddk — Demonstrates the purity check (v1.8).
+// purity_check_demo.ddk — demonstrates the purity check (v1.8).
 //
-//Functions passed to pure contexts (jit, grad, fit,
-// metropolis, hmc, sde_solve), duerfen keine I/O-/Konsolen-Built-ins
-// aufrufen: print, plot, write_file, http_get/post, read_file, ...
+// Functions passed to pure contexts (jit, grad, fit, metropolis, hmc,
+// sde_solve) must not call I/O or console built-ins: print, plot,
+// write_file, http_get/post, read_file, ...
 //
-//This file shows ALLOWED use. The ones commented out below
-//Examples would cause the compile check to fail.
+// This file shows ALLOWED use. The commented examples at the bottom
+// would cause the compile check to fail.
 
 //--- OK: pure loss function for fit() ---
 fn pure_loss(params, data) {
@@ -32,56 +32,56 @@ fn hot_kernel(x) {
     return x * x + 2.0 * x + 1.0
 }
 
-// --- OK: transitiv reine Hilfsfunktion ---
+// --- OK: transitively-pure helper ---
 fn pure_helper(z) {
     return sqrt(z + 1.0)
 }
 
 fn drift_with_helper(t, y) {
-    // Verwendet pure_helper — bleibt insgesamt rein
+    // Uses pure_helper — remains pure overall
     return pure_helper(y) * 0.01
 }
 
 fn main() {
-    print("=== Purity-Check OK-Cases ===")
+    print("=== Purity-check: OK cases ===")
 
-    //1) fit() with pure loss
+    // 1) fit() with a pure loss
     x = [1.0, 2.0, 3.0, 4.0]
     y = [3.1, 5.2, 7.0, 9.1]
     params_opt = fit(pure_loss, [1.0, 1.0], [x, y], method="gd", lr=0.01, steps=200)
-    print("fit ergibt: " + str(params_opt))
+    print("fit result: " + str(params_opt))
 
-    //2) sde_solve() with pure drift/diffusion
+    // 2) sde_solve() with pure drift/diffusion
     t = linspace(0.0, 1.0, 21)
     Y = sde_solve(pure_drift, pure_diffusion, 1.0, t, method="euler_maruyama", seed_value=7)
-    print("SDE Endwert: " + str(Y[20]))
+    print("SDE final value: " + str(Y[20]))
 
-    //3) sde_solve with transitive-pure drift
+    // 3) sde_solve with a transitively-pure drift
     Y2 = sde_solve(drift_with_helper, pure_diffusion, 1.0, t, method="euler_maruyama", seed_value=7)
-    print("SDE2 Endwert: " + str(Y2[20]))
+    print("SDE2 final value: " + str(Y2[20]))
 
-    //4) jit() with pure function
+    // 4) jit() with a pure function
     jit_kernel = jit(hot_kernel)
-    print("jit-Ergebnis: " + str(jit_kernel(3.0)))
+    print("jit result: " + str(jit_kernel(3.0)))
 
     print("All calls were pure — check passed.")
 }
 
 main()
 
-//--- FORBIDDEN examples (commented: would trigger CompileError) ---
+// --- FORBIDDEN examples (commented out — would trigger CompileError) ---
 //
 // fn bad_loss(params, data) {
-//     print("debug")                      // <- I/O im pure-context
+//     print("debug")                      // <- I/O in a pure context
 //     return params[0] * params[0]
 // }
-//// CompileError: "Function 'bad_loss' is passed to 'fit(...)',
-//// but calls 'print()' ... on line 2 in 'bad_loss'."
+// // CompileError: "Function 'bad_loss' is passed to 'fit(...)',
+// // but calls 'print()' ... on line 2 in 'bad_loss'."
 //
 // fn impure_helper(x) { write_file("log.txt", str(x)) return x }
-//fn drift_bad(t, y) { return impure_helper(y) }
-//// CompileError (transitive): "Function 'drift_bad' is passed to 'sde_solve(...)',
-// //                            ruft aber 'write_file()' ... in 'impure_helper'."
+// fn drift_bad(t, y) { return impure_helper(y) }
+// // CompileError (transitive): "Function 'drift_bad' is passed to
+// // 'sde_solve(...)', but calls 'write_file()' ... in 'impure_helper'."
 //
-//Override solution for special cases:
-//python -m src.compiler.compiler myfile.ddk --no-purity-check
+// Override for special cases:
+//   python -m src.compiler.compiler myfile.ddk --no-purity-check

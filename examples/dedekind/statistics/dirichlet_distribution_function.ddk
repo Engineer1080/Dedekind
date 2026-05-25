@@ -4,14 +4,14 @@
 fn main() {
     print("--- Dedekind: Dirichlet distribution and Dirichlet function ---")
     
-    //Dirichlet distribution: shares on the 3-simplex (e.g. topic modeling)
+    //Dirichlet distribution: proportions on the 3-simplex (e.g. topic modeling)
     alpha = [1.0, 1.0, 1.0]
     dist = Dirichlet(alpha)
     x = sample(dist)
     print("Sample from Dirichlet(1,1,1) (sum = 1):")
     print(x)
     s = cumsum(x)
-    print("Summe (sollte 1 sein):")
+    print("Sum (should be 1):")
     print(s[2])
     
     x5 = sample(dist, 5)

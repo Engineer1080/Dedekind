@@ -1,15 +1,15 @@
-//3D LBM (D3Q19): Flow around a sphere with soft mask and autograd drag
+// 3D LBM (D3Q19): flow around a sphere with a soft mask and autograd drag.
 //
-//Task: A sphere in the 3D channel — we simulate with the new D3Q19 solver
-//and differentiate the drag according to the sphere radius. Exactly this gradient
-//is the basis for 3D shape optimization (e.g. bionic design).
+// Task: a sphere in a 3D channel — we simulate with the new D3Q19 solver
+// and differentiate the drag w.r.t. the sphere radius. Exactly that
+// gradient is the basis for 3D shape optimization (e.g. bionic design).
 //
-//Killer feature: D3Q19 + soft_sphere_mask are end-to-end differentiable;
-//Adam then reduces a target drag error without adjoint code.
+// Killer feature: D3Q19 + soft_sphere_mask are end-to-end differentiable;
+// Adam then drives a target-drag error to zero without adjoint code.
 
 use fluid_dynamics
 
-//Drag the sphere at radius r
+// Drag of the sphere at radius r
 fn drag_for_radius(r_arr) {
     r = r_arr[0]
     nx = 12
@@ -22,7 +22,7 @@ fn drag_for_radius(r_arr) {
     return [F[0]]
 }
 
-//Target drag loss for shape optimization
+// Target-drag loss for shape optimization
 fn loss_target_drag(r_arr) {
     drag   = drag_for_radius(r_arr)[0]
     target = 0.015
@@ -32,10 +32,10 @@ fn loss_target_drag(r_arr) {
 
 fn main() {
     print("===============================================================")
-    print("3D LBM (D3Q19): Drag sensitivity to sphere radius")
+    print("3D LBM (D3Q19): drag sensitivity w.r.t. sphere radius")
     print("===============================================================")
 
-    //1) Forward: Drag at three radii
+    // 1) Forward: drag at three radii
     r_small  = drag_for_radius([1.0])[0]
     r_medium = drag_for_radius([1.5])[0]
     r_large  = drag_for_radius([2.0])[0]
@@ -43,17 +43,17 @@ fn main() {
     print("Drag(r=1.5):", r_medium)
     print("Drag(r=2.0):", r_large)
 
-    //Monotonicity: larger radius -> more resistance
+    // Monotonicity: larger radius -> more drag
     assert(r_large > r_small)
 
-    //2) Autograd: dDrag/dr at r=1.5 (Jacobi line)
+    // 2) Autograd: dDrag/dr at r=1.5 (Jacobian row)
     j       = jacobian(drag_for_radius, [1.5])
     grad_ag = j[0][0]
     print("")
-    print("dDrag/dr (Autograd) @ r=1.5:", grad_ag)
+    print("dDrag/dr (autograd) @ r=1.5:", grad_ag)
     assert(abs(grad_ag) > 1e-10)
 
-    //3) Shape Optimization: Adam finds radius that hits a target drag
+    // 3) Shape optimization: Adam finds the radius that hits a target drag
     print("")
     print("Adam optimization towards target drag 0.015 ...")
     r0           = [1.5]
@@ -64,13 +64,13 @@ fn main() {
 
     print("Initial loss:", initial_loss)
     print("Final loss:  ", final_loss)
-    print("Optimaler r: ", r_opt[0])
+    print("Optimal r:   ", r_opt[0])
     assert(final_loss < initial_loss)
 
     print("")
     print("===============================================================")
-    print("  Voll differenzierbare 3D-CFD: D3Q19 + soft_sphere_mask        ")
-    print("provide gradients for real shape optimization loops.")
+    print("Fully differentiable 3D CFD: D3Q19 + soft_sphere_mask provide")
+    print("gradients for real shape-optimization loops.")
     print("===============================================================")
 }
 

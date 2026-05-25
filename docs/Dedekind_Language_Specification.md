@@ -670,7 +670,7 @@ Returns a `dict`:
 }
 ```
 
-**Unit-awareness as the USP** vs. Gurobi/cvxpy/pyomo/PuLP: every constraint runs through `_milp_units_compat` (which uses the existing v1.7 dimension system). `x >= 500[km]` with `x: Variable(lower=0[km])` validates; `x >= 500[kg]` raises `ValueError: MILP-Einheiten passen nicht in Constraint: [km] vs [kg]`. No other MILP toolkit catches dimensional errors before the solver runs.
+**Unit-awareness as the USP** vs. Gurobi/cvxpy/pyomo/PuLP: every constraint runs through `_milp_units_compat` (which uses the existing v1.7 dimension system). `x >= 500[km]` with `x: Variable(lower=0[km])` validates; `x >= 500[kg]` raises `ValueError: MILP units do not match in constraint: [km] vs [kg]`. No other MILP toolkit catches dimensional errors before the solver runs.
 
 The low-level `milp(c, A_ub, b_ub, A_eq, b_eq, bounds, integrality)` from v1.5 stays unchanged; the v1.13 DSL is an additive convenience layer.
 

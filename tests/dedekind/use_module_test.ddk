@@ -1,10 +1,10 @@
-// Modul-System: `use math` lädt modules/math.ddk und stellt square/cube/PHI bereit.
+// Module system: `use math` loads modules/math.ddk and exposes square/cube/PHI.
 use math
 
 fn main() {
     assert(square(4) == 16, "square(4) == 16")
     assert(cube(3) == 27, "cube(3) == 27")
-    assert(PHI > 1.6 and PHI < 1.7, "PHI ungefähr 1.618")
+    assert(PHI > 1.6 and PHI < 1.7, "PHI approximately 1.618")
     print("use_module_test OK")
 }
 main()

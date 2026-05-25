@@ -1,8 +1,8 @@
 // least_squares + minimize_constrained + milp.
 
 fn residuals(x) {
-    // Modell: y = a * exp(-b * t); Daten bei t=0,1,2,3 mit a=2, b=0.5
-    // Vektor-Operation statt Item-Assignment, damit float64-Präzision erhalten bleibt.
+    // Model: y = a * exp(-b * t); data at t=0,1,2,3 with a=2, b=0.5.
+    // Vector operation rather than item assignment to keep float64 precision.
     t = [0.0, 1.0, 2.0, 3.0]
     y = [2.0, 1.21306132, 0.73575888, 0.44626032]
     return x[0] * exp(-x[1] * t) - y
@@ -18,30 +18,30 @@ fn constraint_gt(x) {
 }
 
 fn main() {
-    // least_squares: Schätzung von (a, b)
+    // least_squares: estimate (a, b)
     res = least_squares(residuals, [1.0, 1.0])
-    assert(res["success"], "least_squares konvergiert")
-    assert(abs(res["x"][0] - 2.0) < 0.05, "a ungefähr 2")
-    assert(abs(res["x"][1] - 0.5) < 0.05, "b ungefähr 0.5")
+    assert(res["success"], "least_squares converged")
+    assert(abs(res["x"][0] - 2.0) < 0.05, "a approximately 2")
+    assert(abs(res["x"][1] - 0.5) < 0.05, "b approximately 0.5")
 
-    // Constrained Minimization
+    // Constrained minimization
     cons = [{"type": "ineq", "fun": constraint_gt}]
     out = minimize_constrained(objective, [0.0, 0.0], constraints=cons)
-    assert(out["success"], "SLSQP konvergiert")
-    // Unrestriktes Minimum wäre (1, 2). Constraint 1+2 >= 2 ist nicht bindend -> Minimum bei (1,2).
-    assert(abs(out["x"][0] - 1.0) < 0.05, "x0 ungefähr 1")
-    assert(abs(out["x"][1] - 2.0) < 0.05, "x1 ungefähr 2")
+    assert(out["success"], "SLSQP converged")
+    // The unconstrained minimum is (1, 2). Constraint 1+2 >= 2 is not active -> minimum at (1,2).
+    assert(abs(out["x"][0] - 1.0) < 0.05, "x0 approximately 1")
+    assert(abs(out["x"][1] - 2.0) < 0.05, "x1 approximately 2")
 
     // MILP: max 3x + 5y s.t. x + y <= 4, y <= 3, x,y in Z+, x <= 4
-    // ergibt x=1, y=3 (Wert 18) — wir minimieren -3x - 5y.
+    // -> x=1, y=3 (value 18) — we minimize -3x - 5y.
     c = [-3.0, -5.0]
     A_ub = [[1.0, 1.0]]
     b_ub = [4.0]
     bounds = [[0.0, 4.0], [0.0, 3.0]]
     integ = [1, 1]
     sol = milp(c, A_ub=A_ub, b_ub=b_ub, bounds=bounds, integrality=integ)
-    assert(sol["success"], "MILP gelöst")
-    assert(abs(sol["fun"] + 18.0) < 1e-6, "optimaler Wert -18 (max 18)")
+    assert(sol["success"], "MILP solved")
+    assert(abs(sol["fun"] + 18.0) < 1e-6, "optimal value -18 (max 18)")
     print("optimization_test OK")
 }
 main()

@@ -28,7 +28,7 @@ fn main() {
     print("Shape u_sol (Time, nx, ny):")
     print(u_sol.shape)
     
-    //Speed amount for visualization
+    // Speed magnitude for visualization
     speed0 = sqrt(u_sol[0] * u_sol[0] + v_sol[0] * v_sol[0])
     speed_end = sqrt(u_sol[40] * u_sol[40] + v_sol[40] * v_sol[40])
     

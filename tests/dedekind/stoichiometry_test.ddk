@@ -1,4 +1,4 @@
-// Test: Stöchiometrie balance_equation
+// Test: stoichiometry balance_equation
 fn main() {
     result = balance_equation("H2 + O2", "H2O")
     cr = result[0]
@@ -7,6 +7,6 @@ fn main() {
     assert(cr[1] == 1)
     assert(cp[0] == 2)
 
-    print("stoichiometry_test: bestanden.")
+    print("stoichiometry_test: passed.")
 }
 main()

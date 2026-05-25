@@ -1,4 +1,4 @@
-// Test fuer `unwrap()` — entfernt Quantity-Wrapper im Hot-Path.
+// Test for `unwrap()` — removes the Quantity wrapper in the hot path.
 
 fn approx(a, b, tol) {
     d = a - b
@@ -16,32 +16,32 @@ fn pure_loss(params, data) {
 }
 
 fn main() {
-    // 1) Quantity -> Float
+    // 1) Quantity -> float
     qE = 5.0[J]
     assert(approx(unwrap(qE), 5.0, 1e-12), "unwrap(Quantity) = value")
 
-    // 2) Liste mit Quantities -> Liste mit Floats
+    // 2) List of Quantities -> list of floats
     qs = [1.0[m], 2.0[m], 3.0[m]]
     raw = unwrap(qs)
     assert(len(raw) == 3, "unwrap(list) preserves length")
     assert(approx(raw[0], 1.0, 1e-12), "unwrap list elem 0")
     assert(approx(raw[2], 3.0, 1e-12), "unwrap list elem 2")
 
-    // 3) Plain Float -> passthrough
+    // 3) Plain float -> passthrough
     assert(approx(unwrap(42.0), 42.0, 1e-12), "unwrap(float) passthrough")
 
-    // 4) Pure-context: Quantity-Parameter werden in der Loss-Fn gestrippt
+    // 4) Pure context: Quantity parameters are stripped inside the loss
     params = [2.0[m], 0.5[m]]
     data   = [1.5, 4.5]
     L = pure_loss(params, data)
     // a*x + b - y = 2*1.5 + 0.5 - 4.5 = -1.0; loss = 1.0
-    assert(approx(L, 1.0, 1e-9), "pure_loss mit Quantity-Eingaben")
+    assert(approx(L, 1.0, 1e-9), "pure_loss with Quantity inputs")
 
-    // 5) jit() darueber - keine Aenderung in der Funktion noetig
+    // 5) jit() on top — no change required inside the function
     fast_loss = jit(pure_loss)
     L2 = fast_loss(params, data)
     assert(approx(L2, 1.0, 1e-6), "jit(pure_loss) = pure_loss")
 
-    print("quantity_stripping_test: 7 Asserts bestanden")
+    print("quantity_stripping_test: 7 asserts passed")
 }
 main()

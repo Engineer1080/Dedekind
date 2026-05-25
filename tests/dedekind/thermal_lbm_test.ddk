@@ -1,45 +1,45 @@
-// Tests für Thermal LBM (Double-Distribution, Boussinesq-Konvektion)
+// Tests for thermal LBM (double-distribution, Boussinesq convection).
 
 use fluid_dynamics
 
 fn test_pure_conduction() {
-    print("Testing reine Konduktion (g·β=0) → linearer T-Verlauf, Nu=1...")
+    print("Testing pure conduction (g*beta=0) -> linear T profile, Nu=1...")
     sim = lbm_thermal_simulation(40, 30, 1.0, 0.8, 1.0, 0.0, 0.0)
     thermal_run(sim, 800)
     T = thermal_temperature(sim)
     Nu = thermal_nusselt(sim)
 
-    // Unten (j=0) muss T_hot, oben (j=ny-1) muss T_cold sein
-    print("  T(j=0)  =", T[20][0], "  (soll ≈ 1.0)")
-    print("  T(j=-1) =", T[20][29], " (soll ≈ 0.0)")
-    print("  Mitte   =", T[20][15], " (soll ≈ 0.5)")
+    // Bottom (j=0) must be T_hot, top (j=ny-1) must be T_cold
+    print("  T(j=0)  =", T[20][0], "  (should be ~ 1.0)")
+    print("  T(j=-1) =", T[20][29], " (should be ~ 0.0)")
+    print("  middle  =", T[20][15], " (should be ~ 0.5)")
     print("  Nu      =", Nu)
     assert(abs(T[20][0] - 1.0) < 0.02)
     assert(abs(T[20][29] - 0.0) < 0.02)
     assert(abs(T[20][15] - 0.5) < 0.05)
     assert(abs(Nu - 1.0) < 0.05)
-    print("[OK] Konduktion: linearer T, Nu=1")
+    print("[OK] Conduction: linear T, Nu=1")
 }
 
 fn test_rayleigh_number_helper() {
-    print("Testing rayleigh_number Helper...")
-    // Ra = g·β·ΔT·H³ / (ν·α)
-    // ν = (τ_u - 0.5)/3, α = (τ_T - 0.5)/3
-    // Bei τ=0.8: ν=α=0.1 → Ra = g·β·ΔT·H³ / 0.01
+    print("Testing rayleigh_number helper...")
+    // Ra = g*beta*deltaT*H^3 / (nu*alpha)
+    // nu = (tau_u - 0.5)/3, alpha = (tau_T - 0.5)/3
+    // For tau=0.8: nu=alpha=0.1 -> Ra = g*beta*deltaT*H^3 / 0.01
     Ra = rayleigh_number(0.8, 0.8, 1.0, 0.001, 30.0)
-    // Erwarteter Wert: 0.001 * 1.0 * 27000 / 0.01 = 2700
-    print("  Ra =", Ra, "(erwartet 2700)")
+    // Expected: 0.001 * 1.0 * 27000 / 0.01 = 2700
+    print("  Ra =", Ra, "(expected 2700)")
     assert(abs(Ra - 2700.0) < 1.0)
-    print("[OK] Rayleigh-Zahl Helper")
+    print("[OK] Rayleigh-number helper")
 }
 
 fn test_convection_onset() {
-    print("Testing Konvektionseinsatz oberhalb kritischer Ra-Zahl...")
+    print("Testing onset of convection above the critical Ra...")
     nx = 80
     ny = 40
     sim = lbm_thermal_simulation(nx, ny, 0.6, 0.6, 1.0, 0.0, 1.5e-4)
 
-    // Perturbation für Symmetriebrechung
+    // Perturbation to break symmetry
     T_init = thermal_temperature(sim)
     rows = linspace(0.0, nx - 1.0, nx)
     cols = linspace(0.0, ny - 1.0, ny)
@@ -53,26 +53,26 @@ fn test_convection_onset() {
     u = thermal_velocity(sim)
     u_max = max(abs(u[1]))
 
-    print("  Nu nach Konvektion:", Nu)
+    print("  Nu after convection:", Nu)
     print("  max|u_y|:           ", u_max)
-    assert(Nu > 1.15)               // Konvektion hat eingesetzt
-    assert(u_max > 1e-3)            // Sichtbare Strömung
-    print("[OK] Konvektionseinsatz oberhalb Ra_c")
+    assert(Nu > 1.15)               // convection has set in
+    assert(u_max > 1e-3)            // visible flow
+    print("[OK] Convection onset above Ra_c")
 }
 
 fn test_velocity_zero_no_buoyancy() {
-    print("Testing kein Buoyancy (g·β=0) → keine Strömung...")
+    print("Testing no buoyancy (g*beta=0) -> no flow...")
     sim = lbm_thermal_simulation(40, 30, 1.0, 0.8, 1.0, 0.0, 0.0)
     thermal_run(sim, 500)
     u = thermal_velocity(sim)
     u_max = max(abs(u[1]))
-    print("  max|u_y| ohne Buoyancy:", u_max)
-    assert(u_max < 1e-6)            // Bei g·β=0 KEIN Auftrieb → u bleibt 0
-    print("[OK] Ohne Buoyancy keine Strömung")
+    print("  max|u_y| without buoyancy:", u_max)
+    assert(u_max < 1e-6)            // with g*beta=0 NO buoyancy -> u stays 0
+    print("[OK] No flow without buoyancy")
 }
 
 fn test_obstacle_dirichlet_T() {
-    print("Testing Hindernis mit fester Temperatur (Dirichlet-BC)...")
+    print("Testing obstacle with fixed temperature (Dirichlet BC)...")
     nx = 50
     ny = 30
     M  = soft_cylinder_mask(nx, ny, 25.0, 15.0, 4.0, 0.5)
@@ -80,10 +80,10 @@ fn test_obstacle_dirichlet_T() {
     thermal_run(sim, 1000)
     T  = thermal_temperature(sim)
 
-    // Im Hindernis-Zentrum muss T ≈ T_obstacle (1.0) sein
-    print("  T im Stab-Zentrum:", T[25][15], "(soll ≈ 1.0)")
+    // At the obstacle center, T should be ~ T_obstacle (1.0).
+    print("  T at rod center:", T[25][15], "(should be ~ 1.0)")
     assert(T[25][15] > 0.9)
-    print("[OK] Hindernis-Dirichlet-T")
+    print("[OK] Obstacle Dirichlet T")
 }
 
 fn test_forced_convection() {
@@ -91,16 +91,16 @@ fn test_forced_convection() {
     nx = 60
     ny = 20
     sim = lbm_thermal_simulation_full(nx, ny, 0.6, 0.6, 0.0, 0.0, 0.0, 0.05, 1.0, "inlet_outlet", "walls")
-    
+
     thermal_run(sim, 300)
     T = thermal_temperature(sim)
     u = thermal_velocity(sim)
-    
+
     u_mean_x = mean(u[0])
-    print("  Mean ux in domain:", u_mean_x, "(soll ≈ 0.05)")
+    print("  Mean ux in domain:", u_mean_x, "(should be ~ 0.05)")
     assert(u_mean_x > 0.02)
     assert(u_mean_x < 0.05)
-    
+
     print("  T near inlet (x=5, y=10):", T[5][10])
     print("  T downstream (x=50, y=10):", T[50][10])
     assert(T[5][10] > 0.5)
@@ -113,33 +113,33 @@ fn test_insulated_walls() {
     nx = 40
     ny = 20
     sim = lbm_thermal_simulation_full(nx, ny, 0.6, 0.6, 0.0, 0.0, 0.0, 0.0, 0.0, "periodic", "insulated")
-    
+
     rows = linspace(0.0, nx - 1.0, nx)
     cols = linspace(0.0, ny - 1.0, ny)
     IY = outer(1.0 + 0.0 * rows, cols)
-    
+
     T_bump = 0.0 * IY
     T_bump_new = T_bump + 1.0 * exp(-0.1 * (IY - 10.0) * (IY - 10.0))
     thermal_set_temperature(sim, T_bump_new)
-    
+
     T_initial = thermal_temperature(sim)
     sum_initial = sum(sum(T_initial))
     print("  Initial total heat:", sum_initial)
-    
+
     thermal_run(sim, 150)
     T_final = thermal_temperature(sim)
     sum_final = sum(sum(T_final))
     print("  Final total heat (insulated):", sum_final)
-    
+
     assert(abs(sum_final - sum_initial) < 0.05 * sum_initial)
-    
+
     sim_dir = lbm_thermal_simulation_full(nx, ny, 0.6, 0.6, 0.0, 0.0, 0.0, 0.0, 0.0, "periodic", "walls")
     thermal_set_temperature(sim_dir, T_bump_new)
     thermal_run(sim_dir, 150)
     T_dir_final = thermal_temperature(sim_dir)
     sum_dir_final = sum(sum(T_dir_final))
     print("  Final total heat (Dirichlet/walls):", sum_dir_final)
-    
+
     assert(sum_dir_final < 0.97 * sum_initial)
     print("[OK] Insulated walls test passed")
 }

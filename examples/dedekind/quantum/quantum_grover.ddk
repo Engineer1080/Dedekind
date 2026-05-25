@@ -14,14 +14,14 @@ probs = statevec_probs(grover)
 print("Probabilities according to Grover (index 5 should be dominant):")
 print(probs)
 
-// Sampling: 500 Messungen — Zielzustand sollte haeufig auftreten
+// Sampling: 500 measurements — target state should appear most often
 counts = statevec_sim(grover, 500)
-print("Sampling (500 Shots):")
+print("Sampling (500 shots):")
 print(counts)
 
 //Entropy: should be low (concentrated distribution)
 s = entropy_von_neumann(probs)
-print("Entropy according to Grover (bits):", s)
+print("Entropy after Grover (bits):", s)
 
-// Vergleich: Gleichverteilung hat Entropie = log2(8) = 3.0 Bits
-print("Entropie Gleichverteilung 8 Zustaende:", 3.0)
+// Comparison: uniform distribution has entropy = log2(8) = 3.0 bits
+print("Entropy of uniform distribution over 8 states:", 3.0)

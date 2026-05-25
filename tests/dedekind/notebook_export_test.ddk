@@ -1,28 +1,28 @@
-// Test für export_notebook: erzeugt eine winzige .ddk-Datei und bündelt sie als HTML + MD.
+// Test for export_notebook: creates a tiny .ddk source and bundles it as HTML + MD.
 
 fn main() {
-    // 1) Minimal-Quelle in CWD schreiben (rohstring vermeidet Quote-Escape-Probleme im Lexer)
+    // 1) Write minimal source to CWD (raw string avoids quote-escape issues in the lexer).
     src_path = "./dedekind_nb_src.ddk"
     src_body = r"fn main() { x = 1 + 1 print(x) } main()"
     write_file(src_path, src_body)
 
-    // 2) HTML-Export
+    // 2) HTML export
     html_path = export_notebook(src_path, output_path="./dedekind_nb.html",
-                                format="html", title="Mini-Notebook")
-    assert(file_exists(html_path), "HTML-Datei existiert")
+                                format="html", title="Mini notebook")
+    assert(file_exists(html_path), "HTML file exists")
     html = read_file(html_path)
-    // Output muss enthalten sein
-    assert(len(html) > 200, "HTML hat substanzielle Länge")
+    // Output must be present
+    assert(len(html) > 200, "HTML has substantial length")
 
-    // 3) Markdown-Export
+    // 3) Markdown export
     md_path = export_notebook(src_path, output_path="./dedekind_nb.md",
-                              format="md", title="Mini-Notebook")
+                              format="md", title="Mini notebook")
     md = read_file(md_path)
-    assert(len(md) > 50, "Markdown hat Inhalt")
+    assert(len(md) > 50, "markdown has content")
 
-    // 4) Default-Output-Pfad (selbe Datei mit .html-Endung)
+    // 4) Default output path (same file with .html extension)
     default_out = export_notebook(src_path, format="md")
-    assert(file_exists(default_out), "Default-Output existiert")
+    assert(file_exists(default_out), "default output exists")
 
     print("notebook_export_test OK")
 }

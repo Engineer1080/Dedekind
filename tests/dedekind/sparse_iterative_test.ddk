@@ -1,39 +1,39 @@
-// Tests für cg, gmres, bicgstab + Preconditioner.
-// Wir konstruieren ein kleines symmetrisch-positiv-definites System per Hand.
+// Tests for cg, gmres, bicgstab + preconditioners.
+// We construct a small symmetric positive-definite system by hand.
 
 fn main() {
-    // 3x3 SPD-Matrix:  A = [[4,1,0],[1,3,1],[0,1,2]]; b = [1,2,3]
+    // 3x3 SPD matrix:  A = [[4,1,0],[1,3,1],[0,1,2]]; b = [1,2,3]
     A = [[4.0, 1.0, 0.0], [1.0, 3.0, 1.0], [0.0, 1.0, 2.0]]
     b = [1.0, 2.0, 3.0]
-    // Exakte Lösung: x = [2/9, 1/9, 13/9] ≈ [0.2222, 0.1111, 1.4444]
+    // Exact solution: x = [2/9, 1/9, 13/9] ~ [0.2222, 0.1111, 1.4444]
 
     sol = cg(A, b, tol=1e-10, max_iter=100)
-    assert(sol["converged"], "CG konvergiert")
+    assert(sol["converged"], "CG converged")
     assert(abs(sol["x"][0] - 0.22222222) < 1e-6, "x[0] = 2/9")
     assert(abs(sol["x"][1] - 0.11111111) < 1e-6, "x[1] = 1/9")
     assert(abs(sol["x"][2] - 1.44444444) < 1e-6, "x[2] = 13/9")
-    assert(sol["residual_inf"] < 1e-6, "kleines Residuum")
+    assert(sol["residual_inf"] < 1e-6, "small residual")
 
-    // BiCGSTAB liefert dasselbe
+    // BiCGSTAB yields the same result
     sol_b = bicgstab(A, b, tol=1e-10, max_iter=100)
-    assert(sol_b["converged"], "BiCGSTAB konvergiert")
+    assert(sol_b["converged"], "BiCGSTAB converged")
     assert(abs(sol_b["x"][0] - 0.22222222) < 1e-5, "BiCGSTAB x[0] = 2/9")
 
-    // GMRES auch
+    // GMRES too
     sol_g = gmres(A, b, tol=1e-10, max_iter=100)
-    assert(sol_g["converged"], "GMRES konvergiert")
+    assert(sol_g["converged"], "GMRES converged")
     assert(abs(sol_g["x"][1] - 0.11111111) < 1e-5, "GMRES x[1] = 1/9")
 
-    // Mit Jacobi-Preconditioner sollte CG ebenfalls funktionieren (typischerweise schneller)
+    // With the Jacobi preconditioner CG should also work (typically faster)
     M = jacobi_preconditioner(A)
     sol_p = cg(A, b, tol=1e-10, max_iter=100, preconditioner=M)
-    assert(sol_p["converged"], "CG+Jacobi konvergiert")
+    assert(sol_p["converged"], "CG+Jacobi converged")
     assert(abs(sol_p["x"][0] - 0.22222222) < 1e-6, "CG+Jacobi x[0] = 2/9")
 
-    // ILU-Preconditioner: Smoke-Test (System lösbar mit GMRES + ILU)
+    // ILU preconditioner: smoke test (system solvable with GMRES + ILU)
     M_ilu = ilu_preconditioner(A)
     sol_ilu = gmres(A, b, tol=1e-10, max_iter=100, preconditioner=M_ilu)
-    assert(sol_ilu["converged"], "GMRES+ILU konvergiert")
+    assert(sol_ilu["converged"], "GMRES+ILU converged")
     assert(abs(sol_ilu["x"][2] - 1.44444444) < 1e-5, "GMRES+ILU x[2] = 13/9")
 
     print("sparse_iterative_test OK")

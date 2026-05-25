@@ -1,9 +1,9 @@
-// Tests für `unit NAME = NUMBER[base]` – benutzerdefinierte Einheiten.
+// Tests for `unit NAME = NUMBER[base]` — user-defined units.
 
 unit Foot = 0.3048[m]
 unit Mile = 1609.344[m]
 unit calorie = 4.184[J]
-unit kcal = 1000.0[calorie]      // Verkettung: aliasiert über calorie
+unit kcal = 1000.0[calorie]      // chaining: aliased via calorie
 
 fn approx(a, b, tol) {
     d = a - b
@@ -12,31 +12,31 @@ fn approx(a, b, tol) {
 }
 
 fn main() {
-    // 1) Reine User-Einheit + User-Einheit
+    // 1) Pure user unit + user unit
     h = 6[Foot] + 6[Foot]
     assert(approx(h.value, 12.0, 1e-9), "Foot+Foot")
-    assert(h.unit == "Foot", "Foot-Einheit erhalten")
+    assert(h.unit == "Foot", "Foot unit preserved")
 
-    // 2) User + Built-in: Ergebnis-Einheit folgt LINKER Seite
+    // 2) User + built-in: result unit follows the LEFT operand
     route = 1[Mile] + 1609.344[m]
     assert(approx(route.value, 2.0, 1e-6), "Mile+m: 1 Mile + 1609.344 m = 2 Mile")
-    assert(route.unit == "Mile", "Mile-Einheit erhalten")
+    assert(route.unit == "Mile", "Mile unit preserved")
 
-    // 3) Built-in + User: Ergebnis-Einheit = Built-in
+    // 3) Built-in + user: result unit = built-in
     route2 = 1609.344[m] + 1[Mile]
-    assert(approx(route2.value, 3218.688, 1e-6), "m+Mile in Metern")
-    assert(route2.unit == "m", "m-Einheit erhalten")
+    assert(approx(route2.value, 3218.688, 1e-6), "m+Mile in meters")
+    assert(route2.unit == "m", "m unit preserved")
 
-    // 4) Verkettung: kcal -> calorie -> J
+    // 4) Chaining: kcal -> calorie -> J
     e = 1[kcal] + 1000.0[calorie]
     assert(approx(e.value, 2.0, 1e-9), "kcal + 1000 calorie = 2 kcal")
 
-    // 5) Built-in mit benutzerdefiniertem Alias verträglich
+    // 5) Built-in unit compatible with a user-defined alias
     e_in_J = 1[kcal] + 4184.0[J]
     // 1 kcal + 4184 J = 1 kcal + 1 kcal = 2 kcal
-    assert(approx(e_in_J.value, 2.0, 1e-6), "kcal + J kombiniert")
+    assert(approx(e_in_J.value, 2.0, 1e-6), "kcal + J combined")
 
-    print("user_defined_units_test: alle 5 Asserts bestanden")
+    print("user_defined_units_test: all 5 asserts passed")
 }
 
 main()

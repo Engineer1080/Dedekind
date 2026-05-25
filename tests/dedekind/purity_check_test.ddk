@@ -1,6 +1,7 @@
-// Positiv-Test: reine Loss/Drift/Diffusion-Funktionen kompilieren OHNE Purity-Fehler.
-// Der Negativ-Fall (`print` in loss → CompileError) ist in einem Python-Test in
-// tests/python/test_purity_check.py abgedeckt, weil Dedekind selbst kein try/except hat.
+// Positive test: pure loss/drift/diffusion functions compile WITHOUT a purity error.
+// The negative case (`print` inside loss -> CompileError) is covered by a
+// Python test in tests/python/test_purity_check.py, because Dedekind itself
+// has no try/except for compile errors.
 
 fn pure_loss(params, data) {
     x = data[0]
@@ -20,23 +21,23 @@ fn approx(a, b, tol) {
 }
 
 fn main() {
-    // fit() mit reiner loss
+    // fit() with a pure loss
     xs = [1.0, 2.0, 3.0, 4.0]
     ys = [3.1, 5.2, 7.0, 9.1]
     params = fit(pure_loss, [1.0, 1.0], [xs, ys], method="gd", lr=0.01, steps=100)
-    assert(len(params) == 2, "fit liefert 2 Parameter")
+    assert(len(params) == 2, "fit returns 2 parameters")
 
-    // sde_solve mit reinem drift/diffusion
+    // sde_solve with a pure drift/diffusion
     t = linspace(0.0, 1.0, 11)
     Y = sde_solve(pure_drift, pure_diff, 1.0, t, method="euler_maruyama", seed_value=42)
-    assert(len(Y) == 11, "sde_solve liefert 11 Zeitschritte")
+    assert(len(Y) == 11, "sde_solve returns 11 time steps")
 
-    // jit mit reinem Kernel
+    // jit with a pure kernel
     jit_kernel = jit(pure_kernel)
     out = jit_kernel(3.0)
     assert(approx(out, 10.0, 1e-6), "jit(pure_kernel)(3) = 10")
 
-    print("purity_check_test: 3 Asserts bestanden")
+    print("purity_check_test: 3 asserts passed")
 }
 
 main()

@@ -1,5 +1,5 @@
-// JIT-Backend: jit(fn) wrappt mit torch.compile (oder gibt Original zurück);
-// muss in beiden Fällen ein aufrufbares, dasselbe-Ergebnis-Funktion liefern.
+// JIT backend: jit(fn) wraps with torch.compile (or returns the original);
+// in both cases it must return a callable that produces the same result.
 
 fn square_sum(x) {
     return x * x + x
@@ -9,7 +9,7 @@ fn main() {
     f_jit = jit(square_sum)
     a = square_sum(3.0)
     b = f_jit(3.0)
-    assert(abs(a - b) < 1e-6, "jit liefert gleiches Ergebnis wie Original")
+    assert(abs(a - b) < 1e-6, "jit returns the same result as the original")
     print("jit_test OK")
 }
 main()
