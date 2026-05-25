@@ -3,6 +3,17 @@
 Historical record of Dedekind releases. Most recent first.
 
 
+### What's New in v3.0.3 (Logarithmic Units & Decibels)
+
+The 3.0.3 release adds first-class support for logarithmic units and decibel arithmetic:
+
+- **Logarithmic Units.** Added support for dimensionless ratios (`dB`, `dB_power`, `dB_amp`) and absolute levels (`dBW` relative to 1 W, `dBm` relative to 1 mW, `dBV` relative to 1 V, `dBuV` relative to 1 µV, and `dBSPL` relative to 20 µPa).
+- **Decibel Arithmetic & Log-Linear Comparisons.** Supports adding/subtracting gain ratios (`dB`) to/from absolute levels (e.g. `10[dBW] + 3[dB]`), performing coherent power summation when adding absolute levels (e.g. `10[dBW] + 10[dBW] ≈ 13.01[dBW]`), and level subtraction yielding a ratio (e.g. `30[dBm] - 0[dBm] = 30[dB]`). Allows direct comparison between logarithmic and linear units (e.g. `30[dBm] == 1[W]`).
+- **Function Signature Coercion.** Automatic coercion of function parameters and return values between linear and logarithmic dimensions (e.g. passing a linear value to a function expecting `dBW` or vice versa).
+- **Engineering Example.** Added `logarithmic_units_demo.ddk` demonstrating these features in action.
+
+---
+
 ### What's New in v3.0.2 (Imperial/Custom Units & Fundamental Constants)
 
 The 3.0.2 release adds support for Imperial/US customary units and fundamental physical constants:

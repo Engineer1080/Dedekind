@@ -125,7 +125,7 @@ Compile and run every example at once:
 
 ## Status, roadmap, history
 
-- Current release: **v3.0.2** (May 2026)
+- Current release: **v3.0.3** (May 2026)
 - Roadmap: [docs/roadmap.md](docs/roadmap.md)
 - Full changelog: [docs/changelog.md](docs/changelog.md)
 - Formal spec: [docs/Dedekind_Language_Specification.md](docs/Dedekind_Language_Specification.md)
