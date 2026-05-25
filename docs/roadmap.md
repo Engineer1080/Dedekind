@@ -96,6 +96,17 @@ The current `src/dedekind/mlir_codegen.py` only emits MLIR-style text and `src/d
 *   [ ] **Static Binary**: Replace the C++ stub generator in `aot_compiler.py` with real LLVM linking; produce standalone `.exe` / ELF without Python.
 *   [ ] **Verification**: Execute the AOT-compiled binaries on Windows, Linux, and macOS in CI.
 
+### Phase 22: Natural Units for Particle Physics (proposed)
+Dedekind already ships `eV`, `keV`, `MeV`, `GeV` as energy units and CODATA constants (`hbar`, `c`, `m_e`, `m_p`, `alpha`). What is missing is first-class support for the high-energy-physics convention ℏ = c = 1, under which length, time, mass, momentum and cross sections collapse onto powers of energy. Two design variants are being considered; user feedback from the v3.x release cycle will decide which (or both) ship.
+
+**Variant A — Bridge constants (`use particle`, library-only).** SI remains the single source of truth. The module exposes precomputed bridge quantities such as `hbar_c = 197.3269804[MeV*fm]`, particle masses in their natural representation (`m_e_natural = 0.51099895[MeV]`, `m_p_natural = 938.272[MeV]`, …), and explicit converters `to_natural(q)` / `from_natural(x, target_unit)`. The compile-time dimension checker is untouched: `1[m] + 1[MeV]` stays a compile error, formulas keep their explicit `c` and `hbar` factors. Low implementation cost, fully additive, reversible.
+
+**Variant B — Scope-switched dimension system (`@natural_units` decorator).** Within a marked function the dimension checker is reparameterized so that ℏ = c = 1 holds at the type level: `[length] ≡ [time] ≡ [energy]⁻¹` and `[mass] ≡ [momentum] ≡ [energy]` become legal identities. QFT-style formulas read as in textbooks (no notational `c²`/`ℏ/c` noise), and the compiler enforces explicit coercion (`to_si(...)`) at scope boundaries. Higher implementation cost (checker extension, scope tracking, coercion rules, interaction with generics and solvers), and a non-trivial design commitment that is hard to roll back once users depend on it.
+
+*   [ ] **Variant A**: ship `use particle` with bridge constants, particle masses, and `to_natural`/`from_natural`.
+*   [ ] **Variant B**: optional `@natural_units` scope, gated on demonstrated user demand from the v3.x release.
+*   [ ] **Examples**: Compton scattering, Mandelstam variables, Yukawa potential range, electroweak scale comparisons.
+
 ## 🔭 Beyond v1.0: Future Vision
 
 Dedekind aims to become the "Standard Language for Nature's Laws." To achieve this, we are researching the native implementation of the following concepts:
