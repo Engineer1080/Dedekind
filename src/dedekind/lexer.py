@@ -61,7 +61,7 @@ class Lexer:
             ('DOT',      r'\.'),                # .
             ('CARET',    r'\^'),                # ^ (contravariant index)
             ('UNDERSCORE', r'_'),               # _ (covariant index, only when not in ID)
-            ('ID',       r'[A-Za-z][A-Za-z0-9_]*'), # Identifiers (mit _ z.B. check_value)
+            ('ID',       r'[A-Za-z°][A-Za-z0-9_°]*'), # Identifiers (mit _ z.B. check_value)
             ('NEWLINE',  r'\n'),                # Line endings
             ('SKIP',     r'[ \t\r]+'),           # Skip over spaces, tabs, and carriage returns
             ('MISMATCH', r'.'),                 # Any other character

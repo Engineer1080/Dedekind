@@ -20,6 +20,14 @@ class Quantity:
         """Addition/subtraction with automatic conversion for the same dimension."""
         u1 = self.unit
         u2 = other.unit
+        is_aff1 = u1 in _AFFINE_OFFSET_UNITS
+        is_aff2 = u2 in _AFFINE_OFFSET_UNITS
+        if is_aff1 or is_aff2:
+            dim1 = "temperature" if (is_aff1 or u1 in ("K", "mK", "delta_C", "delta_degC", "delta_F", "delta_degF", "delta_K")) else _get_dimension(u1)
+            dim2 = "temperature" if (is_aff2 or u2 in ("K", "mK", "delta_C", "delta_degC", "delta_F", "delta_degF", "delta_K")) else _get_dimension(u2)
+            if dim1 == "temperature" and dim2 == "temperature":
+                v_res, _, u_res = _add_sub_affine_temp(self.value, 0.0, u1, other.value, 0.0, u2, is_add)
+                return Quantity(v_res, u_res)
         is_log1 = u1 in _LOG_UNITS
         is_log2 = u2 in _LOG_UNITS
         if is_log1 or is_log2:

@@ -23,7 +23,19 @@ DIMENSION_TO_BASE = {
     "mass": ("kg", {"kg": 1.0, "g": 0.001, "t": 1000.0, "mg": 1e-6, "ug": 1e-9, "Da": 1.66053906660e-27, "amu": 1.66053906660e-27, "M_sun": 1.98847e30}),
     "time": ("s", {"s": 1.0, "min": 60.0, "h": 3600.0, "d": 86400.0, "yr": 31557600.0, "a": 31557600.0, "ms": 0.001, "us": 1e-6, "ns": 1e-9, "ps": 1e-12, "fs": 1e-15}),
     "current": ("A", {"A": 1.0, "mA": 0.001, "kA": 1000.0, "uA": 1e-6, "muA": 1e-6}),
-    "temperature": ("K", {"K": 1.0, "mK": 0.001}),
+    "temperature": ("K", {
+        "K": 1.0,
+        "mK": 0.001,
+        "degC": 1.0,
+        "°C": 1.0,
+        "degF": 5.0 / 9.0,
+        "°F": 5.0 / 9.0,
+        "delta_C": 1.0,
+        "delta_degC": 1.0,
+        "delta_F": 5.0 / 9.0,
+        "delta_degF": 5.0 / 9.0,
+        "delta_K": 1.0,
+    }),
     "amount_of_substance": ("mol", {"mol": 1.0, "mmol": 0.001, "umol": 1e-6, "nmol": 1e-9, "kmol": 1000.0}),
     "luminous_intensity": ("cd", {"cd": 1.0, "mcd": 0.001}),
     # Derived / common
@@ -66,15 +78,19 @@ def _get_dimension(unit):
 
 def _convert_to_base(value, unit, dimension):
     """Convert value in given unit to base unit."""
-    _, tab = DIMENSION_TO_BASE[dimension]
     u = str(unit).strip()
+    if dimension == "temperature" and u in _AFFINE_OFFSET_UNITS:
+        return _convert_affine_to_kelvin(value, u)
+    _, tab = DIMENSION_TO_BASE[dimension]
     return float(value) * tab.get(u, 1.0)
 
 
 def _convert_from_base(value_base, unit, dimension):
     """Convert value in base unit to given unit."""
-    _, tab = DIMENSION_TO_BASE[dimension]
     u = str(unit).strip()
+    if dimension == "temperature" and u in _AFFINE_OFFSET_UNITS:
+        return _convert_kelvin_to_affine(value_base, u)
+    _, tab = DIMENSION_TO_BASE[dimension]
     if u not in tab:
         return float(value_base)
     return float(value_base) / tab[u]
@@ -82,13 +98,25 @@ def _convert_from_base(value_base, unit, dimension):
 
 def _convert_between_units(value, std, from_unit, to_unit, dimension):
     """Convert value and std from from_unit to to_unit (for same dimension). Return (value, std)."""
-    _, tab = DIMENSION_TO_BASE[dimension]
     u_from = str(from_unit).strip()
     u_to = str(to_unit).strip()
+    if dimension == "temperature" and (u_from in _AFFINE_OFFSET_UNITS or u_to in _AFFINE_OFFSET_UNITS or u_from == "K" or u_to == "K"):
+        val_k = _convert_affine_to_kelvin(value, u_from)
+        val_to = _convert_kelvin_to_affine(val_k, u_to)
+    else:
+        _, tab = DIMENSION_TO_BASE[dimension]
+        if u_from not in tab or u_to not in tab:
+            val_to = float(value)
+        else:
+            factor = tab[u_from] / tab[u_to]
+            val_to = float(value) * factor
+    _, tab = DIMENSION_TO_BASE[dimension]
     if u_from not in tab or u_to not in tab:
-        return float(value), float(std)
-    factor = tab[u_from] / tab[u_to]
-    return float(value) * factor, float(std) * abs(factor)
+        std_to = float(std)
+    else:
+        factor = tab[u_from] / tab[u_to]
+        std_to = float(std) * abs(factor)
+    return val_to, std_to
 
 
 _LOG_UNITS = {
@@ -135,6 +163,84 @@ def _linear_to_log(value, linear_unit, log_unit):
     factor = 10.0 if is_power else 20.0
     return factor * _log10(ratio)
 
+
+_AFFINE_OFFSET_UNITS = {"degC", "°C", "degF", "°F"}
+
+def _is_affine_unit(unit):
+    return str(unit).strip() in _AFFINE_OFFSET_UNITS
+
+def _convert_affine_to_kelvin(value, unit):
+    u = str(unit).strip()
+    if u in ("degC", "°C"):
+        return value + 273.15
+    if u in ("degF", "°F"):
+        return (value - 32.0) * (5.0 / 9.0) + 273.15
+    if u == "K":
+        return value
+    raise ValueError(f"Unknown affine unit: {unit}")
+
+def _convert_kelvin_to_affine(value_k, unit):
+    u = str(unit).strip()
+    if u in ("degC", "°C"):
+        return value_k - 273.15
+    if u in ("degF", "°F"):
+        return (value_k - 273.15) * (9.0 / 5.0) + 32.0
+    if u == "K":
+        return value_k
+    raise ValueError(f"Unknown affine unit: {unit}")
+
+def _add_sub_affine_temp(v1, s1, u1, v2, s2, u2, is_add):
+    """Handles addition/subtraction of temperature quantities, supporting affine offset units.
+    Returns (value, std, unit) or raises ValueError.
+    """
+    is_aff1 = u1 in _AFFINE_OFFSET_UNITS
+    is_aff2 = u2 in _AFFINE_OFFSET_UNITS
+    
+    if is_add:
+        if is_aff1 and is_aff2:
+            raise ValueError("Unit error: Cannot add two absolute temperatures.")
+        if is_aff1:
+            scale1 = DIMENSION_TO_BASE["temperature"][1].get(u1, 1.0)
+            scale2 = DIMENSION_TO_BASE["temperature"][1].get(u2, 1.0)
+            factor = scale2 / scale1
+            v_res = v1 + v2 * factor
+            s_res = (s1 ** 2 + (s2 * factor) ** 2) ** 0.5
+            return v_res, s_res, u1
+        else:
+            scale1 = DIMENSION_TO_BASE["temperature"][1].get(u1, 1.0)
+            scale2 = DIMENSION_TO_BASE["temperature"][1].get(u2, 1.0)
+            factor = scale1 / scale2
+            v_res = v2 + v1 * factor
+            s_res = (s2 ** 2 + (s1 * factor) ** 2) ** 0.5
+            return v_res, s_res, u2
+    else:
+        # Subtraction
+        if is_aff1 and is_aff2:
+            v1_k = _convert_affine_to_kelvin(v1, u1)
+            v2_k = _convert_affine_to_kelvin(v2, u2)
+            diff_k = v1_k - v2_k
+            
+            scale1 = DIMENSION_TO_BASE["temperature"][1].get(u1, 1.0)
+            scale2 = DIMENSION_TO_BASE["temperature"][1].get(u2, 1.0)
+            s1_k = s1 * scale1
+            s2_k = s2 * scale2
+            s_res_k = (s1_k ** 2 + s2_k ** 2) ** 0.5
+            
+            if u1 in ("degF", "°F"):
+                return diff_k * 1.8, s_res_k * 1.8, "delta_F"
+            else:
+                return diff_k, s_res_k, "K"
+        if is_aff1:
+            scale1 = DIMENSION_TO_BASE["temperature"][1].get(u1, 1.0)
+            scale2 = DIMENSION_TO_BASE["temperature"][1].get(u2, 1.0)
+            factor = scale2 / scale1
+            v_res = v1 - v2 * factor
+            s_res = (s1 ** 2 + (s2 * factor) ** 2) ** 0.5
+            return v_res, s_res, u1
+        if is_aff2:
+            raise ValueError("Unit error: Cannot subtract an absolute temperature from a temperature difference.")
+
+
 class Quantity:
     """Physical quantity with unit (e.g. 10[m], 5[m/s], 0.1[M], 50[ppm]). Calculation rules: same unit for +/-, multiply/divide units. Chemistry: mol, L, M (= mol/L), ppm, bar, atm, g. Radioactivity: Bq (1/s), Gy (J/kg), Sv (J/kg, equivalent dose)."""
     def __init__(self, value, unit=""):
@@ -157,6 +263,14 @@ class Quantity:
         """Addition/subtraction with automatic conversion for the same dimension."""
         u1 = self.unit
         u2 = other.unit
+        is_aff1 = u1 in _AFFINE_OFFSET_UNITS
+        is_aff2 = u2 in _AFFINE_OFFSET_UNITS
+        if is_aff1 or is_aff2:
+            dim1 = "temperature" if (is_aff1 or u1 in ("K", "mK", "delta_C", "delta_degC", "delta_F", "delta_degF", "delta_K")) else _get_dimension(u1)
+            dim2 = "temperature" if (is_aff2 or u2 in ("K", "mK", "delta_C", "delta_degC", "delta_F", "delta_degF", "delta_K")) else _get_dimension(u2)
+            if dim1 == "temperature" and dim2 == "temperature":
+                v_res, _, u_res = _add_sub_affine_temp(self.value, 0.0, u1, other.value, 0.0, u2, is_add)
+                return Quantity(v_res, u_res)
         is_log1 = u1 in _LOG_UNITS
         is_log2 = u2 in _LOG_UNITS
         if is_log1 or is_log2:
@@ -5793,6 +5907,14 @@ class UncertainQuantity:
                 raise ValueError("UncertainQuantity: cannot add a number to a quantity with units.")
             return UncertainQuantity(self.value + other, self.std, "")
         if isinstance(other, UncertainQuantity):
+            is_aff1 = self.unit in _AFFINE_OFFSET_UNITS
+            is_aff2 = other.unit in _AFFINE_OFFSET_UNITS
+            if is_aff1 or is_aff2:
+                dim1 = "temperature" if (is_aff1 or self.unit in ("K", "mK", "delta_C", "delta_degC", "delta_F", "delta_degF", "delta_K")) else _get_dimension(self.unit)
+                dim2 = "temperature" if (is_aff2 or other.unit in ("K", "mK", "delta_C", "delta_degC", "delta_F", "delta_degF", "delta_K")) else _get_dimension(other.unit)
+                if dim1 == "temperature" and dim2 == "temperature":
+                    v_res, s_res, u_res = _add_sub_affine_temp(self.value, self.std, self.unit, other.value, other.std, other.unit, is_add=True)
+                    return UncertainQuantity(v_res, s_res, u_res)
             if not self._compatible_add_sub(other):
                 raise ValueError(f"Units do not match: [{self.unit}] vs [{other.unit}] (same unit or compatible dimension required).")
             dim = _get_dimension(self.unit)
@@ -5815,6 +5937,14 @@ class UncertainQuantity:
                 raise ValueError("UncertainQuantity: cannot subtract a number from a quantity with units.")
             return UncertainQuantity(self.value - other, self.std, "")
         if isinstance(other, UncertainQuantity):
+            is_aff1 = self.unit in _AFFINE_OFFSET_UNITS
+            is_aff2 = other.unit in _AFFINE_OFFSET_UNITS
+            if is_aff1 or is_aff2:
+                dim1 = "temperature" if (is_aff1 or self.unit in ("K", "mK", "delta_C", "delta_degC", "delta_F", "delta_degF", "delta_K")) else _get_dimension(self.unit)
+                dim2 = "temperature" if (is_aff2 or other.unit in ("K", "mK", "delta_C", "delta_degC", "delta_F", "delta_degF", "delta_K")) else _get_dimension(other.unit)
+                if dim1 == "temperature" and dim2 == "temperature":
+                    v_res, s_res, u_res = _add_sub_affine_temp(self.value, self.std, self.unit, other.value, other.std, other.unit, is_add=False)
+                    return UncertainQuantity(v_res, s_res, u_res)
             if not self._compatible_add_sub(other):
                 raise ValueError(f"Units do not match: [{self.unit}] vs [{other.unit}] (same unit or compatible dimension required).")
             dim = _get_dimension(self.unit)
@@ -8477,6 +8607,15 @@ _DERIVED_UNIT_TO_BASE = {
     "muA":  {"A": 1},
     "K":    {"K": 1},
     "mK":   {"K": 1},
+    "degC": {"K": 1},
+    "°C":   {"K": 1},
+    "degF": {"K": 1},
+    "°F":   {"K": 1},
+    "delta_C": {"K": 1},
+    "delta_degC": {"K": 1},
+    "delta_F": {"K": 1},
+    "delta_degF": {"K": 1},
+    "delta_K": {"K": 1},
     "mol":  {"mol": 1},
     "mmol": {"mol": 1},
     "kmol": {"mol": 1},

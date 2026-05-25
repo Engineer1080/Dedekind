@@ -20,6 +20,14 @@ class UncertainQuantity:
                 raise ValueError("UncertainQuantity: cannot add a number to a quantity with units.")
             return UncertainQuantity(self.value + other, self.std, "")
         if isinstance(other, UncertainQuantity):
+            is_aff1 = self.unit in _AFFINE_OFFSET_UNITS
+            is_aff2 = other.unit in _AFFINE_OFFSET_UNITS
+            if is_aff1 or is_aff2:
+                dim1 = "temperature" if (is_aff1 or self.unit in ("K", "mK", "delta_C", "delta_degC", "delta_F", "delta_degF", "delta_K")) else _get_dimension(self.unit)
+                dim2 = "temperature" if (is_aff2 or other.unit in ("K", "mK", "delta_C", "delta_degC", "delta_F", "delta_degF", "delta_K")) else _get_dimension(other.unit)
+                if dim1 == "temperature" and dim2 == "temperature":
+                    v_res, s_res, u_res = _add_sub_affine_temp(self.value, self.std, self.unit, other.value, other.std, other.unit, is_add=True)
+                    return UncertainQuantity(v_res, s_res, u_res)
             if not self._compatible_add_sub(other):
                 raise ValueError(f"Units do not match: [{self.unit}] vs [{other.unit}] (same unit or compatible dimension required).")
             dim = _get_dimension(self.unit)
@@ -42,6 +50,14 @@ class UncertainQuantity:
                 raise ValueError("UncertainQuantity: cannot subtract a number from a quantity with units.")
             return UncertainQuantity(self.value - other, self.std, "")
         if isinstance(other, UncertainQuantity):
+            is_aff1 = self.unit in _AFFINE_OFFSET_UNITS
+            is_aff2 = other.unit in _AFFINE_OFFSET_UNITS
+            if is_aff1 or is_aff2:
+                dim1 = "temperature" if (is_aff1 or self.unit in ("K", "mK", "delta_C", "delta_degC", "delta_F", "delta_degF", "delta_K")) else _get_dimension(self.unit)
+                dim2 = "temperature" if (is_aff2 or other.unit in ("K", "mK", "delta_C", "delta_degC", "delta_F", "delta_degF", "delta_K")) else _get_dimension(other.unit)
+                if dim1 == "temperature" and dim2 == "temperature":
+                    v_res, s_res, u_res = _add_sub_affine_temp(self.value, self.std, self.unit, other.value, other.std, other.unit, is_add=False)
+                    return UncertainQuantity(v_res, s_res, u_res)
             if not self._compatible_add_sub(other):
                 raise ValueError(f"Units do not match: [{self.unit}] vs [{other.unit}] (same unit or compatible dimension required).")
             dim = _get_dimension(self.unit)

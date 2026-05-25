@@ -1,0 +1,81 @@
+// Demonstration of the new affine temperature units:
+// - degC / °C (Celsius absolute point)
+// - degF / °F (Fahrenheit absolute point)
+// - delta_C / delta_F / delta_K (relative temperature differences)
+// Demonstrates point conversions, comparisons, error-free subtraction yielding linear differences,
+// and realistic thermodynamics calculations (heat conduction).
+
+fn print_separator() {
+    print("---------------------------------------------")
+}
+
+// Function signature accepting Celsius and returning Celsius
+fn safety_margin_temp(temp: [degC], margin: [delta_C]) -> [degC] {
+    return temp + margin
+}
+
+fn main() {
+    print("Dedekind Affine Temperature Units Demonstration")
+    print_separator()
+
+    // 1. Basic conversions & comparisons (auto-coercion)
+    print("1. Temperature Scale Conversions:")
+    t_celsius = 20.0[degC]
+    t_fahrenheit = 68.0[degF]
+    t_kelvin = 293.15[K]
+
+    print("20 °C is equal to 68 °F: ", t_celsius == t_fahrenheit)
+    print("20 °C is equal to 293.15 K: ", t_celsius == t_kelvin)
+    print("Is -40 °C equal to -40 °F? ", -40[degC] == -40[degF])
+    print_separator()
+
+    // 2. Arithmetic: Point +/- Difference -> Point
+    print("2. Adding differences to absolute temperatures:")
+    room_temp = 20.0[degC]
+    raise_by = 10.0[K] // 10 Kelvin difference
+    new_temp = room_temp + raise_by
+    print("20 °C warmed up by 10 K = ", new_temp)
+
+    // Using explicit delta units
+    t_f = 68.0[degF]
+    lower_by = 18.0[delta_F] // 18 °F difference
+    cooler_temp = t_f - lower_by
+    print("68 °F cooled down by 18 delta_F = ", cooler_temp)
+    print_separator()
+
+    // 3. Subtraction: Point - Point -> Difference
+    print("3. Temperature Difference (Vector subtraction):")
+    t_inside = 22.0[degC]
+    t_outside = -5.0[degC]
+    delta_t = t_inside - t_outside
+    print("22 °C minus -5 °C = ", delta_t) // Yields difference in Kelvin
+    print_separator()
+
+    // 4. Thermodynamics Application: Heat Conduction through a Wall
+    // Equation: Q = (k * A * delta_T) / d
+    print("4. Thermodynamics application (Heat Conduction):")
+    k_insulation = 0.04[W/m/K] // Thermal conductivity
+    wall_area = 15.0[m^2]
+    wall_thickness = 0.2[m] // 20 cm
+    
+    // Celsius subtraction yields delta_T in K, compatible with W/(m*K)
+    dt = t_inside - t_outside
+    
+    heat_loss = 0.0[W] + (k_insulation * wall_area * dt) / wall_thickness
+    print("Thermal Conductivity k: ", k_insulation)
+    print("Wall Area A:            ", wall_area)
+    print("Wall Thickness d:       ", wall_thickness)
+    print("Temp Difference dT:     ", dt)
+    print("Calculated Heat Loss Q: ", heat_loss)
+    print_separator()
+
+    // 5. Signature coercion
+    print("5. Signature coercion in functions:")
+    t_high = safety_margin_temp(68.0[degF], 10.0[delta_C]) // Coerces 68 °F to 20 °C, adds 10 °C
+    print("20 °C + 10 delta_C margin = ", t_high)
+    print_separator()
+
+    print("Demo successfully completed!")
+}
+
+main()

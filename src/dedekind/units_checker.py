@@ -131,6 +131,30 @@ def _infer_unit(node: Node, env: Environment) -> Optional[str]:
             if left_u is not None and right_u is not None:
                 if not _same_dimension(left_u, right_u):
                     return None  # Signal: mismatch, handled in check
+                
+                # Temperature units (affine offset and difference)
+                affine_units = {"degC", "°C", "degF", "°F"}
+                d1 = _parse_unit_to_base_dims(left_u)
+                d2 = _parse_unit_to_base_dims(right_u)
+                if d1 == {"K": 1} and d2 == {"K": 1}:
+                    is_aff1 = left_u in affine_units
+                    is_aff2 = right_u in affine_units
+                    if is_aff1 and is_aff2:
+                        if node.op == "+":
+                            return None  # Compile error: P + P is invalid
+                        # Subtraction: P - P -> Difference
+                        if left_u in ("degF", "°F"):
+                            return "delta_F"
+                        return "K"
+                    elif is_aff1:
+                        # P +/- V -> P
+                        return left_u
+                    elif is_aff2:
+                        # V + P -> P, but V - P is invalid
+                        if node.op == "-":
+                            return None
+                        return right_u
+                
                 log_units = {"dB", "dB_power", "dB_amp", "dBW", "dBm", "dBV", "dBuV", "dBSPL"}
                 if left_u in log_units or right_u in log_units:
                     if left_u in ("dB", "dB_power", "dB_amp") and right_u in ("dB", "dB_power", "dB_amp"):

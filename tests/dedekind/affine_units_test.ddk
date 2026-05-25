@@ -1,0 +1,69 @@
+// Test for affine temperature units (degC, °C, degF, °F, delta_C, delta_F)
+
+fn approx(a, b, tol) {
+    d = unwrap(a) - unwrap(b)
+    if d < 0 { d = -d }
+    return d < tol
+}
+
+fn test_fn_celsius(t: [degC]) -> [degC] {
+    return t
+}
+
+fn test_fn_kelvin(t: [K]) -> [K] {
+    return t
+}
+
+fn main() {
+    // 1. Basic conversions & point comparison
+    assert(0[degC] == 32[degF], "0 °C is 32 °F")
+    assert(100[degC] == 373.15[K], "100 °C is 373.15 K")
+    assert(approx(test_fn_celsius(0[degF]), -17.77778[degC], 1e-4), "0 °F is approx -17.78 °C")
+    assert(-40[degC] == -40.0[degF], "-40 °C is exactly -40 °F")
+    assert(20[°C] == 20[degC], "Unicode and ASCII Celsius match")
+    assert(68[°F] == 68[degF], "Unicode and ASCII Fahrenheit match")
+    
+    // 2. Point + Difference (Arithmetic)
+    assert(20[degC] + 10[K] == 30[degC], "20 °C + 10 K = 30 °C")
+    assert(10[K] + 20[degC] == 30[degC], "10 K + 20 °C = 30 °C")
+    assert(20[degC] - 10[K] == 10[degC], "20 °C - 10 K = 10 °C")
+    assert(20[degC] + 10[delta_C] == 30[degC], "20 °C + 10 delta_C = 30 °C")
+    
+    // Fahrenheit offset math
+    assert(approx(68[degF] + 18[delta_F], 86.0[degF], 1e-5), "68 °F + 18 delta_F = 86 °F")
+    assert(approx(68[degF] + 10[K], 86.0[degF], 1e-5), "68 °F + 10 K = 86 °F (since 10 K is 18 F change)")
+    assert(approx(68[degF] - 10[K], 50.0[degF], 1e-5), "68 °F - 10 K = 50 °F")
+
+    // 3. Subtracting absolute temperatures yields a difference
+    assert(100[degC] - 20[degC] == 80[K], "100 °C - 20 °C = 80 K difference")
+    assert(approx(212[degF] - 32[degF], 180.0[delta_F], 1e-5), "212 °F - 32 °F = 180 delta_F difference")
+    assert(approx(100[degC] - 32[degF], 100.0[K], 1e-5), "100 °C - 32 °F = 100 K difference")
+
+    // 4. Signature Coercion (autolabel / autoconversion in function signatures)
+    res1 = test_fn_celsius(273.15[K]) // Should convert 273.15[K] to 0[degC]
+    assert(res1 == 0[degC], "273.15 K coerced to 0 °C")
+
+    res2 = test_fn_kelvin(100[degC]) // Should convert 100[degC] to 373.15[K]
+    assert(res2 == 373.15[K], "100 °C coerced to 373.15 K")
+
+    // 5. UncertainQuantity math (value ± std)
+    // Create uncertain temperature points
+    t1 = uncertain(20.0, 0.5, "degC")
+    t2 = uncertain(10.0, 0.3, "degC")
+    
+    // Subtraction of points: (20.0 ± 0.5) - (10.0 ± 0.3) -> 10.0 ± sqrt(0.5^2 + 0.3^2) [K]
+    diff = t1 - t2
+    assert(approx(diff, 10.0[K], 1e-7), "Uncertain point subtraction value")
+    // std should be sqrt(0.25 + 0.09) = sqrt(0.34) ≈ 0.583095
+    assert(approx(diff.std, 0.583095, 1e-5), "Uncertain point subtraction std")
+
+    // Point + Difference: (20.0 ± 0.5)[degC] + (10.0 ± 0.4)[K] -> (30.0 ± sqrt(0.5^2 + 0.4^2))[degC]
+    t_sum = t1 + uncertain(10.0, 0.4, "K")
+    assert(approx(t_sum, 30.0[degC], 1e-7), "Uncertain point + diff value")
+    // std should be sqrt(0.25 + 0.16) = sqrt(0.41) ≈ 0.64031
+    assert(approx(t_sum.std, 0.640312, 1e-5), "Uncertain point + diff std")
+
+    print("affine_units_test: All asserts passed successfully!")
+}
+
+main()
