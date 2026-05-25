@@ -1,0 +1,84 @@
+// Demonstration of the new logarithmic units module:
+// - dB, dBm, dBW, dBV, dBuV, dBSPL
+// Demonstrates unit conversions, comparison, additions/subtractions, and parameter/return type coercion.
+
+fn print_separator() {
+    print("---------------------------------------------")
+}
+
+// Function signature with logarithmic return and input constraints
+fn calculate_amplifier_output(input_power: [dBW], gain: [dB]) -> [dBW] {
+    return input_power + gain
+}
+
+// Function signature with linear return and logarithmic input constraint
+fn log_to_linear_power(power_dbw: [dBW]) -> [W] {
+    // Simply return the power_dbw, coercion system will convert it to [W]
+    return power_dbw
+}
+
+fn main() {
+    print("Dedekind Logarithmic Units Demonstration")
+    print_separator()
+
+    // 1. Basic conversions & comparison
+    print("1. Logarithmic vs Linear Conversions:")
+    p_linear = 1.0[W]
+    p_log_dbw = 0[dBW]
+    p_log_dbm = 30[dBm]
+
+    print("1.0 W is equal to 0 dBW: ", p_linear == p_log_dbw)
+    print("30 dBm is equal to 0 dBW: ", p_log_dbm == p_log_dbw)
+    print("0 dBW is equal to 1000 mW: ", p_log_dbw == 1000[mW])
+    print_separator()
+
+    // 2. Comparisons of levels
+    print("2. Comparisons of Levels:")
+    print("Is 30 dBm greater than 20 dBm? ", 30[dBm] > 20[dBm])
+    print("Is 0 dBW less than 10 dBW? ", 0[dBW] < 10[dBW])
+    print("Is 20 dBuV equal to 10 uV? ", 20[dBuV] == 10[uV])
+    print_separator()
+
+    // 3. Logarithm arithmetic: level +/- ratio (Gain)
+    print("3. Adding / Subtracting Gain:")
+    power_level = 10[dBW]
+    gain = 3[dB]
+    
+    raised_power = power_level + gain
+    reduced_power = power_level - gain
+    
+    print("10 dBW + 3 dB (gain) = ", raised_power)
+    print("10 dBW - 3 dB (attenuation) = ", reduced_power)
+    print_separator()
+
+    // 4. Logarithmic level addition (Power summation)
+    print("4. Power Summation (Adding two coherent power levels):")
+    // 10 dBW + 10 dBW (10 W + 10 W = 20 W ≈ 13.01 dBW)
+    summed_power = 10[dBW] + 10[dBW]
+    print("10 dBW + 10 dBW = ", summed_power)
+    print_separator()
+
+    // 5. Subtracting absolute levels yields a ratio in dB
+    print("5. Ratio Calculation (Subtracting two absolute levels):")
+    p1 = 30[dBm]
+    p2 = 0[dBm]
+    ratio_db = p1 - p2
+    print("30 dBm - 0 dBm = ", ratio_db)
+    print_separator()
+
+    // 6. Function signature coercion / transparent mapping
+    print("6. Function Signature Auto-Coercion:")
+    // Calculate output power using dB-typed function
+    // 1.0[W] is coerced to 0[dBW] automatically
+    out_power = calculate_amplifier_output(1.0[W], 10[dB])
+    print("Output power for 1 W input and 10 dB gain: ", out_power)
+
+    // Coerce logarithmic dBW back to linear Watt
+    out_power_watts = log_to_linear_power(out_power)
+    print("Output power in Watts: ", out_power_watts)
+    print_separator()
+
+    print("Demo successfully completed!")
+}
+
+main()

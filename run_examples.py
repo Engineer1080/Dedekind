@@ -95,6 +95,7 @@ def main():
             exec_globals = {}
             dedekind_exec(python_code, ddk_file=filepath, exec_globals=exec_globals, ddk_source=source)
             output = out.getvalue()
+            sys.stdout = old_stdout
             results.append((filename, True, None))
             if args.verbose:
                 print(f"--- {filename} ---")
