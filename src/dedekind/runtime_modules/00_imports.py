@@ -27,16 +27,16 @@ DIMENSION_TO_BASE = {
     "amount_of_substance": ("mol", {"mol": 1.0, "mmol": 0.001, "umol": 1e-6, "nmol": 1e-9, "kmol": 1000.0}),
     "luminous_intensity": ("cd", {"cd": 1.0, "mcd": 0.001}),
     # Derived / common
-    "pressure": ("Pa", {"Pa": 1.0, "hPa": 100.0, "kPa": 1000.0, "MPa": 1e6, "GPa": 1e9, "bar": 1e5, "atm": 101325.0}),
+    "pressure": ("Pa", {"Pa": 1.0, "hPa": 100.0, "kPa": 1000.0, "MPa": 1e6, "GPa": 1e9, "bar": 1e5, "atm": 101325.0, "uPa": 1e-6, "muPa": 1e-6}),
     "force": ("N", {"N": 1.0, "kN": 1000.0, "MN": 1e6}),
     "permeability": ("m^2", {"m^2": 1.0, "D": 9.869233e-13, "mD": 9.869233e-16}),  # Darcy: 1 D ≈ 9.87e-13 m²
     "volume": ("L", {"L": 1.0, "mL": 0.001, "dm^3": 1.0, "m^3": 1000.0}),  # dm³ = 1 L, m³ = 1000 L
     "energy": ("J", {"J": 1.0, "kJ": 1000.0, "MJ": 1e6, "Wh": 3600.0, "kWh": 3.6e6, "eV": 1.602176634e-19, "meV": 1.602176634e-22, "keV": 1.602176634e-16, "MeV": 1.602176634e-13, "GeV": 1.602176634e-10, "cal": 4.184, "kcal": 4184.0}),
-    "electric_potential": ("V", {"V": 1.0, "mV": 0.001, "kV": 1000.0}),
+    "electric_potential": ("V", {"V": 1.0, "mV": 0.001, "uV": 1e-6, "muV": 1e-6, "kV": 1000.0}),
     "frequency": ("Hz", {"Hz": 1.0, "kHz": 1000.0, "MHz": 1e6, "GHz": 1e9, "THz": 1e12}),
     "charge": ("C", {"C": 1.0, "mC": 0.001, "uC": 1e-6}),
     "resistance": ("ohm", {"ohm": 1.0, "kohm": 1000.0, "Mohm": 1e6}),
-    "power": ("W", {"W": 1.0, "kW": 1000.0, "MW": 1e6, "L_sun": 3.828e26}),
+    "power": ("W", {"W": 1.0, "mW": 0.001, "kW": 1000.0, "MW": 1e6, "L_sun": 3.828e26}),
     "magnetic_flux_density": ("T", {"T": 1.0, "G": 1e-4}),
     "magnetic_flux": ("Wb", {"Wb": 1.0}),
     "inductance": ("H", {"H": 1.0, "mH": 0.001, "uH": 1e-6}),
@@ -89,4 +89,49 @@ def _convert_between_units(value, std, from_unit, to_unit, dimension):
         return float(value), float(std)
     factor = tab[u_from] / tab[u_to]
     return float(value) * factor, float(std) * abs(factor)
+
+
+_LOG_UNITS = {
+    "dB": ("", 1.0, True),
+    "dB_power": ("", 1.0, True),
+    "dB_amp": ("", 1.0, False),
+    "dBW": ("W", 1.0, True),
+    "dBm": ("W", 1e-3, True),
+    "dBV": ("V", 1.0, False),
+    "dBuV": ("V", 1e-6, False),
+    "dBSPL": ("Pa", 20e-6, False),
+}
+
+def _get_log_dimension(unit):
+    u = str(unit).strip() if unit else ""
+    if u in _LOG_UNITS:
+        ref_unit = _LOG_UNITS[u][0]
+        if not ref_unit:
+            return ""
+        return _get_dimension(ref_unit)
+    return _get_dimension(u)
+
+def _log10(x):
+    if isinstance(x, torch.Tensor):
+        return torch.log10(x)
+    import math as _math
+    try:
+        return _math.log10(x)
+    except ValueError:
+        return float("nan")
+
+def _log_to_linear(value, unit):
+    ref_unit, ref_scale, is_power = _LOG_UNITS[unit]
+    factor = 10.0 if is_power else 20.0
+    ratio = 10.0 ** (value / factor)
+    return ratio * ref_scale, ref_unit
+
+def _linear_to_log(value, linear_unit, log_unit):
+    ref_unit, ref_scale, is_power = _LOG_UNITS[log_unit]
+    dim = _get_dimension(ref_unit)
+    v_base = _convert_to_base(value, linear_unit, dim)
+    v_ref = _convert_from_base(v_base, ref_unit, dim)
+    ratio = v_ref / ref_scale
+    factor = 10.0 if is_power else 20.0
+    return factor * _log10(ratio)
 

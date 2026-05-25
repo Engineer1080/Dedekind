@@ -18,6 +18,82 @@ class Quantity:
 
     def _add_sub_quantity(self, other, is_add):
         """Addition/subtraction with automatic conversion for the same dimension."""
+        u1 = self.unit
+        u2 = other.unit
+        is_log1 = u1 in _LOG_UNITS
+        is_log2 = u2 in _LOG_UNITS
+        if is_log1 or is_log2:
+            dim1 = _get_log_dimension(u1)
+            dim2 = _get_log_dimension(u2)
+            if dim1 != dim2:
+                # Absolute level (e.g. dBW) plus/minus ratio (dB)
+                if is_add:
+                    if is_log1 and u1 != "dB" and u2 == "dB":
+                        return Quantity(self.value + other.value, u1)
+                    if is_log2 and u2 != "dB" and u1 == "dB":
+                        return Quantity(self.value + other.value, u2)
+                else:
+                    if is_log1 and u1 != "dB" and u2 == "dB":
+                        return Quantity(self.value - other.value, u1)
+                raise ValueError(
+                    f"Unit error during {'addition' if is_add else 'subtraction'}: [{u1}] vs [{u2}]. "
+                    "Logarithmic levels can only be added to or subtracted from logarithmic ratios (dB) "
+                    "or quantities of the same dimension."
+                )
+            else:
+                # Same dimension (e.g. both power: dBW, dBm, W; or both dimensionless: dB, dB)
+                if u1 == "dB" and u2 == "dB":
+                    v = (self.value + other.value) if is_add else (self.value - other.value)
+                    return Quantity(v, "dB")
+                
+                # Convert both to linear base unit values
+                if is_log1:
+                    v1_linear, ref1 = _log_to_linear(self.value, u1)
+                    dim_ref1 = _get_dimension(ref1)
+                    v1_base = _convert_to_base(v1_linear, ref1, dim_ref1)
+                    base_unit = ref1
+                else:
+                    dim_linear1 = _get_dimension(u1)
+                    v1_base = _convert_to_base(self.value, u1, dim_linear1)
+                    base_unit = DIMENSION_TO_BASE[dim_linear1][0]
+                    
+                if is_log2:
+                    v2_linear, ref2 = _log_to_linear(other.value, u2)
+                    dim_ref2 = _get_dimension(ref2)
+                    v2_base = _convert_to_base(v2_linear, ref2, dim_ref2)
+                else:
+                    dim_linear2 = _get_dimension(u2)
+                    v2_base = _convert_to_base(other.value, u2, dim_linear2)
+                
+                if is_add:
+                    v_res_base = v1_base + v2_base
+                    # Result in LHS unit
+                    if is_log1:
+                        v_res = _linear_to_log(v_res_base, base_unit, u1)
+                        return Quantity(v_res, u1)
+                    else:
+                        dim_l1 = _get_dimension(u1)
+                        v_res = _convert_from_base(v_res_base, u1, dim_l1)
+                        return Quantity(v_res, u1)
+                else:
+                    # Subtraction
+                    if is_log1 and is_log2:
+                        # Subtracting two absolute log units yields a ratio in dB
+                        ratio = v1_base / v2_base
+                        is_power = _LOG_UNITS[u1][2]
+                        factor = 10.0 if is_power else 20.0
+                        res_val = factor * _log10(ratio)
+                        return Quantity(res_val, "dB")
+                    else:
+                        v_res_base = v1_base - v2_base
+                        if is_log1:
+                            v_res = _linear_to_log(v_res_base, base_unit, u1)
+                            return Quantity(v_res, u1)
+                        else:
+                            dim_l1 = _get_dimension(u1)
+                            v_res = _convert_from_base(v_res_base, u1, dim_l1)
+                            return Quantity(v_res, u1)
+
         dim_self = _get_dimension(self.unit)
         dim_other = _get_dimension(other.unit)
         if dim_self is not None and dim_self == dim_other:
@@ -130,11 +206,29 @@ class Quantity:
     def _cmp_value(self, other):
         """Returns (self_val, other_val) for comparison. Converts units if possible."""
         if isinstance(other, Quantity):
-            dim_s = _get_dimension(self.unit)
-            dim_o = _get_dimension(other.unit)
+            dim_s = _get_log_dimension(self.unit)
+            dim_o = _get_log_dimension(other.unit)
             if dim_s is not None and dim_s == dim_o:
-                return _convert_to_base(self.value, self.unit, dim_s), \
-                       _convert_to_base(other.value, other.unit, dim_o)
+                is_log_s = self.unit in _LOG_UNITS
+                is_log_o = other.unit in _LOG_UNITS
+                if is_log_s or is_log_o:
+                    if is_log_s:
+                        v_s_linear, ref_s = _log_to_linear(self.value, self.unit)
+                        dim_ref_s = _get_dimension(ref_s)
+                        v_s_base = _convert_to_base(v_s_linear, ref_s, dim_ref_s)
+                    else:
+                        v_s_base = _convert_to_base(self.value, self.unit, dim_s)
+                        
+                    if is_log_o:
+                        v_o_linear, ref_o = _log_to_linear(other.value, other.unit)
+                        dim_ref_o = _get_dimension(ref_o)
+                        v_o_base = _convert_to_base(v_o_linear, ref_o, dim_ref_o)
+                    else:
+                        v_o_base = _convert_to_base(other.value, other.unit, dim_o)
+                    return v_s_base, v_o_base
+                else:
+                    return _convert_to_base(self.value, self.unit, dim_s), \
+                           _convert_to_base(other.value, other.unit, dim_o)
             if _normalize_unit_for_compare(self.unit) == _normalize_unit_for_compare(other.unit):
                 return self.value, other.value
             raise ValueError(

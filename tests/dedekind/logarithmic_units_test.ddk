@@ -1,0 +1,52 @@
+// Test for logarithmic units (dB, dBm, dBW, dBV, dBuV, dBSPL)
+
+fn approx(a, b, tol) {
+    d = unwrap(a) - unwrap(b)
+    if d < 0 { d = -d }
+    return d < tol
+}
+
+fn test_fn_dbw(x: [dBW]) -> [dBW] {
+    return x
+}
+
+fn test_fn_w(x: [W]) -> [W] {
+    return x
+}
+
+fn main() {
+    // 1. Basic conversions & comparison
+    assert(30[dBm] == 1.0[W], "30 dBm is 1 W")
+    assert(0[dBW] == 1.0[W], "0 dBW is 1 W")
+    assert(0[dBW] == 1000[mW], "0 dBW is 1000 mW")
+    assert(30[dBm] == 0[dBW], "30 dBm is 0 dBW")
+    
+    // 2. Logarithmic level comparisons
+    assert(30[dBm] > 20[dBm], "30 dBm > 20 dBm")
+    assert(0[dBW] < 10[dBW], "0 dBW < 10 dBW")
+    assert(20[dBuV] == 10[uV], "20 dBuV is 10 uV")
+
+    // 3. Logarithm addition / subtraction (Gain + Level)
+    assert(10[dBW] + 3[dB] == 13[dBW], "dBW + dB")
+    assert(10[dBW] - 3[dB] == 7[dBW], "dBW - dB")
+    assert(30[dBm] + 3[dB] == 33[dBm], "dBm + dB")
+    
+    // 4. Logarithmic level addition (Power summation)
+    // 10 dBW = 10 W, 10 dBW = 10 W -> 20 W = 13.0103 dBW
+    assert(approx(10[dBW] + 10[dBW], 13.0103, 1e-4), "10 dBW + 10 dBW")
+    
+    // 5. Subtracting absolute levels yields a ratio in dB
+    assert(approx(10[dBW] - 7[dBW], 3.0, 1e-5), "10 dBW - 7 dBW = 3 dB")
+    assert(approx(30[dBm] - 0[dBm], 30.0, 1e-5), "30 dBm - 0 dBm = 30 dB")
+
+    // 6. Signature Coercion (autolabel / autoconversion in function signatures)
+    res1 = test_fn_dbw(1.0[W]) // Should convert 1.0[W] to 0[dBW]
+    assert(approx(res1 + 0.0[dB], 0.0, 1e-7), "1 W coerced to 0 dBW")
+
+    res2 = test_fn_w(30[dBm]) // Should convert 30[dBm] to 1.0[W]
+    assert(approx(res2 + 0.0[W], 1.0, 1e-7), "30 dBm coerced to 1 W")
+
+    print("logarithmic_units_test: All asserts passed successfully!")
+}
+
+main()

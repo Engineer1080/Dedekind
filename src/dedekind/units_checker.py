@@ -61,6 +61,14 @@ def _same_dimension(u1: Optional[str], u2: Optional[str]) -> bool:
     if u1 == u2:
         return True
         
+    # Logarithmic units special case: absolute level +/- ratio (dB)
+    log_units = {"dB", "dB_power", "dB_amp", "dBW", "dBm", "dBV", "dBuV", "dBSPL"}
+    if u1 in log_units or u2 in log_units:
+        if u1 in log_units and u2 in ("dB", "dB_power", "dB_amp") and u1 not in ("dB", "dB_power", "dB_amp"):
+            return True
+        if u2 in log_units and u1 in ("dB", "dB_power", "dB_amp") and u2 not in ("dB", "dB_power", "dB_amp"):
+            return True
+
     n1 = _normalize_chemical_unit(u1)
     n2 = _normalize_chemical_unit(u2)
     if n1 is not None and n2 is not None and n1 == n2:
@@ -120,8 +128,19 @@ def _infer_unit(node: Node, env: Environment) -> Optional[str]:
         left_u = _infer_unit(node.left, env)
         right_u = _infer_unit(node.right, env)
         if node.op in ("+", "-"):
-            if left_u is not None and right_u is not None and not _same_dimension(left_u, right_u):
-                return None  # Signal: mismatch, handled in check
+            if left_u is not None and right_u is not None:
+                if not _same_dimension(left_u, right_u):
+                    return None  # Signal: mismatch, handled in check
+                log_units = {"dB", "dB_power", "dB_amp", "dBW", "dBm", "dBV", "dBuV", "dBSPL"}
+                if left_u in log_units or right_u in log_units:
+                    if left_u in ("dB", "dB_power", "dB_amp") and right_u in ("dB", "dB_power", "dB_amp"):
+                        return left_u
+                    if node.op == "-" and left_u in log_units and right_u in log_units and left_u not in ("dB", "dB_power", "dB_amp") and right_u not in ("dB", "dB_power", "dB_amp"):
+                        return "dB"
+                    if left_u in log_units and left_u not in ("dB", "dB_power", "dB_amp") and right_u in ("dB", "dB_power", "dB_amp"):
+                        return left_u
+                    if right_u in log_units and right_u not in ("dB", "dB_power", "dB_amp") and left_u in ("dB", "dB_power", "dB_amp"):
+                        return right_u
             return left_u if left_u is not None else right_u
         if node.op in ("*", "**"):
             lu = left_u or ""

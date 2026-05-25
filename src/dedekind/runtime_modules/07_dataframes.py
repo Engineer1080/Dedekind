@@ -295,6 +295,8 @@ _DERIVED_UNIT_TO_BASE = {
     "kN":  {"kg": 1, "m": 1, "s": -2},
     "MN":  {"kg": 1, "m": 1, "s": -2},
     "Pa":  {"kg": 1, "m": -1, "s": -2},
+    "uPa": {"kg": 1, "m": -1, "s": -2},
+    "muPa": {"kg": 1, "m": -1, "s": -2},
     "kPa": {"kg": 1, "m": -1, "s": -2},
     "MPa": {"kg": 1, "m": -1, "s": -2},
     "GPa": {"kg": 1, "m": -1, "s": -2},
@@ -307,10 +309,13 @@ _DERIVED_UNIT_TO_BASE = {
     "Wh":  {"kg": 1, "m": 2, "s": -2},
     "kWh": {"kg": 1, "m": 2, "s": -2},
     "W":   {"kg": 1, "m": 2, "s": -3},
+    "mW":  {"kg": 1, "m": 2, "s": -3},
     "kW":  {"kg": 1, "m": 2, "s": -3},
     "MW":  {"kg": 1, "m": 2, "s": -3},
     "L_sun": {"kg": 1, "m": 2, "s": -3},
     "V":   {"kg": 1, "m": 2, "s": -3, "A": -1},
+    "uV":  {"kg": 1, "m": 2, "s": -3, "A": -1},
+    "muV": {"kg": 1, "m": 2, "s": -3, "A": -1},
     "mV":  {"kg": 1, "m": 2, "s": -3, "A": -1},
     "kV":  {"kg": 1, "m": 2, "s": -3, "A": -1},
     "Hz":  {"s": -1},
@@ -385,6 +390,14 @@ _DERIVED_UNIT_TO_BASE = {
     "J/mol": {"kg": 1, "m": 2, "s": -2, "mol": -1},
     "eV/atom": {"kg": 1, "m": 2, "s": -2, "mol": -1},
     "Hartree/mol": {"kg": 1, "m": 2, "s": -2, "mol": -1},
+    "dB": {},
+    "dB_power": {},
+    "dB_amp": {},
+    "dBW": {"kg": 1, "m": 2, "s": -3},
+    "dBm": {"kg": 1, "m": 2, "s": -3},
+    "dBV": {"kg": 1, "m": 2, "s": -3, "A": -1},
+    "dBuV": {"kg": 1, "m": 2, "s": -3, "A": -1},
+    "dBSPL": {"kg": 1, "m": -1, "s": -2},
 }
 
 
@@ -559,6 +572,27 @@ def _coerce_to_expected_unit(value, expected_unit, context_label):
             return value
         if value.unit == expected:
             return value
+        
+        is_log_have = value.unit in _LOG_UNITS
+        is_log_want = expected in _LOG_UNITS
+        if is_log_have or is_log_want:
+            dim_have = _get_log_dimension(value.unit)
+            dim_want = _get_log_dimension(expected)
+            if dim_have is not None and dim_have == dim_want:
+                if is_log_have:
+                    v_linear, ref_unit = _log_to_linear(value.value, value.unit)
+                    dim_ref = _get_dimension(ref_unit)
+                    v_base = _convert_to_base(v_linear, ref_unit, dim_ref)
+                else:
+                    v_base = _convert_to_base(value.value, value.unit, dim_have)
+                
+                if is_log_want:
+                    base_unit = DIMENSION_TO_BASE[dim_want][0]
+                    v_target = _linear_to_log(v_base, base_unit, expected)
+                else:
+                    v_target = _convert_from_base(v_base, expected, dim_want)
+                return Quantity(v_target, expected)
+                
         dim_have = _get_dimension(value.unit)
         dim_want = _get_dimension(expected)
         if dim_have is not None and dim_have == dim_want:
