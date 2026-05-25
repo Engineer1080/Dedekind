@@ -1,6 +1,6 @@
 # Dedekind
 
-![Version](https://img.shields.io/badge/Version-3.0.0-blue) ![License](https://img.shields.io/badge/License-Apache_2.0-green) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+[![PyPI - Version](https://img.shields.io/pypi/v/dedekind)](https://pypi.org/project/dedekind/) ![License](https://img.shields.io/badge/License-Apache_2.0-green) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 **A programming language for scientific computing.** Write your simulator
 once in readable code with units — and get inverse problems, topology
@@ -125,7 +125,7 @@ Compile and run every example at once:
 
 ## Status, roadmap, history
 
-- Current release: **v3.0.0** (May 2026)
+- Current release: **v3.0.1** (May 2026)
 - Roadmap: [docs/roadmap.md](docs/roadmap.md)
 - Full changelog: [docs/changelog.md](docs/changelog.md)
 - Formal spec: [docs/Dedekind_Language_Specification.md](docs/Dedekind_Language_Specification.md)

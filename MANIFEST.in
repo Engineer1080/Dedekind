@@ -6,6 +6,7 @@ include CONTRIBUTING.md
 include pyproject.toml
 include run_tests.py
 include run_examples.py
+include bump_version.py
 recursive-include docs *.md
 recursive-include examples *.ddk
 recursive-include tests *.ddk
