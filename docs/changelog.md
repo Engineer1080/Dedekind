@@ -3,6 +3,19 @@
 Historical record of Dedekind releases. Most recent first.
 
 
+### What's New in v3.0.4 (Affine Temperature Units)
+
+The 3.0.4 release adds first-class support for affine temperature scales, closing the long-standing gap between Kelvin (a ratio scale) and Celsius/Fahrenheit (offset scales whose arithmetic is not multiplicative):
+
+- **Absolute Temperature Points.** Added `degC` / `°C` (Celsius) and `degF` / `°F` (Fahrenheit) as affine units alongside the existing Kelvin scale. Literals like `20[degC]`, `68[°F]`, and `293.15[K]` compare equal across scales via automatic offset-aware coercion (e.g. `-40[degC] == -40[degF]`).
+- **Temperature Differences.** Added linear delta units `delta_C`, `delta_degC`, `delta_F`, `delta_degF`, and `delta_K` for relative temperature changes. These compose multiplicatively with other quantities (e.g. heat capacity in `J/(kg*K)`), unlike the absolute points.
+- **Offset-Correct Arithmetic.** Point ± difference yields a point (`20[degC] + 10[K]` → `30[degC]`); point − point yields a difference (`22[degC] − (−5)[degC]` → `27[delta_K]`); point + point is rejected at compile time, eliminating a class of bugs that silently corrupt thermodynamics code in unit-naive systems.
+- **Function Signature Coercion.** `@units`-annotated signatures accept any temperature representation and coerce to the declared scale (e.g. `fn safety_margin_temp(temp: [degC], margin: [delta_C]) -> [degC]`).
+- **Uncertainty Propagation.** `UncertainQuantity` correctly handles affine offsets — the standard deviation transforms linearly across scales while the mean transforms affinely.
+- **Engineering Example & Tests.** Added `affine_units_demo.ddk` (heat-conduction scenario) and `affine_units_test.ddk` covering conversions, arithmetic rules, and signature coercion.
+
+---
+
 ### What's New in v3.0.3 (Logarithmic Units & Decibels)
 
 The 3.0.3 release adds first-class support for logarithmic units and decibel arithmetic:
