@@ -475,6 +475,74 @@ def _units_dimensionally_equal(u1, u2):
     return d1 == d2
 
 
+def _parse_unit_factor(unit_str):
+    """Computes the overall scale factor of a unit string relative to SI base units.
+    E.g. 'km' -> 1000.0, 'cm' -> 0.01, 'BTU/h' -> 1055.05585262 / 3600.0.
+    """
+    s = (unit_str or "").strip()
+    if not s:
+        return 1.0
+    import re as _re
+    tokens = _re.findall(r"\(|\)|\*|/|\^|-?\d+\.\d+|-?\d+|[A-Za-z][A-Za-z_]*", s)
+    if not tokens:
+        return 1.0
+    pos = [0]
+
+    def _get_atomic_factor(tok):
+        # Look up in DIMENSION_TO_BASE
+        for dim, (_b, tab) in DIMENSION_TO_BASE.items():
+            if tok in tab:
+                return tab[tok]
+        return 1.0
+
+    def parse_factor():
+        if pos[0] >= len(tokens):
+            return 1.0
+        t = tokens[pos[0]]
+        if t == "(":
+            pos[0] += 1
+            val = parse_term()
+            if pos[0] < len(tokens) and tokens[pos[0]] == ")":
+                pos[0] += 1
+            return val
+        if t and t[0].isalpha():
+            pos[0] += 1
+            factor = _get_atomic_factor(t)
+            if pos[0] < len(tokens) and tokens[pos[0]] == "^":
+                pos[0] += 1
+                if pos[0] < len(tokens):
+                    try:
+                        exp = float(tokens[pos[0]])
+                    except ValueError:
+                        exp = 1.0
+                    pos[0] += 1
+                    return factor ** exp
+            return factor
+        try:
+            val = float(t)
+            pos[0] += 1
+            return val
+        except ValueError:
+            return 1.0
+
+    def parse_term():
+        left = parse_factor()
+        while pos[0] < len(tokens) and tokens[pos[0]] in ("*", "/"):
+            op = tokens[pos[0]]
+            pos[0] += 1
+            right = parse_factor()
+            if op == "*":
+                left *= right
+            else:
+                left /= right if right != 0 else 1.0
+        return left
+
+    try:
+        return parse_term()
+    except Exception:
+        return 1.0
+
+
 def _coerce_to_expected_unit(value, expected_unit, context_label):
     """Coerces `value` to `expected_unit` if dimensionally compatible.
 
