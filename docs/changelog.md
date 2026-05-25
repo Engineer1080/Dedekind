@@ -3,6 +3,16 @@
 Historical record of Dedekind releases. Most recent first.
 
 
+### What's New in v3.0.2 (Imperial/Custom Units & Fundamental Constants)
+
+The 3.0.2 release adds support for Imperial/US customary units and fundamental physical constants:
+
+- **Imperial and US Customary Units.** Added a new standard library module `use imperial` declaring units like `inch`, `foot`, `yard`, `mile`, `pound`, `ounce`, `lbf`, `psi`, `hp`, `BTU`, and `gallon`.
+- **Fundamental Constants.** Added four new fundamental physical constants to `01_classes.py`: standard gravity `g_0`, neutron mass `m_n`, Bohr magneton `mu_B`, and Rydberg constant `R_inf`.
+- **Compound Custom Unit Addition.** Enhanced `Quantity._add_sub_quantity` to fallback to general dimension parsing (matching base dimensions and scaling factors via `_parse_unit_factor` and registering custom units in `_DERIVED_UNIT_TO_BASE`), allowing math operations between compatible compound units (e.g. `[W]` vs `[BTU/h]`).
+
+---
+
 ### What's New in v3.0.1 (UX Enhancements & Windows Fixes)
 
 The 3.0.1 release addresses minor onboarding issues for researchers installing purely via PyPI:
