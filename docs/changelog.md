@@ -3,6 +3,17 @@
 Historical record of Dedekind releases. Most recent first.
 
 
+### What's New in v3.0.7 (Reproducibility Report Upgrades)
+
+A patch release improving the scope of Dedekind's automated reproducibility auditing:
+
+- **OS and Compiler Version Tracking.** The automated reproducibility report generated during runs now logs:
+  - The exact operating system, kernel release, and CPU architecture (via Pythons `platform` module) to audit CPU float rounding drift.
+  - The exact installed Dedekind compiler version (`v3.0.7`) to trace feature-level toolchain drift.
+- **Verification.** Verified against the full 73/73 test suite on the local environment.
+
+---
+
 ### What's New in v3.0.6 (Bioinformatics Showcase & Microliter Volume Units)
 
 A patch release extending the chemistry and biology support with native volume units and a complete workflow demonstration:
