@@ -1,0 +1,109 @@
+// bioinformatics_showcase.ddk — Bioinformatics and Cheminformatics Pipeline Showcase (v3.0.3)
+//
+// This showcase demonstrates the following features of Dedekind:
+// 1. Compile-time Sequence Typisierung (DNA/RNA/Protein validation)
+// 2. Automated Biochemical Unit Check & Scaling
+// 3. Direct APIs: ChEMBL & PubChem queries
+// 4. Differentiable Curve-Fitting (Hill/Michaelis-Menten) via built-in autograd
+// 5. Automated PDF/HTML Notebook publishing of results
+
+fn calculate_gc(seq: Sequence[DNA]) -> Scalar {
+    return gc_content(seq)
+}
+
+fn main() {
+    print("=========================================================")
+    print("      DEDEKIND BIOINFORMATICS & CHEMINFORMATICS DEMO     ")
+    print("=========================================================")
+    print("")
+
+    // 1. Central Dogma & Typisierung
+    print("[1] NATIVE SEQUENZ-TYPISIERUNG")
+    dna_input = "ATGGCCCTGTGGATGCGCCTCCTGCCCCTGCTGGCGCTGCTGGCC"
+    print("DNA Input:      " + dna_input)
+    print("Länge (bp):     " + str(len(dna_input)))
+    
+    // Berechne GC-Gehalt mit Sequence[DNA]-Typüberprüfung
+    gc = calculate_gc(dna_input)
+    print("GC-Anteil:      " + str(gc * 100.0) + " %")
+    
+    // Transkription zu RNA und Translation zu Protein
+    rna = transcribe(dna_input)
+    protein = translate(rna)
+    print("Transkribiert:  " + rna)
+    print("Translatiert:   " + protein)
+    print("")
+
+    // 2. Wirkstoff-APIs
+    print("[2] DIREKTE API-ABFRAGEN AN WIRKSTOFFDATENBANKEN")
+    // Summenformel von Aspirin über PubChem
+    aspirin_formula = pubchem_get_molecular_formula("aspirin")
+    print("PubChem: Summenformel Aspirin = " + aspirin_formula)
+    
+    // IC50 von Gefitinib gegen EGFR target über ChEMBL
+    ic50_val = chembl_get_ic50("EGFR", "gefitinib")
+    print("ChEMBL: IC50 Gefitinib vs EGFR = " + str(ic50_val))
+    print("")
+
+    // 3. Einheiten-Validierung
+    print("[3] BIOCHEMISCHE EINHEITEN-VALIDIERUNG & VERDÜNNUNG")
+    // Zielkonzentration aus ChEMBL-Daten
+    c_target = 0.0[nM] + ic50_val // 33 nM
+    // Stammloesung: 10 uM (Micromolar)
+    c_stock = 10.0[uM]
+    // Gewünschtes Gesamtvolumen: 50 mL
+    v_target = 50.0[mL]
+    
+    // Verdünnungsberechnung: V_stock = (C_target * V_target) / C_stock
+    // Dedekind skaliert uM, nM und mL vollautomatisch im Compiler!
+    v_stock = (c_target * v_target) / c_stock
+    
+    print("Zielkonzentration:  " + str(c_target))
+    print("Stammkonzentration: " + str(c_stock))
+    print("Zielvolumen:        " + str(v_target))
+    print("Erforderliches Stammlösungsvolumen: " + str(v_stock) + " (entspricht " + str(0.0[uL] + v_stock) + ")")
+    print("")
+
+    // 4. Differentielles Fitting & Autograd
+    print("[4] PARAMETER-FITTING EINER DOSIS-WIRKUNGSKURVE (HILL / MICHAELIS-MENTEN)")
+    // Synthetische Messdaten (Dosis vs relative Zellviabilität/Inhibition)
+    doses = [0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0]
+    responses = [0.15, 0.6, 1.0, 1.6, 2.2, 2.6, 2.85]
+    
+    // Quadratischer Loss für MM-Fitting
+    fn mm_loss(params, data) {
+        x = data[0]
+        y = data[1]
+        Vmax = params[0]
+        EC50 = params[1]
+        y_pred = michaelis_menten(x, Vmax, EC50)
+        diff = y_pred - y
+        return (diff * diff).sum()
+    }
+    
+    data_fit = [doses, responses]
+    params_start = [3.0, 2.0]
+    params_opt = fit(mm_loss, params_start, data_fit, method="gd", lr=0.01, steps=800)
+    
+    Vmax_fit = params_opt[0]
+    EC50_fit = params_opt[1]
+    
+    print("Fitted Vmax: " + str(Vmax_fit))
+    print("Fitted EC50: " + str(EC50_fit))
+    print("")
+
+    // 5. Visualisierung
+    print("[5] AUTOMATISCHE VISUALISIERUNG")
+    doses_fine = linspace(0.0, 20.0, 100)
+    responses_fit = michaelis_menten(doses_fine, Vmax_fit, EC50_fit)
+    
+    // Erzeugt Matplotlib plot
+    scatter(doses, responses, title="Dose-Response Fit (Michaelis-Menten)", xlabel="Dose", ylabel="Response")
+    plot(doses_fine, responses_fit)
+    print("Plot erfolgreich generiert!")
+    print("")
+}
+main()
+
+// Exportiere das lauffähige Skript als interaktives Notebook-HTML
+export_notebook("examples/dedekind/chemistry_biology/bioinformatics_showcase.ddk", "examples/dedekind/chemistry_biology/bioinformatics_showcase.html", "html", "Dedekind Showcase: Bioinformatik & Wirkstoffdesign")

@@ -341,6 +341,8 @@ _DERIVED_UNIT_TO_BASE = {
     "F":   {"kg": -1, "m": -2, "s": 4, "A": 2},
     "L":   {"m": 3},
     "mL":  {"m": 3},
+    "uL":  {"m": 3},
+    "muL": {"m": 3},
     "M":   {"mol": 1, "m": -3},  # mol/L = 1000 mol/m³, gleiche Dimension
     "mM":  {"mol": 1, "m": -3},
     "uM":  {"mol": 1, "m": -3},
