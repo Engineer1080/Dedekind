@@ -10,11 +10,13 @@ from __future__ import annotations
 
 import hashlib
 import os
+import platform
 import re
 import subprocess
 import sys
 from datetime import datetime, timezone
 
+from . import __version__
 from .lexer import Lexer
 from .parser import Parser
 from .latex_export import program_to_latex
@@ -71,6 +73,7 @@ def build_report(source_code: str, source_path: str, repo_dir: str | None = None
     sha256 = hashlib.sha256(source_code.encode("utf-8")).hexdigest()
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     py_ver = sys.version.split()[0]
+    platform_info = f"{platform.system()} {platform.release()} ({platform.machine()})"
     git = _git_info(repo_dir)
     torch_v = _pkg_version("torch")
     numpy_v = _pkg_version("numpy")
@@ -105,12 +108,14 @@ def build_report(source_code: str, source_path: str, repo_dir: str | None = None
         lines.append("- (not a git repository)")
     lines.append("")
     lines.append("## Toolchain")
-    lines.append(f"- Python: {py_ver}")
-    lines.append(f"- torch:  {torch_v or '(not installed)'}")
+    lines.append(f"- Dedekind: {__version__}")
+    lines.append(f"- Python:   {py_ver}")
+    lines.append(f"- OS:       {platform_info}")
+    lines.append(f"- torch:    {torch_v or '(not installed)'}")
     if cuda is not None:
         lines.append(f"- CUDA available: {cuda}")
-    lines.append(f"- numpy:  {numpy_v or '(not installed)'}")
-    lines.append(f"- scipy:  {scipy_v or '(not installed)'}")
+    lines.append(f"- numpy:    {numpy_v or '(not installed)'}")
+    lines.append(f"- scipy:    {scipy_v or '(not installed)'}")
     lines.append("")
     lines.append("## RNG seeds detected in source")
     if seeds:
