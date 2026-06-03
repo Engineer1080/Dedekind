@@ -3,6 +3,16 @@
 Historical record of Dedekind releases. Most recent first.
 
 
+### What's New in v3.0.6 (Bioinformatics Showcase & Microliter Volume Units)
+
+A patch release extending the chemistry and biology support with native volume units and a complete workflow demonstration:
+
+- **Native Microliter Support.** Added `uL` and `muL` with scale factor `1e-6` to the volume dimension. This allows unit-safe calculations and conversions (e.g. `0.0[uL] + v_stock`) in biological and chemical assay protocols.
+- **End-to-End Bioinformatics Showcase.** Created `bioinformatics_showcase.ddk` demonstrating a full pipeline: compile-time sequence validation (`Sequence[DNA]`), live API queries to PubChem and ChEMBL drug databases, biochemical unit scaling, and differentiable dose-response curve fitting via autograd.
+- **Automated HTML/Markdown Notebook publishing.** The pipeline automatically exports its results and plots to a standalone, reproducible HTML notebook `bioinformatics_showcase.html`.
+
+---
+
 ### What's New in v3.0.5 (Documentation Polish & Version-Pinned Examples)
 
 A docs-only patch release with one small CLI improvement:

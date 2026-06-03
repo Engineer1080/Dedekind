@@ -1,7 +1,7 @@
-// bioinformatics_showcase.ddk — Bioinformatics and Cheminformatics Pipeline Showcase (v3.0.3)
+// bioinformatics_showcase.ddk — Bioinformatics and Cheminformatics Pipeline Showcase (v3.0.4)
 //
 // This showcase demonstrates the following features of Dedekind:
-// 1. Compile-time Sequence Typisierung (DNA/RNA/Protein validation)
+// 1. Compile-time Sequence Typing (DNA/RNA/Protein validation)
 // 2. Automated Biochemical Unit Check & Scaling
 // 3. Direct APIs: ChEMBL & PubChem queries
 // 4. Differentiable Curve-Fitting (Hill/Michaelis-Menten) via built-in autograd
@@ -17,60 +17,60 @@ fn main() {
     print("=========================================================")
     print("")
 
-    // 1. Central Dogma & Typisierung
-    print("[1] NATIVE SEQUENZ-TYPISIERUNG")
+    // 1. Central Dogma & Sequence Typing
+    print("[1] NATIVE SEQUENCE TYPING")
     dna_input = "ATGGCCCTGTGGATGCGCCTCCTGCCCCTGCTGGCGCTGCTGGCC"
     print("DNA Input:      " + dna_input)
-    print("Länge (bp):     " + str(len(dna_input)))
+    print("Length (bp):    " + str(len(dna_input)))
     
-    // Berechne GC-Gehalt mit Sequence[DNA]-Typüberprüfung
+    // Calculate GC content with Sequence[DNA] typechecking
     gc = calculate_gc(dna_input)
-    print("GC-Anteil:      " + str(gc * 100.0) + " %")
+    print("GC Content:     " + str(gc * 100.0) + " %")
     
-    // Transkription zu RNA und Translation zu Protein
+    // Transcribe to RNA and translate to Protein
     rna = transcribe(dna_input)
     protein = translate(rna)
-    print("Transkribiert:  " + rna)
-    print("Translatiert:   " + protein)
+    print("Transcribed:    " + rna)
+    print("Translated:     " + protein)
     print("")
 
-    // 2. Wirkstoff-APIs
-    print("[2] DIREKTE API-ABFRAGEN AN WIRKSTOFFDATENBANKEN")
-    // Summenformel von Aspirin über PubChem
+    // 2. Drug Databases APIs
+    print("[2] DIRECT API QUERIES TO DRUG DATABASES")
+    // Molecular formula of Aspirin via PubChem
     aspirin_formula = pubchem_get_molecular_formula("aspirin")
-    print("PubChem: Summenformel Aspirin = " + aspirin_formula)
+    print("PubChem: Aspirin Formula = " + aspirin_formula)
     
-    // IC50 von Gefitinib gegen EGFR target über ChEMBL
+    // IC50 of Gefitinib vs EGFR target via ChEMBL
     ic50_val = chembl_get_ic50("EGFR", "gefitinib")
-    print("ChEMBL: IC50 Gefitinib vs EGFR = " + str(ic50_val))
+    print("ChEMBL: Gefitinib EGFR IC50 = " + str(ic50_val))
     print("")
 
-    // 3. Einheiten-Validierung
-    print("[3] BIOCHEMISCHE EINHEITEN-VALIDIERUNG & VERDÜNNUNG")
-    // Zielkonzentration aus ChEMBL-Daten
+    // 3. Unit Validation
+    print("[3] BIOCHEMICAL UNIT VALIDATION & DILUTION")
+    // Target concentration from ChEMBL data
     c_target = 0.0[nM] + ic50_val // 33 nM
-    // Stammloesung: 10 uM (Micromolar)
+    // Stock solution: 10 uM (Micromolar)
     c_stock = 10.0[uM]
-    // Gewünschtes Gesamtvolumen: 50 mL
+    // Desired target volume: 50 mL
     v_target = 50.0[mL]
     
-    // Verdünnungsberechnung: V_stock = (C_target * V_target) / C_stock
-    // Dedekind skaliert uM, nM und mL vollautomatisch im Compiler!
+    // Dilution formula: V_stock = (C_target * V_target) / C_stock
+    // Dedekind automatically scales uM, nM, and mL at compile-time!
     v_stock = (c_target * v_target) / c_stock
     
-    print("Zielkonzentration:  " + str(c_target))
-    print("Stammkonzentration: " + str(c_stock))
-    print("Zielvolumen:        " + str(v_target))
-    print("Erforderliches Stammlösungsvolumen: " + str(v_stock) + " (entspricht " + str(0.0[uL] + v_stock) + ")")
+    print("Target Conc:        " + str(c_target))
+    print("Stock Conc:         " + str(c_stock))
+    print("Target Volume:      " + str(v_target))
+    print("Required Stock Vol: " + str(v_stock) + " (equals " + str(0.0[uL] + v_stock) + ")")
     print("")
 
-    // 4. Differentielles Fitting & Autograd
-    print("[4] PARAMETER-FITTING EINER DOSIS-WIRKUNGSKURVE (HILL / MICHAELIS-MENTEN)")
-    // Synthetische Messdaten (Dosis vs relative Zellviabilität/Inhibition)
+    // 4. Differentiable Fitting & Autograd
+    print("[4] PARAMETER-FITTING OF A DOSE-RESPONSE CURVE (HILL / MICHAELIS-MENTEN)")
+    // Synthetic experimental data (dose vs response)
     doses = [0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0]
     responses = [0.15, 0.6, 1.0, 1.6, 2.2, 2.6, 2.85]
     
-    // Quadratischer Loss für MM-Fitting
+    // L2 loss for MM fitting
     fn mm_loss(params, data) {
         x = data[0]
         y = data[1]
@@ -88,22 +88,22 @@ fn main() {
     Vmax_fit = params_opt[0]
     EC50_fit = params_opt[1]
     
-    print("Fitted Vmax: " + str(Vmax_fit))
-    print("Fitted EC50: " + str(EC50_fit))
+    print("Fitted Vmax:        " + str(Vmax_fit))
+    print("Fitted EC50:        " + str(EC50_fit))
     print("")
 
-    // 5. Visualisierung
-    print("[5] AUTOMATISCHE VISUALISIERUNG")
+    // 5. Visualisation
+    print("[5] AUTOMATED VISUALIZATION")
     doses_fine = linspace(0.0, 20.0, 100)
     responses_fit = michaelis_menten(doses_fine, Vmax_fit, EC50_fit)
     
-    // Erzeugt Matplotlib plot
+    // Generate Matplotlib plot
     scatter(doses, responses, title="Dose-Response Fit (Michaelis-Menten)", xlabel="Dose", ylabel="Response")
     plot(doses_fine, responses_fit)
-    print("Plot erfolgreich generiert!")
+    print("Plot generated successfully!")
     print("")
 }
 main()
 
-// Exportiere das lauffähige Skript als interaktives Notebook-HTML
-export_notebook("examples/dedekind/chemistry_biology/bioinformatics_showcase.ddk", "examples/dedekind/chemistry_biology/bioinformatics_showcase.html", "html", "Dedekind Showcase: Bioinformatik & Wirkstoffdesign")
+// Export runnable script as interactive HTML notebook
+export_notebook("examples/dedekind/chemistry_biology/bioinformatics_showcase.ddk", "examples/dedekind/chemistry_biology/bioinformatics_showcase.html", "html", "Dedekind Showcase: Bioinformatics & Drug Design")
