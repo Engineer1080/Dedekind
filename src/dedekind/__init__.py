@@ -8,7 +8,7 @@ Public entry points:
 CLI: `dedekind <file.ddk>` (see dedekind.cli).
 """
 
-__version__ = "3.0.7"
+__version__ = "3.0.8"
 
 from .compiler import (  # noqa: F401  (re-export)
     compile_source,

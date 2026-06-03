@@ -3,6 +3,18 @@
 Historical record of Dedekind releases. Most recent first.
 
 
+### What's New in v3.0.8 (Enhanced Reproducibility Auditing)
+
+A major enhancement to the reproducibility auditing system of Dedekind:
+
+- **Repository Tracking.** Automated retrieval and logging of the Git repository remote URL (`git config --get remote.origin.url`) under the Git section.
+- **Hardware Auditing.** Added tracking for CPU model, total RAM, and GPU device details (via CUDA and PyTorch, if available) to record the target hardware environment.
+- **RNG Seed Audit Warnings.** Triggers warning flags if no random number generator (RNG) seeds are set, reminding users that the execution is non-deterministic.
+- **Data Hashing (Data Provenance).** Automatically parses compile-time AST representation to detect file read functions (`read_file`, `read_csv`, etc.) and logs their SHA-256 hashes for raw dataset auditing.
+- **BibTeX Citations.** Generates copy-paste ready BibTeX citations matching the specific Dedekind version.
+
+---
+
 ### What's New in v3.0.7 (Reproducibility Report Upgrades)
 
 A patch release improving the scope of Dedekind's automated reproducibility auditing:
